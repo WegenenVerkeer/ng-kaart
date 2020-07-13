@@ -1,9 +1,6 @@
 import { HttpClient } from "@angular/common/http";
-import * as array from "fp-ts/lib/Array";
+import { array, option, strmap, tuple } from "fp-ts";
 import { concat, Function1, Function2 } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
-import * as strmap from "fp-ts/lib/StrMap";
-import { Tuple } from "fp-ts/lib/Tuple";
 import * as rx from "rxjs";
 import { map, mergeMap } from "rxjs/operators";
 
@@ -37,7 +34,7 @@ export const emptyRouteState: RouteState = { waypoints: [], versions: new strmap
 
 export const emptyRouteChanges: RouteChanges = { routesAdded: [], routesRemoved: [] };
 
-export function removeWaypoint(routeState: RouteState, RemoveWaypoint: RemoveWaypoint): Tuple<RouteState, RouteChanges> {
+export function removeWaypoint(routeState: RouteState, RemoveWaypoint: RemoveWaypoint): tuple.Tuple<RouteState, RouteChanges> {
   const id = RemoveWaypoint.waypoint.id;
 
   const maybePreviousWaypoint = arrays.previousElement(routeState.waypoints)(wp => wp.id === id);
@@ -50,7 +47,7 @@ export function removeWaypoint(routeState: RouteState, RemoveWaypoint: RemoveWay
   const routeAdded = maybePreviousWaypoint.chain(pwp => maybeNextWaypoint.map(nwp => createRoute(pwp, nwp, routeState.versions)));
   const routesAdded = toArray(routeAdded);
 
-  return new Tuple(
+  return new tuple.Tuple(
     {
       waypoints: arrays
         .deleteFirst(routeState.waypoints)(wp => wp.id === RemoveWaypoint.waypoint.id)
@@ -64,12 +61,12 @@ export function removeWaypoint(routeState: RouteState, RemoveWaypoint: RemoveWay
   );
 }
 
-export function addWaypoint(routeState: RouteState, addWaypoint: AddWaypoint): Tuple<RouteState, RouteChanges> {
+export function addWaypoint(routeState: RouteState, addWaypoint: AddWaypoint): tuple.Tuple<RouteState, RouteChanges> {
   return addWaypoint.previous.foldL(
     () => {
       const routesAdded = toArray(array.head(routeState.waypoints).map(e => createRoute(addWaypoint.waypoint, e, routeState.versions)));
 
-      return new Tuple(
+      return new tuple.Tuple(
         {
           waypoints: [addWaypoint.waypoint].concat(routeState.waypoints),
           versions: updateVersions(routeState.versions, routesAdded)
@@ -90,7 +87,7 @@ export function addWaypoint(routeState: RouteState, addWaypoint: AddWaypoint): T
 
       const routesRemoved = toArray(maybeRouteToRemove);
 
-      return new Tuple(
+      return new tuple.Tuple(
         {
           waypoints: arrays
             .insertAfter(routeState.waypoints)(wp => wp.id === previous.id)(addWaypoint.waypoint)
@@ -106,7 +103,7 @@ export function addWaypoint(routeState: RouteState, addWaypoint: AddWaypoint): T
   );
 }
 
-function nextRouteStateChanges(previousRouteState: RouteState, waypointOps: WaypointOperation): Tuple<RouteState, RouteChanges> {
+function nextRouteStateChanges(previousRouteState: RouteState, waypointOps: WaypointOperation): tuple.Tuple<RouteState, RouteChanges> {
   switch (waypointOps.type) {
     case "RemoveWaypoint":
       return removeWaypoint(previousRouteState, waypointOps);
@@ -124,8 +121,8 @@ export function routesViaRoutering(http: HttpClient): Pipeable<WaypointOperation
   return waypointOpsToRouteOperation(new CompositeRoutingService([new SimpleRoutingService(), new VerfijndeRoutingService(http)]));
 }
 
-const ifDifferentLocation: Function2<ol.Coordinate, Waypoint, Option<Waypoint>> = (l, w) =>
-  Coordinates.equalTo(w.location)(l) ? none : some(Waypoint(w.id, l));
+const ifDifferentLocation: Function2<ol.Coordinate, Waypoint, option.Option<Waypoint>> = (l, w) =>
+  Coordinates.equalTo(w.location)(l) ? option.none : option.some(Waypoint(w.id, l));
 
 const waypointOpsToRouteOperation: Function1<RoutingService, Pipeable<WaypointOperation, RouteEvent>> = routingService => waypointOpss => {
   const routeChangesObs: rx.Observable<RouteChanges> = scanState(waypointOpss, nextRouteStateChanges, emptyRouteState, emptyRouteChanges);
@@ -148,15 +145,15 @@ const waypointOpsToRouteOperation: Function1<RoutingService, Pipeable<WaypointOp
     )
   );
 
-  return catOptions(scanState(routeEventObs, filterRouteEvent, new strmap.StrMap<number>({}), none));
+  return catOptions(scanState(routeEventObs, filterRouteEvent, new strmap.StrMap<number>({}), option.none));
 };
 
-function filterRouteEvent(versions: Versions, routeEvent: RouteEvent): Tuple<Versions, Option<RouteEvent>> {
+function filterRouteEvent(versions: Versions, routeEvent: RouteEvent): tuple.Tuple<Versions, option.Option<RouteEvent>> {
   return strmap
     .lookup(routeEvent.id, versions)
-    .fold(new Tuple(strmap.insert(routeEvent.id, routeEvent.version, versions), some(routeEvent)), previousVersion => {
+    .fold(new tuple.Tuple(strmap.insert(routeEvent.id, routeEvent.version, versions), option.some(routeEvent)), previousVersion => {
       return previousVersion > routeEvent.version
-        ? new Tuple(versions, none)
-        : new Tuple(strmap.insert(routeEvent.id, routeEvent.version, versions), some(routeEvent));
+        ? new tuple.Tuple(versions, option.none)
+        : new tuple.Tuple(strmap.insert(routeEvent.id, routeEvent.version, versions), option.some(routeEvent));
     });
 }

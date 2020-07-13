@@ -1,14 +1,16 @@
-import { option } from "fp-ts";
+import { eq, option } from "fp-ts";
 import { constant, Function1, Function2, Function4, identity, Lazy, not, Predicate, Refinement } from "fp-ts/lib/function";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
-import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
+import { pipe } from "fp-ts/lib/pipeable";
 import { DateTime, Duration } from "luxon";
 import { Getter, Lens } from "monocle-ts";
-import { isBoolean, isNumber, isObject, isString } from "util";
 
 import * as arrays from "../util/arrays";
+import { isBoolean } from "../util/boolean";
 import { PartialFunction1 } from "../util/function";
 import * as matchers from "../util/matchers";
+import { isNumber } from "../util/number";
+import { isObject } from "../util/object";
+import { isString } from "../util/string";
 
 // Een namespace is nodig omdat verschillende types dezelfde naam hebben als die voor stijlen en er kan maar 1 naam
 // geëxporteerd worden buiten de module.
@@ -22,7 +24,7 @@ export namespace Filter {
 
   export interface ExpressionFilter {
     readonly kind: "ExpressionFilter";
-    readonly name: Option<string>;
+    readonly name: option.Option<string>;
     readonly expression: Expression;
   }
 
@@ -125,14 +127,16 @@ export namespace Filter {
     export const isRelativeDateRange: Refinement<ValueType, Range> = (range): range is Range =>
       isRange(range) && arrays.isOneOf("year", "month", "day")(range.unit) && range.magnitude > 0;
 
-    const durationFallBackMatcher = matchers.matchWithFallback<RelativeDateRange, Option<DateTime>>({
-      day: (q: RelativeDateRange) => some(DateTime.local().minus(Duration.fromObject({ days: q.magnitude }))),
-      month: (q: RelativeDateRange) => some(DateTime.local().minus(Duration.fromObject({ months: q.magnitude }))),
-      year: (q: RelativeDateRange) => some(DateTime.local().minus(Duration.fromObject({ years: q.magnitude }))),
-      fallback: () => none
+    const durationFallBackMatcher = matchers.matchWithFallback<RelativeDateRange, option.Option<DateTime>>({
+      day: (q: RelativeDateRange) => option.some(DateTime.local().minus(Duration.fromObject({ days: q.magnitude }))),
+      month: (q: RelativeDateRange) => option.some(DateTime.local().minus(Duration.fromObject({ months: q.magnitude }))),
+      year: (q: RelativeDateRange) => option.some(DateTime.local().minus(Duration.fromObject({ years: q.magnitude }))),
+      fallback: () => option.none
     });
 
-    export const withinValueToDuration: Function1<RelativeDateRange, Option<DateTime>> = durationFallBackMatcher((q: Range) => q.unit);
+    export const withinValueToDuration: Function1<RelativeDateRange, option.Option<DateTime>> = durationFallBackMatcher(
+      (q: Range) => q.unit
+    );
   }
 
   // Dit zijn alle types die we ondersteunen in het geheugen, maar denk eraan dat alles als string of number
@@ -152,7 +156,7 @@ export namespace Filter {
     readonly type: TypeType;
     readonly ref: string;
     readonly label: string;
-    readonly sqlFormat: Option<string>;
+    readonly sqlFormat: option.Option<string>;
   }
 
   export const BinaryComparison: Function4<BinaryComparisonOperator, Property, Literal, boolean, BinaryComparison> = (
@@ -200,7 +204,7 @@ export namespace Filter {
   export const EmptyFilter: EmptyFilter = { kind: "EmptyFilter" };
   export const empty: Lazy<Filter> = constant(EmptyFilter);
 
-  export const ExpressionFilter: Function2<Option<string>, Expression, ExpressionFilter> = (name, expression) => ({
+  export const ExpressionFilter: Function2<option.Option<string>, Expression, ExpressionFilter> = (name, expression) => ({
     kind: "ExpressionFilter",
     name: name,
     expression: expression
@@ -210,7 +214,7 @@ export namespace Filter {
     kind: "Property",
     type: typetype,
     ref: name,
-    sqlFormat: fromNullable(sqlFormat),
+    sqlFormat: option.fromNullable(sqlFormat),
     label
   });
 
@@ -231,9 +235,9 @@ export namespace Filter {
 
   export const matchFilter: <A>(_: FilterMatcher<A>) => Function1<Filter, A> = matchers.matchKind;
 
-  export const asExpressionFilter: Function1<Filter, Option<ExpressionFilter>> = matchFilter({
-    EmptyFilter: constant(none),
-    ExpressionFilter: some
+  export const asExpressionFilter: Function1<Filter, option.Option<ExpressionFilter>> = matchFilter({
+    EmptyFilter: constant(option.none),
+    ExpressionFilter: option.some
   });
 
   export interface ExpressionMatcher<A> {
@@ -277,7 +281,10 @@ export namespace Filter {
 
   export const isDefined: Predicate<Filter> = not(isEmpty);
 
-  export const setoidPropertyByRef: Setoid<Property> = contramap(p => p.ref, setoidString);
-  export const setoidBinaryComparisonOperator: Setoid<BinaryComparisonOperator> = setoidString;
-  export const setoidUnaryComparisonOperator: Setoid<UnaryComparisonOperator> = setoidString;
+  export const setoidPropertyByRef: eq.Eq<Property> = pipe(
+    eq.eqString,
+    eq.contramap(p => p.ref)
+  );
+  export const setoidBinaryComparisonOperator: eq.Eq<BinaryComparisonOperator> = eq.eqString;
+  export const setoidUnaryComparisonOperator: eq.Eq<UnaryComparisonOperator> = eq.eqString;
 }

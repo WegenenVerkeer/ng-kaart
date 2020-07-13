@@ -1,12 +1,11 @@
 import { AfterViewInit, Directive, NgZone, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 import { Lazy } from "fp-ts/es6/function";
-import { Function1, identity } from "fp-ts/lib/function";
-import { Refinement } from "fp-ts/lib/function";
+import { Function1, identity, Refinement } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { filter, map, mapTo, switchMap, takeUntil } from "rxjs/operators";
-import { isNullOrUndefined } from "util";
 
 import { asap } from "../util/asap";
+import { isNotNullOrUndefined } from "../util/null";
 
 interface ClickAction {
   name: string;
@@ -90,7 +89,7 @@ export abstract class KaartBaseDirective implements AfterViewInit, OnInit, OnDes
 
   protected actionDataFor$<T>(actionName: string, refinement: Refinement<any, T>): rx.Observable<T> {
     return this.clickActionSubj.pipe(
-      filter(a => a.name === actionName && !isNullOrUndefined(a.data) && refinement(a.data)),
+      filter(a => a.name === actionName && isNotNullOrUndefined(a.data) && refinement(a.data)),
       map(a => a.data)
     );
   }

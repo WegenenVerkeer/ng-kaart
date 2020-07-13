@@ -1,5 +1,5 @@
 import { Directive, Injector, Input, OnChanges, SimpleChanges } from "@angular/core";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 import * as rx from "rxjs";
 
 import { forChangedValue } from "../../kaart/kaart-base.directive";
@@ -42,8 +42,8 @@ export abstract class ClassicVectorLaagLikeDirective extends ClassicLaagDirectiv
     });
   }
 
-  _stijlSpec: Option<ss.AwvV0StyleSpec> = none; // heeft voorrang op style
-  _clusterDistance: Option<number> = none;
+  _stijlSpec: option.Option<ss.AwvV0StyleSpec> = option.none; // heeft voorrang op style
+  _clusterDistance: option.Option<number> = option.none;
   _clusterMinSize = 15;
   _clusterSizeFactor = 0;
   _clusterTextColor = "black";
@@ -52,7 +52,7 @@ export abstract class ClassicVectorLaagLikeDirective extends ClassicLaagDirectiv
   _zichtbaar = true;
   _selecteerbaar = true;
   _hover = false;
-  _offsetveld: Option<string> = none;
+  _offsetveld: option.Option<string> = option.none;
   _minZoom = 7;
   _maxZoom = 15;
 
@@ -68,27 +68,27 @@ export abstract class ClassicVectorLaagLikeDirective extends ClassicLaagDirectiv
 
   @Input()
   set clusterMinSize(param: number) {
-    this._clusterMinSize = fromNullable(param).getOrElse(this._clusterMinSize);
+    this._clusterMinSize = option.fromNullable(param).getOrElse(this._clusterMinSize);
   }
 
   @Input()
   set clusterSizeFactor(param: number) {
-    this._clusterSizeFactor = fromNullable(param).getOrElse(this._clusterSizeFactor);
+    this._clusterSizeFactor = option.fromNullable(param).getOrElse(this._clusterSizeFactor);
   }
 
   @Input()
   set clusterTextColor(param: string) {
-    this._clusterTextColor = fromNullable(param).getOrElse(this._clusterTextColor);
+    this._clusterTextColor = option.fromNullable(param).getOrElse(this._clusterTextColor);
   }
 
   @Input()
   set clusterCircleColor(param: string) {
-    this._clusterCircleColor = fromNullable(param).getOrElse(this._clusterCircleColor);
+    this._clusterCircleColor = option.fromNullable(param).getOrElse(this._clusterCircleColor);
   }
 
   @Input()
   set clusterCircleStrokeColor(param: string) {
-    this._clusterCircleStrokeColor = fromNullable(param).getOrElse(this._clusterCircleStrokeColor);
+    this._clusterCircleStrokeColor = option.fromNullable(param).getOrElse(this._clusterCircleStrokeColor);
   }
 
   @Input()
@@ -119,18 +119,19 @@ export abstract class ClassicVectorLaagLikeDirective extends ClassicLaagDirectiv
     return "Voorgrond.Hoog";
   }
 
-  protected getMaybeStyleSelectorBron(): Option<ss.AwvV0StyleSpec> {
+  protected getMaybeStyleSelectorBron(): option.Option<ss.AwvV0StyleSpec> {
     return this._stijlSpec;
   }
 
-  protected getMaybeStyleSelector(): Option<ss.StyleSelector> {
-    return fromNullable(this.clusterStyleFunction)
+  protected getMaybeStyleSelector(): option.Option<ss.StyleSelector> {
+    return option
+      .fromNullable(this.clusterStyleFunction)
       .map(ss.DynamicStyle)
       .orElse(() => {
         const maybeUnclusteredStyleSelector = this._stijlSpec
           .chain(spec => fromValidation(ss.validateAwvV0StyleSpec(spec)))
-          .orElse(() => fromNullable(this.style))
-          .orElse(() => fromNullable(this.styleFunction))
+          .orElse(() => option.fromNullable(this.style))
+          .orElse(() => option.fromNullable(this.styleFunction))
           .chain(ss.asStyleSelector);
 
         const maybeClusterStyleSelector = this._clusterDistance.chain(_ =>
@@ -162,7 +163,8 @@ export abstract class ClassicVectorLaagLikeDirective extends ClassicLaagDirectiv
 
   clusterStyle(defaultStyleSelector: ss.StyleSelector): ol.style.StyleFunction {
     return (feature, resolution) => {
-      return fromNullable(feature.get("features"))
+      return option
+        .fromNullable(feature.get("features"))
         .filter(arrays.isArray)
         .filter(arrays.isNonEmpty)
         .map(features => {
@@ -202,7 +204,12 @@ export abstract class ClassicVectorLaagLikeDirective extends ClassicLaagDirectiv
 
     forEach(this.getMaybeStyleSelector(), styleselector => {
       this.dispatch(
-        prt.ZetStijlVoorLaagCmd(this._titel, styleselector, fromNullable(this.selectieStyle).chain(ss.asStyleSelector), logOnlyWrapper)
+        prt.ZetStijlVoorLaagCmd(
+          this._titel,
+          styleselector,
+          option.fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
+          logOnlyWrapper
+        )
       );
     });
   }

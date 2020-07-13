@@ -1,9 +1,5 @@
-import * as array from "fp-ts/lib/Array";
-import * as eq from "fp-ts/lib/Eq";
-import { fieldNumber } from "fp-ts/lib/Field";
-import { sum } from "fp-ts/lib/Foldable2v";
+import { array, eq, field, foldable, option } from "fp-ts";
 import { constant, Function1, identity } from "fp-ts/lib/function";
-import { none, option, Option, some } from "fp-ts/lib/Option";
 
 import * as ol from "./openlayers-compat";
 
@@ -20,9 +16,10 @@ export interface GeometryMapper<T> {
   readonly geometry?: (_: ol.geom.Geometry) => T;
 }
 
-export function matchGeometryType<T>(geometry: ol.geom.Geometry, mapper: GeometryMapper<T>): Option<T> {
-  const tryFallback = () => (mapper.geometry ? some(mapper.geometry(geometry)) : none);
-  const applyIfDefined: <G extends ol.geom.Geometry>(f?: Function1<G, T>) => Option<T> = f => (f ? some(f(geometry as any)) : none);
+export function matchGeometryType<T>(geometry: ol.geom.Geometry, mapper: GeometryMapper<T>): option.Option<T> {
+  const tryFallback = () => (mapper.geometry ? option.some(mapper.geometry(geometry)) : option.none);
+  const applyIfDefined: <G extends ol.geom.Geometry>(f?: Function1<G, T>) => option.Option<T> = f =>
+    f ? option.some(f(geometry as any)) : option.none;
 
   switch (geometry.getType()) {
     case "Point":
@@ -44,22 +41,22 @@ export function matchGeometryType<T>(geometry: ol.geom.Geometry, mapper: Geometr
     case "Circle":
       return applyIfDefined<ol.geom.Circle>(mapper.circle).orElse(tryFallback);
   }
-  return none;
+  return option.none;
 }
 
-export function toLineString(geometry: ol.geom.Geometry): Option<ol.geom.LineString> {
+export function toLineString(geometry: ol.geom.Geometry): option.Option<ol.geom.LineString> {
   return matchGeometryType(geometry, {
-    lineString: line => some(line),
-    multiLineString: line => some(new ol.geom.LineString(array.flatten(line.getCoordinates() as ol.Coordinate[][]))),
-    polygon: poly => some(new ol.geom.LineString(array.flatten(poly.getCoordinates() as ol.Coordinate[][]))),
+    lineString: line => option.some(line),
+    multiLineString: line => option.some(new ol.geom.LineString(array.flatten(line.getCoordinates() as ol.Coordinate[][]))),
+    polygon: poly => option.some(new ol.geom.LineString(array.flatten(poly.getCoordinates() as ol.Coordinate[][]))),
     geometryCollection: collection =>
       array.array
-        .traverse(option)(collection.getGeometries(), toLineString)
+        .traverse(option.option)(collection.getGeometries(), toLineString)
         .map(lines => new ol.geom.LineString(array.flatten(lines.map(line => line.getCoordinates() as ol.Coordinate[]))))
   }).chain(identity);
 }
 
-const numberArraySum: Function1<number[], number> = sum(fieldNumber, array.array);
+const numberArraySum: Function1<number[], number> = foldable.sum(array.array, field.fieldNumber);
 
 export function geometryLength(geometry: ol.geom.Geometry): number {
   return matchGeometryType(geometry, {

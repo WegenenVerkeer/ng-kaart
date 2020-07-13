@@ -1,5 +1,5 @@
+import { option } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
-import { none, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { delay } from "rxjs/operators";
 
@@ -92,12 +92,12 @@ export class DummyZoeker implements Zoeker {
           partialMatch: Math.random() < 0.25,
           featureIdSuffix: index.toString(),
           omschrijving: `resultaat_${input.value}`,
-          extraOmschrijving: some(`${this.naam()}_${index}`),
+          extraOmschrijving: option.some(`${this.naam()}_${index}`),
           bron: this.naam(),
           zoeker: this.naam(),
-          kaartInfo: some(randomResultaat(this.colorCode)),
+          kaartInfo: option.some(randomResultaat(this.colorCode)),
           icoon: { type: "font" as "font", name: "Du" },
-          preferredPointZoomLevel: some(4 + Math.random() * 5)
+          preferredPointZoomLevel: option.some(4 + Math.random() * 5)
         });
         const resultaten = rangeArray(numResults).map(resultaat);
         return rx.of(new ZoekAntwoord(this.naam(), "Volledig", [], resultaten));
@@ -114,12 +114,12 @@ export class DummyZoeker implements Zoeker {
           partialMatch: Math.random() > 0.2,
           featureIdSuffix: index,
           omschrijving: `${input.value} (${this.naam()}_${index})`,
-          extraOmschrijving: none,
+          extraOmschrijving: option.none,
           bron: "bron",
           zoeker: this.naam(),
-          kaartInfo: some(randomResultaat(this.colorCode)),
+          kaartInfo: option.some(randomResultaat(this.colorCode)),
           icoon: { type: "font" as "font", name: "Du" },
-          preferredPointZoomLevel: some(4 + Math.random() * 5),
+          preferredPointZoomLevel: option.some(4 + Math.random() * 5),
           zoektype: "Suggesties" as Zoektype
         });
         const resultaten = rangeArray(numResults).map(resultaat);

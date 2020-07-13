@@ -1,9 +1,7 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, Component, NgZone } from "@angular/core";
-import * as array from "fp-ts/lib/Array";
-import { and, not } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { debounceTime, map, withLatestFrom } from "rxjs/operators";
+import { debounceTime, map } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";

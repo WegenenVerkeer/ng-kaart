@@ -1,4 +1,4 @@
-import { Option } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 import { filter, map } from "rxjs/operators";
 
 import { toOlFeature } from "../util/feature";
@@ -15,7 +15,7 @@ export function wfsSource(
   typenames: string,
   baseUrl: string,
   geomField: string,
-  cqlFilter: Option<string>,
+  cqlFilter: option.Option<string>,
   cors: boolean
 ): ol.source.Vector {
   const maybeEncodedFilter = cqlFilter.map(f => ` AND (${f})`).map(encodeURIComponent);

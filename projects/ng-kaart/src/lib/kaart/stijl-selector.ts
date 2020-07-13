@@ -1,5 +1,5 @@
+import { option } from "fp-ts";
 import { Function1, Function4, identity, pipe } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
 import { Iso } from "monocle-ts";
 
 import { offsetStyleFunction } from "../stijl/offset-stijl-function";
@@ -79,16 +79,16 @@ export function matchStyleSelector<A>(
 
 export const toStylish: (_: StyleSelector) => Stylish = matchStyleSelector<Stylish>(s => s.style, s => s.styleFunction, s => s.styles);
 
-export function asStyleSelector(stp: Stylish): Option<StyleSelector> {
+export function asStyleSelector(stp: Stylish): option.Option<StyleSelector> {
   // TODO kies een of ander unieke property van ol.style.Style
   if (stp instanceof ol.style.Style) {
-    return some(StaticStyle(stp));
+    return option.some(StaticStyle(stp));
   } else if (typeof stp === "function") {
-    return some(DynamicStyle(stp as ol.style.StyleFunction));
+    return option.some(DynamicStyle(stp as ol.style.StyleFunction));
   } else if (Array.isArray(stp)) {
-    return some(Styles(stp as ol.style.Style[]));
+    return option.some(Styles(stp as ol.style.Style[]));
   } else {
-    return none;
+    return option.none;
   }
 }
 
@@ -114,7 +114,7 @@ export function Styles(styles: Array<ol.style.Style>): StyleSelector {
 }
 
 interface StijlSelectorOpNaam {
-  [laagnaam: string]: Option<StyleSelector>;
+  [laagnaam: string]: option.Option<StyleSelector>;
 }
 
 // Spijtig genoeg kan die niet in het model zelf zitten vermits de stijl functie in de interaction.Select control wordt
@@ -134,7 +134,7 @@ export function initStyleSelectorsInMap(map: ol.Map): void {
   map.set(HOVER_STIJL_OP_LAAG, {});
 }
 
-export function setFeatureStyleSelector(map: ol.Map, laagnaam: string, stijl: Option<StyleSelector>): void {
+export function setFeatureStyleSelector(map: ol.Map, laagnaam: string, stijl: option.Option<StyleSelector>): void {
   featureStijlSelectorOpNaam(map)[laagnaam] = stijl;
 }
 
@@ -142,11 +142,11 @@ export function clearFeatureStyleSelector(map: ol.Map, laagnaam: string): void {
   delete featureStijlSelectorOpNaam(map)[laagnaam];
 }
 
-export function getFeatureStyleSelector(map: ol.Map, laagnaam: string): Option<StyleSelector> {
-  return featureStijlSelectorOpNaam(map)[laagnaam] || none;
+export function getFeatureStyleSelector(map: ol.Map, laagnaam: string): option.Option<StyleSelector> {
+  return featureStijlSelectorOpNaam(map)[laagnaam] || option.none;
 }
 
-export function setSelectionStyleSelector(map: ol.Map, laagnaam: string, stijl: Option<StyleSelector>): void {
+export function setSelectionStyleSelector(map: ol.Map, laagnaam: string, stijl: option.Option<StyleSelector>): void {
   selectieStijlSelectorOpNaam(map)[laagnaam] = stijl;
 }
 
@@ -154,16 +154,16 @@ export function deleteSelectionStyleSelector(map: ol.Map, laagnaam: string): voi
   delete selectieStijlSelectorOpNaam(map)[laagnaam];
 }
 
-export function getSelectionStyleSelector(map: ol.Map, laagnaam: string): Option<StyleSelector> {
-  return selectieStijlSelectorOpNaam(map)[laagnaam] || none;
+export function getSelectionStyleSelector(map: ol.Map, laagnaam: string): option.Option<StyleSelector> {
+  return selectieStijlSelectorOpNaam(map)[laagnaam] || option.none;
 }
 
-export function setHoverStyleSelector(map: ol.Map, laagnaam: string, stijl: Option<StyleSelector>): void {
+export function setHoverStyleSelector(map: ol.Map, laagnaam: string, stijl: option.Option<StyleSelector>): void {
   hoverStijlSelectorOpNaam(map)[laagnaam] = stijl;
 }
 
-export function getHoverStyleSelector(map: ol.Map, laagnaam: string): Option<StyleSelector> {
-  return hoverStijlSelectorOpNaam(map)[laagnaam] || none;
+export function getHoverStyleSelector(map: ol.Map, laagnaam: string): option.Option<StyleSelector> {
+  return hoverStijlSelectorOpNaam(map)[laagnaam] || option.none;
 }
 
 export const offsetStyleSelector: Function4<string, string, number, boolean, Function1<StyleSelector, StyleSelector>> = (

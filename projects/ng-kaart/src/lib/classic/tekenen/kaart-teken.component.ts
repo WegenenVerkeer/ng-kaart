@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Injector, Input, OnInit, Output } from "@angular/core";
-import { none, Option } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 import * as rx from "rxjs";
 import { identity, merge } from "rxjs";
 import { distinctUntilChanged, map, switchMap, takeUntil } from "rxjs/operators";
@@ -93,7 +93,7 @@ export class KaartTekenComponent extends ClassicBaseDirective implements OnInit 
   private meerdereGeometrieen = false;
 
   @Input()
-  private geometry: Option<ol.geom.Geometry> = none;
+  private geometry: option.Option<ol.geom.Geometry> = option.none;
 
   @Output()
   getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();

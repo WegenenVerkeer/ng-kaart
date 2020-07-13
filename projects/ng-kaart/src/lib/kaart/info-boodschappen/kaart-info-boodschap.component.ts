@@ -1,6 +1,6 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit } from "@angular/core";
-import { fromNullable } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 import scrollIntoView from "scroll-into-view-if-needed";
 
 import { forEach } from "../../util";
@@ -56,7 +56,7 @@ export class KaartInfoBoodschapComponent extends KaartChildDirective implements 
   scrollIntoView() {
     setTimeout(
       () =>
-        forEach(fromNullable(document.getElementById("kaart-info-boodschap-" + this.boodschap.id)), el =>
+        forEach(option.fromNullable(document.getElementById("kaart-info-boodschap-" + this.boodschap.id)), el =>
           scrollIntoView(el, {
             behavior: "smooth",
             scrollMode: "if-needed"

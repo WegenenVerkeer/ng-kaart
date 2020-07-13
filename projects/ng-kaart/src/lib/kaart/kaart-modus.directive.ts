@@ -1,6 +1,6 @@
 import { Directive, NgZone } from "@angular/core";
+import { option } from "fp-ts";
 import { identity } from "fp-ts/lib/function";
-import { none, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, map, mapTo, sample, share, shareReplay, skipUntil, tap } from "rxjs/operators";
 
@@ -83,10 +83,10 @@ export abstract class KaartModusDirective extends KaartChildDirective {
   }
 
   private publiceerActivatie() {
-    this.dispatch(prt.ZetActieveModusCmd(some(this.modus())));
+    this.dispatch(prt.ZetActieveModusCmd(option.some(this.modus())));
   }
 
   private publiceerDeactivatie() {
-    this.dispatch(prt.ZetActieveModusCmd(none));
+    this.dispatch(prt.ZetActieveModusCmd(option.none));
   }
 }

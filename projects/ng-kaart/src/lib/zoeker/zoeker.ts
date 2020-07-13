@@ -1,8 +1,5 @@
-import * as array from "fp-ts/lib/Array";
+import { array, option, ordering, strmap } from "fp-ts";
 import { Function1, Function2, Function3 } from "fp-ts/lib/function";
-import { fromPredicate, Option } from "fp-ts/lib/Option";
-import { Ordering, sign } from "fp-ts/lib/Ordering";
-import { insert, remove, StrMap } from "fp-ts/lib/StrMap";
 import * as rx from "rxjs";
 
 import * as ol from "../util/openlayers-compat";
@@ -51,16 +48,16 @@ export interface Zoeker {
   zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekAntwoord>;
 }
 
-export type PrioriteitenOpZoekertype = StrMap<number>;
+export type PrioriteitenOpZoekertype = strmap.StrMap<number>;
 
 // Vreemde manier van werken, maar constructor heeft een type nodig
-export const emptyPrioriteitenOpZoekertype: PrioriteitenOpZoekertype = remove("dummy", new StrMap({ dummy: 0 }));
+export const emptyPrioriteitenOpZoekertype: PrioriteitenOpZoekertype = strmap.remove("dummy", new strmap.StrMap({ dummy: 0 }));
 
-const maybeInsertPrioriteit: Function3<Option<number>, Zoektype, PrioriteitenOpZoekertype, PrioriteitenOpZoekertype> = (
+const maybeInsertPrioriteit: Function3<option.Option<number>, Zoektype, PrioriteitenOpZoekertype, PrioriteitenOpZoekertype> = (
   maybePrio,
   zoektype,
   prioriteiten
-) => maybePrio.map(prio => insert(zoektype, prio, prioriteiten)).getOrElse(prioriteiten);
+) => maybePrio.map(prio => strmap.insert(zoektype, prio, prioriteiten)).getOrElse(prioriteiten);
 
 export interface Weergaveopties {
   readonly prioriteiten: PrioriteitenOpZoekertype;
@@ -84,10 +81,10 @@ export interface ZoekResultaat {
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
-  readonly kaartInfo: Option<ZoekKaartResultaat>;
+  readonly kaartInfo: option.Option<ZoekKaartResultaat>;
   readonly icoon: IconDescription;
-  readonly preferredPointZoomLevel: Option<number>;
-  readonly extraOmschrijving: Option<string>;
+  readonly preferredPointZoomLevel: option.Option<number>;
+  readonly extraOmschrijving: option.Option<string>;
 }
 
 export class ZoekAntwoord {
@@ -116,7 +113,7 @@ export class ZoekAntwoord {
 
 export const nietOndersteund: Function2<string, Zoektype, ZoekAntwoord> = (naam, zoektype) => new ZoekAntwoord(naam, zoektype);
 
-const nonNegative = fromPredicate((n: number) => n >= 0);
+const nonNegative = option.fromPredicate((n: number) => n >= 0);
 
 export const zoekerMetPrioriteiten: (
   zoeker: Zoeker,
@@ -135,7 +132,7 @@ export const zoekerMetPrioriteiten: (
   toonOppervlak: toonOppervlak
 });
 
-export const zoekerMetNaam: Function1<string, Function1<ZoekerMetWeergaveopties[], Option<Zoeker>>> = naam => zmps =>
+export const zoekerMetNaam: Function1<string, Function1<ZoekerMetWeergaveopties[], option.Option<Zoeker>>> = naam => zmps =>
   array.findFirst(zmps, zmp => zmp.zoeker.naam() === naam).map(zmp => zmp.zoeker);
 
 // De resultaten worden getoond volgens een bepaalde hiërarchie
@@ -146,27 +143,27 @@ export const zoekerMetNaam: Function1<string, Function1<ZoekerMetWeergaveopties[
 export function zoekResultaatOrdering(
   input: string,
   prioriteitenGetter: Function1<ZoekResultaat, number>
-): Function2<ZoekResultaat, ZoekResultaat, Ordering> {
+): Function2<ZoekResultaat, ZoekResultaat, ordering.Ordering> {
   return (a, b) => {
     const prioA = prioriteitenGetter(a);
     const prioB = prioriteitenGetter(b);
     if (prioA === prioB) {
       return compareOpInhoud(a, b, input);
     } else {
-      return sign(prioA - prioB);
+      return ordering.sign(prioA - prioB);
     }
   };
 }
 
 //  - Dan wordt er gekeken naar de resultaten in de tekst (als de 3 tekens matchen met de 3 eerste tekens van het resultaat)
-function compareOpInhoud(a: ZoekResultaat, b: ZoekResultaat, input: string): Ordering {
+function compareOpInhoud(a: ZoekResultaat, b: ZoekResultaat, input: string): ordering.Ordering {
   const aMatchesInput = matchesInput(a, input);
   const bMatchesInput = matchesInput(b, input);
 
   if (aMatchesInput) {
     if (bMatchesInput) {
       // Zowel a als b matchen met de input, doe op volgend niveau.
-      return sign(a.omschrijving.localeCompare(b.omschrijving));
+      return ordering.sign(a.omschrijving.localeCompare(b.omschrijving));
     } else {
       return -1;
     }
@@ -174,7 +171,7 @@ function compareOpInhoud(a: ZoekResultaat, b: ZoekResultaat, input: string): Ord
     return 1;
   } else {
     // Noch a noch b matchen met de input, vergelijk heel het resultaat.
-    return sign(a.omschrijving.localeCompare(b.omschrijving));
+    return ordering.sign(a.omschrijving.localeCompare(b.omschrijving));
   }
 }
 

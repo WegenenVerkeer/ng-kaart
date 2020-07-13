@@ -1,6 +1,5 @@
+import { eq, option } from "fp-ts";
 import { constant, Function1, Lazy } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
-import { Setoid, setoidString } from "fp-ts/lib/Setoid";
 
 export type Progress<A> = Requested | TimedOut | Received<A>;
 
@@ -37,10 +36,10 @@ export const proceed: <A>(pr1: Progress<A>, pr2: Progress<A>) => Progress<A> = (
     () => pr1 // Received is een finale toestand
   )(pr1);
 
-export const toOption: <A>(_: Progress<A>) => Option<A> = withProgress(
-  () => none, //
-  () => none,
-  a => some(a)
+export const toOption: <A>(_: Progress<A>) => option.Option<A> = withProgress(
+  () => option.none, //
+  () => option.none,
+  a => option.some(a)
 );
 
 export const toProgressStatus: <A>(_: Progress<A>) => ProgressStatus = withProgress(
@@ -64,4 +63,4 @@ export const combineStatus: (ps1: ProgressStatus, ps2: ProgressStatus) => Progre
   }
 };
 
-export const setoidProgressStatus: Setoid<ProgressStatus> = setoidString;
+export const setoidProgressStatus: eq.Eq<ProgressStatus> = eq.eqString;

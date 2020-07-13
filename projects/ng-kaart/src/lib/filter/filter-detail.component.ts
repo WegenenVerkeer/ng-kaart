@@ -1,7 +1,6 @@
 import { Component, Input, NgZone } from "@angular/core";
-import * as array from "fp-ts/lib/Array";
+import { array, option } from "fp-ts";
 import { Function1, Function2 } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { filter, map, share, shareReplay, switchMap } from "rxjs/operators";
 
@@ -68,7 +67,7 @@ export class FilterDetailComponent extends KaartChildDirective {
       share()
     );
 
-    const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], Option<ke.ToegevoegdeVectorLaag>> = (titel, lgn) =>
+    const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], option.Option<ke.ToegevoegdeVectorLaag>> = (titel, lgn) =>
       array.findFirst(lgn, lg => lg.titel === titel).filter(ke.isToegevoegdeVectorLaag);
 
     const laagUpdates$ = laag$.pipe(

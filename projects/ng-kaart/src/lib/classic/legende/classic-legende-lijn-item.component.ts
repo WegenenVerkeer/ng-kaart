@@ -1,5 +1,5 @@
 import { Component, Injector, Input } from "@angular/core";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import { LegendeItem } from "../../kaart/kaart-legende";
 import * as val from "../webcomponent-support/params";
@@ -17,7 +17,7 @@ import { ClassicLegendeItemDirective } from "./classic-legende-item.directive";
   template: "<ng-content></ng-content>"
 })
 export class ClassicLegendeLijnItemComponent extends ClassicLegendeItemDirective {
-  _achtergrondKleur: Option<string> = none;
+  _achtergrondKleur: option.Option<string> = option.none;
   _kleur: string;
 
   /**

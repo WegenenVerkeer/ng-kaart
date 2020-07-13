@@ -1,5 +1,4 @@
 import { option } from "fp-ts";
-import { Option } from "fp-ts/lib/Option";
 
 import * as maps from "../util/maps";
 
@@ -9,7 +8,7 @@ export type OptiesOpUiElement = Map<string, object>;
 export namespace OptiesOpUiElement {
   export const create = (): OptiesOpUiElement => new Map();
 
-  export const getOption = <A extends object>(uiSelector: string) => (optiesMap: OptiesOpUiElement): Option<A> =>
+  export const getOption = <A extends object>(uiSelector: string) => (optiesMap: OptiesOpUiElement): option.Option<A> =>
     option.fromNullable(optiesMap.get(uiSelector) as A);
 
   export const set = <A extends object>(a: A) => (uiSelector: string) => (optiesMap: OptiesOpUiElement): OptiesOpUiElement =>

@@ -1,4 +1,4 @@
-import { fromNullable } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import * as ol from "../util/openlayers-compat";
 
@@ -48,7 +48,7 @@ export class TileLoader {
 
   public abort(): void {
     this.inTeLadenImages.map(htmlImage => {
-      fromNullable(htmlImage).map(img => {
+      option.fromNullable(htmlImage).map(img => {
         img.src = "";
       });
     });

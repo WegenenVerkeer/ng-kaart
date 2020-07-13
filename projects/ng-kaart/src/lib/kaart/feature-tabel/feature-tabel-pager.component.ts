@@ -3,8 +3,8 @@ import { option } from "fp-ts";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import { map, mapTo, share, switchMap, tap } from "rxjs/operators";
-import { isNumber } from "util";
 
+import { isNumber } from "../../util/number";
 import { KaartChildDirective } from "../kaart-child.directive";
 import { KaartComponent } from "../kaart.component";
 

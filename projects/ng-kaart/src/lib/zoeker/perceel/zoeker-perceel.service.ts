@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 import * as rx from "rxjs";
 import { map, shareReplay } from "rxjs/operators";
 
@@ -77,9 +77,9 @@ export class PerceelZoekResultaat implements ZoekResultaat {
   readonly featureIdSuffix: string;
   readonly omschrijving: string;
   readonly bron: string = "Perceel";
-  readonly kaartInfo: Option<ZoekKaartResultaat>;
-  readonly preferredPointZoomLevel = none;
-  readonly extraOmschrijving: Option<string> = none;
+  readonly kaartInfo: option.Option<ZoekKaartResultaat>;
+  readonly preferredPointZoomLevel = option.none;
+  readonly extraOmschrijving: option.Option<string> = option.none;
 
   constructor(
     details: PerceelDetails,
@@ -92,7 +92,7 @@ export class PerceelZoekResultaat implements ZoekResultaat {
     this.featureIdSuffix = `${index + 1}`;
     try {
       const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(details.shape);
-      this.kaartInfo = some({
+      this.kaartInfo = option.some({
         geometry: geometry,
         extent: geometry.getExtent(),
         style: style,

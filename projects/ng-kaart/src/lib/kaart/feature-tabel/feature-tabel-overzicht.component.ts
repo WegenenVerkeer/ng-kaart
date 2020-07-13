@@ -1,6 +1,6 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
-import { array, setoid } from "fp-ts";
+import { array, eq } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { delay, distinctUntilChanged, map, observeOn, scan, share, shareReplay, switchMap, take, takeUntil, tap } from "rxjs/operators";
@@ -141,7 +141,7 @@ export class FeatureTabelOverzichtComponent extends KaartChildDirective {
     // verlies van DOM + state betekent.
     const laagTitles$ = this.tableModel$.pipe(
       map(model => model.laagData.map(LaagModel.titelLens.get)),
-      distinctUntilChanged(array.getSetoid(setoid.setoidString).equals)
+      distinctUntilChanged(array.getSetoid(eq.eqString).equals)
     );
 
     const tabelVisible$ = this.modelChanges.tabelActiviteit$.pipe(

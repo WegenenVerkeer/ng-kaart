@@ -1,6 +1,5 @@
-import { Either } from "fp-ts/lib/Either";
+import { either, option } from "fp-ts";
 import { Function1, Function2 } from "fp-ts/lib/function";
-import * as option from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 
 import * as ol from "../../util/openlayers-compat";
@@ -55,9 +54,9 @@ export interface Adres {
 
 export type BevragenErrorReason = "Unreachable" | "ServiceError" | "NoData";
 
-export type AdresResult = Either<BevragenErrorReason, Adres>;
-export type WegLocatiesResult = Either<BevragenErrorReason, WegLocaties>;
-export type LaagLocationInfoResult = Either<BevragenErrorReason, LaagLocationInfo>;
+export type AdresResult = either.Either<BevragenErrorReason, Adres>;
+export type WegLocatiesResult = either.Either<BevragenErrorReason, WegLocaties>;
+export type LaagLocationInfoResult = either.Either<BevragenErrorReason, LaagLocationInfo>;
 
 export interface KaartLocaties {
   readonly timestamp: number;
@@ -67,7 +66,7 @@ export interface KaartLocaties {
   readonly lagenLocatieInfo: Map<string, Progress<LaagLocationInfoResult>>;
 }
 
-export const progressFailure: <A>(_: Progress<Either<BevragenErrorReason, A>>) => BevragenErrorReason | undefined = p =>
+export const progressFailure: <A>(_: Progress<either.Either<BevragenErrorReason, A>>) => BevragenErrorReason | undefined = p =>
   progress
     .toOption(p)
     .chain(e => option.fromEither(e.swap()))

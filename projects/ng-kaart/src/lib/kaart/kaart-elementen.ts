@@ -1,9 +1,5 @@
+import { eq, option, ord } from "fp-ts";
 import { Function1, Function2, Refinement } from "fp-ts/lib/function";
-import { fromPredicate, fromRefinement, Option } from "fp-ts/lib/Option";
-import * as ord from "fp-ts/lib/Ord";
-import { Ord } from "fp-ts/lib/Ord";
-import * as setoid from "fp-ts/lib/Setoid";
-import { Setoid } from "fp-ts/lib/Setoid";
 import { Fold, Getter, Iso, Lens, Optional, Prism } from "monocle-ts";
 import * as rx from "rxjs";
 import { debounceTime, mapTo } from "rxjs/operators";
@@ -46,10 +42,10 @@ export interface WmsLaag {
   readonly naam: string;
   readonly backgroundUrl: string;
   readonly urls: Array<string>;
-  readonly versie: Option<string>;
-  readonly cqlFilter: Option<string>;
-  readonly tileSize: Option<number>;
-  readonly format: Option<string>;
+  readonly versie: option.Option<string>;
+  readonly cqlFilter: option.Option<string>;
+  readonly tileSize: option.Option<number>;
+  readonly format: option.Option<string>;
   readonly minZoom: number;
   readonly maxZoom: number;
   readonly verwijderd: boolean;
@@ -65,10 +61,10 @@ export interface WmtsCapaConfig {
 export interface WmtsManualConfig {
   readonly type: "Manual";
   readonly urls: Array<string>;
-  readonly style: Option<string>;
+  readonly style: option.Option<string>;
   readonly matrixIds: string[];
-  readonly origin: Option<ol.Coordinate>;
-  readonly extent: Option<ol.Extent>;
+  readonly origin: option.Option<ol.Coordinate>;
+  readonly extent: option.Option<ol.Extent>;
 }
 
 export interface WmtsLaag {
@@ -76,8 +72,8 @@ export interface WmtsLaag {
   readonly titel: string;
   readonly naam: string;
   readonly backgroundUrl: string;
-  readonly versie: Option<string>;
-  readonly format: Option<string>;
+  readonly versie: option.Option<string>;
+  readonly format: option.Option<string>;
   readonly matrixSet: string;
   readonly config: WmtsCapaConfig | WmtsManualConfig;
   readonly minZoom: number;
@@ -105,21 +101,21 @@ export interface VeldInfo {
 export interface VectorLaag {
   readonly type: VectorType;
   readonly source: ol.source.Vector;
-  readonly clusterDistance: Option<number>;
+  readonly clusterDistance: option.Option<number>;
   readonly titel: string;
-  readonly styleSelector: Option<StyleSelector>;
-  readonly styleSelectorBron: Option<AwvV0StyleSpec>; // De JSON specificatie die aan de basis ligt van de StyleSelector
-  readonly selectieStyleSelector: Option<StyleSelector>;
-  readonly hoverStyleSelector: Option<StyleSelector>;
+  readonly styleSelector: option.Option<StyleSelector>;
+  readonly styleSelectorBron: option.Option<AwvV0StyleSpec>; // De JSON specificatie die aan de basis ligt van de StyleSelector
+  readonly selectieStyleSelector: option.Option<StyleSelector>;
+  readonly hoverStyleSelector: option.Option<StyleSelector>;
   readonly selecteerbaar: boolean;
   readonly hover: boolean;
   readonly minZoom: number;
   readonly maxZoom: number;
   readonly velden: Map<string, VeldInfo>;
-  readonly offsetveld: Option<string>;
+  readonly offsetveld: option.Option<string>;
   readonly verwijderd: boolean;
   readonly rijrichtingIsDigitalisatieZin: boolean;
-  readonly filter: Option<string>;
+  readonly filter: option.Option<string>;
 }
 
 export interface BlancoLaag {
@@ -133,9 +129,9 @@ export interface BlancoLaag {
 
 export interface TekenSettings {
   readonly geometryType: ol.geom.GeometryType;
-  readonly geometry: Option<ol.geom.Geometry>;
-  readonly laagStyle: Option<StyleSelector>;
-  readonly drawStyle: Option<StyleSelector>;
+  readonly geometry: option.Option<ol.geom.Geometry>;
+  readonly laagStyle: option.Option<StyleSelector>;
+  readonly drawStyle: option.Option<StyleSelector>;
   readonly meerdereGeometrieen: boolean;
 }
 
@@ -173,20 +169,20 @@ export interface ToegevoegdeLaag {
   readonly positieInGroep: number;
   readonly magGetoondWorden: boolean;
   readonly transparantie: Transparantie;
-  readonly legende: Option<Legende>;
-  readonly stijlInLagenKiezer: Option<string>; // optionele naam van een CSS klasse om lijn in lagenkiezer individueel te stijlen
+  readonly legende: option.Option<Legende>;
+  readonly stijlInLagenKiezer: option.Option<string>; // optionele naam van een CSS klasse om lijn in lagenkiezer individueel te stijlen
 }
 
 export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
   readonly bron: VectorLaag;
   readonly layer: ol.layer.Vector;
   readonly stijlPositie: number; // We gaan er van uit dat alle vectorlagen in dezelfde groep zitten!
-  readonly stijlSel: Option<StyleSelector>;
-  readonly stijlSelBron: Option<AwvV0StyleSpec>; // Het JSON document dat aan de basis ligt van de StyleSelector
-  readonly selectiestijlSel: Option<StyleSelector>;
-  readonly hoverstijlSel: Option<StyleSelector>;
+  readonly stijlSel: option.Option<StyleSelector>;
+  readonly stijlSelBron: option.Option<AwvV0StyleSpec>; // Het JSON document dat aan de basis ligt van de StyleSelector
+  readonly selectiestijlSel: option.Option<StyleSelector>;
+  readonly hoverstijlSel: option.Option<StyleSelector>;
   readonly filterinstellingen: Laagfilterinstellingen;
-  readonly tabelLaagInstellingen: Option<Laagtabelinstellingen>;
+  readonly tabelLaagInstellingen: option.Option<Laagtabelinstellingen>;
 }
 
 export interface OpLaagGroep<T> {
@@ -213,19 +209,21 @@ export const isVectorLaag: Refinement<Laag, VectorLaag> = (laag): laag is Vector
 // tslint:disable-next-line:max-line-length
 export const isNoSqlFsLaag: Refinement<Laag, VectorLaag> = (laag): laag is VectorLaag =>
   laag.type === VectorType && isNoSqlFsSource(laag.source);
-export const asVectorLaag: (laag: Laag) => Option<VectorLaag> = fromPredicate(isVectorLaag) as (_: Laag) => Option<VectorLaag>;
-export const asTiledWmsLaag: (laag: Laag) => Option<WmsLaag> = fromRefinement(isTiledWmsLaag);
+export const asVectorLaag: (laag: Laag) => option.Option<VectorLaag> = option.fromPredicate(isVectorLaag) as (
+  _: Laag
+) => option.Option<VectorLaag>;
+export const asTiledWmsLaag: (laag: Laag) => option.Option<WmsLaag> = option.fromRefinement(isTiledWmsLaag);
 export const isToegevoegdeVectorLaag: Refinement<ToegevoegdeLaag, ToegevoegdeVectorLaag> = (laag): laag is ToegevoegdeVectorLaag =>
   isVectorLaag(laag.bron);
-export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => Option<ToegevoegdeVectorLaag> = laag =>
-  fromPredicate<ToegevoegdeLaag>(lg => isVectorLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;
+export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => option.Option<ToegevoegdeVectorLaag> = laag =>
+  option.fromPredicate<ToegevoegdeLaag>(lg => isVectorLaag(lg.bron))(laag) as option.Option<ToegevoegdeVectorLaag>;
 export const isZichtbaar: (_: number) => (_: ToegevoegdeLaag) => boolean = currentRes => laag =>
   laag.layer.getMinResolution() <= currentRes && laag.layer.getMaxResolution() > currentRes && laag.layer.getVisible();
-export const asToegevoegdeNosqlVectorLaag: (laag: ToegevoegdeLaag) => Option<ToegevoegdeVectorLaag> = laag =>
-  fromPredicate<ToegevoegdeLaag>(lg => isNoSqlFsLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;
-export const asNosqlSource: (source: ol.source.Vector) => Option<NosqlFsSource> = fromPredicate(isNoSqlFsSource) as (
+export const asToegevoegdeNosqlVectorLaag: (laag: ToegevoegdeLaag) => option.Option<ToegevoegdeVectorLaag> = laag =>
+  option.fromPredicate<ToegevoegdeLaag>(lg => isNoSqlFsLaag(lg.bron))(laag) as option.Option<ToegevoegdeVectorLaag>;
+export const asNosqlSource: (source: ol.source.Vector) => option.Option<NosqlFsSource> = option.fromPredicate(isNoSqlFsSource) as (
   _: ol.source.Vector
-) => Option<NosqlFsSource>;
+) => option.Option<NosqlFsSource>;
 
 ///////////////
 // Constructors
@@ -233,9 +231,9 @@ export const asNosqlSource: (source: ol.source.Vector) => Option<NosqlFsSource> 
 
 export function TekenSettings(
   geometryType: ol.geom.GeometryType,
-  geometry: Option<ol.geom.Geometry>,
-  laagStyle: Option<StyleSelector>,
-  drawStyle: Option<StyleSelector>,
+  geometry: option.Option<ol.geom.Geometry>,
+  laagStyle: option.Option<StyleSelector>,
+  drawStyle: option.Option<StyleSelector>,
   meerdereGeometrieen: boolean
 ): TekenSettings {
   return {
@@ -283,7 +281,7 @@ export const stdLaagfilterinstellingen = Laagfilterinstellingen(fltr.empty(), tr
 //
 
 export namespace ToegevoegdeLaag {
-  export const setoidToegevoegdeLaagByTitel: Setoid<ToegevoegdeLaag> = setoid.contramap(tl => tl.titel, setoid.setoidString);
+  export const setoidToegevoegdeLaagByTitel: eq.Eq<ToegevoegdeLaag> = eq.contramap<string, ToegevoegdeLaag>(tl => tl.titel)(eq.eqString);
 }
 
 export namespace ToegevoegdeVectorLaag {
@@ -316,7 +314,7 @@ export namespace ToegevoegdeVectorLaag {
     .asGetter()
     .composePrism(Prism.fromRefinement(isNoSqlFsSource));
 
-  export const opTitelSetoid: Setoid<ToegevoegdeVectorLaag> = setoid.contramap(laag => laag.titel, setoid.setoidString);
+  export const opTitelSetoid: eq.Eq<ToegevoegdeVectorLaag> = eq.contramap<string, ToegevoegdeVectorLaag>(laag => laag.titel)(eq.eqString);
 
   export const featuresChanged$: Function1<ToegevoegdeVectorLaag, rx.Observable<null>> = vlg =>
     observableFromOlEvents(vlg.layer.getSource(), "addfeature", "removefeature", "clear").pipe(
@@ -326,15 +324,15 @@ export namespace ToegevoegdeVectorLaag {
 }
 
 export namespace VeldInfo {
-  export const setoidVeldOpNaam: Setoid<VeldInfo> = setoid.contramap(vi => vi.naam, setoid.setoidString);
-  export const ordVeldOpBasisVeld: Ord<VeldInfo> = ord.contramap(vi => vi.isBasisVeld, ord.ordBoolean);
+  export const setoidVeldOpNaam: eq.Eq<VeldInfo> = eq.contramap<string, VeldInfo>(vi => vi.naam)(eq.eqString);
+  export const ordVeldOpBasisVeld: ord.Ord<VeldInfo> = ord.contramap<boolean, VeldInfo>(vi => vi.isBasisVeld, ord.ordBoolean);
   export const veldnaamLens: Lens<VeldInfo, string> = Lens.fromProp<VeldInfo>()("naam");
   export const veldlabelLens: Lens<VeldInfo, string | undefined> = Lens.fromProp<VeldInfo>()("label");
   export const isBasisveldLens: Lens<VeldInfo, boolean> = Lens.fromProp<VeldInfo>()("isBasisVeld");
   // Als er geen of een leeg label is, gebruiken we de naam
   export const veldGuaranteedLabelGetter: Getter<VeldInfo, string> = new Getter(vi => vi.label || vi.naam);
 
-  export const veldInfoOpNaam: Function2<string, Map<string, VeldInfo>, Option<VeldInfo>> = (naam, veldinfos) =>
+  export const veldInfoOpNaam: Function2<string, Map<string, VeldInfo>, option.Option<VeldInfo>> = (naam, veldinfos) =>
     maps.findFirst(veldinfos, vi => vi.naam === naam);
 
   export const matchWithFallback: <A>(_: matchers.FallbackMatcher<VeldInfo, A, VeldType>) => Function1<VeldInfo, A> = m =>

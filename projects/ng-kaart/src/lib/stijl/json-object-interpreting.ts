@@ -1,8 +1,5 @@
-import * as array from "fp-ts/lib/Array";
+import { array, option, traversable, validation } from "fp-ts";
 import { identity, Refinement } from "fp-ts/lib/function";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
-import * as traversable from "fp-ts/lib/Traversable";
-import * as validation from "fp-ts/lib/Validation";
 
 import { kaartLogger } from "../kaart/log";
 import { failure, success, validationAp, validationChain, validationSemigroup } from "../util/validation";
@@ -49,8 +46,8 @@ export function field<T>(name: string, interpreter: Interpreter<T>): Interpreter
   return (json: Object) => (json.hasOwnProperty(name) ? interpreter(json[name]) : fail(`'${toString(json)}' heeft geen veld '${name}'`));
 }
 
-export function optional<T>(interpreter: Interpreter<T>): Interpreter<Option<T>> {
-  return firstOf(map<T, Option<T>>(some, interpreter), succeed(none));
+export function optional<T>(interpreter: Interpreter<T>): Interpreter<option.Option<T>> {
+  return firstOf(map<T, option.Option<T>>(option.some, interpreter), succeed(option.none));
 }
 
 export function nullable<T>(interpreter: Interpreter<T>): Interpreter<T | undefined> {
@@ -65,13 +62,14 @@ export function at<T>(nest: Array<string>, interpreter: Interpreter<T>): Interpr
   );
 }
 
-export function reqField<T>(name: string, interpreter: Interpreter<T>): Interpreter<Option<T>> {
-  return map<T, Option<T>>(some, field(name, interpreter));
+export function reqField<T>(name: string, interpreter: Interpreter<T>): Interpreter<option.Option<T>> {
+  return map<T, option.Option<T>>(option.some, field(name, interpreter));
 }
 
-export function optField<T>(name: string, interpreter: Interpreter<T>): Interpreter<Option<T>> {
+export function optField<T>(name: string, interpreter: Interpreter<T>): Interpreter<option.Option<T>> {
   // Kan ook met een fold op field, maar gezien deze methode meer gebruikt wordt en de velden doorgaans undefined zijn, is dit effciënter.
-  return (json: Object) => (json.hasOwnProperty(name) && json[name] !== undefined ? interpreter(json[name]).map(some) : ok(none));
+  return (json: Object) =>
+    json.hasOwnProperty(name) && json[name] !== undefined ? interpreter(json[name]).map(option.some) : ok(option.none);
 }
 
 export function undefField<T>(name: string, interpreter: Interpreter<T>): Interpreter<T | undefined> {
@@ -130,14 +128,14 @@ export function enu<T extends string>(...values: T[]): Interpreter<T> {
  * Selecteert de eerste interpreter die een niet-none resultaat oplevert. Indien geen enkele interpreter een niet-none resultaat oplevert,
  * is het resultaat none. Geen enkele van de interpreters mag een failure geven.
  */
-export function atMostOneOf<T>(...interpreters: Interpreter<Option<T>>[]): Interpreter<Option<T>> {
+export function atMostOneOf<T>(...interpreters: Interpreter<option.Option<T>>[]): Interpreter<option.Option<T>> {
   return (json: Object) => {
-    const validations: Validation<Array<Option<T>>> = sequence(interpreters.map(i => i(json)));
+    const validations: Validation<Array<option.Option<T>>> = sequence(interpreters.map(i => i(json)));
     const presentValidations: Validation<Array<T>> = validations.map(array.catOptions);
     return validationChain(presentValidations, values => {
       switch (values.length) {
         case 0:
-          return ok(none);
+          return ok(option.none);
         case 1:
           return ok(array.head(values));
         default:
@@ -445,7 +443,7 @@ function mergeDeep<T>(base: T, overlay: T) {
 }
 
 // Een afgeleid type van A dat alle types van de  velden omzet in Interpreters van Options van dat type
-export type InterpreterOptionalRecord<A> = { readonly [P in Extract<keyof A, string>]: Interpreter<Option<A[P]>> };
+export type InterpreterOptionalRecord<A> = { readonly [P in Extract<keyof A, string>]: Interpreter<option.Option<A[P]>> };
 
 function interpretOptionalRecord<A>(record: InterpreterOptionalRecord<A>): Interpreter<A> {
   return (json: Object) => {
@@ -454,7 +452,7 @@ function interpretOptionalRecord<A>(record: InterpreterOptionalRecord<A>): Inter
     // tslint:disable-next-line:forin
     for (const k in record) {
       // noinspection JSUnfilteredForInLoop
-      const validationOutcome: Validation<Option<A[keyof A]>> = record[k](json);
+      const validationOutcome: Validation<option.Option<A[keyof A]>> = record[k](json);
       // zet alle resultaten waarvoor de validation ok is
       validationOutcome.map(maybeValue => (result[k] = maybeValue.toUndefined())); // forEach
       // combineer alle fails, map de ok's weg (probleem is dat die allemaal een ander type hebben)
@@ -520,7 +518,7 @@ export function mapRecord<A, B>(f: (a: A) => B, record: InterpreterRecord<A>): I
 export function byTypeDiscriminator<T>(discriminatorField: string, interpretersByKind: { [k: string]: Interpreter<T> }): Interpreter<T> {
   return (json: Object) => {
     return chain(field(discriminatorField, str), (kind: string) =>
-      fromNullable(interpretersByKind[kind]).getOrElse(() => fail<T>(`Het typediscriminatieveld bevat een onbekend type '${kind}'`))
+      option.fromNullable(interpretersByKind[kind]).getOrElse(() => fail<T>(`Het typediscriminatieveld bevat een onbekend type '${kind}'`))
     )(json);
   };
 }

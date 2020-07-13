@@ -1,7 +1,7 @@
 import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
 import { FormControl } from "@angular/forms";
+import { option } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, share, shareReplay, switchMap } from "rxjs/operators";
 
@@ -39,9 +39,9 @@ export class ZoekerAlleLagenGetraptComponent extends GetraptZoekerDirective impl
   constructor(kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
     super(kaartComponent, zoekerComponent, zone);
 
-    const services$: rx.Observable<Option<AlleLagenZoekerService>> = this.modelChanges.zoekerServices$.pipe(
+    const services$: rx.Observable<option.Option<AlleLagenZoekerService>> = this.modelChanges.zoekerServices$.pipe(
       map(zoekerMetNaam("AlleLagen")),
-      map(maybeZoeker => maybeZoeker as Option<AlleLagenZoekerService>)
+      map(maybeZoeker => maybeZoeker as option.Option<AlleLagenZoekerService>)
     );
 
     this.bronnen$ = services$.pipe(
@@ -96,8 +96,8 @@ export class ZoekerAlleLagenGetraptComponent extends GetraptZoekerDirective impl
     const selectie$ = bronEnProvider$.pipe(
       switchMap(([bron, subCatProv]) =>
         subCatProv(bron).foldL(
-          () => rx.of({ type: "AlleLagen", bron: bron, categorie: none }), //
-          () => gekozenCategorie$.pipe(map(categorie => ({ type: "AlleLagen", bron: bron, categorie: some(categorie) })))
+          () => rx.of({ type: "AlleLagen", bron: bron, categorie: option.none }), //
+          () => gekozenCategorie$.pipe(map(categorie => ({ type: "AlleLagen", bron: bron, categorie: option.some(categorie) })))
         )
       )
     );

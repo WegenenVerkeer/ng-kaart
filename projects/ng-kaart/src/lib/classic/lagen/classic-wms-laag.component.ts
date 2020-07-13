@@ -1,10 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import { AfterViewInit, Component, EventEmitter, Injector, Input, OnInit, Output, ViewEncapsulation } from "@angular/core";
-import { array, option } from "fp-ts";
+import { array, eq, map as fpMap, option } from "fp-ts";
 import { Curried2, Function1, Function2, Function4, pipe } from "fp-ts/lib/function";
-import * as fpMap from "fp-ts/lib/Map";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
-import { getStructSetoid, Setoid, setoidNumber, setoidString } from "fp-ts/lib/Setoid";
 import { merge } from "rxjs";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, tap } from "rxjs/operators";
@@ -68,8 +65,8 @@ export interface ClassicLaagKlikInfoEnStatus {
   readonly laagInfoFailure?: BevragenErrorReason;
 }
 
-const flatten: Curried2<string, KaartLocaties, Option<ClassicLaagKlikInfoEnStatus>> = titel => kaartLocaties => {
-  const maybeLaagInfoResult: Option<progress.Progress<LaagLocationInfoResult>> = fpMap.lookup(setoidString)(
+const flatten: Curried2<string, KaartLocaties, option.Option<ClassicLaagKlikInfoEnStatus>> = titel => kaartLocaties => {
+  const maybeLaagInfoResult: option.Option<progress.Progress<LaagLocationInfoResult>> = fpMap.lookup(eq.eqString)(
     titel,
     kaartLocaties.lagenLocatieInfo
   );
@@ -85,9 +82,9 @@ const flatten: Curried2<string, KaartLocaties, Option<ClassicLaagKlikInfoEnStatu
   }));
 };
 
-const infoSetoid: Setoid<ClassicLaagKlikInfoEnStatus> = getStructSetoid({
-  timestamp: setoidNumber,
-  coordinaat: array.getSetoid(setoidNumber),
+const infoSetoid: eq.Eq<ClassicLaagKlikInfoEnStatus> = eq.getStructEq({
+  timestamp: eq.eqNumber,
+  coordinaat: array.getEq(eq.eqNumber),
   laagInfoStatus: progress.setoidProgressStatus
 });
 
@@ -128,14 +125,14 @@ export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnI
   laagLocaties: EventEmitter<ClassicLaagKlikInfoEnStatus> = new EventEmitter();
 
   _laagNaam: string;
-  _versie: Option<string> = none;
+  _versie: option.Option<string> = option.none;
   _format = "image/png";
   _urls: string[];
-  _cqlFilter: Option<string> = none;
+  _cqlFilter: option.Option<string> = option.none;
   _tiled: boolean;
   _tileSize = 256;
   _cacheActief = false;
-  _veldInfos: Option<ke.VeldInfo[]> = none;
+  _veldInfos: option.Option<ke.VeldInfo[]> = option.none;
   _beschikbareProjecties: string[] = [Epsg.Lambert72];
 
   @Input()
@@ -175,7 +172,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnI
 
   @Input()
   set cqlFilter(param: string) {
-    this._cqlFilter = fromNullable(param);
+    this._cqlFilter = option.fromNullable(param);
   }
 
   // metadata van de velden zoals die geparsed worden door textParser
@@ -203,17 +200,19 @@ export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnI
 
   protected voegLaagToe() {
     super.voegLaagToe();
-    forEach(fromNullable(this.queryUrlFn), queryUrlFn =>
+    forEach(option.fromNullable(this.queryUrlFn), queryUrlFn =>
       this.dispatch(
         this._veldInfos
           .chain(veldinfos =>
-            fromNullable(this.textParser).map(textParser =>
-              VoegLaagLocatieInformatieServiceToe(
-                this._titel,
-                { infoByLocation$: veldWmsFeatureInfo(this.http, queryUrlFn, textParser, veldinfos) },
-                logOnlyWrapper
+            option
+              .fromNullable(this.textParser)
+              .map(textParser =>
+                VoegLaagLocatieInformatieServiceToe(
+                  this._titel,
+                  { infoByLocation$: veldWmsFeatureInfo(this.http, queryUrlFn, textParser, veldinfos) },
+                  logOnlyWrapper
+                )
               )
-            )
           )
           .getOrElseL(() =>
             VoegLaagLocatieInformatieServiceToe(this._titel, { infoByLocation$: textWmsFeatureInfo(this.http, queryUrlFn) }, logOnlyWrapper)
@@ -231,8 +230,8 @@ export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnI
         urls: this._urls,
         versie: this._versie,
         cqlFilter: this._cqlFilter,
-        tileSize: fromNullable(this._tileSize),
-        format: fromNullable(this._format),
+        tileSize: option.fromNullable(this._tileSize),
+        format: option.fromNullable(this._format),
         backgroundUrl: this.backgroundUrl(this._urls, this._laagNaam),
         minZoom: this._minZoom,
         maxZoom: this._maxZoom,
@@ -247,8 +246,8 @@ export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnI
         urls: this._urls,
         versie: this._versie,
         cqlFilter: this._cqlFilter, // wordt niet gebruikt evenwel
-        tileSize: none,
-        format: fromNullable(this._format),
+        tileSize: option.none,
+        format: option.fromNullable(this._format),
         backgroundUrl: this.backgroundUrl(this._urls, this._laagNaam),
         minZoom: this._minZoom,
         maxZoom: this._maxZoom,
@@ -314,7 +313,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnI
           ),
           this.kaart.kaartClassicSubMsg$.pipe(
             ofType<LaatsteCacheRefreshMsg>("LaatsteCacheRefresh"),
-            filter(m => fromNullable(m.laatsteCacheRefresh[this._titel]).isSome()),
+            filter(m => option.fromNullable(m.laatsteCacheRefresh[this._titel]).isSome()),
             map(m => m.laatsteCacheRefresh[this._titel]),
             distinctUntilChanged(),
             tap(laatsteCacheRefresh => this.laatsteCacheRefresh.emit(laatsteCacheRefresh))

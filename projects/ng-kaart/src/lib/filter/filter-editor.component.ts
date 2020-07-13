@@ -1,13 +1,8 @@
 import { ChangeDetectorRef, Component, ElementRef, NgZone, ViewChild } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import { MatAutocompleteTrigger } from "@angular/material/autocomplete";
-import { apply } from "fp-ts";
-import * as array from "fp-ts/lib/Array";
+import { apply, array, option, ord } from "fp-ts";
 import { and, Endomorphism, Function1, Refinement } from "fp-ts/lib/function";
-import * as option from "fp-ts/lib/Option";
-import { fromNullable, Option } from "fp-ts/lib/Option";
-import * as ord from "fp-ts/lib/Ord";
-import { Ord } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
 import { DateTime } from "luxon";
 import * as momentImported from "moment";
@@ -28,7 +23,6 @@ import {
   tap,
   withLatestFrom
 } from "rxjs/operators";
-import { isString } from "util";
 
 import { KaartChildDirective } from "../kaart/kaart-child.directive";
 import { mobile } from "../kaart/kaart-config";
@@ -41,7 +35,7 @@ import { isNotNull, isNotNullObject } from "../util/function";
 import { isOfKind } from "../util/kinded";
 import { parseDouble, parseInteger } from "../util/number";
 import { catOptions, forEvery } from "../util/operators";
-import { nonEmptyString } from "../util/string";
+import { isString, nonEmptyString } from "../util/string";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
 import { FilterEditor, FilterEditor as fed } from "./filter-builder";
@@ -59,7 +53,7 @@ const autoCompleteSelectieVerplichtValidator: Function1<FormControl, ValidationE
   return null;
 };
 
-const ordPropertyByBaseField: Function1<Map<string, ke.VeldInfo>, Ord<Filter.Property>> = veldinfos =>
+const ordPropertyByBaseField: Function1<Map<string, ke.VeldInfo>, ord.Ord<Filter.Property>> = veldinfos =>
   ord.contramap(prop => ke.VeldInfo.veldInfoOpNaam(prop.ref, veldinfos), option.getOrd(ord.getDualOrd(ke.VeldInfo.ordVeldOpBasisVeld)));
 
 const enableDisabled = (...controls: FormControl[]): void => {
@@ -231,11 +225,11 @@ export class FilterEditorComponent extends KaartChildDirective {
       this.forceAutoCompleteControl.reset(false, { emitEvent: true });
     });
 
-    const gekozenNaam$: rx.Observable<Option<string>> = forControlValue(this.naamControl)
+    const gekozenNaam$: rx.Observable<option.Option<string>> = forControlValue(this.naamControl)
       .pipe(
         debounceTime(100), // voor de snelle typers
         distinctUntilChanged(),
-        map(x => fromNullable(x).filter(x => x !== ""))
+        map(x => option.fromNullable(x).filter(x => x !== ""))
       )
       .pipe(share());
 
@@ -250,7 +244,7 @@ export class FilterEditorComponent extends KaartChildDirective {
 
     const gekozenHoofdLetterGevoelig$: rx.Observable<boolean> = forControlValue(this.hoofdLetterGevoeligControl);
 
-    const gekozenText$: rx.Observable<Option<FilterEditor.LiteralValue>> = rx
+    const gekozenText$: rx.Observable<option.Option<FilterEditor.LiteralValue>> = rx
       .merge(
         forControlValue(this.textWaardeControl),
         forControlValue(this.dropdownWaardeControl),
@@ -260,7 +254,7 @@ export class FilterEditorComponent extends KaartChildDirective {
       )
       .pipe(
         distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
-        map(input => fromNullable(input).map(value => FilterEditor.LiteralValue("string")(sanitiseText(value.toString()))))
+        map(input => option.fromNullable(input).map(value => FilterEditor.LiteralValue("string")(sanitiseText(value.toString()))))
       );
 
     const gekozenDatum$ = forControlValue(this.datumWaardeControl).pipe(
@@ -272,7 +266,8 @@ export class FilterEditorComponent extends KaartChildDirective {
         }
       }),
       map(input =>
-        fromNullable(input)
+        option
+          .fromNullable(input)
           .filter(moment.isMoment)
           .map(m => {
             // We hebben een probleem in de zin dat de date component verbergt wat de input is en enkel de geparste date
@@ -295,16 +290,16 @@ export class FilterEditorComponent extends KaartChildDirective {
       )
     );
 
-    const gekozenInteger$: rx.Observable<Option<FilterEditor.LiteralValue>> = forControlValue(this.integerWaardeControl).pipe(
+    const gekozenInteger$: rx.Observable<option.Option<FilterEditor.LiteralValue>> = forControlValue(this.integerWaardeControl).pipe(
       distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
       map(input => parseInteger(input).map(FilterEditor.LiteralValue("integer")))
     );
-    const gekozenDouble$: rx.Observable<Option<FilterEditor.LiteralValue>> = forControlValue(this.doubleWaardeControl).pipe(
+    const gekozenDouble$: rx.Observable<option.Option<FilterEditor.LiteralValue>> = forControlValue(this.doubleWaardeControl).pipe(
       distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
       map(input => parseDouble(input).map(FilterEditor.LiteralValue("double")))
     );
 
-    const range$: rx.Observable<Option<FilterEditor.LiteralValue>> = rx
+    const range$: rx.Observable<option.Option<FilterEditor.LiteralValue>> = rx
       .combineLatest(
         forControlValue(this.rangeMagnitudeWaardeControl).pipe(
           distinctUntilChanged(),
@@ -312,7 +307,7 @@ export class FilterEditorComponent extends KaartChildDirective {
         ),
         forControlValue(this.rangeUnitWaardeControl).pipe(
           distinctUntilChanged(),
-          map(fromNullable),
+          map(option.fromNullable),
           map(option.filter(and(isString, nonEmptyString)))
         )
       )
@@ -326,7 +321,7 @@ export class FilterEditorComponent extends KaartChildDirective {
         )
       );
 
-    const gekozenWaarde$: rx.Observable<Option<FilterEditor.LiteralValue>> = rx.merge(
+    const gekozenWaarde$: rx.Observable<option.Option<FilterEditor.LiteralValue>> = rx.merge(
       gekozenText$,
       gekozenInteger$,
       gekozenDouble$,
@@ -578,10 +573,11 @@ export class FilterEditorComponent extends KaartChildDirective {
         this.veldControl.valueChanges.pipe(
           filter(isNotNull),
           startWith<Filter.Property | string>(""), // nog niets ingetypt
-          map(waarde => (typeof waarde === "string" ? waarde : fromNullable(waarde.label).getOrElse(""))),
+          map(waarde => (typeof waarde === "string" ? waarde : option.fromNullable(waarde.label).getOrElse(""))),
           map(getypt =>
             properties.filter(veld =>
-              fromNullable(veld.label)
+              option
+                .fromNullable(veld.label)
                 .getOrElse("")
                 .toLowerCase()
                 .startsWith(getypt.toLowerCase())

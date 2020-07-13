@@ -1,7 +1,7 @@
 /// <reference types="@types/googlemaps" />
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
-import { fromNullable, Option, some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 import * as rx from "rxjs";
 import { combineLatest, Observable, Observer, timer } from "rxjs";
 import { catchError, concatMap, map, mergeMap, publishLast, reduce, refCount, retryWhen, switchMap, take, toArray } from "rxjs/operators";
@@ -33,9 +33,9 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
   readonly featureIdSuffix: string;
   readonly omschrijving: string;
   readonly bron: string;
-  readonly kaartInfo: Option<ZoekKaartResultaat>;
-  readonly preferredPointZoomLevel: Option<number>;
-  readonly extraOmschrijving: Option<string>;
+  readonly kaartInfo: option.Option<ZoekKaartResultaat>;
+  readonly preferredPointZoomLevel: option.Option<number>;
+  readonly extraOmschrijving: option.Option<string>;
   readonly zoektype: Zoektype = "Volledig";
 
   constructor(
@@ -48,18 +48,18 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
   ) {
     this.featureIdSuffix = `${index + 1}`;
     const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(locatie.locatie);
-    this.kaartInfo = some({
+    this.kaartInfo = option.some({
       geometry: geometry,
       extent: geometry.getExtent(),
       style: style,
       highlightStyle: highlightStyle
     });
     this.omschrijving = locatie.omschrijving;
-    this.extraOmschrijving = fromNullable(locatie.extraOmschrijving).orElse(() =>
-      fromNullablePredicate<string>(() => locatie.omschrijving !== locatie.formatted_address, locatie.formatted_address)
-    );
+    this.extraOmschrijving = option
+      .fromNullable(locatie.extraOmschrijving)
+      .orElse(() => fromNullablePredicate<string>(() => locatie.omschrijving !== locatie.formatted_address, locatie.formatted_address));
     this.bron = locatie.bron;
-    this.preferredPointZoomLevel = isWdbBron(this.bron) ? some(12) : some(10);
+    this.preferredPointZoomLevel = isWdbBron(this.bron) ? option.some(12) : option.some(10);
   }
 }
 

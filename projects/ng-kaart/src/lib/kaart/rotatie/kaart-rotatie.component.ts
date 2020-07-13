@@ -2,7 +2,7 @@ import { BreakpointObserver, Breakpoints } from "@angular/cdk/layout";
 import { ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
 import { MatIconRegistry } from "@angular/material/icon";
 import { DomSanitizer } from "@angular/platform-browser";
-import { some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 import * as rx from "rxjs";
 import { delay, distinctUntilChanged, map, tap } from "rxjs/operators";
 
@@ -59,7 +59,7 @@ export class KaartRotatieComponent extends KaartChildDirective implements OnInit
   }
 
   roteerNaarNoord() {
-    this.dispatch(prt.VeranderRotatieCmd(0, some(250)));
+    this.dispatch(prt.VeranderRotatieCmd(0, option.some(250)));
     this.clickBtnSubj.next(false);
   }
 }

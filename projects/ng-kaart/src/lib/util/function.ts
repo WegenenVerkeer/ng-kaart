@@ -1,6 +1,5 @@
-import { array } from "fp-ts";
+import { array, option } from "fp-ts";
 import { Endomorphism, Function1, Function2 } from "fp-ts/lib/function";
-import { fromNullable, Option } from "fp-ts/lib/Option";
 import { Lens, Setter } from "monocle-ts";
 
 /**
@@ -43,14 +42,14 @@ export type Consumer1<A> = (a: A) => void;
 export type Consumer2<A, B> = (a: A, b: B) => void;
 
 /**
- * Een functie die none terug geeft waar die niet gedefineerd is in het domein A.
+ * Een functie die option.none terug geeft waar die niet gedefineerd is in het domein A.
  */
-export type PartialFunction1<A, B> = Function1<A, Option<B>>;
+export type PartialFunction1<A, B> = Function1<A, option.Option<B>>;
 
 /**
- * Een functie die none terug geeft waar die niet gedefineerd is in het domein AxB.
+ * Een functie die option.none terug geeft waar die niet gedefineerd is in het domein AxB.
  */
-export type PartialFunction2<A, B, C> = Function2<A, B, Option<C>>;
+export type PartialFunction2<A, B, C> = Function2<A, B, option.Option<C>>;
 
 /**
  * Een (endo)functie die alle (endo)functies na elkaar uitvoert. Lijkt heel sterk op pipe/flow.
@@ -58,10 +57,10 @@ export type PartialFunction2<A, B, C> = Function2<A, B, Option<C>>;
 export const applySequential: <S>(_: Endomorphism<S>[]) => Endomorphism<S> = fs => init => fs.reduce((s, f) => f(s), init);
 
 /**
- * Zet een functie die `null` of `undefined` kan genereren om naar 1 die `Option` genereert.
+ * Zet een functie die `null` of `undefined` kan genereren om naar 1 die `option.Option` genereert.
  */
-export function fromNullableFunc<A, B>(f: Function1<A, B | undefined>): Function1<A, Option<B>> {
-  return (a: A) => fromNullable(f(a));
+export function fromNullableFunc<A, B>(f: Function1<A, B | undefined>): Function1<A, option.Option<B>> {
+  return (a: A) => option.fromNullable(f(a));
 }
 
 export function isNotNullObject(object: any) {

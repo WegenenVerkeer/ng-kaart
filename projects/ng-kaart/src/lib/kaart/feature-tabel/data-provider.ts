@@ -1,9 +1,6 @@
-import { array, option, ord, setoid } from "fp-ts";
+import { array, eq, option, ord } from "fp-ts";
 import { Curried2, Endomorphism, flow, Function1, Function2, Function3, identity, Predicate, Refinement } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
-import { Ord } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
-import { Setoid } from "fp-ts/lib/Setoid";
 import { Getter, Iso, Lens, Prism } from "monocle-ts";
 import { iso, Newtype } from "newtype-ts";
 import { NonNegativeInteger, prismNonNegativeInteger } from "newtype-ts/lib/NonNegativeInteger";
@@ -85,7 +82,7 @@ export interface FeatureCountRequest {
 export type FeatureCountFetcher = Function1<FeatureCountRequest, rx.Observable<FeatureCount>>;
 
 export namespace SortDirection {
-  export const setoidSortDirection: Setoid<SortDirection> = setoid.setoidString;
+  export const setoidSortDirection: eq.Eq<SortDirection> = eq.eqString;
 
   export const invert: Endomorphism<SortDirection> = direction => (direction === "ASCENDING" ? "DESCENDING" : "ASCENDING");
 }
@@ -110,7 +107,7 @@ export namespace Page {
   );
   export const pageNumberLens: Lens<Page, PageNumber> = Lens.fromProp<Page>()("pageNumber");
   export const rowsLens: Lens<Page, Row[]> = Lens.fromProp<Page>()("rows");
-  export const ordPageNumber: Ord<PageNumber> = ord.contramap(prismPageNumber.reverseGet, ord.ordNumber);
+  export const ordPageNumber: ord.Ord<PageNumber> = ord.contramap(prismPageNumber.reverseGet, ord.ordNumber);
 
   export const first: PageNumber = isoPageNumber.wrap(0);
   export const previous: Endomorphism<PageNumber> = isoPageNumber.modify(n => Math.max(0, n - 1));
@@ -171,13 +168,13 @@ export namespace PageFetcher {
     array.filter(Feature.overlapsExtent(extent))(selected);
   const takePage: Function1<PageNumber, Endomorphism<ol.Feature[]>> = pageNumber => array.filterWithIndex(Page.isInPage(pageNumber));
   const toRows: Curried2<PartialFunction1<ol.Feature, Row>, ol.Feature[], Row[]> = array.filterMap;
-  const featureToFieldValue: Curried2<FieldSorting, ol.Feature, Option<ValueType>> = sorting => feature =>
+  const featureToFieldValue: Curried2<FieldSorting, ol.Feature, option.Option<ValueType>> = sorting => feature =>
     Row.extractFieldValue(Feature.properties(feature), sorting.veldinfo);
 
-  const directionOrd: <A>(direction: SortDirection) => Endomorphism<Ord<A>> = direction =>
+  const directionOrd: <A>(direction: SortDirection) => Endomorphism<ord.Ord<A>> = direction =>
     direction === "ASCENDING" ? identity : ord.getDualOrd;
-  const ordFor: Function1<FieldSorting, Ord<ValueType>> = sorting =>
-    ke.VeldInfo.matchWithFallback<Ord<ValueType>>({
+  const ordFor: Function1<FieldSorting, ord.Ord<ValueType>> = sorting =>
+    ke.VeldInfo.matchWithFallback<ord.Ord<ValueType>>({
       string: () => ord.ordString,
       integer: () => ord.ordNumber,
       double: () => ord.ordNumber,
@@ -185,14 +182,15 @@ export namespace PageFetcher {
       // TODO + date -> parse + ordNumber
       fallback: () => ord.ordString
     })(sorting.veldinfo);
-  const sortingToOrd: Function1<FieldSorting, Ord<ol.Feature>> = sorting =>
+  const sortingToOrd: Function1<FieldSorting, ord.Ord<ol.Feature>> = sorting =>
     pipe(
       ord.contramap(featureToFieldValue(sorting), option.getOrd(ordFor(sorting))),
       directionOrd(sorting.direction)
     );
-  const sortingsToOrds: Function1<FieldSorting[], Ord<ol.Feature>[]> = array.map(sortingToOrd);
+  const sortingsToOrds: Function1<FieldSorting[], ord.Ord<ol.Feature>[]> = array.map(sortingToOrd);
 
-  const unlessNoSortableFields: Function1<Option<Endomorphism<ol.Feature[]>>, Endomorphism<ol.Feature[]>> = o => o.getOrElse(identity);
+  const unlessNoSortableFields: Function1<option.Option<Endomorphism<ol.Feature[]>>, Endomorphism<ol.Feature[]>> = o =>
+    o.getOrElse(identity);
   const sortFeatures: Function1<FieldSorting[], Endomorphism<ol.Feature[]>> = flow(
     sortingsToOrds,
     array.sortBy,
@@ -249,11 +247,14 @@ export namespace PageFetcher {
 }
 
 export namespace FeatureCount {
-  const setoidFeatureCountFetched: Setoid<FeatureCountFetched> = setoid.contramap(fcp => fcp.count, setoid.setoidNumber);
-  const setoidFeatureCountPending: Setoid<FeatureCountPending> = setoid.fromEquals(() => true);
-  const setoidFeatureCountFailed: Setoid<FeatureCountFailed> = setoid.fromEquals(() => true);
+  const setoidFeatureCountFetched: eq.Eq<FeatureCountFetched> = pipe(
+    eq.eqNumber,
+    eq.contramap(fcp => fcp.count)
+  );
+  const setoidFeatureCountPending: eq.Eq<FeatureCountPending> = eq.fromEquals(() => true);
+  const setoidFeatureCountFailed: eq.Eq<FeatureCountFailed> = eq.fromEquals(() => true);
 
-  export const setoidFeatureCount: Setoid<FeatureCount> = setoids.byKindSetoid<FeatureCount, string>({
+  export const setoidFeatureCount: eq.Eq<FeatureCount> = setoids.byKindEq<FeatureCount, string>({
     FeatureCountFetched: setoidFeatureCountFetched,
     FeatureCountPending: setoidFeatureCountPending,
     FeatureCountFailed: setoidFeatureCountFailed

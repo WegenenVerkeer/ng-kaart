@@ -1,6 +1,6 @@
 import { Component, NgZone } from "@angular/core";
+import { option } from "fp-ts";
 import { Predicate } from "fp-ts/lib/function";
-import { fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, map, share, startWith, switchMap, tap } from "rxjs/operators";
 
@@ -34,8 +34,8 @@ const defaultOptions: MultiMetenOpties = {
 };
 
 interface Measure {
-  readonly length: Option<number>;
-  readonly area: Option<number>;
+  readonly length: option.Option<number>;
+  readonly area: option.Option<number>;
 }
 
 const InfoBoodschapId = "multi-meten-resultaat";
@@ -81,7 +81,7 @@ export class KaartMultiMetenComponent extends KaartModusDirective {
       switchMap(() =>
         rx.combineLatest(this.modelChanges.getekendeGeometry$, scale$).pipe(
           map(([geom, scale]) => {
-            const length = some(geometryLength(geom));
+            const length = option.some(geometryLength(geom));
             const area = matchGeometryType(geom, {
               geometryCollection: collection => {
                 if (collection.getGeometries().length >= 2) {
@@ -102,7 +102,7 @@ export class KaartMultiMetenComponent extends KaartModusDirective {
                   return 0;
                 }
               }
-            }).chain(fromPredicate<number>(area => area > 0)); // flatten had ook gekund, maar dit is analoog aan lengte
+            }).chain(option.fromPredicate<number>(area => area > 0)); // flatten had ook gekund, maar dit is analoog aan lengte
             return { length: length, area: area };
           })
         )
@@ -150,10 +150,10 @@ export class KaartMultiMetenComponent extends KaartModusDirective {
                         type: "InfoBoodschapMeten",
                         titel: "Meten",
                         sluit: "VANZELF",
-                        bron: some("multi-meten"),
+                        bron: option.some("multi-meten"),
                         length: measures.length,
                         area: measures.area,
-                        verbergMsgGen: () => some(tekenInfoboodschapGeslotenMsgWrapper())
+                        verbergMsgGen: () => option.some(tekenInfoboodschapGeslotenMsgWrapper())
                       })
                     )
                   )
@@ -209,7 +209,7 @@ export class KaartMultiMetenComponent extends KaartModusDirective {
   }
 
   private startMetMeten(): void {
-    this.dispatch(DrawOpsCmd(StartDrawing(this.metenOpties.markColour, this.metenOpties.useRouting, none)));
+    this.dispatch(DrawOpsCmd(StartDrawing(this.metenOpties.markColour, this.metenOpties.useRouting, option.none)));
     this.metingGestartSubj.next();
   }
 

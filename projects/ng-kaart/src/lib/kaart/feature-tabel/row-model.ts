@@ -1,6 +1,5 @@
 import { array, option } from "fp-ts";
 import { Curried2, Endomorphism, FunctionN, not } from "fp-ts/lib/function";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { DateTime } from "luxon";
 import { Lens } from "monocle-ts";
 
@@ -17,8 +16,8 @@ export type ValueType = string | number | boolean | DateTime;
 
 // Zou kunnen new-type zijn. Afwachten of er nog properties nuttig zijn
 export interface Field {
-  readonly maybeValue: Option<ValueType>;
-  readonly maybeLink: Option<string>;
+  readonly maybeValue: option.Option<ValueType>;
+  readonly maybeLink: option.Option<string>;
 }
 
 export type Fields = Record<string, Field>;
@@ -41,7 +40,7 @@ const isString = (value: ValueType): boolean => typeof value === "string";
 export const isUrl = (value: string): boolean => value.startsWith("http");
 
 export namespace Field {
-  export const create = (maybeValue: Option<ValueType>, maybeLink: Option<string>): Field => {
+  export const create = (maybeValue: option.Option<ValueType>, maybeLink: option.Option<string>): Field => {
     return {
       maybeValue: maybeValue,
       maybeLink: maybeLink.alt(
@@ -71,7 +70,7 @@ export namespace Row {
           boolean: () => option.some(value !== 0),
           date: () => fromTimestamp(value),
           fallback: () => option.none
-        })(veldinfo);
+        })(veldinfo) as option.Option<ValueType>;
       }
       case "boolean": {
         return ke.VeldInfo.matchWithFallback({
@@ -79,7 +78,7 @@ export namespace Row {
           integer: () => option.some(value ? 1 : 0),
           string: () => option.some(value ? "JA" : "NEEN"),
           fallback: () => option.none
-        })(veldinfo);
+        })(veldinfo) as option.Option<ValueType>;
       }
       case "string": {
         return ke.VeldInfo.matchWithFallback({
@@ -90,14 +89,14 @@ export namespace Row {
           boolean: () => option.some(value !== ""),
           date: () => parseDate(option.fromNullable(veldinfo.parseFormat))(value), // we zouden kunnen afronden
           fallback: () => option.none
-        })(veldinfo);
+        })(veldinfo) as option.Option<ValueType>;
       }
       default:
         return option.none;
     }
   };
 
-  const nestedPropertyValue = (properties: Properties, path: string[], veldinfo: ke.VeldInfo): Option<ValueType> =>
+  const nestedPropertyValue = (properties: Properties, path: string[], veldinfo: ke.VeldInfo): option.Option<ValueType> =>
     array.fold(path, option.none, (head, tail) =>
       arrays.isEmpty(tail)
         ? option
@@ -112,7 +111,8 @@ export namespace Row {
   // bvb "constante": "http://localhost/werf/schermen/werf/{werfid};werf=werf%2Fapi%2Fwerf%2F{werfid}" naar
   // "constante": "http://localhost/werf/schermen/werf/123123;werf=werf%2Fapi%2Fwerf%2F123123"
   const replaceTokens = (input: string, properties: Properties): string =>
-    fromNullable(input.match(/{(.*?)}/g))
+    option
+      .fromNullable(input.match(/{(.*?)}/g))
       .map(tokens =>
         tokens.reduce(
           (result, token) =>
@@ -126,24 +126,29 @@ export namespace Row {
   const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) => {
     // extraheer veldwaarde, rekening houdend met 'constante' veld in veldinfo indien aanwezig, krijgt properiteit over veldwaarde zelf
     // bij tonen in tabel
-    const veldWaarde = fromNullable(veldinfo.constante).foldL<Option<ValueType>>(
-      () => nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo),
-      html => some(replaceTokens(html, properties))
-    );
+    const veldWaarde = option
+      .fromNullable(veldinfo.constante)
+      .foldL<option.Option<ValueType>>(
+        () => nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo),
+        html => option.some(replaceTokens(html, properties))
+      );
 
     // als er een html veld aanwezig is in veldinfo wordt dit gebruikt om te tonen in de tabel. De waarde zelf wordt als link meegegeven
     // indien dit een link is. Voor velden als type url wordt er enkel een waarde getoond indien er een url is
-    return fromNullable(veldinfo.html).foldL<Field>(
-      () => Field.create(veldWaarde, none),
+    return option.fromNullable(veldinfo.html).foldL<Field>(
+      () => Field.create(veldWaarde, option.none),
       html =>
         veldinfo.type === "url"
           ? veldWaarde
               .filter(isString)
               .map(value => value as string)
               .filter(isUrl)
-              .foldL(() => Field.create(none, none), url => Field.create(some(replaceTokens(html, properties)), some(url)))
+              .foldL(
+                () => Field.create(option.none, option.none),
+                url => Field.create(option.some(replaceTokens(html, properties)), option.some(url))
+              )
           : Field.create(
-              some(replaceTokens(html, properties)),
+              option.some(replaceTokens(html, properties)),
               veldWaarde
                 .filter(isString)
                 .map(value => value as string)
@@ -152,7 +157,7 @@ export namespace Row {
     );
   };
 
-  export const extractFieldValue = (properties: Properties, veldinfo: ke.VeldInfo): Option<ValueType> =>
+  export const extractFieldValue = (properties: Properties, veldinfo: ke.VeldInfo): option.Option<ValueType> =>
     nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo);
 
   export const featureToFields: Curried2<ke.VeldInfo[], FeatureWithIdAndLaagnaam, Fields> = veldInfos => feature => {

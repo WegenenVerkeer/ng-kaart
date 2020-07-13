@@ -1,5 +1,5 @@
 import { ElementRef, Injectable, Injector } from "@angular/core";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import { classicLogger } from "./log";
 
@@ -31,13 +31,13 @@ export class KaartClassicLocatorService<T extends object = any> {
     }
   }
 
-  private findContainerElement(el: Element, component: any): Option<Element> {
+  private findContainerElement(el: Element, component: any): option.Option<Element> {
     if (this.registry.has(el) && this.registry.get(el) instanceof component) {
-      return some(el);
+      return option.some(el);
     } else if (el.parentElement) {
       return this.findContainerElement(el.parentElement, component);
     } else {
-      return none;
+      return option.none;
     }
   }
 }

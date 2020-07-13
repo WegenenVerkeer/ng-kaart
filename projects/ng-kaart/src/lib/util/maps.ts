@@ -1,13 +1,12 @@
 import { option } from "fp-ts";
 import { Endomorphism, Function1, Function3, identity, Predicate } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 
 export const isOfSize: (_: number) => <K, V>(_: Map<K, V>) => boolean = size => map => map.size === size;
 
 export const isNonEmpty: <K, V>(_: Map<K, V>) => boolean = map => map.size > 0;
 
-export function findFirst<K, V>(kvs: Map<K, V>, predicate: Predicate<V>): Option<V> {
+export function findFirst<K, V>(kvs: Map<K, V>, predicate: Predicate<V>): option.Option<V> {
   for (const entry of kvs.entries()) {
     if (predicate(entry[1])) {
       return option.some(entry[1]);

@@ -1,9 +1,9 @@
 import { Component, Input, NgZone } from "@angular/core";
+import { option } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
-import { fromNullable } from "fp-ts/lib/Option";
-import { isObject } from "util";
 
 import { matchGeometryType } from "../../util";
+import { isObject } from "../../util/object";
 import * as ol from "../../util/openlayers-compat";
 import { KaartChildDirective } from "../kaart-child.directive";
 import { InfoBoodschapIdentify } from "../kaart-with-info-model";
@@ -12,7 +12,7 @@ import { KaartComponent } from "../kaart.component";
 import { Properties, VeldinfoMap } from "./kaart-info-boodschap-veldinfo.component";
 
 const liftProperties: Function1<ol.Feature, Properties> = feature => {
-  const maybeOlProperties = fromNullable(feature.getProperties());
+  const maybeOlProperties = option.fromNullable(feature.getProperties());
   const logicalProperties = maybeOlProperties
     .map(obj => obj["properties"])
     .filter(isObject)

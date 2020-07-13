@@ -1,14 +1,10 @@
 import { formatNumber } from "@angular/common";
-import { array, option, ord, record, setoid, traversable } from "fp-ts";
+import { array, eq, option, ord, record, semigroup, traversable } from "fp-ts";
 import { Curried2, Endomorphism, flow, Function1, Function2, identity, not, Predicate } from "fp-ts/lib/function";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
-import { ordString } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
-import { getLastSemigroup } from "fp-ts/lib/Semigroup";
 import { Fold, Getter, Lens, Optional, Traversal } from "monocle-ts";
 import { indexArray } from "monocle-ts/lib/Index/Array";
 import { map } from "rxjs/operators";
-import { isNumber } from "util";
 
 import { Filter, FilterTotaal, match as FilterTotaalMatch, TotaalOpgehaald } from "../../filter";
 import { NosqlFsSource } from "../../source";
@@ -18,6 +14,7 @@ import { equalToString } from "../../util/equal";
 import { Feature } from "../../util/feature";
 import { PartialFunction2 } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
+import { isNumber } from "../../util/number";
 import * as ol from "../../util/openlayers-compat";
 import * as ke from "../kaart-elementen";
 import { VeldInfo } from "../kaart-elementen";
@@ -53,7 +50,7 @@ export interface LaagModel {
   readonly featureCount: FeatureCount; // aantal features in de tabel over alle pagina's heen. Hangt af van viewsourcemode.
   readonly fullFeatureCount: FeatureCount; // aantal features in de laag rekening houdend met de filter. Hangt niet af van viewsourcemode
   readonly expectedPageNumber: PageNumber; // Het PageNumber dat we verwachten te zien. Potentieel anders dan in Page wegens asynchoniciteit
-  readonly page: Option<Page>; // We houden maar 1 pagina van data tegelijkertijd in het geheugen. (later meer)
+  readonly page: option.Option<Page>; // We houden maar 1 pagina van data tegelijkertijd in het geheugen. (later meer)
 
   readonly fieldSelections: FieldSelection[]; // enkel een subset van de velden is zichtbaar
   readonly fieldSortings: FieldSorting[];
@@ -70,7 +67,7 @@ export interface LaagModel {
 
   readonly visibleFeatures: ol.Feature[]; // Alle features van de laag die momenteel zichtbaar zijn
   readonly selectedFeatures: ol.Feature[]; // Alle features van de laag die momenteel geselecteerd zijn. Niet noodzakelijk zichtbaar
-  readonly lastPageNumber: Option<PageNumber>; // Hangt af van de view en selection mode
+  readonly lastPageNumber: option.Option<PageNumber>; // Hangt af van de view en selection mode
 
   readonly viewinstellingen: Viewinstellingen; // Kopie van gegevens in TableModel. Handig om hier te refereren
 }
@@ -92,11 +89,11 @@ export namespace LaagModel {
   export const pageFold: LaagModelFold<Page> = pageOptional.asFold();
   const pageNumberOptional: LaagModelOptional<PageNumber> = pageOptional.composeLens(Page.pageNumberLens);
   export const pageNumberFold: LaagModelFold<PageNumber> = pageNumberOptional.asFold();
-  const lastPageNumberLens: LaagModelLens<Option<PageNumber>> = laagPropLens("lastPageNumber");
+  const lastPageNumberLens: LaagModelLens<option.Option<PageNumber>> = laagPropLens("lastPageNumber");
   export const lastPageNumberFold: LaagModelFold<PageNumber> = laagPropOptional("lastPageNumber").asFold();
   const expectedPageNumberLens: LaagModelLens<PageNumber> = laagPropLens("expectedPageNumber");
-  const pageLens: LaagModelLens<Option<Page>> = laagPropLens("page");
-  export const pageGetter: LaagModelGetter<Option<Page>> = pageLens.asGetter();
+  const pageLens: LaagModelLens<option.Option<Page>> = laagPropLens("page");
+  export const pageGetter: LaagModelGetter<option.Option<Page>> = pageLens.asGetter();
   export const nextPageSequenceLens: LaagModelLens<number> = laagPropLens("nextPageSequence");
   const updatePendingLens: LaagModelLens<boolean> = laagPropLens("updatePending");
   export const updatePendingGetter: LaagModelGetter<boolean> = updatePendingLens.asGetter();
@@ -170,7 +167,7 @@ export namespace LaagModel {
     const geenWegLocatieValue = option.some("<Geen weglocatie>");
 
     const noLocationFieldsTransformer = (fs: FieldSelection[]): FieldSelection[] => array.cons(syntheticFieldSelection([]), fs);
-    const noLocationVeldTransformer = Row.addField(syntheticLocationFieldKey, Field.create(geenWegLocatieValue, none));
+    const noLocationVeldTransformer = Row.addField(syntheticLocationFieldKey, Field.create(geenWegLocatieValue, option.none));
     const noLocationTransformers = [noLocationFieldsTransformer, noLocationVeldTransformer] as [
       Endomorphism<FieldSelection[]>,
       Endomorphism<Fields>
@@ -184,9 +181,9 @@ export namespace LaagModel {
       const puntAlternatiefValueGen = (wegValue: string) => (positie: number[]): string => `${wegValue} ${positie}`;
       const enkelDeWegValueGen = (wegValue: string) => (): string => `${wegValue}`;
 
-      const allLijnLabelsPresent = arrays.containsAll(ordString)(veldlabels, lijnAfstandLabels);
-      const allPuntAfstandLabelsPresent = arrays.containsAll(ordString)(veldlabels, puntAfstandLabels);
-      const allPuntLabelsPresent = arrays.containsAll(ordString)(veldlabels, puntLabelsAlternatief);
+      const allLijnLabelsPresent = arrays.containsAll(ord.ordString)(veldlabels, lijnAfstandLabels);
+      const allPuntAfstandLabelsPresent = arrays.containsAll(ord.ordString)(veldlabels, puntAfstandLabels);
+      const allPuntLabelsPresent = arrays.containsAll(ord.ordString)(veldlabels, puntLabelsAlternatief);
 
       const [locationLabels, locationValueGen]: [string[], Curried2<string, number[], string>] = allLijnLabelsPresent
         ? [lijnAfstandLabels, lijnValueGen]
@@ -194,7 +191,7 @@ export namespace LaagModel {
         ? [puntAfstandLabels, puntValueGen]
         : allPuntLabelsPresent
         ? [puntLabelsAlternatief, puntAlternatiefValueGen]
-        : maybeWegKey.isSome
+        : maybeWegKey.isSome()
         ? [[], enkelDeWegValueGen]
         : [[], () => () => ""];
 
@@ -214,14 +211,14 @@ export namespace LaagModel {
 
       const veldTrf: Endomorphism<Fields> = row => {
         const maybeWegValue = row[wegKey];
-        const maybeDistances: Option<number[]> = traversable
+        const maybeDistances: option.Option<number[]> = traversable
           .sequence(option.option, array.array)(locationKeys.map(key => row[key].maybeValue.filter(isNumber)))
           .filter(ns => ns.length === locationLabels.length);
         const locatieField: Field = {
           maybeValue: maybeWegValue.maybeValue
             .map(wegValue => maybeDistances.fold(`${wegValue}`, locationValueGen(wegValue.toString())))
             .orElse(() => geenWegLocatieValue),
-          maybeLink: none
+          maybeLink: option.none
         };
         return Row.addField(syntheticLocationFieldKey, locatieField)(row);
       };
@@ -229,7 +226,7 @@ export namespace LaagModel {
     });
   };
 
-  const safeDoubleFormat = (maybeFormat: Option<string>): string =>
+  const safeDoubleFormat = (maybeFormat: option.Option<string>): string =>
     maybeFormat
       .map(format => {
         // We validateren het formaat door het op een nummer te proberen. Dit wordt naar 1 maal uitgevoerd wanner het
@@ -255,7 +252,7 @@ export namespace LaagModel {
 
   const formatAsUrl = (veldInfo: VeldInfo) => (value: ValueType): string => {
     try {
-      return isUrl(value as string) ? fromNullable(veldInfo.label).getOrElse("Link") : (value as string);
+      return isUrl(value as string) ? option.fromNullable(veldInfo.label).getOrElse("Link") : (value as string);
     } catch {
       kaartLogger.warn(`Waarde ${value} kan niet als een string geïnterpreteerd worden`);
       return `${value} <i>*</i>`;
@@ -273,8 +270,8 @@ export namespace LaagModel {
     formatNumberSafe,
     Field.modify
   );
-  const formatDate = (format: Option<string>): Endomorphism<Field> => Field.modify(formateerDate(format));
-  const rowFormat: Function1<ke.VeldInfo, Option<Endomorphism<Field>>> = vi =>
+  const formatDate = (format: option.Option<string>): Endomorphism<Field> => Field.modify(formateerDate(format));
+  const rowFormat: Function1<ke.VeldInfo, option.Option<Endomorphism<Field>>> = vi =>
     ke.VeldInfo.matchWithFallback({
       boolean: () => option.some(formatBoolean),
       integer: () => option.some(formatInteger(option.fromNullable(vi.displayFormat))),
@@ -286,12 +283,12 @@ export namespace LaagModel {
     })(vi);
   const rowFormatsFromVeldinfos: Function1<ke.VeldInfo[], FieldsFormatSpec> = veldinfos =>
     pipe(
-      record.fromFoldableMap(getLastSemigroup<ke.VeldInfo>(), array.array)(veldinfos, vi => [vi.naam, vi]),
+      record.fromFoldableMap(semigroup.getLastSemigroup<ke.VeldInfo>(), array.array)(veldinfos, vi => [vi.naam, vi]),
       record.filterMap(rowFormat)
     );
 
   const fieldFormatter = (selectedFieldNames: string[], formats: FieldsFormatSpec) => (fieldName: string, field: Field): Field =>
-    array.elem(setoid.setoidString)(fieldName, selectedFieldNames)
+    array.elem(eq.eqString)(fieldName, selectedFieldNames)
       ? record
           .lookup(fieldName, formats)
           .map(f => f(field))
@@ -313,11 +310,11 @@ export namespace LaagModel {
   const sortOnFirstField: Endomorphism<FieldSelection[]> = indexArray<FieldSelection>()
     .index(0)
     .composeLens(FieldSelection.maybeSortDirectionLens)
-    .set(option.some("ASCENDING") as Option<SortDirection>);
+    .set(option.some("ASCENDING") as option.Option<SortDirection>);
 
   const setFieldSelectionsWithFallbackToFirst = (
-    maybeSelectedFieldNames: Option<Set<string>>,
-    maybeSortSpec: Option<{ veldnaam: string; sort: SortDirection }>
+    maybeSelectedFieldNames: option.Option<Set<string>>,
+    maybeSortSpec: option.Option<{ veldnaam: string; sort: SortDirection }>
   ): Endomorphism<FieldSelection[]> =>
     flow(
       arrayTraversal<FieldSelection>().modify(fs =>
@@ -448,7 +445,7 @@ export namespace LaagModel {
     endoOutsideZoom: Endomorphism<LaagModel>
   ): Endomorphism<LaagModel> => laag => (ifInZoom(laag) ? endoInZoom : endoOutsideZoom)(laag);
 
-  const toggleSortDirection: Endomorphism<Option<SortDirection>> = flow(
+  const toggleSortDirection: Endomorphism<option.Option<SortDirection>> = flow(
     option.map(SortDirection.invert),
     option.alt(() => option.some("ASCENDING" as SortDirection))
   );
@@ -481,7 +478,7 @@ export namespace LaagModel {
     requestSequence: laag.nextPageSequence
   });
 
-  const maakRow: Curried2<LaagModel, ol.Feature, Option<Row>> = laag => feature =>
+  const maakRow: Curried2<LaagModel, ol.Feature, option.Option<Row>> = laag => feature =>
     pipe(
       Feature.featureWithIdAndLaagnaam(feature),
       option.map(featureWithIdAndLaagnaam => {
@@ -862,7 +859,7 @@ export namespace LaagModel {
 
   export const updateSelectedFieldsAndSortings = (
     selectedFieldNames: Set<string>,
-    maybeSortSpec: Option<{ veldnaam: string; sort: SortDirection }>
+    maybeSortSpec: option.Option<{ veldnaam: string; sort: SortDirection }>
   ): LaagModelUpdate => {
     return updatePageDataAfter(
       fieldSelectionsLens.modify(setFieldSelectionsWithFallbackToFirst(option.some(selectedFieldNames), maybeSortSpec))

@@ -1,6 +1,6 @@
 import { Component, NgZone, ViewEncapsulation } from "@angular/core";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 import * as rx from "rxjs";
 import { map } from "rxjs/operators";
 
@@ -11,7 +11,7 @@ import { ZoekerHelpBoom, ZoekerMetWeergaveopties } from "../zoeker";
 interface ZoekHelpNode {
   readonly titel: string;
   readonly children: Map<string, ZoekHelpNode>;
-  readonly text: Option<string>;
+  readonly text: option.Option<string>;
 }
 
 interface HelpContent {
@@ -24,7 +24,7 @@ class ZoekerHelpBoomImpl implements ZoekerHelpBoom {
   private root: ZoekHelpNode = {
     titel: "Ik zoek",
     children: new Map(),
-    text: none
+    text: option.none
   };
 
   voegItemToe(text: string, ...titles: string[]) {
@@ -35,7 +35,7 @@ class ZoekerHelpBoomImpl implements ZoekerHelpBoom {
         parent.children.set(title, {
           titel: title,
           children: new Map(),
-          text: index === titles.length - 1 ? some(text) : none
+          text: index === titles.length - 1 ? option.some(text) : option.none
         });
       }
       parent = parent.children.get(title)!;
@@ -60,13 +60,13 @@ const zoekHelpNodeToHelpContent = (domSanitizer: DomSanitizer, node: ZoekHelpNod
 
 const selecteerUitBoom = (domSanitizer: DomSanitizer, node: ZoekHelpNode, subPath: string[]) => {
   if (subPath.length === 0) {
-    return some(Array.from(node.children.values()).map(child => zoekHelpNodeToHelpContent(domSanitizer, child)));
+    return option.some(Array.from(node.children.values()).map(child => zoekHelpNodeToHelpContent(domSanitizer, child)));
   } else {
     const childNode = node.children.get(subPath[0]);
     if (childNode) {
       return selecteerUitBoom(domSanitizer, childNode, subPath.slice(1));
     } else {
-      return none;
+      return option.none;
     }
   }
 };

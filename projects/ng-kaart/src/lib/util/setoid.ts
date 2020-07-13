@@ -1,9 +1,9 @@
-import { fromEquals, Setoid } from "fp-ts/lib/Setoid";
+import { eq } from "fp-ts";
 
 import { Key, Kinded } from "./kinded";
 
 /**
- * import { contramap, fromEquals, Setoid, setoidNumber, setoidString } from "fp-ts/lib/Setoid";
+ * import { eq } from "fp-ts";
  *
  * type T = A | B;
  * interface A {
@@ -14,16 +14,16 @@ import { Key, Kinded } from "./kinded";
  *   kind: "b";
  *   b: string;
  * }
- * const setoidA: Setoid<A> = contramap(a => a.a, setoidNumber);
- * const setoidB: Setoid<B> = contramap(b => b.b, setoidString);
- * const setoidT: Setoid<T> = byKindSetoid({
- *   a: setoidA,
- *   b: setoidB
+ * const eqA: eq.Eq<A> = eq.contramap(a => a.a)(eq.eqNumber);
+ * const eqB: eq.Eq<B> = eq.contramap(b => b.b)(eq.eqString);
+ * const eqT: eq.Eq<T> = byKindEq({
+ *   a: eqA,
+ *   b: eqB
  * });
  *
  */
-export const byKindSetoid = <A extends Kinded<K>, K extends Key>(
-  setoidRecord: { [P in A["kind"]]: Setoid<A & { readonly kind: P; readonly [key: string]: any }> }
-) => fromEquals((a1: A, a2: A) => !!a1 && !!a2 && a1.kind === a2.kind && setoidRecord[a1.kind].equals(a1, a2));
+export const byKindEq = <A extends Kinded<K>, K extends Key>(
+  eqRecord: { [P in A["kind"]]: eq.Eq<A & { readonly kind: P; readonly [key: string]: any }> }
+) => eq.fromEquals((a1: A, a2: A) => !!a1 && !!a2 && a1.kind === a2.kind && eqRecord[a1.kind].equals(a1, a2));
 
-export const singletonSetoid = fromEquals(() => true);
+export const singletonEq = eq.fromEquals(() => true);

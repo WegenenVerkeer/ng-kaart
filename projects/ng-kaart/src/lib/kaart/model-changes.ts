@@ -1,10 +1,7 @@
 import { NgZone } from "@angular/core";
-import { array } from "fp-ts";
-import { left, right } from "fp-ts/lib/Either";
+import { array, either, eq, option } from "fp-ts";
 import { flow, Function1, Function2 } from "fp-ts/lib/function";
-import { none, Option } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
-import { setoidString } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
 import {
   debounceTime,
@@ -88,9 +85,9 @@ export interface ModelChanger {
   readonly viewPortSizeSubj: rx.Subject<null>;
   readonly lagenOpGroepSubj: ke.OpLaagGroep<rx.BehaviorSubject<ke.ToegevoegdeLaag[]>>;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
-  readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
+  readonly mijnLocatieZoomDoelSubj: rx.Subject<option.Option<number>>;
   readonly laagTabelExtraKnopKlikkenSubj: rx.Subject<prt.LaagTabelKnopKlik>;
-  readonly actieveModusSubj: rx.Subject<Option<string>>;
+  readonly actieveModusSubj: rx.Subject<option.Option<string>>;
   readonly zoekerServicesSubj: rx.Subject<ZoekerMetWeergaveopties[]>;
   readonly zoekopdrachtSubj: rx.Subject<Zoekopdracht>;
   readonly zoekresultaatselectieSubj: rx.Subject<ZoekResultaat>;
@@ -127,9 +124,9 @@ export const ModelChanger: () => ModelChanger = () => ({
     Tools: new rx.BehaviorSubject<ke.ToegevoegdeLaag[]>([])
   },
   laagVerwijderdSubj: new rx.Subject<ke.ToegevoegdeLaag>(),
-  mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<Option<number>>(none),
+  mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<option.Option<number>>(option.none),
   laagTabelExtraKnopKlikkenSubj: new rx.Subject<prt.LaagTabelKnopKlik>(),
-  actieveModusSubj: new rx.BehaviorSubject(none),
+  actieveModusSubj: new rx.BehaviorSubject(option.none),
   zoekerServicesSubj: new rx.BehaviorSubject([]),
   zoekopdrachtSubj: new rx.Subject<Zoekopdracht>(),
   zoekresultaatselectieSubj: new rx.Subject<ZoekResultaat>(),
@@ -167,8 +164,8 @@ export interface ModelChanges {
   readonly zichtbareFeatures$: rx.Observable<ol.Feature[]>;
   readonly zichtbareFeaturesPerLaag$: rx.Observable<ReadonlyMap<string, ol.Feature[]>>;
   readonly kaartKlikLocatie$: rx.Observable<KlikInfo>;
-  readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
-  readonly actieveModus$: rx.Observable<Option<string>>;
+  readonly mijnLocatieZoomDoel$: rx.Observable<option.Option<number>>;
+  readonly actieveModus$: rx.Observable<option.Option<string>>;
   readonly zoekerServices$: rx.Observable<ZoekerMetWeergaveopties[]>;
   readonly zoekresultaten$: rx.Observable<ZoekAntwoord>;
   readonly zoekresultaatselectie$: rx.Observable<ZoekResultaat>;
@@ -300,7 +297,7 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
 
   const hoverFeatures$ = observableFromOlEvents<ol.collection.Event<ol.Feature>>(model.hoverFeatures, "add", "remove").pipe(
     map(event => ({
-      hover: event.type === "add" ? right<ol.Feature, ol.Feature>(event.element) : left<ol.Feature, ol.Feature>(event.element)
+      hover: event.type === "add" ? either.right<ol.Feature, ol.Feature>(event.element) : either.left<ol.Feature, ol.Feature>(event.element)
     }))
   );
 
@@ -398,7 +395,7 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
   );
 
   const gevraagdeZoekers: Function2<Zoekopdracht, ZoekerMetWeergaveopties[], ZoekerMetWeergaveopties[]> = (opdracht, geregistreerd) =>
-    geregistreerd.filter(zmp => array.elem(setoidString)(zmp.zoeker.naam(), opdracht.zoekernamen));
+    geregistreerd.filter(zmp => array.elem(eq.eqString)(zmp.zoeker.naam(), opdracht.zoekernamen));
 
   const zoekresultaten$: rx.Observable<ZoekAntwoord> = changer.zoekerServicesSubj.pipe(
     switchMap(zoekerSvcs =>

@@ -1,8 +1,6 @@
 import { array, option, ord, tuple } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
-import { Ord } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
-import { Tuple } from "fp-ts/lib/Tuple";
 
 import * as arrays from "../util/arrays";
 import { PartialFunction2 } from "../util/function";
@@ -15,7 +13,7 @@ import * as ol from "../util/openlayers-compat";
 // Dit is op basis van een OL multi select waarvan we alle behalve 1 feature (de dichtste) weerhouden. Het probleem met
 // de de native select van OL is dat die de eerste feature (volgens een of andere arbitraire volgorde) selecteert.
 
-const distanceFromPointOrd: Function1<ol.Coordinate, Ord<Tuple<ol.Feature, ol.geom.Geometry>>> = coord =>
+const distanceFromPointOrd: Function1<ol.Coordinate, ord.Ord<tuple.Tuple<ol.Feature, ol.geom.Geometry>>> = coord =>
   tuple.getOrd(ord.fromCompare(_ => 0), ord.contramap(geometry => distance(coord, geometry.getClosestPoint(coord)), ord.ordNumber));
 
 export const findClosest: PartialFunction2<ol.Feature[], ol.Coordinate, ol.Feature> = (features, clickLoc) => {
@@ -25,7 +23,7 @@ export const findClosest: PartialFunction2<ol.Feature[], ol.Coordinate, ol.Featu
       pipe(
         f.getGeometry(),
         option.fromNullable,
-        option.map(g => new Tuple(f, g))
+        option.map(g => new tuple.Tuple(f, g))
       )
     ),
     arrays.findFirstBy(distanceFromPointOrd(clickLoc)),

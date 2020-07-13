@@ -1,8 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, EventEmitter, Injector, Input, OnChanges, Output, SimpleChanges, ViewEncapsulation } from "@angular/core";
-import { array } from "fp-ts";
+import { array, eq } from "fp-ts";
 import { identity } from "fp-ts/lib/function";
-import { Setoid } from "fp-ts/lib/Setoid";
 
 import { forChangedValue } from "../../kaart/kaart-base.directive";
 import * as prt from "../../kaart/kaart-protocol";
@@ -46,7 +45,7 @@ const featureEqualityToFeaturesSetoid = (eq: FeatureEqualityFn) => array.getSeto
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent implements OnChanges {
-  private featuresSetoid: Setoid<ol.Feature[]> = featureEqualityToFeaturesSetoid(stdFeatureEquality);
+  private featuresSetoid: eq.Eq<ol.Feature[]> = featureEqualityToFeaturesSetoid(stdFeatureEquality);
 
   // Er wordt verwacht dat alle features een unieke ID hebben. Null of undefined ID's zorgen voor onnodige updates. Bovendien moet de hele
   // feature array aangepast worden. Dwz, je mag de array niet aanpassen en de referentie ongewijzigd laten. Dit is om performantieredenen.

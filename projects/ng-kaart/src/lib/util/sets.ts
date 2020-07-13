@@ -1,4 +1,4 @@
-import * as set from "fp-ts/lib/Set";
+import { set } from "fp-ts";
 
 export const isOfSize: (_: number) => <A>(_: Set<A>) => boolean = size => set => set.size === size;
 

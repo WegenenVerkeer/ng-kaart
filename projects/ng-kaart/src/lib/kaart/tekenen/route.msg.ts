@@ -1,5 +1,4 @@
-import { Option } from "fp-ts/lib/Option";
-import * as strmap from "fp-ts/lib/StrMap";
+import { option, strmap } from "fp-ts";
 
 import * as ol from "../../util/openlayers-compat";
 
@@ -33,8 +32,8 @@ export interface RouteAdded {
   readonly version: number;
   readonly startWaypointId: WaypointId; // we moeten weten waar in de volgorde van deelroutes dit thuis hoort om de lengte te kunnen meten
   readonly geometry: ol.geom.Geometry;
-  readonly beginSnap: Option<Waypoint>;
-  readonly endSnap: Option<Waypoint>;
+  readonly beginSnap: option.Option<Waypoint>;
+  readonly endSnap: option.Option<Waypoint>;
 }
 
 export interface RouteRemoved {
@@ -54,7 +53,7 @@ export function createRoute(begin: Waypoint, end: Waypoint, versions: Versions):
   };
 }
 
-export function routeAdded(geometryRoute: GeometryRoute, beginSnap: Option<Waypoint>, endSnap: Option<Waypoint>): RouteAdded {
+export function routeAdded(geometryRoute: GeometryRoute, beginSnap: option.Option<Waypoint>, endSnap: option.Option<Waypoint>): RouteAdded {
   return {
     type: "RouteAdded",
     id: geometryRoute.id,

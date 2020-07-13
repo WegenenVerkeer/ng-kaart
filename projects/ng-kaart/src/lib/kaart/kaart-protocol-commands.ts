@@ -1,4 +1,4 @@
-import { Option } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 import * as rx from "rxjs";
 
 import { Filter as fltr } from "../filter/filter-model";
@@ -148,10 +148,10 @@ export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly magGetoondWorden: boolean;
   readonly transparantie: Transparantie;
   readonly laaggroep: ke.Laaggroep;
-  readonly legende: Option<Legende>;
-  readonly stijlInLagenKiezer: Option<string>;
-  readonly filterinstellingen: Option<ke.Laagfilterinstellingen>;
-  readonly laagtabelinstellingen: Option<Laagtabelinstellingen>;
+  readonly legende: option.Option<Legende>;
+  readonly stijlInLagenKiezer: option.Option<string>;
+  readonly filterinstellingen: option.Option<ke.Laagfilterinstellingen>;
+  readonly laagtabelinstellingen: option.Option<Laagtabelinstellingen>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -212,7 +212,7 @@ export interface VraagSchaalAanCmd<Msg extends KaartMsg> {
 
 export interface VoegSchaalToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegSchaalToe";
-  readonly target: Option<HTMLElement>;
+  readonly target: option.Option<HTMLElement>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -246,7 +246,7 @@ export interface VerwijderStandaardInteractiesCmd<Msg extends KaartMsg> {
 export interface VeranderMiddelpuntCmd {
   readonly type: "VeranderMiddelpunt";
   readonly coordinate: ol.Coordinate;
-  readonly animationDuration: Option<number>;
+  readonly animationDuration: option.Option<number>;
 }
 
 export interface VeranderZoomCmd<Msg extends KaartMsg> {
@@ -263,7 +263,7 @@ export interface VeranderExtentCmd {
 export interface VeranderRotatieCmd {
   readonly type: "VeranderRotatie";
   readonly rotatie: number;
-  readonly animationDuration: Option<number>;
+  readonly animationDuration: option.Option<number>;
 }
 
 export interface VeranderViewportCmd {
@@ -371,7 +371,7 @@ export interface ZetStijlVoorLaagCmd<Msg extends KaartMsg> {
   readonly type: "ZetStijlVoorLaag";
   readonly titel: string;
   readonly stijl: ss.StyleSelector;
-  readonly selectieStijl: Option<ss.StyleSelector>;
+  readonly selectieStijl: option.Option<ss.StyleSelector>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -423,12 +423,12 @@ export interface ZoekSuggestiesCmd {
 
 export interface ZetMijnLocatieZoomCmd {
   readonly type: "ZetMijnLocatieZoomStatus";
-  readonly doelniveau: Option<number>;
+  readonly doelniveau: option.Option<number>;
 }
 
 export interface ZetActieveModusCmd {
   readonly type: "ZetActieveModus";
-  readonly modus: Option<string>;
+  readonly modus: option.Option<string>;
 }
 
 export interface ZetOffline<Msg extends KaartMsg> {
@@ -559,7 +559,7 @@ export interface SluitInfoBoodschapCmd {
   readonly type: "SluitInfoBoodschap";
   readonly id: string;
   readonly sluit: boolean;
-  readonly msgGen: () => Option<TypedRecord>;
+  readonly msgGen: () => option.Option<TypedRecord>;
 }
 
 export interface SluitPanelenCmd {
@@ -661,10 +661,10 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
   magGetoondWorden: boolean,
   transparantie: Transparantie,
   laaggroep: ke.Laaggroep,
-  legende: Option<Legende>,
-  stijlInLagenKiezer: Option<string>,
-  filterinstellingen: Option<ke.Laagfilterinstellingen>,
-  laagtabelinstellingen: Option<Laagtabelinstellingen>,
+  legende: option.Option<Legende>,
+  stijlInLagenKiezer: option.Option<string>,
+  filterinstellingen: option.Option<ke.Laagfilterinstellingen>,
+  laagtabelinstellingen: option.Option<Laagtabelinstellingen>,
   wrapper: BareValidationWrapper<Msg>
 ): VoegLaagToeCmd<Msg> {
   return {
@@ -746,7 +746,7 @@ export function HaalFilterTotaalOp<Msg extends KaartMsg>(titel: string, wrapper:
 }
 
 export function VoegSchaalToeCmd<Msg extends KaartMsg>(
-  target: Option<HTMLElement>,
+  target: option.Option<HTMLElement>,
   wrapper: BareValidationWrapper<Msg>
 ): VoegSchaalToeCmd<Msg> {
   return { type: "VoegSchaalToe", target, wrapper };
@@ -759,7 +759,7 @@ export function VerwijderSchaalCmd<Msg extends KaartMsg>(wrapper: BareValidation
 export function ZetStijlVoorLaagCmd<Msg extends KaartMsg>(
   titel: string,
   stijl: ss.StyleSelector,
-  selectieStijl: Option<ss.StyleSelector>,
+  selectieStijl: option.Option<ss.StyleSelector>,
   wrapper: BareValidationWrapper<Msg>
 ): ZetStijlVoorLaagCmd<Msg> {
   return { type: "ZetStijlVoorLaag", stijl, selectieStijl, titel, wrapper };
@@ -776,7 +776,7 @@ export function ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg>(
 
 export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(
   coordinate: ol.Coordinate,
-  animationDuration: Option<number>
+  animationDuration: option.Option<number>
 ): VeranderMiddelpuntCmd {
   return { type: "VeranderMiddelpunt", coordinate, animationDuration };
 }
@@ -785,7 +785,7 @@ export function VeranderZoomCmd<Msg extends KaartMsg>(zoom: number, wrapper: Bar
   return { type: "VeranderZoom", zoom, wrapper };
 }
 
-export function VeranderRotatieCmd(rotatie: number, animationDuration: Option<number>): VeranderRotatieCmd {
+export function VeranderRotatieCmd(rotatie: number, animationDuration: option.Option<number>): VeranderRotatieCmd {
   return { type: "VeranderRotatie", rotatie, animationDuration };
 }
 
@@ -927,11 +927,11 @@ export function UnsubscribeCmd(subscriptionResult: SubscriptionResult): Unsubscr
   return { type: "Unsubscription", subscriptionResult };
 }
 
-export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocatieZoomCmd {
+export function ZetMijnLocatieZoomCmd(doelniveau: option.Option<number>): ZetMijnLocatieZoomCmd {
   return { type: "ZetMijnLocatieZoomStatus", doelniveau };
 }
 
-export function ZetActieveModusCmd(modus: Option<string>): ZetActieveModusCmd {
+export function ZetActieveModusCmd(modus: option.Option<string>): ZetActieveModusCmd {
   return { type: "ZetActieveModus", modus };
 }
 
@@ -979,7 +979,7 @@ export function DeselecteerAlleFeaturesCmd(): DeselecteerAlleFeaturesCmd {
   return { type: "DeselecteerAlleFeatures" };
 }
 
-export function SluitInfoBoodschapCmd(id: string, sluit: boolean, msgGen: () => Option<TypedRecord>): SluitInfoBoodschapCmd {
+export function SluitInfoBoodschapCmd(id: string, sluit: boolean, msgGen: () => option.Option<TypedRecord>): SluitInfoBoodschapCmd {
   return { type: "SluitInfoBoodschap", id, sluit, msgGen };
 }
 

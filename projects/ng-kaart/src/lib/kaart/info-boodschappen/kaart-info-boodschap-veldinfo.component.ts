@@ -1,10 +1,7 @@
 import { Component, Input, NgZone } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
-import { option } from "fp-ts";
+import { eq, map, option } from "fp-ts";
 import { constTrue, Function1, Function2, Predicate } from "fp-ts/lib/function";
-import * as map from "fp-ts/lib/Map";
-import { Option } from "fp-ts/lib/Option";
-import { setoidString } from "fp-ts/lib/Setoid";
 import * as Mustache from "mustache";
 
 import * as arrays from "../../util/arrays";
@@ -58,8 +55,8 @@ const formateerJson = (veld: string, veldtype: string, json: any, formatString: 
 
 const veldnamen: Function1<VeldinfoMap, string[]> = veldbeschrijvingen => [...veldbeschrijvingen.keys()];
 
-const veldbeschrijving: Function2<string, VeldinfoMap, Option<VeldInfo>> = (veld, veldbeschrijvingen) =>
-  map.lookup(setoidString)(veld, veldbeschrijvingen);
+const veldbeschrijving: Function2<string, VeldinfoMap, option.Option<VeldInfo>> = (veld, veldbeschrijvingen) =>
+  map.lookup(eq.eqString)(veld, veldbeschrijvingen);
 
 const hasVeldSatisfying: Function1<Predicate<VeldInfo>, Function2<VeldinfoMap, string, boolean>> = test => (veldbeschrijvingen, veld) =>
   veldbeschrijving(veld, veldbeschrijvingen).exists(test);
@@ -134,7 +131,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     this.kaartInfoBoodschapComponent.scrollIntoView();
   }
 
-  lengte(): Option<number> {
+  lengte(): option.Option<number> {
     return option
       .fromNullable(this.waarde(LOCATIE_LENGTE))
       .map(Math.round)
@@ -142,7 +139,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       .orElse(() => option.fromNullable(this.waarde(LOCATIE_GEOMETRY_LENGTE)).map(Math.round));
   }
 
-  breedte(): Option<string> {
+  breedte(): option.Option<string> {
     return option.fromNullable(this.waarde(BREEDTE)).map(b => b.toString());
   }
 
@@ -231,7 +228,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       .getOrElse("");
   }
 
-  private afstand(afstandVeld: string): Option<string> {
+  private afstand(afstandVeld: string): option.Option<string> {
     return option.fromNullable(this.waarde(afstandVeld)).map(this.signed);
   }
 
@@ -329,7 +326,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     );
   }
 
-  constante(veld: string): Option<string> {
+  constante(veld: string): option.Option<string> {
     return (
       veldbeschrijving(veld, this.veldbeschrijvingen)
         .chain(veldInfo => option.fromNullable(veldInfo.constante))
@@ -344,11 +341,11 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     );
   }
 
-  parseFormat(veldnaam: string): Option<string> {
+  parseFormat(veldnaam: string): option.Option<string> {
     return veldbeschrijving(veldnaam, this.veldbeschrijvingen).chain(veldInfo => option.fromNullable(veldInfo.parseFormat));
   }
 
-  displayFormat(veldnaam: string): Option<string> {
+  displayFormat(veldnaam: string): option.Option<string> {
     return veldbeschrijving(veldnaam, this.veldbeschrijvingen).chain(veldInfo =>
       option.fromNullable(veldInfo.displayFormat).orElse(() => option.fromNullable(veldInfo.parseFormat))
     );
@@ -378,7 +375,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     });
   }
 
-  private maybeDateWaarde(veldnaam: string): Option<string> {
+  private maybeDateWaarde(veldnaam: string): option.Option<string> {
     return this.constante(veldnaam).orElse(() => {
       const waarde = nestedPropertyValue(veldnaam, this.properties);
       return option
@@ -396,7 +393,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     return this.maybeDateWaarde(veldnaam).isSome();
   }
 
-  private maybeDateTimeWaarde(veldnaam: string): Option<string> {
+  private maybeDateTimeWaarde(veldnaam: string): option.Option<string> {
     return this.constante(veldnaam).orElse(() => {
       const waarde = nestedPropertyValue(veldnaam, this.properties);
       return option
@@ -421,7 +418,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       .getOrElse("");
   }
 
-  private pos(positieVeld: string): Option<string> {
+  private pos(positieVeld: string): option.Option<string> {
     return option
       .fromNullable(this.waarde(positieVeld))
       .filter(positie => typeof positie === "number")

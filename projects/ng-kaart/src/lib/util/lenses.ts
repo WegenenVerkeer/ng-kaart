@@ -1,6 +1,5 @@
-import { array } from "fp-ts/lib/Array";
+import { array, option } from "fp-ts";
 import { Predicate } from "fp-ts/lib/function";
-import { fromNullable, Option } from "fp-ts/lib/Option";
 import { fromTraversable, Lens, Optional, Prism, Traversal } from "monocle-ts";
 
 /**
@@ -10,7 +9,7 @@ import { fromTraversable, Lens, Optional, Prism, Traversal } from "monocle-ts";
  */
 export const mapToOptionalByKey: <K, V>(key: K) => Optional<Map<K, V>, V> = key =>
   new Optional(
-    map => fromNullable(map.get(key)), //
+    map => option.fromNullable(map.get(key)), //
     value => map => map.set(key, value)
   );
 
@@ -27,7 +26,7 @@ export interface NumberMapped<V> {
 
 export const numberMapOptional: <V>(k: number) => Optional<NumberMapped<V>, V> = k =>
   new Optional(
-    map => fromNullable(map[k]),
+    map => option.fromNullable(map[k]),
     v => map => {
       const cloned = { ...map }; // een ondiepe clone is goed genoeg als V immutable is
       cloned[k] = v;
@@ -41,9 +40,9 @@ export const removeFromNumberMap: <V>(k: number) => (_: NumberMapped<V>) => Numb
   return cloned;
 };
 
-export const numberMapLens: <V>(k: number) => Lens<NumberMapped<V>, Option<V>> = k =>
+export const numberMapLens: <V>(k: number) => Lens<NumberMapped<V>, option.Option<V>> = k =>
   new Lens(
-    map => fromNullable(map[k]),
+    map => option.fromNullable(map[k]),
     mv => map => {
       const cloned = { ...map }; // een ondiepe clone is goed genoeg als V immutable is
       mv.foldL(
@@ -60,7 +59,7 @@ export const numberMapLens: <V>(k: number) => Lens<NumberMapped<V>, Option<V>> =
 // Ik geloof dat er wel wat mogelijk is met type wizardry om deze 2 functies in 1 te draaien
 export const stringMapOptional: <V>(k: string) => Optional<StringMapped<V>, V> = k =>
   new Optional(
-    map => fromNullable(map[k]),
+    map => option.fromNullable(map[k]),
     v => map => {
       const cloned = { ...map }; // een ondiepe clone is goed genoeg als V immutable is
       cloned[k] = v;
@@ -74,9 +73,9 @@ export const removeFromStringMap: <V>(k: string) => (_: StringMapped<V>) => Stri
   return cloned;
 };
 
-export const stringMapLens: <V>(k: string) => Lens<StringMapped<V>, Option<V>> = k =>
+export const stringMapLens: <V>(k: string) => Lens<StringMapped<V>, option.Option<V>> = k =>
   new Lens(
-    map => fromNullable(map[k]),
+    map => option.fromNullable(map[k]),
     mv => map => {
       const cloned = { ...map }; // een ondiepe clone is goed genoeg als V immutable is
       mv.foldL(
@@ -90,7 +89,7 @@ export const stringMapLens: <V>(k: string) => Lens<StringMapped<V>, Option<V>> =
     }
   );
 
-export const arrayTraversal: <A>() => Traversal<A[], A> = fromTraversable(array);
+export const arrayTraversal: <A>() => Traversal<A[], A> = fromTraversable(array.array);
 
 export const selectiveArrayTraversal: <A>(pred: Predicate<A>) => Traversal<A[], A> = <A>(pred: Predicate<A>) =>
-  fromTraversable(array)<A>().composePrism(Prism.fromPredicate<A>(pred));
+  arrayTraversal<A>().composePrism(Prism.fromPredicate<A>(pred));

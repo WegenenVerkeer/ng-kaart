@@ -1,5 +1,5 @@
 import { Component, NgZone } from "@angular/core";
-import * as array from "fp-ts/lib/Array";
+import { array } from "fp-ts";
 import { not, Predicate } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import {

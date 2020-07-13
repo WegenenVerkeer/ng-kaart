@@ -1,8 +1,5 @@
-import { array, option, ord, setoid } from "fp-ts";
+import { array, eq, option, ord, setoid } from "fp-ts";
 import { Endomorphism, flow, Function1, Predicate } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
-import { Ord } from "fp-ts/lib/Ord";
-import { Setoid } from "fp-ts/lib/Setoid";
 import { Getter, Lens } from "monocle-ts";
 
 import * as arrays from "../../util/arrays";
@@ -15,7 +12,7 @@ export interface FieldSelection {
   readonly name: string;
   readonly label: string;
   readonly selected: boolean;
-  readonly sortDirection: Option<SortDirection>;
+  readonly sortDirection: option.Option<SortDirection>;
   readonly contributingVeldinfos: ke.VeldInfo[]; // voor de synthetische velden
 }
 
@@ -25,14 +22,16 @@ export namespace FieldSelection {
   export const contributingVeldinfosGetter: Getter<FieldSelection, ke.VeldInfo[]> = Lens.fromProp<FieldSelection>()(
     "contributingVeldinfos"
   ).asGetter();
-  export const maybeSortDirectionLens: Lens<FieldSelection, Option<SortDirection>> = Lens.fromProp<FieldSelection>()("sortDirection");
+  export const maybeSortDirectionLens: Lens<FieldSelection, option.Option<SortDirection>> = Lens.fromProp<FieldSelection>()(
+    "sortDirection"
+  );
   export const isSelected: Predicate<FieldSelection> = selectedLens.get;
   export const isSortField: Predicate<FieldSelection> = flow(
     maybeSortDirectionLens.get,
     option.isSome
   );
 
-  const basisVeldOrd: Ord<ke.VeldInfo> = ord.contramap(ke.VeldInfo.isBasisveldLens.get)(ord.getDualOrd(ord.ordBoolean));
+  const basisVeldOrd: ord.Ord<ke.VeldInfo> = ord.contramap(ke.VeldInfo.isBasisveldLens.get)(ord.getDualOrd(ord.ordBoolean));
 
   const hasSupportedType: (vi: ke.VeldInfo) => boolean = ke.VeldInfo.matchWithFallback({
     boolean: () => true,
@@ -69,13 +68,13 @@ export namespace FieldSelection {
     array.map(nameLens.get)
   );
 
-  export const setoidFieldSelection: Setoid<FieldSelection> = setoid.getStructSetoid({
-    name: setoid.setoidString,
-    selected: setoid.setoidBoolean,
+  export const setoidFieldSelection: eq.Eq<FieldSelection> = eq.getStructEq({
+    name: eq.eqString,
+    selected: eq.eqBoolean,
     sortDirection: option.getSetoid(SortDirection.setoidSortDirection)
   });
 
-  export const setoidFieldSelectionByKey: Setoid<FieldSelection> = setoid.contramap(nameLens.get, setoid.setoidString);
+  export const setoidFieldSelectionByKey: eq.Eq<FieldSelection> = setoid.contramap(nameLens.get, eq.eqString);
 
   export const selectFirstField: Endomorphism<FieldSelection[]> = array.mapWithIndex<FieldSelection, FieldSelection>((i, field) =>
     selectedLens.modify(set => set || i === 0)(field)

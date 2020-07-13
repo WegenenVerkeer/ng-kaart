@@ -1,7 +1,6 @@
+import { array, eq, option, set } from "fp-ts";
 import { Endomorphism, Function1, Function2, Predicate } from "fp-ts/lib/function";
-import { fromPredicate, none, Option, some } from "fp-ts/lib/Option";
-import * as set from "fp-ts/lib/Set";
-import { getArraySetoid, Setoid, setoidNumber, setoidString } from "fp-ts/lib/Setoid";
+
 import proj4 from "proj4";
 
 import { Consumer1, PartialFunction1 } from "../util/function";
@@ -42,19 +41,20 @@ export const roundCoordinate: Function2<ol.Coordinate, number, ol.Coordinate> = 
 export const formatCoordinate: (_: number) => (_: ol.Coordinate) => string = decimals => coordinate =>
   `${coordinate[0].toFixed(decimals)}, ${coordinate[1].toFixed(decimals)}`;
 
-export const parseCoordinate: (_: string) => Option<ol.Coordinate> = coordTxt => {
+export const parseCoordinate: (_: string) => option.Option<ol.Coordinate> = coordTxt => {
   const coords = coordTxt
     .split(",")
     .map(s => Number(s))
     .filter(n => !isNaN(n));
-  return fromPredicate((cs: number[]) => cs.length === 2)(coords) as Option<ol.Coordinate>;
+  return option.fromPredicate((cs: number[]) => cs.length === 2)(coords) as option.Option<ol.Coordinate>;
 };
 
 const supportedProjections = new Set(Epsg.all);
 
-const stringIntersector = set.intersection(setoidString);
+const stringIntersector = set.intersection(eq.eqString);
 
-const first: Function1<Set<string>, Option<string>> = (xs: Set<string>) => (xs.size > 0 ? some(xs.values().next().value) : none);
+const first: Function1<Set<string>, option.Option<string>> = (xs: Set<string>) =>
+  xs.size > 0 ? option.some(xs.values().next().value) : option.none;
 
 export const supportedProjection: PartialFunction1<string[], string> = projections =>
   first(stringIntersector(supportedProjections, new Set(projections)));
@@ -99,7 +99,7 @@ updateExtent(Epsg.GoogleMercator);
 updateExtent(Epsg.Wgs84);
 
 export namespace Coordinates {
-  export const setoid: Setoid<ol.Coordinate> = getArraySetoid(setoidNumber);
+  export const setoid: eq.Eq<ol.Coordinate> = array.getEq(eq.eqNumber);
   export const equalTo: Function1<ol.Coordinate, Predicate<ol.Coordinate>> = coord1 => coord2 => setoid.equals(coord1, coord2);
   export const equal: Function2<ol.Coordinate, ol.Coordinate, boolean> = (coord1, coord2) => setoid.equals(coord1, coord2);
 }

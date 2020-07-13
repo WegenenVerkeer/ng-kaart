@@ -1,5 +1,5 @@
+import { option } from "fp-ts";
 import { Function3 } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
 
 export type LegendeItem = LijnItem | BolletjeItem | PolygoonItem | ImageItem;
 
@@ -7,7 +7,7 @@ export interface LijnItem {
   readonly type: "Lijn";
   readonly beschrijving: string;
   readonly kleur: string;
-  readonly achtergrondKleur: Option<string>;
+  readonly achtergrondKleur: option.Option<string>;
 }
 
 export interface BolletjeItem {
@@ -40,7 +40,7 @@ export function Legende(items: LegendeItem[]) {
   return { items: items };
 }
 
-export const LijnItem: Function3<string, string, Option<string>, LijnItem> = (beschrijving, kleur, achtergrondKleur) => ({
+export const LijnItem: Function3<string, string, option.Option<string>, LijnItem> = (beschrijving, kleur, achtergrondKleur) => ({
   type: "Lijn",
   beschrijving: beschrijving,
   kleur: kleur,
