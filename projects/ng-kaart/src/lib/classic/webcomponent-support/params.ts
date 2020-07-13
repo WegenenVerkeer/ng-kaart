@@ -1,5 +1,5 @@
+import { option } from "fp-ts";
 import { Function1, Function2, identity } from "fp-ts/lib/function";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
 import * as ke from "../../kaart/kaart-elementen";
 import { kaartLogger } from "../../kaart/log";
@@ -22,7 +22,7 @@ import { validationChain } from "../../util/validation";
  */
 
 export type ParamGetter<A> = Function2<A, A, A>;
-export type OptionalParamGetter<A> = Function1<A, Option<A>>;
+export type OptionalParamGetter<A> = Function1<A, option.Option<A>>;
 
 const parseJSON: (param: string) => json.Validation<Object> = param => {
   try {
@@ -39,7 +39,7 @@ const getParameter: <A>(_: json.Interpreter<A>) => ParamGetter<A> = interpreter 
       return fallback;
     });
   } else {
-    return fromNullable(param).getOrElse(fallback);
+    return option.fromNullable(param).getOrElse(fallback);
   }
 };
 
@@ -52,29 +52,29 @@ export function enu<T extends string>(param: string | T, fallback: T, ...values:
         return fallback;
       });
   } else {
-    return fromNullable(param as T).getOrElse(fallback);
+    return option.fromNullable(param as T).getOrElse(fallback);
   }
 }
 
-export function optEnu<T extends string>(param: string | Option<T>, ...values: T[]): Option<T> {
+export function optEnu<T extends string>(param: string | option.Option<T>, ...values: T[]): option.Option<T> {
   if (typeof param === "string") {
     return json
       .optional(json.enu(...values))(param)
       .getOrElse(
-        none // Dit kan niet omdat json.optional zelf al none returnt
+        option.none // Dit kan niet omdat json.optional zelf al option.none returnt
       );
   } else {
-    return fromNullable(param as Option<T>).getOrElse(none);
+    return option.fromNullable(param as option.Option<T>).getOrElse(option.none);
   }
 }
 
 const getOptionalParameter: <A>(_: json.Interpreter<A>) => OptionalParamGetter<A> = interpreter => param => {
   if (typeof param === "string") {
     return validationChain(parseJSON(param), json.optional(interpreter)).getOrElse(
-      none // Dit kan niet omdat json.optional zelf al none returnt
+      option.none // Dit kan niet omdat json.optional zelf al option.none returnt
     );
   } else {
-    return some(param);
+    return option.some(param);
   }
 };
 
@@ -84,9 +84,9 @@ export const strOpt: ParamGetter<string | undefined> = identity;
 
 export const optStr: OptionalParamGetter<string> = param => {
   if (param) {
-    return some(param);
+    return option.some(param);
   } else {
-    return none;
+    return option.none;
   }
 };
 

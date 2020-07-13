@@ -1,8 +1,5 @@
-import { array, eq, option, ord, setoid } from "fp-ts";
-import { Either } from "fp-ts/lib/Either";
+import { array, either, eq, option, ord } from "fp-ts";
 import { identity, pipe, Predicate, Refinement } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
-import { Setoid } from "fp-ts/lib/Setoid";
 
 import { PartialFunction1 } from "./function";
 
@@ -19,17 +16,19 @@ export const length: <A>(as: A[]) => number = as => as.length;
 
 export const pure: <A>() => A[] = () => [];
 
-const findOffsetElement: <A>(as: Array<A>) => (p: Predicate<A>) => (offset: number) => Option<A> = as => predicate => offset =>
+const findOffsetElement: <A>(as: Array<A>) => (p: Predicate<A>) => (offset: number) => option.Option<A> = as => predicate => offset =>
   array.findIndex(as, predicate).chain(i => array.lookup(i + offset, as));
 
-export const previousElement: <A>(as: Array<A>) => (p: Predicate<A>) => Option<A> = as => predicate => findOffsetElement(as)(predicate)(-1);
+export const previousElement: <A>(as: Array<A>) => (p: Predicate<A>) => option.Option<A> = as => predicate =>
+  findOffsetElement(as)(predicate)(-1);
 
-export const nextElement: <A>(as: Array<A>) => (p: Predicate<A>) => Option<A> = as => predicate => findOffsetElement(as)(predicate)(1);
+export const nextElement: <A>(as: Array<A>) => (p: Predicate<A>) => option.Option<A> = as => predicate =>
+  findOffsetElement(as)(predicate)(1);
 
-export const insertAfter: <A>(as: Array<A>) => (p: Predicate<A>) => (a: A) => Option<Array<A>> = as => predicate => a =>
+export const insertAfter: <A>(as: Array<A>) => (p: Predicate<A>) => (a: A) => option.Option<Array<A>> = as => predicate => a =>
   array.findIndex(as, predicate).chain(i => array.insertAt(i + 1, a, as));
 
-export const deleteFirst: <A>(as: Array<A>) => (p: Predicate<A>) => Option<Array<A>> = as => predicate =>
+export const deleteFirst: <A>(as: Array<A>) => (p: Predicate<A>) => option.Option<Array<A>> = as => predicate =>
   array.findIndex(as, predicate).chain(i => array.deleteAt(i, as));
 
 export const splitInChunks = <A>(as: Array<A>, aantalChunks: number): Array<Array<A>> => {
@@ -37,15 +36,15 @@ export const splitInChunks = <A>(as: Array<A>, aantalChunks: number): Array<Arra
   return array.chunksOf(as, chunkSize);
 };
 
-export const fromOption: <A>(maybeArray: Option<A[]>) => A[] = mas => mas.fold(pure(), identity);
-export const fromEither: <L, A>(eitherArray: Either<L, A[]>) => A[] = pipe(
+export const fromOption: <A>(maybeArray: option.Option<A[]>) => A[] = mas => mas.fold(pure(), identity);
+export const fromEither: <L, A>(eitherArray: either.Either<L, A[]>) => A[] = pipe(
   option.fromEither,
   fromOption
 );
 export const fromNullable: <A>(aOrAs: null | undefined | A | A[]) => A[] = aOrAs => option.fromNullable(aOrAs).fold([], toArray);
 
 /**
- * Finds the first element of an array according to some ordering.
+ * Finds the first element of an array according to option.some ordering.
  * @param order The Ord to use as a comparison
  */
 export const findFirstBy: <A>(order: ord.Ord<A>) => PartialFunction1<A[], A> = order => as =>
@@ -71,10 +70,10 @@ export const forAll: <A>(pred: Predicate<A>) => (as: A[]) => boolean = pred =>
 /**
  * True iff the first array contains all elements of the second array.
  */
-export const containsAll = <A>(eq: setoid.Setoid<A>) => (as: A[], bs: A[]): boolean => forAll((b: A) => array.elem(eq)(b, as))(bs);
+export const containsAll = <A>(eq: eq.Eq<A>) => (as: A[], bs: A[]): boolean => forAll((b: A) => array.elem(eq)(b, as))(bs);
 
-export const getStringsSetoid: Setoid<string[]> = array.getSetoid(setoid.setoidString);
+export const getStringsSetoid: eq.Eq<string[]> = array.getSetoid(eq.eqString);
 
 export const isOneOf = <A>(...as: A[]) => (a: A): boolean => array.elem(eq.fromEquals(eq.strictEqual))(a, as);
 
-export const asSingleton = <A>(as: A[]): Option<A[]> => (as.length === 1 ? option.some(as) : option.none);
+export const asSingleton = <A>(as: A[]): option.Option<A[]> => (as.length === 1 ? option.some(as) : option.none);

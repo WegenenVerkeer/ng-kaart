@@ -1,5 +1,5 @@
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 import { Subject } from "rxjs";
 import { distinctUntilChanged, map, skipWhile } from "rxjs/operators";
 import * as uuid from "uuid";
@@ -142,10 +142,10 @@ export class KaartTekenLaagComponent extends KaartChildDirective implements OnIn
       magGetoondWorden: true,
       transparantie: Transparantie.opaak,
       laaggroep: "Tools",
-      legende: none,
-      stijlInLagenKiezer: none,
-      filterinstellingen: none,
-      laagtabelinstellingen: none,
+      legende: option.none,
+      stijlInLagenKiezer: option.none,
+      filterinstellingen: option.none,
+      laagtabelinstellingen: option.none,
       wrapper: kaartLogOnlyWrapper
     });
 
@@ -177,20 +177,20 @@ export class KaartTekenLaagComponent extends KaartChildDirective implements OnIn
       type: ke.VectorType,
       titel: TekenLaagNaam,
       source: source,
-      clusterDistance: none,
+      clusterDistance: option.none,
       styleSelector: tekenSettings.laagStyle.orElse(() => asStyleSelector(defaultlaagStyle)),
-      styleSelectorBron: none,
-      selectieStyleSelector: none,
-      hoverStyleSelector: none,
+      styleSelectorBron: option.none,
+      selectieStyleSelector: option.none,
+      hoverStyleSelector: option.none,
       selecteerbaar: false,
       hover: false,
       minZoom: 2,
       maxZoom: 15,
-      offsetveld: none,
+      offsetveld: option.none,
       velden: new Map<string, VeldInfo>(),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false,
-      filter: none
+      filter: option.none
     };
   }
 
@@ -265,21 +265,21 @@ export class KaartTekenLaagComponent extends KaartChildDirective implements OnIn
   private volgendeVolgnummer(): number {
     const maxVolgNummer = this.source
       .getFeatures()
-      .map(feature => fromNullable(feature.get("volgnummer")))
+      .map(feature => option.fromNullable(feature.get("volgnummer")))
       .filter(optional => optional.isSome())
       .map(optional => optional.toNullable())
       .reduce((maxVolgNummer: number, volgNummer: number) => Math.max(maxVolgNummer, volgNummer), 0);
     return maxVolgNummer + 1;
   }
 
-  tooltipCoord(geometry: ol.geom.Geometry): Option<ol.Coordinate> {
+  tooltipCoord(geometry: ol.geom.Geometry): option.Option<ol.Coordinate> {
     switch (geometry.getType()) {
       case "Polygon":
-        return some((geometry as ol.geom.Polygon).getInteriorPoint().getCoordinates());
+        return option.some((geometry as ol.geom.Polygon).getInteriorPoint().getCoordinates());
       case "LineString":
-        return some((geometry as ol.geom.LineString).getLastCoordinate());
+        return option.some((geometry as ol.geom.LineString).getLastCoordinate());
       default:
-        return none;
+        return option.none;
     }
   }
 }

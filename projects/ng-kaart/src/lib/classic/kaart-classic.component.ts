@@ -11,9 +11,8 @@ import {
   SimpleChanges,
   ViewChild
 } from "@angular/core";
+import { option } from "fp-ts";
 import { Function1, pipe } from "fp-ts/lib/function";
-import * as option from "fp-ts/lib/Option";
-import { fromEither, none, Option, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { debounceTime, map, share, switchMap, tap } from "rxjs/operators";
 
@@ -112,15 +111,15 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
   /** @ignore */
   readonly kaartMsgObservableConsumer: KaartMsgObservableConsumer;
 
-  _zoom: Option<number> = none;
+  _zoom: option.Option<number> = option.none;
   _minZoom = 1;
   _maxZoom = 15;
-  _middelpunt: Option<ol.Coordinate> = none;
-  _breedte: Option<number> = none;
-  _hoogte: Option<number> = none;
+  _middelpunt: option.Option<ol.Coordinate> = option.none;
+  _breedte: option.Option<number> = option.none;
+  _hoogte: option.Option<number> = option.none;
   _kaartLinksBreedte: number;
-  _mijnLocatieZoom: Option<number> = none;
-  _extent: Option<ol.Extent> = none;
+  _mijnLocatieZoom: option.Option<number> = option.none;
+  _extent: option.Option<ol.Extent> = option.none;
   _selectieModus: prt.SelectieModus = "none";
   _hoverModus: prt.HoverModus = "off";
   _naam = "kaart" + KaartClassicComponent.counter++;
@@ -222,7 +221,7 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
   @Output()
   zichtbareFeatures: EventEmitter<Array<ol.Feature>> = new EventEmitter();
   @Output()
-  hoverFeature: EventEmitter<Option<ol.Feature>> = new EventEmitter();
+  hoverFeature: EventEmitter<option.Option<ol.Feature>> = new EventEmitter();
   @Output()
   achtergrondLagen: EventEmitter<Array<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
@@ -370,7 +369,7 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
             // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
             return selectionBuffer.next(msg.geselecteerdeFeatures.geselecteerd);
           case "FeatureHoverAangepast":
-            return this.hoverFeature.emit(fromEither(msg.feature.hover));
+            return this.hoverFeature.emit(option.fromEither(msg.feature.hover));
           case "ZichtbareFeaturesAangepast":
             return this.zichtbareFeatures.emit(msg.features);
           case "FeatureGedeselecteerd":
@@ -409,7 +408,7 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
     // De volgorde van de dispatching hier is van belang voor wat de overhand heeft
     this._zoom.foldL(nop, zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
     this._extent.foldL(nop, extent => this.dispatch(prt.VeranderExtentCmd(extent)));
-    this._middelpunt.foldL(nop, middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, none)));
+    this._middelpunt.foldL(nop, middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, option.none)));
     if (this._breedte.isSome() || this._hoogte.isSome()) {
       this.dispatch(prt.VeranderViewportCmd([this._breedte.toUndefined(), this._hoogte.toUndefined()]));
     }
@@ -432,7 +431,7 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
     forChangedValue(
       changes,
       "middelpunt",
-      middelpuntOpt => forEach(middelpuntOpt, middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, none))),
+      middelpuntOpt => forEach(middelpuntOpt, middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, option.none))),
       val.optCoord
     );
     forChangedValue(
@@ -552,10 +551,10 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
         id: featureId,
         titel: Feature.getLaagnaam(feature).getOrElse("Onbekende laag"),
         feature: feature,
-        bron: none,
+        bron: option.none,
         sluit: "DOOR_APPLICATIE",
-        laag: none,
-        verbergMsgGen: () => some(KaartClassicMsg(FeatureGedeselecteerdMsg(feature)))
+        laag: option.none,
+        verbergMsgGen: () => option.some(KaartClassicMsg(FeatureGedeselecteerdMsg(feature)))
       })
     );
   }

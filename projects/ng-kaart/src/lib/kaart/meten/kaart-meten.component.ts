@@ -1,5 +1,5 @@
 import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
-import { none, some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 import * as rx from "rxjs";
 import { map, takeUntil, tap } from "rxjs/operators";
 
@@ -88,7 +88,7 @@ export class KaartMetenComponent extends KaartModusDirective implements OnInit, 
         internalMsgSubscriptionCmdOperator(
           this.kaartComponent.internalCmdDispatcher,
           prt.GeometryChangedSubscription(
-            TekenSettings(ol.geom.GeometryType.POLYGON, none, none, none, this.meerdereGeometrieen),
+            TekenSettings(ol.geom.GeometryType.POLYGON, option.none, option.none, option.none, this.meerdereGeometrieen),
             tekenResultaatWrapper
           )
         )
@@ -127,7 +127,7 @@ export class KaartMetenComponent extends KaartModusDirective implements OnInit, 
         observeOnAngular(this.zone)
       )
       .subscribe(msg => {
-        const infoSluitCallback = () => some(verwijderTekenFeatureWrapper(msg.featureId));
+        const infoSluitCallback = () => option.some(verwijderTekenFeatureWrapper(msg.featureId));
 
         this.getekendeGeom.next(msg.geometry);
         if (this.toonInfoBoodschap) {
@@ -137,9 +137,9 @@ export class KaartMetenComponent extends KaartModusDirective implements OnInit, 
               type: "InfoBoodschapAlert",
               titel: "Meten " + msg.volgnummer + ":",
               sluit: "VANZELF",
-              bron: some("meten"),
+              bron: option.some("meten"),
               message: this.helpText(msg.geometry),
-              iconName: some("straighten"),
+              iconName: option.some("straighten"),
               verbergMsgGen: infoSluitCallback
             })
           );

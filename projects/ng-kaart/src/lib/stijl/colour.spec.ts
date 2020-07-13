@@ -1,4 +1,4 @@
-import { none, some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import { kleurcode, kleurcodeValue, kleurnaam, kleurnaamValue, setOpacity, toKleur, toKleurUnsafe } from "./colour";
 
@@ -40,7 +40,7 @@ describe("Een kleur", () => {
       describe("op de 'veilige' manier", () => {
         const gefaaldRood = toKleur("rood", "ff0000");
         it("moet none opleveren", () => {
-          expect(gefaaldRood).toEqual(none);
+          expect(gefaaldRood).toEqual(option.none);
         });
       });
     });
@@ -50,14 +50,14 @@ describe("Een kleur", () => {
         expect(blauw.isSome()).toEqual(true);
       });
       it("moet de componenten omvatten", () => {
-        expect(blauw.map(kleurnaamValue)).toEqual(some("blauw"));
-        expect(blauw.map(kleurcodeValue)).toEqual(some("#0000ffff"));
+        expect(blauw.map(kleurnaamValue)).toEqual(option.some("blauw"));
+        expect(blauw.map(kleurcodeValue)).toEqual(option.some("#0000ffff"));
       });
     });
     describe("op basis van een lege naam", () => {
       it("moet falen", () => {
         const slechteNaam = toKleur("", "#ff0000");
-        expect(slechteNaam).toEqual(none);
+        expect(slechteNaam).toEqual(option.none);
       });
     });
   });

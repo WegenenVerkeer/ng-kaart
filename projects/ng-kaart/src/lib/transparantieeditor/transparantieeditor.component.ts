@@ -1,16 +1,15 @@
 import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
-import * as array from "fp-ts/lib/Array";
+import { array, option } from "fp-ts";
 import { Function2, identity } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, sample, shareReplay, startWith, tap } from "rxjs/operators";
-import { isNumber } from "util";
 
 import { KaartChildDirective } from "../kaart/kaart-child.directive";
 import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
+import { isNumber } from "../util/number";
 import { collectOption, forEvery } from "../util/operators";
 
 import { isAanpassingBezig, isAanpassingNietBezig, TransparantieaanpassingBezig } from "./state";
@@ -40,7 +39,7 @@ export class TransparantieeditorComponent extends KaartChildDirective {
 
     this.zichtbaar$ = kaart.modelChanges.transparantieaanpassingState$.pipe(map(isAanpassingBezig));
 
-    const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], Option<ke.ToegevoegdeLaag>> = (titel, lgn) =>
+    const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], option.Option<ke.ToegevoegdeLaag>> = (titel, lgn) =>
       array.findFirst(lgn, lg => lg.titel === titel);
     const laag$: rx.Observable<ke.ToegevoegdeLaag> = forEvery(aanpassing$)(aanpassing =>
       kaart.modelChanges.lagenOpGroep[aanpassing.laag.laaggroep].pipe(

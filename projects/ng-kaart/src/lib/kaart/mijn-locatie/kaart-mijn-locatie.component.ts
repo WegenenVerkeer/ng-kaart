@@ -1,8 +1,8 @@
 import { BreakpointObserver, Breakpoints } from "@angular/cdk/layout";
 import { AfterViewInit, Component, NgZone, OnInit, QueryList, ViewChildren } from "@angular/core";
 import { MatButton } from "@angular/material/button";
+import { option } from "fp-ts";
 import { Function1, Predicate } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
 import { AbsoluteOrientationSensor } from "motion-sensors-polyfill";
 import * as rx from "rxjs";
 import {
@@ -70,7 +70,7 @@ const isEventRelevant = (event: EventMetVerschil) => {
 };
 
 interface TrackingInfo {
-  readonly feature: Option<ol.Feature>;
+  readonly feature: option.Option<ol.Feature>;
   readonly zoom: number;
   readonly accuracy: number;
   readonly doelzoom: number;
@@ -190,7 +190,7 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = inf
     });
   }
 
-  function kijkrichtingStyle(info: TrackingInfo, radius: number): Option<ol.style.Style> {
+  function kijkrichtingStyle(info: TrackingInfo, radius: number): option.Option<ol.style.Style> {
     if (moetKijkrichtingTonen(info.state)) {
       const radius2 = 50;
 
@@ -229,10 +229,10 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = inf
             rotation: info.currentRotation - (info.rotatie + Math.PI / 4)
           })
         });
-        return some(buitenArc);
+        return option.some(buitenArc);
       }
     }
-    return none;
+    return option.none;
   }
 
   return (_: ol.Feature, resolution: number) => {
@@ -241,7 +241,7 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = inf
 
     const binnencirkel: ol.style.Style = binnencirkelStyle();
     const buitencirkel: ol.style.Style = buitencirkelStyle(radius);
-    const kijkrichting: Option<ol.style.Style> = kijkrichtingStyle(info, radius);
+    const kijkrichting: option.Option<ol.style.Style> = kijkrichtingStyle(info, radius);
 
     return kijkrichting.map(arc => [binnencirkel, buitencirkel, arc]).getOrElse([binnencirkel, buitencirkel]);
   };
@@ -264,7 +264,7 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
   }
 
   private viewinstellingen$: rx.Observable<Viewinstellingen> = rx.EMPTY;
-  private zoomdoelSetting$: rx.Observable<Option<number>> = rx.EMPTY;
+  private zoomdoelSetting$: rx.Observable<option.Option<number>> = rx.EMPTY;
   private locatieSubj: rx.Subject<Position> = new rx.Subject<Position>();
   private rotatieSubj: rx.Subject<number> = new rx.Subject<number>();
 
@@ -279,9 +279,9 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
   @ViewChildren("locateBtn")
   locateBtnQry: QueryList<MatButton>;
 
-  private mijnLocatie: Option<ol.Feature> = none;
-  private watchId: Option<number> = none;
-  private sensor: Option<AbsoluteOrientationSensor> = none;
+  private mijnLocatie: option.Option<ol.Feature> = option.none;
+  private watchId: option.Option<number> = option.none;
+  private sensor: option.Option<AbsoluteOrientationSensor> = option.none;
 
   private zoomIsGevraagd = false;
   private rotatieIsGevraagd = false;
@@ -300,10 +300,10 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
       magGetoondWorden: true,
       transparantie: Transparantie.opaak,
       laaggroep: "Tools",
-      legende: none,
-      stijlInLagenKiezer: none,
-      filterinstellingen: none,
-      laagtabelinstellingen: none,
+      legende: option.none,
+      stijlInLagenKiezer: option.none,
+      filterinstellingen: option.none,
+      laagtabelinstellingen: option.none,
       wrapper: kaartLogOnlyWrapper
     });
 
@@ -415,7 +415,7 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
             const longLat: ol.Coordinate = [locatie.coords.longitude, locatie.coords.latitude];
             const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
             return {
-              feature: none,
+              feature: option.none,
               zoom,
               accuracy: locatie.coords.accuracy,
               doelzoom: doel,
@@ -440,7 +440,7 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
       )
     ).subscribe(rotatie => {
       this.rotatieIsGevraagd = true;
-      this.dispatch(prt.VeranderRotatieCmd(rotatie, some(250)));
+      this.dispatch(prt.VeranderRotatieCmd(rotatie, option.some(250)));
     });
 
     this.bindToLifeCycle(this.currentState$).subscribe(state => {
@@ -483,11 +483,11 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
     this.eventsSubj.next({ event: "ClickEvent", verschil: 0 });
   }
 
-  private maakNieuwFeature(info: TrackingInfo): Option<ol.Feature> {
+  private maakNieuwFeature(info: TrackingInfo): option.Option<ol.Feature> {
     const feature = new ol.Feature(new ol.geom.Point(info.coordinate));
     feature.setStyle(locatieStijlFunctie(info)); // Opgelet hier word de nieuwe feature niet gebruikt
     this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, [feature], kaartLogOnlyWrapper));
-    return some(feature);
+    return option.some(feature);
   }
 
   private meldFout(fout: PositionError | string) {
@@ -499,15 +499,15 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
 
   private stopPositieTracking() {
     this.watchId.map(watchId => navigator.geolocation.clearWatch(watchId));
-    this.watchId = none;
-    this.mijnLocatie = none;
+    this.watchId = option.none;
+    this.mijnLocatie = option.none;
     this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, <Array<ol.Feature>>[], kaartLogOnlyWrapper));
   }
 
   private startPositieTracking() {
     if (navigator.geolocation) {
       if (this.watchId.isNone()) {
-        this.watchId = some(
+        this.watchId = option.some(
           navigator.geolocation.watchPosition(
             //
             positie => this.locatieSubj.next(positie),
@@ -549,7 +549,7 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
             }
           });
           sensor.start();
-          this.sensor = some(sensor);
+          this.sensor = option.some(sensor);
         } else {
           this.meldFout("Geen toestemming om AbsoluteOrientationSensor te gebruiken");
         }
@@ -561,7 +561,7 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
   private stopRotatieTracking() {
     this.sensor = this.sensor.chain(sensor => {
       sensor.stop();
-      return none;
+      return option.none;
     });
   }
 
@@ -569,7 +569,7 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
     if (moetLocatieTonen(info.state)) {
       this.mijnLocatie = this.mijnLocatie
         .chain(() => {
-          // TODO hier stond voorheen { feature: some(feature), ...info } wat
+          // TODO hier stond voorheen { feature: option.some(feature), ...info } wat
           // wil zeggen dat we op de bestaande feature van info aan het werken
           // waren. Als we daarentegen op de feature van mijnLocatie willen
           // werken, moeten we onderstaande functie aanpassen om een feature te
@@ -600,7 +600,10 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
       // kleine delay om OL tijd te geven eerst de icon te verplaatsen
       this.mijnLocatie.map(feature =>
         setTimeout(
-          () => this.dispatch(prt.VeranderMiddelpuntCmd((<ol.geom.Point>feature.getGeometry()).getCoordinates(), some(TrackingInterval))),
+          () =>
+            this.dispatch(
+              prt.VeranderMiddelpuntCmd((<ol.geom.Point>feature.getGeometry()).getCoordinates(), option.some(TrackingInterval))
+            ),
           50
         )
       );
@@ -612,20 +615,20 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
       type: ke.VectorType,
       titel: MijnLocatieLaagNaam,
       source: new ol.source.Vector(),
-      clusterDistance: none,
-      styleSelector: none,
-      styleSelectorBron: none,
-      selectieStyleSelector: none,
-      hoverStyleSelector: none,
+      clusterDistance: option.none,
+      styleSelector: option.none,
+      styleSelectorBron: option.none,
+      selectieStyleSelector: option.none,
+      hoverStyleSelector: option.none,
       selecteerbaar: false,
       hover: false,
       minZoom: 2,
       maxZoom: 15,
       velden: new Map<string, ke.VeldInfo>(),
-      offsetveld: none,
+      offsetveld: option.none,
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false,
-      filter: none
+      filter: option.none
     };
   }
 }

@@ -1,5 +1,5 @@
+import { option } from "fp-ts";
 import { Function1, Function2 } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
 
 import * as ol from "../../util/openlayers-compat";
 
@@ -18,7 +18,7 @@ export interface Waypoint {
 
 export interface AddWaypoint {
   readonly type: "AddWaypoint";
-  readonly previous: Option<Waypoint>;
+  readonly previous: option.Option<Waypoint>;
   readonly waypoint: Waypoint;
 }
 
@@ -29,7 +29,7 @@ export interface RemoveWaypoint {
 
 export const Waypoint: Function2<WaypointId, ol.Coordinate, Waypoint> = (id, location) => ({ id: id, location: location });
 
-export const AddWaypoint: Function2<Option<Waypoint>, Waypoint, AddWaypoint> = (previous, waypoint) => ({
+export const AddWaypoint: Function2<option.Option<Waypoint>, Waypoint, AddWaypoint> = (previous, waypoint) => ({
   type: "AddWaypoint",
   previous: previous,
   waypoint: waypoint

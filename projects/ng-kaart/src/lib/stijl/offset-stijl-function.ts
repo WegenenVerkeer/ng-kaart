@@ -1,5 +1,4 @@
-import * as option from "fp-ts/lib/Option";
-import { Option } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import { kaartLogger } from "../kaart/log";
 import * as ol from "../util/openlayers-compat";
@@ -66,7 +65,7 @@ export function offsetStyleFunction(
   return offsetStyleFunc;
 }
 
-function getValue(feature: ol.Feature, field: string): Option<string> {
+function getValue(feature: ol.Feature, field: string): option.Option<string> {
   return option.fromNullable(feature.get("properties")).chain(properties => option.fromNullable(properties[field]));
 }
 

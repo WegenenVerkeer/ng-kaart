@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, NgZone, OnDestroy, ViewChild } from "@angular/core";
-import * as option from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import { KaartChildDirective } from "../kaart-child.directive";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";

@@ -1,7 +1,6 @@
-import { array } from "fp-ts/lib/Array";
-import { Function1, Function2, pipe } from "fp-ts/lib/function";
-import * as option from "fp-ts/lib/Option";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { array, option } from "fp-ts";
+import { flow, Function1, Function2 } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import * as ol from "../util/openlayers-compat";
 import { composeValidators2, validationChain as chain, Validator } from "../util/validation";
@@ -47,7 +46,7 @@ interface RuleStyle {
 
 const RuleStyleConfig: Function1<RuleStyle[], RuleStyleConfig> = rules => ({ rules: rules });
 const alwaysTrue: Expression = { kind: "Literal", value: true };
-const RuleStyle: Function2<Option<Expression>, olStyle, RuleStyle> = (maybeCondition, style) => ({
+const RuleStyle: Function2<option.Option<Expression>, olStyle, RuleStyle> = (maybeCondition, style) => ({
   condition: maybeCondition.getOrElse(alwaysTrue),
   style: style
 });
@@ -114,7 +113,7 @@ const jsonAwvV0RuleConfig: Function1<AwvV0DynamicStyle, RuleStyleConfig> = style
   }))
 });
 
-export const jsonAwvV0RuleCompiler: Validator<AwvV0DynamicStyle, ol.style.StyleFunction> = pipe(
+export const jsonAwvV0RuleCompiler: Validator<AwvV0DynamicStyle, ol.style.StyleFunction> = flow(
   jsonAwvV0RuleConfig,
   compileRules
 );
@@ -132,8 +131,8 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.style.StyleFuncti
   }
 
   // Evaluator is een functie die at runtime aangeroepen wordt en de context omzet in misschien een waarde.
-  // De Option is nodig omdat properties in een feature niet noodzakelijk aanwezig zijn (met het correcte type).
-  type Evaluator = (ctx: Context) => Option<ValueType>;
+  // De option.Option is nodig omdat properties in een feature niet noodzakelijk aanwezig zijn (met het correcte type).
+  type Evaluator = (ctx: Context) => option.Option<ValueType>;
 
   // Tijdens de compilatiefase hebben we het resultaattype van de toekomstige evaluatie nodig zodat we kunnen garanderen dat we enkel
   // operaties samenstellen die type-compatibel zijn.
@@ -156,14 +155,14 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.style.StyleFuncti
       ? propertyKey.split(".").reduce((obj, key) => (isDefined(obj) && isDefined(obj[key]) ? obj[key] : null), object)
       : null;
   };
-  const getProperty = (key: string, typeName: TypeType) => (ctx: Context): Option<any> =>
+  const getProperty = (key: string, typeName: TypeType) => (ctx: Context): option.Option<any> =>
     option
       .fromNullable(ctx.feature.get("properties"))
       .chain(properties => option.fromNullable(getNestedProperty(key, properties)))
       .filter(value => typeof value === typeName);
   const checkFeatureDefined = (key: string) => (ctx: Context) =>
     option.fromNullable(ctx.feature.get("properties")).map(properties => properties.hasOwnProperty(key));
-  const getResolution = (ctx: Context) => some(ctx.resolution);
+  const getResolution = (ctx: Context) => option.some(ctx.resolution);
 
   // Type check functies
   const typeIs = (targetType: TypeType) => (t1: TypeType) =>
@@ -210,7 +209,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.style.StyleFuncti
       case "PropertyExists":
         return ok(TypedEvaluator(checkFeatureDefined(expression.ref), "boolean"));
       case "EnvironmentExists": {
-        const envIsResolution = some(expression.ref === "resolution"); // berekenen at compile time!
+        const envIsResolution = option.some(expression.ref === "resolution"); // berekenen at compile time!
         return ok(TypedEvaluator(() => envIsResolution, "boolean"));
       }
       case "<=>":
@@ -225,7 +224,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.style.StyleFuncti
       case "Literal":
         return ok(
           TypedEvaluator(
-            () => some(expression.value),
+            () => option.some(expression.value),
             typeof expression.value as TypeType // Het type van ValueType is TypeType bij constructie
           )
         );
@@ -307,22 +306,23 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.style.StyleFuncti
       ev1(ctx).chain(r1 => ev2(ctx).chain(r2 => ev3(ctx).map(r3 => f(r1, r2, r3))));
   }
 
-  type RuleExpression = Function1<Context, Option<ol.style.Style>>;
+  type RuleExpression = Function1<Context, option.Option<ol.style.Style>>;
 
   // De regels controleren en combineren zodat at run-time ze één voor één geprobeerd worden totdat er een match is
-  const validatedCombinedRuleExpression: Validation<RuleExpression> = array.reduce(
+  const validatedCombinedRuleExpression: Validation<RuleExpression> = pipe(
     ruleCfg.rules,
-    ok(() => none),
-    (combinedRuleValidation: Validation<RuleExpression>, rule: RuleStyle) => {
+    array.reduce(ok(() => option.none), (combinedRuleValidation: Validation<RuleExpression>, rule: RuleStyle) => {
       // Hang een regel bij de vorige regels
       return chain(combinedRuleValidation, combinedRule => {
         // WTF? Deze lambda moet blijkbaar in een {} block zitten of het faalt wanneer gebruikt in externe applicatie.
         // De conditie moet kosjer zijn
         return compileCondition(rule.condition).map(typedEvaluator => (ctx: Context) =>
-          combinedRule(ctx).orElse(() => typedEvaluator.evaluator(ctx).chain(outcome => ((outcome as boolean) ? some(rule.style) : none)))
+          combinedRule(ctx).orElse(() =>
+            typedEvaluator.evaluator(ctx).chain(outcome => ((outcome as boolean) ? option.some(rule.style) : option.none))
+          )
         );
       });
-    }
+    })
   );
 
   const styleFunctionFromRuleExpression: Function1<RuleExpression, ol.style.StyleFunction> = ruleExpression => (

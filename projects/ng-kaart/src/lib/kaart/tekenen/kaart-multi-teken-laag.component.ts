@@ -1,11 +1,8 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
-import { option } from "fp-ts";
-import * as array from "fp-ts/lib/Array";
+import { array, eq, option } from "fp-ts";
 import { Curried2, Endomorphism, flow, Function1, Function2, Function3, identity, Predicate, Refinement } from "fp-ts/lib/function";
-import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
-import { setoidNumber, setoidString } from "fp-ts/lib/Setoid";
 import { Lens, Optional } from "monocle-ts";
 import * as rx from "rxjs";
 import {
@@ -76,17 +73,17 @@ interface DrawState {
   readonly map: ol.Map; // Misschien moeten we de interacties via dispatchCmd op de OL map zetten, dan hebbenn we ze hier niet nodig
   readonly featureColour: clr.Kleur;
   readonly drawInteractions: ol.interaction.Interaction[];
-  readonly selectInteraction: Option<ol.interaction.Select>;
+  readonly selectInteraction: option.Option<ol.interaction.Select>;
   readonly pointFeatures: ol.Feature[];
   readonly nextId: number;
-  readonly dragFeature: Option<ol.Feature>;
+  readonly dragFeature: option.Option<ol.Feature>;
   readonly listeners: ol.events.EventsKey[];
 }
 
 interface PointProperties {
   readonly type: "Waypoint";
-  readonly previous: Option<ol.Feature>; // Het vorige punt in de dubbelgelinkte lijst van punten
-  readonly next: Option<ol.Feature>; // Het volgende punt in de dubbelgelinkte lijst van punten
+  readonly previous: option.Option<ol.Feature>; // Het vorige punt in de dubbelgelinkte lijst van punten
+  readonly next: option.Option<ol.Feature>; // Het volgende punt in de dubbelgelinkte lijst van punten
 }
 
 // Onze state is wel immutable, maar de features zelf worden beheerd door OL en die is helemaal niet immutable dus de features
@@ -95,14 +92,14 @@ const initialState: Function1<ol.Map, DrawState> = olMap => ({
   map: olMap,
   featureColour: clr.zwartig,
   drawInteractions: [],
-  selectInteraction: none,
+  selectInteraction: option.none,
   pointFeatures: [],
   nextId: 0,
-  dragFeature: none,
+  dragFeature: option.none,
   listeners: []
 });
 
-const PointProperties: Function2<Option<ol.Feature>, Option<ol.Feature>, PointProperties> = (previous, next) => ({
+const PointProperties: Function2<option.Option<ol.Feature>, option.Option<ol.Feature>, PointProperties> = (previous, next) => ({
   type: "Waypoint",
   next: next,
   previous: previous
@@ -110,19 +107,19 @@ const PointProperties: Function2<Option<ol.Feature>, Option<ol.Feature>, PointPr
 
 type DrawLens<A> = Lens<DrawState, A>;
 const drawInteractionsLens: DrawLens<ol.interaction.Interaction[]> = Lens.fromProp("drawInteractions");
-const selectInteractionLens: DrawLens<Option<ol.interaction.Select>> = Lens.fromProp("selectInteraction");
+const selectInteractionLens: DrawLens<option.Option<ol.interaction.Select>> = Lens.fromProp("selectInteraction");
 const pointFeaturesLens: DrawLens<ol.Feature[]> = Lens.fromProp("pointFeatures");
 const nextIdLens: DrawLens<number> = Lens.fromProp("nextId");
 const incrementNextId: Endomorphism<DrawState> = nextIdLens.modify(n => n + 1);
-const dragFeatureLens: DrawLens<Option<ol.Feature>> = Lens.fromProp("dragFeature");
+const dragFeatureLens: DrawLens<option.Option<ol.Feature>> = Lens.fromProp("dragFeature");
 const listenersLens: DrawLens<ol.events.EventsKey[]> = Lens.fromProp("listeners");
 const featureColourLens: DrawLens<clr.Kleur> = Lens.fromProp("featureColour");
 
 type PointFeaturePropertyLens<A> = Lens<PointProperties, A>;
-const nextLens: PointFeaturePropertyLens<Option<ol.Feature>> = Lens.fromProp("next");
-const previousLens: PointFeaturePropertyLens<Option<ol.Feature>> = Lens.fromProp("previous");
-const replaceNext: Function1<Option<ol.Feature>, Endomorphism<PointProperties>> = nextLens.set;
-const replacePrevious: Function1<Option<ol.Feature>, Endomorphism<PointProperties>> = previousLens.set;
+const nextLens: PointFeaturePropertyLens<option.Option<ol.Feature>> = Lens.fromProp("next");
+const previousLens: PointFeaturePropertyLens<option.Option<ol.Feature>> = Lens.fromProp("previous");
+const replaceNext: Function1<option.Option<ol.Feature>, Endomorphism<PointProperties>> = nextLens.set;
+const replacePrevious: Function1<option.Option<ol.Feature>, Endomorphism<PointProperties>> = previousLens.set;
 
 const createMarkerStyle: Function1<clr.Kleur, ss.Stylish> = colour => disc.stylish(colour, clr.wit, 3, 5);
 
@@ -134,38 +131,39 @@ const createLayer: Function2<string, ol.source.Vector, ke.VectorLaag> = (titel, 
     type: ke.VectorType,
     titel: titel,
     source: source,
-    clusterDistance: none,
-    styleSelector: none,
-    styleSelectorBron: none,
-    selectieStyleSelector: none,
-    hoverStyleSelector: none,
+    clusterDistance: option.none,
+    styleSelector: option.none,
+    styleSelectorBron: option.none,
+    selectieStyleSelector: option.none,
+    hoverStyleSelector: option.none,
     selecteerbaar: false,
     hover: false,
     minZoom: 2,
     maxZoom: 15,
-    offsetveld: none, // veel ruis
+    offsetveld: option.none, // veel ruis
     velden: new Map<string, ke.VeldInfo>(),
     verwijderd: false,
     rijrichtingIsDigitalisatieZin: false,
-    filter: none
+    filter: option.none
   };
 };
 
 const isTekenLayer: Predicate<ol.layer.Layer> = layer =>
-  fromNullable(ke.underlyingSource(layer))
-    .chain(source => fromNullable(source.get("laagTitel")))
-    .contains(setoidString, PuntLaagNaam);
+  option
+    .fromNullable(ke.underlyingSource(layer))
+    .chain(source => option.fromNullable(source.get("laagTitel")))
+    .contains(eq.eqString, PuntLaagNaam);
 
 type FeaturePicker = PartialFunction1<ol.Pixel, ol.Feature>;
 const featurePicker: Function1<ol.Map, FeaturePicker> = map => pixel => {
   const featuresAtPixel = map.getFeaturesAtPixel(pixel, { layerFilter: isTekenLayer }) as ol.Feature[];
-  return fromNullable(featuresAtPixel).chain(array.head);
+  return option.fromNullable(featuresAtPixel).chain(array.head);
 };
 
 const isPoint: Refinement<ol.geom.Geometry, ol.geom.Point> = (geom): geom is ol.geom.Point => geom instanceof ol.geom.Point;
 const isNumber: Refinement<any, number> = (value): value is number => typeof value === "number";
 const isWaypointProperties: Refinement<any, PointProperties> = (value): value is PointProperties =>
-  typeof value === "object" && fromNullable(value.type).exists(type => type === "Waypoint");
+  typeof value === "object" && option.fromNullable(value.type).exists(type => type === "Waypoint");
 
 const extractCoordinate: PartialFunction1<ol.Feature, ol.Coordinate> = feature =>
   pipe(
@@ -175,10 +173,11 @@ const extractCoordinate: PartialFunction1<ol.Feature, ol.Coordinate> = feature =
     option.map(point => point.getFirstCoordinate())
   );
 
-const extractId: PartialFunction1<ol.Feature, number> = feature => fromNullable(feature.getId()).chain(fromPredicate(isNumber));
+const extractId: PartialFunction1<ol.Feature, number> = feature =>
+  option.fromNullable(feature.getId()).chain(option.fromPredicate(isNumber));
 
 const extractPointProperties: PartialFunction1<ol.Feature, PointProperties> = feature =>
-  fromPredicate(isWaypointProperties)(feature.getProperties());
+  option.fromPredicate(isWaypointProperties)(feature.getProperties());
 
 const toWaypoint: PartialFunction1<ol.Feature, Waypoint> = feature =>
   extractId(feature).chain(id => extractCoordinate(feature).map(coordinate => Waypoint(id, coordinate)));
@@ -282,10 +281,10 @@ function drawStateTransformer(
         magGetoondWorden: true,
         transparantie: Transparantie.opaak,
         laaggroep: "Tools",
-        legende: none,
-        stijlInLagenKiezer: none,
-        filterinstellingen: none,
-        laagtabelinstellingen: none,
+        legende: option.none,
+        stijlInLagenKiezer: option.none,
+        filterinstellingen: option.none,
+        laagtabelinstellingen: option.none,
         wrapper: kaartLogOnlyWrapper
       });
       dispatchCmd({
@@ -295,10 +294,10 @@ function drawStateTransformer(
         magGetoondWorden: true,
         transparantie: Transparantie.opaak,
         laaggroep: "Tools",
-        legende: none,
-        stijlInLagenKiezer: none,
-        filterinstellingen: none,
-        laagtabelinstellingen: none,
+        legende: option.none,
+        stijlInLagenKiezer: option.none,
+        filterinstellingen: option.none,
+        laagtabelinstellingen: option.none,
         wrapper: kaartLogOnlyWrapper
       });
       drawInteractions.forEach(inter => state.map.addInteraction(inter));
@@ -307,7 +306,7 @@ function drawStateTransformer(
       const moveKey = state.map.on("pointermove", handlePointermove(featurePicker(state.map), modifySource));
       return applySequential([
         drawInteractionsLens.set(drawInteractions),
-        selectInteractionLens.set(some(selectInteraction)),
+        selectInteractionLens.set(option.some(selectInteraction)),
         listenersLens.set([moveKey]),
         featureColourLens.set(ops.featureColour)
       ]);
@@ -336,7 +335,7 @@ function drawStateTransformer(
       // binnen krijgt. Dat is zo omdat de dispatch asynchroon gebeurt.
       state.pointFeatures.forEach(feature => {
         const maybePointProperties = extractPointProperties(feature);
-        const maybePreviousPoint: Option<Waypoint> = maybePointProperties.chain(p => p.previous).chain(toWaypoint);
+        const maybePreviousPoint: option.Option<Waypoint> = maybePointProperties.chain(p => p.previous).chain(toWaypoint);
         const maybeCurrentWaypoint = toWaypoint(feature);
         forEach(maybeCurrentWaypoint, currentWaypoint => dispatchWaypointOps(AddWaypoint(maybePreviousPoint, currentWaypoint)));
       });
@@ -359,8 +358,8 @@ function drawStateTransformer(
       if (!sameLocationAsPrevious) {
         feature.setId(state.nextId);
         feature.setStyle(createMarkerStyle(state.featureColour));
-        feature.setProperties(PointProperties(lastFeature, none));
-        forEach(lastFeature, updatePointProperties(replaceNext(some(feature))));
+        feature.setProperties(PointProperties(lastFeature, option.none));
+        forEach(lastFeature, updatePointProperties(replaceNext(option.some(feature))));
         feature.on("change", handleFeatureDrag);
         const newFeatures = array.snoc(currentFeatures, feature);
         dispatchWaypointOps(AddWaypoint(lastFeature.chain(toWaypoint), Waypoint(state.nextId, coordinate)));
@@ -376,7 +375,7 @@ function drawStateTransformer(
       // Er is nog een bijkomende complicatie: wanneer 2 of meer features over elkaar liggen, dan worden die door de Modify
       // interaction allemaal verplaatst. Dat willen we niet. We kunnen dit opvangen door maar 1 drag toe te laten. We krijgen
       // immers een event voor elk punt. Elk punt na het eerste dat we zien, zetten we terug op zijn originele plaats.
-      return dragFeatureLens.set(some(ops.feature));
+      return dragFeatureLens.set(option.some(ops.feature));
     }
 
     case "MovePoint": {
@@ -388,7 +387,7 @@ function drawStateTransformer(
             const previous = findPreviousWaypoint(draggedFeature);
             dispatchWaypointOps(RemoveWaypoint(current));
             dispatchWaypointOps(AddWaypoint(previous, current));
-            return dragFeatureLens.set(none);
+            return dragFeatureLens.set(option.none);
           })
         )
         .getOrElse(identity);
@@ -424,7 +423,7 @@ function drawStateTransformer(
 
     case "SnapWaypoint": {
       state.pointFeatures.forEach(feature => {
-        if (extractId(feature).contains(setoidNumber, ops.waypoint.id)) {
+        if (extractId(feature).contains(eq.eqNumber, ops.waypoint.id)) {
           feature.setGeometry(new ol.geom.Point(ops.waypoint.location));
         }
       });
@@ -455,7 +454,11 @@ const edgesToPolygon: Function1<ol.geom.LineString[], ol.geom.Polygon> = edges =
   return new ol.geom.Polygon([coordinates]);
 };
 
-const featuresIn: Curried2<Option<ol.style.StyleFunction>, RouteSegmentState, Array<ol.Feature>> = maybePolygonStylefunction => state => {
+const featuresIn: Curried2<
+  option.Option<ol.style.StyleFunction>,
+  RouteSegmentState,
+  Array<ol.Feature>
+> = maybePolygonStylefunction => state => {
   const routes: Array<ol.Feature> = Object.values(state.featuresByRouteId);
 
   return maybePolygonStylefunction.fold(routes, polygonStyleFunction => {

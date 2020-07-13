@@ -1,5 +1,5 @@
 import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as ss from "../../kaart/stijl-selector";
@@ -19,8 +19,8 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeDirective {
   _version = "2.0.0";
   _srsName = "EPSG:31370";
   _geom = "the_geom";
-  _typeNames: Option<string> = none;
-  _cqlFilter: Option<string> = none;
+  _typeNames: option.Option<string> = option.none;
+  _cqlFilter: option.Option<string> = option.none;
   _cors = false;
 
   constructor(injector: Injector) {
@@ -29,7 +29,7 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeDirective {
 
   @Input()
   set url(param: string) {
-    this._url = fromNullable(param).getOrElse(this._url);
+    this._url = option.fromNullable(param).getOrElse(this._url);
   }
 
   @Input()
@@ -39,27 +39,27 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeDirective {
 
   @Input()
   set version(param: string) {
-    this._version = fromNullable(param).getOrElse(this._version);
+    this._version = option.fromNullable(param).getOrElse(this._version);
   }
 
   @Input()
   set srsName(param: string) {
-    this._srsName = fromNullable(param).getOrElse(this._srsName);
+    this._srsName = option.fromNullable(param).getOrElse(this._srsName);
   }
 
   @Input()
   set typeNames(param: string) {
-    this._typeNames = fromNullable(param);
+    this._typeNames = option.fromNullable(param);
   }
 
   @Input()
   set cqlFilter(param: string) {
-    this._cqlFilter = fromNullable(param);
+    this._cqlFilter = option.fromNullable(param);
   }
 
   @Input()
   set geom(param: string) {
-    this._geom = fromNullable(param).getOrElse(this._geom);
+    this._geom = option.fromNullable(param).getOrElse(this._geom);
   }
 
   /**
@@ -69,7 +69,7 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeDirective {
    */
   @Input()
   set cors(cors: boolean) {
-    this._cors = fromNullable(cors).getOrElse(this._cors);
+    this._cors = option.fromNullable(cors).getOrElse(this._cors);
   }
 
   createLayer(): ke.VectorLaag {
@@ -91,8 +91,8 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeDirective {
       clusterDistance: this._clusterDistance,
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
-      selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
-      hoverStyleSelector: fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
+      selectieStyleSelector: option.fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
+      hoverStyleSelector: option.fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
       selecteerbaar: this._selecteerbaar,
       hover: this._hover,
       minZoom: this._minZoom,
@@ -101,7 +101,7 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeDirective {
       velden: this._veldInfos.reduce((m, vi) => m.set(vi.naam, vi), new Map<string, ke.VeldInfo>()),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false,
-      filter: none
+      filter: option.none
     };
   }
 }

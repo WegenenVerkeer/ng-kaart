@@ -1,13 +1,12 @@
 import { option } from "fp-ts";
 import { Curried2, Function1 } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
 import { DateTime } from "luxon";
 
 import { PartialFunction1 } from "./function";
 
 export const defaultDateFormat = "dd/MM/yyyy";
 
-export const formateerDate: Curried2<Option<string>, DateTime, string> = maybeFormat => date => {
+export const formateerDate: Curried2<option.Option<string>, DateTime, string> = maybeFormat => date => {
   return date.setLocale("nl-BE").toFormat(maybeFormat.getOrElse(defaultDateFormat));
 };
 
@@ -19,11 +18,11 @@ export const formateerJsDate: Function1<Date, string> = date => {
     .toFormat(defaultDateFormat);
 };
 
-export const formateerDateTime: Curried2<Option<string>, DateTime, string> = maybeFormat => dateTime => {
+export const formateerDateTime: Curried2<option.Option<string>, DateTime, string> = maybeFormat => dateTime => {
   return dateTime.setLocale("nl-BE").toFormat(maybeFormat.getOrElse("dd/MM/yyyy hh:mm:ss"));
 };
 
-export const parseDate: Curried2<Option<string>, string, Option<DateTime>> = maybeFormat => text =>
+export const parseDate: Curried2<option.Option<string>, string, option.Option<DateTime>> = maybeFormat => text =>
   maybeFormat.foldL(() => parseDateHeuristically, parseDateTimeWithFormat)(text);
 
 const parseDateTimeHeuristically: PartialFunction1<string, DateTime> = text => {
@@ -50,7 +49,7 @@ const parseDateHeuristically: PartialFunction1<string, DateTime> = text => {
     .orElse(() => parseDateTimeWithFormat("yyyy-LL-dd")(text));
 };
 
-export const parseDateTime: Curried2<Option<string>, string, Option<DateTime>> = maybeFormat => text =>
+export const parseDateTime: Curried2<option.Option<string>, string, option.Option<DateTime>> = maybeFormat => text =>
   maybeFormat.foldL(() => parseDateTimeHeuristically, parseDateTimeWithFormat)(text);
 
-export const fromTimestamp = (ts: number): Option<DateTime> => option.tryCatch(() => DateTime.fromMillis(ts));
+export const fromTimestamp = (ts: number): option.Option<DateTime> => option.tryCatch(() => DateTime.fromMillis(ts));

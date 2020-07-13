@@ -1,6 +1,5 @@
-import { setoid } from "fp-ts";
+import { eq } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
-import { Setoid } from "fp-ts/lib/Setoid";
 import { Lens } from "monocle-ts";
 
 import { LaagModel } from "./laag-model";
@@ -22,10 +21,10 @@ export namespace TableHeader {
     count: laag.featureCount.kind === "FeatureCountFetched" ? laag.featureCount.count : undefined
   });
 
-  export const setoidTableHeader: Setoid<TableHeader> = setoid.getStructSetoid({
-    titel: setoid.setoidString,
-    filterIsActive: setoid.setoidBoolean,
-    hasFilter: setoid.setoidBoolean,
-    count: setoid.setoidNumber
+  export const setoidTableHeader: eq.Eq<TableHeader> = eq.getStructEq({
+    titel: eq.eqString,
+    filterIsActive: eq.eqBoolean,
+    hasFilter: eq.eqBoolean,
+    count: eq.eqNumber
   });
 }

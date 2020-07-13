@@ -1,6 +1,5 @@
-import { Either } from "fp-ts/lib/Either";
+import { either, option } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
 
 import * as ol from "../util/openlayers-compat";
 import { Progress } from "../util/progress";
@@ -15,33 +14,33 @@ export type InfoBoodschap = InfoBoodschapAlert | InfoBoodschapMeten | InfoBoodsc
 export interface InfoBoodschapBase {
   readonly id: string;
   readonly titel: string;
-  readonly bron: Option<string>;
+  readonly bron: option.Option<string>;
   readonly sluit: "NIET" | "VANZELF" | "DOOR_APPLICATIE";
-  readonly verbergMsgGen: () => Option<TypedRecord>;
+  readonly verbergMsgGen: () => option.Option<TypedRecord>;
 }
 
 export interface InfoBoodschapAlert extends InfoBoodschapBase {
   readonly type: "InfoBoodschapAlert";
   readonly message: string;
-  readonly iconName: Option<string>;
+  readonly iconName: option.Option<string>;
 }
 
 export interface InfoBoodschapMeten extends InfoBoodschapBase {
   readonly type: "InfoBoodschapMeten";
-  readonly length: Option<number>;
-  readonly area: Option<number>;
+  readonly length: option.Option<number>;
+  readonly area: option.Option<number>;
 }
 
 export interface InfoBoodschapIdentify extends InfoBoodschapBase {
   readonly type: "InfoBoodschapIdentify";
   readonly feature: ol.Feature;
-  readonly laag: Option<VectorLaag>;
+  readonly laag: option.Option<VectorLaag>;
 }
 
 export interface InfoBoodschapKaartBevragenProgress extends InfoBoodschapBase {
   readonly type: "InfoBoodschapKaartBevragen";
   readonly coordinaat: ol.Coordinate;
-  readonly adres: Option<Adres>; // Zou ook Progress<Adres> kunnen zijn
+  readonly adres: option.Option<Adres>; // Zou ook Progress<Adres> kunnen zijn
   readonly weglocaties: WegLocaties; // Zou ook Progress<<WegLocaties> kunnen zijn
   readonly laagLocatieInfoOpTitel: Map<string, Progress<LaagLocationInfoResult>>;
 }
@@ -70,5 +69,5 @@ export interface Groeplagen {
 }
 
 export interface HoverFeature {
-  readonly hover: Either<ol.Feature, ol.Feature>;
+  readonly hover: either.Either<ol.Feature, ol.Feature>;
 }

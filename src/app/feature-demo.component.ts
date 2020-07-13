@@ -1,8 +1,8 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectorRef, Component, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
+import { option } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { CachedFeatureLookup } from "projects/ng-kaart/src/lib/kaart/cache/lookup";
 import * as ol from "projects/ng-kaart/src/lib/util/openlayers-compat";
 import { urlWithParams } from "projects/ng-kaart/src/lib/util/url";
@@ -374,7 +374,7 @@ export class FeatureDemoComponent {
 
   tekenenActief = false;
   geometryType = "Polygon";
-  private getekendeGeom: Option<ol.geom.Geometry> = none;
+  private getekendeGeom: option.Option<ol.geom.Geometry> = option.none;
 
   private alleVoorwaarden = ["Voorwaarden disclaimer", "Er zijn nieuwe voorwaarden", "Er zijn nog nieuwere voorwaarden"];
   voorwaarden = this.alleVoorwaarden[0];
@@ -598,7 +598,7 @@ export class FeatureDemoComponent {
     zoekerMetPrioriteiten(new DummyZoeker("dummy1", FeatureDemoComponent.zoekerKleurCodes[1]), 2, 2, true, true)
   ];
 
-  private cachedFeaturesProvider: Option<CachedFeatureLookup> = none;
+  private cachedFeaturesProvider: option.Option<CachedFeatureLookup> = option.none;
 
   offlineGeselecteerdeFeatures: ol.Feature[] = [];
 
@@ -1124,7 +1124,7 @@ export class FeatureDemoComponent {
     startWith(true)
   );
 
-  readonly cachedFeaturesProviderConsumer = (cfpc: CachedFeatureLookup) => (this.cachedFeaturesProvider = some(cfpc));
+  readonly cachedFeaturesProviderConsumer = (cfpc: CachedFeatureLookup) => (this.cachedFeaturesProvider = option.some(cfpc));
 
   readonly percelenQueryUrl: Function1<ol.Coordinate, string> = location => {
     const params = {
@@ -1239,7 +1239,7 @@ export class FeatureDemoComponent {
 
   stopTekenen() {
     this.tekenenActief = false;
-    this.getekendeGeom = none;
+    this.getekendeGeom = option.none;
   }
 
   toggleTekenen() {
@@ -1251,7 +1251,7 @@ export class FeatureDemoComponent {
   }
 
   geomGetekend(geom: ol.geom.Geometry) {
-    this.getekendeGeom = some(geom);
+    this.getekendeGeom = option.some(geom);
   }
 
   veranderVoorwaarden() {
@@ -1375,7 +1375,7 @@ export class FeatureDemoComponent {
 
   scrollTo(idName: string): void {
     const element = document.getElementById(idName);
-    forEach(fromNullable(element), elt => elt.scrollIntoView({ behavior: "smooth" }));
+    forEach(option.fromNullable(element), elt => elt.scrollIntoView({ behavior: "smooth" }));
   }
 
   onZetCenterManueel(coordTxt: string): void {

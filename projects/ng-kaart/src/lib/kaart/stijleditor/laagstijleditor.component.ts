@@ -1,10 +1,8 @@
 import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, ViewChildren, ViewEncapsulation } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { MatTabChangeEvent } from "@angular/material/tabs";
-import * as array from "fp-ts/lib/Array";
+import { array, option, eq } from "fp-ts";
 import { Curried2, Function1, Function2, Predicate, Refinement, tuple } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
-import { setoidString } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
 import { delay, filter, map, mapTo, sample, scan, shareReplay, startWith, switchMap } from "rxjs/operators";
 
@@ -173,7 +171,7 @@ export class LaagstijleditorComponent extends KaartChildDirective {
         }
       });
 
-    const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], Option<ke.ToegevoegdeVectorLaag>> = (titel, lgn) =>
+    const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], option.Option<ke.ToegevoegdeVectorLaag>> = (titel, lgn) =>
       array.findFirst(lgn.filter(lg => lg.titel === titel), ke.isToegevoegdeVectorLaag);
     const laag$: rx.Observable<ke.ToegevoegdeVectorLaag> = forEvery(aanpassing$)(aanpassing =>
       kaart.modelChanges.lagenOpGroep[aanpassing.laag.laaggroep].pipe(collectOption(lgn => findLaagOpTitel(aanpassing.laag.titel, lgn)))
@@ -221,7 +219,7 @@ export class LaagstijleditorComponent extends KaartChildDirective {
 
     // We willen dat de veld dropdown opgevuld wordt met de waarde die voorheen gekozen was (als die er is)
     const isStillAvailable: Function1<string[], Predicate<string>> = bechikbareVeldnamen => veldnaam =>
-      array.elem(setoidString)(veldnaam, bechikbareVeldnamen);
+      array.elem(eq.eqString)(veldnaam, bechikbareVeldnamen);
     this.bindToLifeCycle(
       rx
         .combineLatest(laag$.pipe(map(kleurveldnaamViaLaag)), this.klasseVelden$, tuple)

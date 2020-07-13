@@ -1,5 +1,5 @@
+import { option } from "fp-ts";
 import { Endomorphism } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
 
 import * as prt from "../kaart-protocol";
 import { OptiesOpUiElement } from "../ui-element-opties";
@@ -54,6 +54,6 @@ export namespace BevraagKaartOpties {
   export const set = (opties: Partial<BevraagKaartOpties>): Endomorphism<OptiesOpUiElement> =>
     OptiesOpUiElement.extend(opties)(BevraagKaartUiSelector);
 
-  export const getOption = (optiesOpSelector: OptiesOpUiElement): Option<BevraagKaartOpties> =>
+  export const getOption = (optiesOpSelector: OptiesOpUiElement): option.Option<BevraagKaartOpties> =>
     OptiesOpUiElement.getOption<BevraagKaartOpties>(BevraagKaartUiSelector)(optiesOpSelector);
 }

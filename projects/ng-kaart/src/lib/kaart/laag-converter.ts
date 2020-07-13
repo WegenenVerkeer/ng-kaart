@@ -1,6 +1,5 @@
-import * as array from "fp-ts/lib/Array";
+import { array, option } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
 
 import { supportedProjection } from "../coordinaten/coordinaten.service";
 import * as ol from "../util/openlayers-compat";
@@ -10,7 +9,7 @@ import { KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
 import { toStylish } from "./stijl-selector";
 
-export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
+export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): option.Option<ol.layer.Base> {
   const projection: Function1<string[], string> = projections => supportedProjection(projections).getOrElse(kaart.config.srs);
 
   function createdTileWms(l: ke.WmsLaag) {
@@ -141,21 +140,21 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
 
   switch (laag.type) {
     case ke.TiledWmsType:
-      return some(createdTileWms(laag));
+      return option.some(createdTileWms(laag));
 
     case ke.WmtsType:
-      return some(createdWmts(laag));
+      return option.some(createdWmts(laag));
 
     case ke.SingleTileWmsType:
-      return some(createSingleTileWmsLayer(laag));
+      return option.some(createSingleTileWmsLayer(laag));
 
     case ke.VectorType:
-      return some(createVectorLayer(laag));
+      return option.some(createVectorLayer(laag));
 
     case ke.BlancoType:
-      return some(createBlankLayer());
+      return option.some(createBlankLayer());
 
     default:
-      return none;
+      return option.none;
   }
 }

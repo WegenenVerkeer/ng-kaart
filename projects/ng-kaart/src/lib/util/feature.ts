@@ -1,10 +1,6 @@
-import { array, option } from "fp-ts";
-import { array as arrayTraversable, foldLeft, mapOption } from "fp-ts/lib/Array";
-import * as eq from "fp-ts/lib/Eq";
+import { array, eq, option, traversable } from "fp-ts";
 import { Curried2, FunctionN, Refinement } from "fp-ts/lib/function";
-import { fromNullable, Option, option as optionApplcative } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
-import * as traversable from "fp-ts/lib/Traversable";
 
 import { kaartLogger } from "../kaart/log";
 
@@ -60,21 +56,21 @@ const singleFeatureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeature> = fea
     )
   );
 
-const multipleFeatureToGeoJson: Curried2<ol.Feature, ol.Feature[], Option<GeoJsonFeatureCollection>> = feature => features => {
+const multipleFeatureToGeoJson: Curried2<ol.Feature, ol.Feature[], option.Option<GeoJsonFeatureCollection>> = feature => features => {
   return pipe(
     option.fromNullable(feature.getGeometry()),
     option.chain(geometry =>
       option.tryCatch(() => ({
         type: "FeatureCollection" as "FeatureCollection",
         geometry: format.writeGeometryObject(geometry),
-        features: mapOption(features, singleFeatureToGeoJson)
+        features: array.mapOption(features, singleFeatureToGeoJson)
       }))
     )
   );
 };
 
 export const featureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeatures> = feature => {
-  const features = fromNullable(feature.get("features"));
+  const features = option.fromNullable(feature.get("features"));
   return features
     .filter(arrays.isArray)
     .chain<GeoJsonFeatureCollection | GeoJsonFeature>(multipleFeatureToGeoJson(feature))
@@ -82,7 +78,7 @@ export const featureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeatures> = f
 };
 
 export const clusterFeaturesToGeoJson: PartialFunction1<ol.Feature[], GeoJsonFeatures[]> = features =>
-  traversable.traverse(optionApplcative, arrayTraversable)(features, featureToGeoJson);
+  traversable.traverse(option.option, array.array)(features, featureToGeoJson);
 
 // Een type dat onze features encapsuleert. Die hebben in 99% van de gevallen een id en een laagnaam.
 export interface FeatureWithIdAndLaagnaam {
@@ -117,12 +113,13 @@ export namespace Feature {
   export const isSelectedRendered = (feature: ol.Feature): boolean => feature.get(SelectionRenderedMarker) === true;
 
   export const getLaagnaam: PartialFunction1<ol.Feature, string> = feature => {
-    const singleFeature = fromNullable(feature.get("features"))
+    const singleFeature = option
+      .fromNullable(feature.get("features"))
       .filter(arrays.isArray)
       .filter(arrays.isNonEmpty)
-      .chain(features => fromNullable(features[0]))
+      .chain(features => option.fromNullable(features[0]))
       .getOrElse(feature);
-    return fromNullable(singleFeature.get("laagnaam").toString());
+    return option.fromNullable(singleFeature.get("laagnaam").toString());
   };
 
   export const featureWithIdAndLaagnaam: PartialFunction1<ol.Feature, FeatureWithIdAndLaagnaam> = feature =>
@@ -168,7 +165,7 @@ export namespace Feature {
     }
   };
 
-  export const combineExtents: PartialFunction1<ol.Extent[], ol.Extent> = foldLeft(
+  export const combineExtents: PartialFunction1<ol.Extent[], ol.Extent> = array.foldLeft(
     () => option.none,
     (head, tail) =>
       arrays.isEmpty(tail) //

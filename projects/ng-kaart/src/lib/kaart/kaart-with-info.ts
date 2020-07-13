@@ -1,4 +1,4 @@
-import { none, Option } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
 import * as ol from "../util/openlayers-compat";
@@ -24,12 +24,12 @@ export class KaartWithInfo {
     ["Tools", []]
   ]);
   readonly groepOpTitel: Map<string, ke.Laaggroep> = new Map();
-  readonly schaal: Option<ol.control.Control> = none;
-  readonly fullScreen: Option<ol.control.FullScreen> = none;
+  readonly schaal: option.Option<ol.control.Control> = option.none;
+  readonly fullScreen: option.Option<ol.control.FullScreen> = option.none;
   readonly stdInteracties: ol.interaction.Interaction[] = [];
   readonly selectInteracties: ol.interaction.Interaction[] = [];
-  readonly hoverInteractie: Option<ol.interaction.Interaction> = none;
-  readonly highlightInteractie: Option<ol.interaction.Interaction> = none;
+  readonly hoverInteractie: option.Option<ol.interaction.Interaction> = option.none;
+  readonly highlightInteractie: option.Option<ol.interaction.Interaction> = option.none;
   readonly scrollZoomOnFocus: boolean = false;
   readonly showBackgroundSelector: boolean = false;
   readonly zoekersMetPrioriteiten: ZoekerMetWeergaveopties[] = [];
@@ -43,7 +43,9 @@ export class KaartWithInfo {
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
   readonly meldingenSubj: Subject<Array<string>> = new ReplaySubject<Array<string>>(1);
   readonly geometryChangedSubj: Subject<ke.Tekenresultaat> = new Subject<ke.Tekenresultaat>();
-  readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);
+  readonly tekenSettingsSubj: BehaviorSubject<option.Option<ke.TekenSettings>> = new BehaviorSubject<option.Option<ke.TekenSettings>>(
+    option.none
+  );
   readonly infoBoodschappenSubj = new BehaviorSubject<Map<string, InfoBoodschap>>(new Map());
   readonly publishedKaartLocatiesSubj: Subject<KaartLocaties> = new Subject();
   readonly tileLoader: TileLoader = new TileLoader();

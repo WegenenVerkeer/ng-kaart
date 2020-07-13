@@ -1,5 +1,5 @@
 import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
-import { fromNullable, none } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as ss from "../../kaart/stijl-selector";
@@ -36,8 +36,8 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeDirective {
       clusterDistance: this._clusterDistance,
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
-      selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
-      hoverStyleSelector: fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
+      selectieStyleSelector: option.fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
+      hoverStyleSelector: option.fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
       selecteerbaar: this._selecteerbaar,
       hover: this._hover,
       minZoom: this._minZoom,
@@ -46,7 +46,7 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeDirective {
       velden: this._veldInfos.reduce((m, vi) => m.set(vi.naam, vi), new Map<string, ke.VeldInfo>()),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false,
-      filter: none
+      filter: option.none
     };
   }
 }

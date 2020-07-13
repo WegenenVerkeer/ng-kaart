@@ -1,8 +1,8 @@
-import { fromNullable } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 const sendMessage = (message: any) => {
-  fromNullable(navigator.serviceWorker)
-    .chain(sw => fromNullable(sw.controller))
+  option.fromNullable(navigator.serviceWorker)
+    .chain(sw => option.fromNullable(sw.controller))
     .map(swc => swc.postMessage(message))
     .orElse(() => {
       throw new Error("Geen navigator.serviceWorker.controller object gevonden. Werd ng-kaart-service-worker.js correct geïnitialiseerd?");

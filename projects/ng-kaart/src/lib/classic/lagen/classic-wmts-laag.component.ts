@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, Injector, Input, OnInit, ViewEncapsulation } from "@angular/core";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as arrays from "../../util/arrays";
@@ -24,15 +24,15 @@ export class ClassicWmtsLaagComponent extends ClassicLaagDirective implements On
   private _laagNaam: string;
   private _type: string;
   private _matrixSet: string;
-  private _capUrl: Option<string> = none;
-  private _versie: Option<string> = none;
+  private _capUrl: option.Option<string> = option.none;
+  private _versie: option.Option<string> = option.none;
   private _format = "image/png";
-  private _style: Option<string> = none;
+  private _style: option.Option<string> = option.none;
   private _projection = "EPSG:31370";
   private _urls: string[] = [];
   private _matrixIds: string[];
-  private _origin: Option<ol.Coordinate> = none;
-  private _extent: Option<ol.Extent> = none;
+  private _origin: option.Option<ol.Coordinate> = option.none;
+  private _extent: option.Option<ol.Extent> = option.none;
 
   constructor(injector: Injector, private http: HttpClient) {
     super(injector);
@@ -144,7 +144,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagDirective implements On
       titel: this._titel,
       naam: this._laagNaam,
       versie: this._versie,
-      format: some(this._format),
+      format: option.some(this._format),
       matrixSet: this._matrixSet,
       config: config,
       backgroundUrl: this.backgroundUrl(config),
@@ -213,7 +213,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagDirective implements On
       wmtsOptions: wmtsOptions
     };
     const lg = this.createLayerFromConfig(config);
-    this.laag = some(lg);
+    this.laag = option.some(lg);
     this.dispatch({
       type: "VervangLaagCmd",
       laag: lg,

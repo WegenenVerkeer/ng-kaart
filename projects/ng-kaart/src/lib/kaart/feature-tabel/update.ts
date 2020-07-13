@@ -1,6 +1,5 @@
 import { array, option } from "fp-ts";
 import { constant, Endomorphism, flow, Function1, identity, Predicate } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { map } from "rxjs/operators";
 
@@ -49,9 +48,10 @@ export namespace Update {
   export const liftUpdate: <A, B>(
     extract: Function1<B, option.Option<A>>,
     lift: Function1<Endomorphism<A>, Endomorphism<B>>
-  ) => (ua: Update<A>) => Update<B> = <A, B>(extract: Function1<B, Option<A>>, lift: Function1<Endomorphism<A>, Endomorphism<B>>) => (
-    ua: Update<A>
-  ) => ({
+  ) => (ua: Update<A>) => Update<B> = <A, B>(
+    extract: Function1<B, option.Option<A>>,
+    lift: Function1<Endomorphism<A>, Endomorphism<B>>
+  ) => (ua: Update<A>) => ({
     syncUpdate: lift(ua.syncUpdate),
     asyncUpdate: flow(
       extract,

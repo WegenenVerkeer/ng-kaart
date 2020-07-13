@@ -1,5 +1,4 @@
-import { option } from "fp-ts";
-import * as array from "fp-ts/lib/Array";
+import { array, option } from "fp-ts";
 import { pipe } from "fp-ts/lib/pipeable";
 
 import * as oi from "../stijl/json-object-interpreting";

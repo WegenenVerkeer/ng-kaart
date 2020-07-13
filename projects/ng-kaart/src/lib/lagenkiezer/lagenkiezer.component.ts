@@ -2,9 +2,8 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import { MatTabChangeEvent } from "@angular/material/tabs";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
-import * as array from "fp-ts/lib/Array";
+import { array, option } from "fp-ts";
 import { not, Predicate } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, map, shareReplay } from "rxjs/operators";
 
@@ -81,7 +80,7 @@ const isTarget = (laag: ToegevoegdeLaag) => (ds: DragState) => ds.currentDrop.ti
   changeDetection: ChangeDetectionStrategy.OnPush // Omdat angular anders veel te veel change detection uitvoert
 })
 export class LagenkiezerComponent extends KaartChildDirective implements OnInit, OnDestroy {
-  private dragState: Option<DragState> = none;
+  private dragState: option.Option<DragState> = option.none;
   private dichtgeklapt = false;
   public geselecteerdeTab = 0;
   readonly lagenHoog$: rx.Observable<Array<ToegevoegdeLaag>>;
@@ -247,7 +246,7 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
     }
     // Een beetje later schedulen omdat anders CSS direct verandert en de browser dan de gewijzigde CSS overneemt ipv de originele
     setTimeout(() => {
-      this.dragState = some({
+      this.dragState = option.some({
         from: laag,
         currentDrop: laag
       });
@@ -259,7 +258,7 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
     // Als we dat niet doen, dan wordt nog even de oorspronkelijke volgorde getoond totdat het command
     // verwerkt is en de nieuwe volgorde uit de observable komt.
     setTimeout(() => {
-      this.dragState = none;
+      this.dragState = option.none;
       this.cdr.detectChanges(); // We hebben de OnPush strategie, maar er is niet noodzakelijk nieuwe data
     }, 100);
   }
@@ -267,11 +266,11 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
   onDragEnter(evt: DragEvent, laag: ToegevoegdeLaag) {
     evt.preventDefault(); // nodig opdat browser drop toelaat
     if (evt.dataTransfer) {
-      evt.dataTransfer.dropEffect = this.isDropZone(laag) ? "move" : "none";
+      evt.dataTransfer.dropEffect = this.isDropZone(laag) ? "move" : "option.none";
     }
     this.dragState.map(ds => {
       if (!isSource(laag)(ds) && ds.from.laaggroep === laag.laaggroep) {
-        this.dragState = some({
+        this.dragState = option.some({
           ...ds,
           currentDrop: laag
         });
@@ -284,7 +283,7 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
       // enkel drop toelaten in zelfde groep
       evt.preventDefault();
       this.dragState.map(ds => {
-        this.dragState = some({
+        this.dragState = option.some({
           ...ds,
           currentDrop: laag
         });
@@ -297,7 +296,7 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
     // aangeduid heeft. Dat kan als we buiten de lijst gaan met de cursor.
     this.dragState.map(ds => {
       if (isTarget(laag)(ds)) {
-        this.dragState = some({
+        this.dragState = option.some({
           ...ds,
           currentDrop: ds.from
         });

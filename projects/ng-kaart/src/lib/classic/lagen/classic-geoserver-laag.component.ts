@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, Inject, Injector, ViewEncapsulation } from "@angular/core";
-import { fromNullable } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import { KAART_CFG, KaartConfig } from "../../kaart/kaart-config";
 import * as ke from "../../kaart/kaart-elementen";
@@ -28,8 +28,8 @@ export class ClassicGeoserverLaagComponent extends ClassicWmsLaagComponent {
       urls: urls,
       versie: this._versie,
       cqlFilter: this._cqlFilter,
-      tileSize: fromNullable(this._tileSize),
-      format: fromNullable(this._format),
+      tileSize: option.fromNullable(this._tileSize),
+      format: option.fromNullable(this._format),
       backgroundUrl: this.backgroundUrl(urls, this._laagNaam),
       minZoom: this._minZoom,
       maxZoom: this._maxZoom,

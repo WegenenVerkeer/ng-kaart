@@ -1,9 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
-import { left, right } from "fp-ts/lib/Either";
-import * as option from "fp-ts/lib/Option";
-import { none } from "fp-ts/lib/Option";
-import { Tuple } from "fp-ts/lib/Tuple";
+import { either, option, tuple } from "fp-ts";
 import * as rx from "rxjs";
 import { catchError, debounceTime, filter, map, mergeAll, scan, startWith, switchMap, timeoutWith } from "rxjs/operators";
 
@@ -145,7 +142,7 @@ export class KaartBevragenComponent extends KaartModusDirective implements OnIni
                           allSvcCalls(lgn, svcs, locatie.coordinate, zoekAfstand, options) //
                             .pipe(
                               scan(srv.merge),
-                              map(locatieInfo => new Tuple<srv.LocatieInfo, BevraagKaartOpties>(locatieInfo, options))
+                              map(locatieInfo => new tuple.Tuple<srv.LocatieInfo, BevraagKaartOpties>(locatieInfo, options))
                             )
                         )
                       )
@@ -182,13 +179,13 @@ export class KaartBevragenComponent extends KaartModusDirective implements OnIni
         type: "InfoBoodschapKaartBevragen",
         titel: "Kaart bevragen",
         sluit: "DOOR_APPLICATIE",
-        bron: none,
+        bron: option.none,
         coordinaat: coordinaat,
         adres: progress.toOption(maybeAdres).chain(option.fromEither),
         // We moeten een Progress<Either<A, B[]>> omzetten naar een B[]
         weglocaties: arrays.fromOption(progress.toOption(wegLocaties).map(arrays.fromEither)),
         laagLocatieInfoOpTitel: lagenLocatieInfo,
-        verbergMsgGen: () => none
+        verbergMsgGen: () => option.none
       })
     );
   }
@@ -225,7 +222,7 @@ function infoForLaag(
         srv.withLaagLocationInfo(
           srv.fromTimestampAndCoordinate(timestamp, location),
           laag.titel,
-          Received(right<BevragenErrorReason, LaagLocationInfo>(info))
+          Received(either.right<BevragenErrorReason, LaagLocationInfo>(info))
         )
       ),
       startWith(srv.withLaagLocationInfo(srv.fromTimestampAndCoordinate(timestamp, location), laag.titel, Requested)),
@@ -237,7 +234,7 @@ function infoForLaag(
           srv.withLaagLocationInfo(
             srv.fromTimestampAndCoordinate(timestamp, location),
             laag.titel,
-            Received(left<BevragenErrorReason, LaagLocationInfo>(srv.errorToReason(error)))
+            Received(either.left<BevragenErrorReason, LaagLocationInfo>(srv.errorToReason(error)))
           )
         );
       })

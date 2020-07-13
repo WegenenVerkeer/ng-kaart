@@ -1,6 +1,5 @@
-import { array } from "fp-ts";
+import { array, option } from "fp-ts";
 import { BinaryOperation, Function1 } from "fp-ts/lib/function";
-import { fromPredicate, none } from "fp-ts/lib/Option";
 
 import { PartialFunction1 } from "../util/function";
 import * as ol from "../util/openlayers-compat";
@@ -39,8 +38,8 @@ export namespace Extent {
       const [h1, h2] = lft1 <= lft2 ? [lft1, lft2] : [Number.POSITIVE_INFINITY, lft1];
       const [h3, h4] = rght2 <= rght1 ? [rght2, rght1] : [rght1, Number.NEGATIVE_INFINITY];
 
-      const isValidLeftRight: PartialFunction1<Extent, Extent> = fromPredicate(([l, _, r, __]) => l < r);
-      const isValidTopBottom: PartialFunction1<Extent, Extent> = fromPredicate(([_, t, __, b]) => t < b);
+      const isValidLeftRight: PartialFunction1<Extent, Extent> = option.fromPredicate(([l, _, r, __]) => l < r);
+      const isValidTopBottom: PartialFunction1<Extent, Extent> = option.fromPredicate(([_, t, __, b]) => t < b);
 
       // Als er overlap is, dan kijken we of de drie mogelijke rechthoeken begrensd door [lft1, lft2, rght2, lft2] geldig zijn.
       const [left, middle, right] = [
@@ -51,10 +50,10 @@ export namespace Extent {
       const [middleTop, middleBottom] = middle
         .map(([lftm, topm, rghtm, botmm]) => {
           return top2 >= botmm || btm2 <= topm // Is er enige verticale overlap? We zijn al zeker van horizontale.
-            ? [none, none]
+            ? [option.none, option.none]
             : [isValidTopBottom([lftm, topm, rghtm, top2]), isValidTopBottom([lftm, btm2, rghtm, botmm])];
         })
-        .getOrElse([none, none]);
+        .getOrElse([option.none, option.none]);
       return array.catOptions([left, right, middleTop, middleBottom]);
     }
   };

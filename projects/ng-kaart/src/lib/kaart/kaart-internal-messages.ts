@@ -1,4 +1,4 @@
-import { none, Option, some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import * as ol from "../util/openlayers-compat";
 
@@ -43,12 +43,12 @@ export interface GeometryChangedMsg {
 
 export interface ActieveModusAangepastMsg {
   type: "ActieveModus";
-  modus: Option<string>;
+  modus: option.Option<string>;
 }
 
 export interface TekenMsg {
   type: "Teken";
-  settings: Option<TekenSettings>;
+  settings: option.Option<TekenSettings>;
 }
 
 export interface SubscribedMsg {
@@ -59,12 +59,12 @@ export interface SubscribedMsg {
 
 export interface MijnLocatieZoomdoelGezetMsg {
   readonly type: "MijnLocatieZoomdoelGezet";
-  readonly mijnLocatieZoomdoel: Option<number>;
+  readonly mijnLocatieZoomdoel: option.Option<number>;
 }
 
 export interface KaartInternalMsg {
   readonly type: "KaartInternal";
-  readonly payload: Option<KaartInternalSubMsg>;
+  readonly payload: option.Option<KaartInternalSubMsg>;
 }
 
 export interface KaartClickMsg {
@@ -96,7 +96,7 @@ export interface IdentifyInfoBoodschapGeslotenMsg {
   readonly feature: ol.Feature;
 }
 
-function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
+function KaartInternalMsg(payload: option.Option<KaartInternalSubMsg>): KaartInternalMsg {
   return {
     type: "KaartInternal",
     payload: payload
@@ -113,25 +113,25 @@ export const kaartLogOnlyWrapper: prt.ValidationWrapper<any, KaartInternalMsg> =
   }
   return {
     type: "KaartInternal",
-    payload: none
+    payload: option.none
   };
 };
 
 export const infoBoodschappenMsgGen = (infoBoodschappen: Map<string, InfoBoodschap>) =>
-  KaartInternalMsg(some(InfoBoodschappenMsg(infoBoodschappen)));
+  KaartInternalMsg(option.some(InfoBoodschappenMsg(infoBoodschappen)));
 
 function InfoBoodschappenMsg(infoBoodschappen: Map<string, InfoBoodschap>): InfoBoodschappenMsg {
   return { type: "InfoBoodschappen", infoBoodschappen: infoBoodschappen };
 }
 
 export const tabelLaagInstellingenMsgGen = (instellingen: Laagtabelinstellingen): KaartInternalMsg =>
-  KaartInternalMsg(some(LaagtabelinstellingenMsg(instellingen)));
+  KaartInternalMsg(option.some(LaagtabelinstellingenMsg(instellingen)));
 
 function LaagtabelinstellingenMsg(instellingen: Laagtabelinstellingen): LaagtabelinstellingenMsg {
   return { type: "Laagtabelinstellingen", instellingen };
 }
 
-export const kaartClickWrapper = (clickCoordinaat: ol.Coordinate) => KaartInternalMsg(some(KaartClickMsg(clickCoordinaat)));
+export const kaartClickWrapper = (clickCoordinaat: ol.Coordinate) => KaartInternalMsg(option.some(KaartClickMsg(clickCoordinaat)));
 
 function KaartClickMsg(clickCoordinaat: ol.Coordinate): KaartClickMsg {
   return { type: "KaartClick", clickCoordinaat: clickCoordinaat };
@@ -142,29 +142,29 @@ function ViewinstellingenGezetMsg(instellingen: prt.Viewinstellingen): Viewinste
 }
 
 export const viewinstellingenGezetWrapper = (instellingen: prt.Viewinstellingen) =>
-  KaartInternalMsg(some(ViewinstellingenGezetMsg(instellingen)));
+  KaartInternalMsg(option.some(ViewinstellingenGezetMsg(instellingen)));
 
 function AchtergrondtitelGezetMsg(titel: string): AchtergrondtitelGezetMsg {
   return { type: "AchtergrondtitelGezet", titel: titel };
 }
 
-export const achtergrondtitelGezetWrapper = (titel: string) => KaartInternalMsg(some(AchtergrondtitelGezetMsg(titel)));
+export const achtergrondtitelGezetWrapper = (titel: string) => KaartInternalMsg(option.some(AchtergrondtitelGezetMsg(titel)));
 
 function GeometryChangedMsg(geometry: ol.geom.Geometry, volgnummer: number, featureId: string | number): GeometryChangedMsg {
   return { type: "GeometryChanged", geometry: geometry, volgnummer: volgnummer, featureId: featureId };
 }
 
 export const tekenResultaatWrapper = (resultaat: Tekenresultaat) =>
-  KaartInternalMsg(some(GeometryChangedMsg(resultaat.geometry, resultaat.volgnummer, resultaat.featureId)));
+  KaartInternalMsg(option.some(GeometryChangedMsg(resultaat.geometry, resultaat.volgnummer, resultaat.featureId)));
 
-function TekenMsg(settings: Option<TekenSettings>): TekenMsg {
+function TekenMsg(settings: option.Option<TekenSettings>): TekenMsg {
   return {
     type: "Teken",
     settings: settings
   };
 }
 
-export const tekenWrapper = (settings: Option<TekenSettings>) => KaartInternalMsg(some(TekenMsg(settings)));
+export const tekenWrapper = (settings: option.Option<TekenSettings>) => KaartInternalMsg(option.some(TekenMsg(settings)));
 
 function SubscribedMsg(subscription: prt.KaartCmdValidation<prt.SubscriptionResult>, reference: any): SubscribedMsg {
   return { type: "Subscribed", reference: reference, subscription: subscription };
@@ -172,19 +172,19 @@ function SubscribedMsg(subscription: prt.KaartCmdValidation<prt.SubscriptionResu
 
 export const subscribedWrapper: (ref: any) => (v: prt.KaartCmdValidation<prt.SubscriptionResult>) => KaartInternalMsg = (
   reference: any
-) => (v: prt.KaartCmdValidation<prt.SubscriptionResult>) => KaartInternalMsg(some(SubscribedMsg(v, reference)));
+) => (v: prt.KaartCmdValidation<prt.SubscriptionResult>) => KaartInternalMsg(option.some(SubscribedMsg(v, reference)));
 
-function MijnLocatieZoomdoelGezetMsg(d: Option<number>): MijnLocatieZoomdoelGezetMsg {
+function MijnLocatieZoomdoelGezetMsg(d: option.Option<number>): MijnLocatieZoomdoelGezetMsg {
   return { type: "MijnLocatieZoomdoelGezet", mijnLocatieZoomdoel: d };
 }
 
-export const mijnLocatieZoomdoelGezetWrapper = (d: Option<number>) => KaartInternalMsg(some(MijnLocatieZoomdoelGezetMsg(d)));
+export const mijnLocatieZoomdoelGezetWrapper = (d: option.Option<number>) => KaartInternalMsg(option.some(MijnLocatieZoomdoelGezetMsg(d)));
 
-function ActieveModusGezet(modus: Option<string>): ActieveModusAangepastMsg {
+function ActieveModusGezet(modus: option.Option<string>): ActieveModusAangepastMsg {
   return { type: "ActieveModus", modus: modus };
 }
 
-export const actieveModusGezetWrapper = (modus: Option<string>) => KaartInternalMsg(some(ActieveModusGezet(modus)));
+export const actieveModusGezetWrapper = (modus: option.Option<string>) => KaartInternalMsg(option.some(ActieveModusGezet(modus)));
 
 export function VerwijderTekenFeatureMsg(featureId: string | number): VerwijderTekenFeatureMsg {
   return {
@@ -193,7 +193,8 @@ export function VerwijderTekenFeatureMsg(featureId: string | number): VerwijderT
   };
 }
 
-export const verwijderTekenFeatureWrapper = (featureId: string | number) => KaartInternalMsg(some(VerwijderTekenFeatureMsg(featureId)));
+export const verwijderTekenFeatureWrapper = (featureId: string | number) =>
+  KaartInternalMsg(option.some(VerwijderTekenFeatureMsg(featureId)));
 
 export function TekenInfoboodschapGeslotenMsg(): TekenInfoboodschapGeslotenMsg {
   return {
@@ -201,7 +202,7 @@ export function TekenInfoboodschapGeslotenMsg(): TekenInfoboodschapGeslotenMsg {
   };
 }
 
-export const tekenInfoboodschapGeslotenMsgWrapper = () => KaartInternalMsg(some(TekenInfoboodschapGeslotenMsg()));
+export const tekenInfoboodschapGeslotenMsgWrapper = () => KaartInternalMsg(option.some(TekenInfoboodschapGeslotenMsg()));
 
 const IdentifyInfoBoodschapGeslotenMsg = (feature: ol.Feature): IdentifyInfoBoodschapGeslotenMsg => ({
   type: "IdentifyInfoBoodschapGesloten",
@@ -209,4 +210,4 @@ const IdentifyInfoBoodschapGeslotenMsg = (feature: ol.Feature): IdentifyInfoBood
 });
 
 export const identifyInfoBoodschapGeslotenMsgGen = (feature: ol.Feature) =>
-  KaartInternalMsg(some(IdentifyInfoBoodschapGeslotenMsg(feature)));
+  KaartInternalMsg(option.some(IdentifyInfoBoodschapGeslotenMsg(feature)));

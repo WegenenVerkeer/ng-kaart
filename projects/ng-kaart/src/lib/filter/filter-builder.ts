@@ -1,6 +1,4 @@
-import { eq, option } from "fp-ts";
-import * as array from "fp-ts/lib/Array";
-import { array as ArrayMonad } from "fp-ts/lib/Array";
+import { array, eq, option, ord } from "fp-ts";
 import {
   Curried2,
   Curried3,
@@ -16,19 +14,7 @@ import {
   Predicate,
   Refinement
 } from "fp-ts/lib/function";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
-import { ordString } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
-import {
-  contramap,
-  fromEquals,
-  getArraySetoid,
-  getRecordSetoid,
-  getTupleSetoid,
-  Setoid,
-  setoidString,
-  strictEqual
-} from "fp-ts/lib/Setoid";
 import { fromTraversable, Lens, Prism, Traversal } from "monocle-ts";
 
 import * as ke from "../kaart/kaart-elementen";
@@ -37,7 +23,7 @@ import { parseDate } from "../util/date-time";
 import { applySequential, PartialFunction1 } from "../util/function";
 import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
-import { byKindSetoid, singletonSetoid } from "../util/setoid";
+import { byKindEq, singletonEq } from "../util/setoid";
 
 import { Filter as fltr } from "./filter-model";
 
@@ -55,7 +41,7 @@ export namespace FilterEditor {
     readonly current: TermEditor;
     readonly disjunctions: DisjunctionsEditor;
 
-    readonly name: Option<string>;
+    readonly name: option.Option<string>;
     readonly laag: ke.ToegevoegdeVectorLaag;
   }
 
@@ -148,7 +134,7 @@ export namespace FilterEditor {
     readonly selectedOperator: ComparisonOperator;
     readonly caseSensitive: boolean;
     readonly valueSelector: ValueSelector;
-    readonly workingValue: Option<SelectedValue>; // Om voorlopig ongeldige ingevoerde waarde bij te houden
+    readonly workingValue: option.Option<SelectedValue>; // Om voorlopig ongeldige ingevoerde waarde bij te houden
   }
 
   export type SelectedValue = LiteralValue;
@@ -182,7 +168,7 @@ export namespace FilterEditor {
     readonly selectedValue: SelectedValue;
   }
 
-  const Property: Function5<fltr.TypeType, string, string, Option<string>, string[], Property> = (
+  const Property: Function5<fltr.TypeType, string, string, option.Option<string>, string[], Property> = (
     typetype,
     name,
     label,
@@ -219,10 +205,10 @@ export namespace FilterEditor {
     ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag).filter(
       // filter de speciale velden er uit
       veld =>
-        fromNullable(veld.label).isSome() &&
-        fromNullable(veld.constante).isNone() &&
-        fromNullable(veld.template).isNone() &&
-        fromNullable(veld.html).isNone() &&
+        option.fromNullable(veld.label).isSome() &&
+        option.fromNullable(veld.constante).isNone() &&
+        option.fromNullable(veld.template).isNone() &&
+        option.fromNullable(veld.html).isNone() &&
         hasAcceptableName(veld)
     );
 
@@ -242,9 +228,9 @@ export namespace FilterEditor {
           Property(
             typetype,
             vi.naam,
-            fromNullable(vi.label).getOrElse(vi.naam),
-            fromNullable(vi.sqlFormat),
-            array.sort(ordString)(arrays.fromNullable(vi.uniekeWaarden))
+            option.fromNullable(vi.label).getOrElse(vi.naam),
+            option.fromNullable(vi.sqlFormat),
+            array.sort(ord.ordString)(arrays.fromNullable(vi.uniekeWaarden))
           )
         )
       )
@@ -450,7 +436,7 @@ export namespace FilterEditor {
     selectedOperator,
     valueSelector,
     caseSensitive
-  ) => ({ ...selection, kind: "Value", selectedOperator, valueSelector, workingValue: none, caseSensitive: caseSensitive });
+  ) => ({ ...selection, kind: "Value", selectedOperator, valueSelector, workingValue: option.none, caseSensitive: caseSensitive });
 
   const booleanCompleted: Function2<OperatorSelection, BinaryComparisonOperator, TermEditor> = (selection, selectedOperator) => ({
     ...selection,
@@ -460,7 +446,7 @@ export namespace FilterEditor {
     // contra-intuitief willen we ook bij 'inequality' als boolean waarde 'true'
     // vermits we dan 'true' vergelijken via '!=' voor operator 'is niet waar'
     selectedValue: LiteralValue("boolean")(arrays.isOneOf("isEmpty", "equality", "inequality")(selectedOperator.operator)),
-    workingValue: none,
+    workingValue: option.none,
     caseSensitive: false
   });
 
@@ -481,7 +467,7 @@ export namespace FilterEditor {
         ...selection,
         kind: "Completed",
         selectedOperator: unOp,
-        workingValue: none,
+        workingValue: option.none,
         valueSelector: EmptyValueSelector
       }),
       BinaryComparisonOperator: binOp =>
@@ -499,7 +485,7 @@ export namespace FilterEditor {
 
   // Overgang van ValueSelection naar CompletedWithValue als alles OK is. Kan ook van CompletedWithValue naar
   // ValueSelection gaan wanneer nieuwe input gegeven wordt.
-  export const selectValue: Curried2<Option<SelectedValue>, ValueSelection, TermEditor> = maybeSelectedValue => selection => {
+  export const selectValue: Curried2<option.Option<SelectedValue>, ValueSelection, TermEditor> = maybeSelectedValue => selection => {
     // Voorlopig ondersteunen we dus enkel LiteralValues
 
     type SelectedValueChecker = PartialFunction1<SelectedValue, SelectedValue>;
@@ -550,9 +536,9 @@ export namespace FilterEditor {
         fltr.Range.isRelativeDateRange(selectedValue.value)
     );
 
-    const validatedOperator: Option<BinaryComparisonOperator> = matchComparisonOperator<Option<BinaryComparisonOperator>>({
-      UnaryComparisonOperator: () => none,
-      BinaryComparisonOperator: binOp => some(binOp)
+    const validatedOperator: option.Option<BinaryComparisonOperator> = matchComparisonOperator<option.Option<BinaryComparisonOperator>>({
+      UnaryComparisonOperator: () => option.none,
+      BinaryComparisonOperator: binOp => option.some(binOp)
     })(selection.selectedOperator);
 
     // selectedValue verwijderen maakt geen verschil
@@ -591,7 +577,7 @@ export namespace FilterEditor {
     const current = FieldSelection(laag);
     return {
       laag,
-      name: none,
+      name: option.none,
       current: current,
       disjunctions: DisjunctionEditor([ConjunctionEditor([current])])
     };
@@ -619,7 +605,7 @@ export namespace FilterEditor {
     Prism.fromPredicate(containsSameEditorAs(ee));
   const getConjunctionEditorPrism: Function1<ConjunctionEditor, Prism<ConjunctionEditor, ConjunctionEditor>> = conj =>
     Prism.fromPredicate(sameConjuctionEditorAs(conj));
-  const nameLens: Lens<ExpressionEditor, Option<string>> = Lens.fromProp("name");
+  const nameLens: Lens<ExpressionEditor, option.Option<string>> = Lens.fromProp("name");
 
   const getTermEditorTraversal: Function1<TermEditor, Traversal<ExpressionEditor, TermEditor>> = ee =>
     disjunctionsLens
@@ -650,7 +636,7 @@ export namespace FilterEditor {
     ])(expressionEditor);
   };
 
-  export const setName: Function1<Option<string>, Endomorphism<ExpressionEditor>> = nameLens.set;
+  export const setName: Function1<option.Option<string>, Endomorphism<ExpressionEditor>> = nameLens.set;
 
   export const setCurrent: Function1<TermEditor, Endomorphism<ExpressionEditor>> = currentLens.set;
 
@@ -721,7 +707,7 @@ export namespace FilterEditor {
     ])(expressionEditor);
   };
 
-  const ExpressionEditor: Function4<Option<string>, ke.ToegevoegdeVectorLaag, TermEditor, DisjunctionsEditor, ExpressionEditor> = (
+  const ExpressionEditor: Function4<option.Option<string>, ke.ToegevoegdeVectorLaag, TermEditor, DisjunctionsEditor, ExpressionEditor> = (
     name,
     laag,
     current,
@@ -733,7 +719,7 @@ export namespace FilterEditor {
   const completedTermEditor: Function2<ke.ToegevoegdeVectorLaag, fltr.Comparison, TermEditor> = (laag, comparison) => {
     const distinctValues = array
       .findFirst(veldinfos(laag), vi => vi.naam === comparison.property.ref)
-      .chain(vi => fromNullable(vi.uniekeWaarden).map(array.sort(ordString)))
+      .chain(vi => option.fromNullable(vi.uniekeWaarden).map(array.sort(ord.ordString)))
       .getOrElse([]);
     const selectedProperty: Property = { ...comparison.property, distinctValues };
 
@@ -765,7 +751,7 @@ export namespace FilterEditor {
     })(comparison);
   };
 
-  const fromComparison: Function3<Option<string>, ke.ToegevoegdeVectorLaag, fltr.Comparison, ExpressionEditor> = (
+  const fromComparison: Function3<option.Option<string>, ke.ToegevoegdeVectorLaag, fltr.Comparison, ExpressionEditor> = (
     name,
     laag,
     comparison
@@ -777,7 +763,9 @@ export namespace FilterEditor {
   const toConjunctionEditor: Function2<ke.ToegevoegdeVectorLaag, fltr.ConjunctionExpression, ConjunctionEditor> = (laag, expression) => {
     switch (expression.kind) {
       case "And":
-        return ConjunctionEditor(ArrayMonad.chain([expression.left, expression.right], exp => toConjunctionEditor(laag, exp).termEditors));
+        return ConjunctionEditor(
+          array.chain((exp: fltr.ConjunctionExpression) => toConjunctionEditor(laag, exp).termEditors)([expression.left, expression.right])
+        );
       case "BinaryComparison":
         return ConjunctionEditor([completedTermEditor(laag, expression)]);
       case "UnaryComparison":
@@ -785,7 +773,7 @@ export namespace FilterEditor {
     }
   };
 
-  const fromConjunction: Function3<Option<string>, ke.ToegevoegdeVectorLaag, fltr.Conjunction, ExpressionEditor> = (
+  const fromConjunction: Function3<option.Option<string>, ke.ToegevoegdeVectorLaag, fltr.Conjunction, ExpressionEditor> = (
     name,
     laag,
     conjunction
@@ -799,7 +787,7 @@ export namespace FilterEditor {
     switch (expression.kind) {
       case "Or":
         return DisjunctionEditor(
-          ArrayMonad.chain([expression.left, expression.right], exp => toDisjunctionsEditor(laag, exp).conjunctionEditors)
+          array.chain((exp: fltr.Expression) => toDisjunctionsEditor(laag, exp).conjunctionEditors)([expression.left, expression.right])
         );
       case "And":
         return DisjunctionEditor([toConjunctionEditor(laag, expression)]);
@@ -810,7 +798,7 @@ export namespace FilterEditor {
     }
   };
 
-  const fromDisjunction: Function3<Option<string>, ke.ToegevoegdeVectorLaag, fltr.Disjunction, ExpressionEditor> = (
+  const fromDisjunction: Function3<option.Option<string>, ke.ToegevoegdeVectorLaag, fltr.Disjunction, ExpressionEditor> = (
     name,
     laag,
     disjunction
@@ -822,7 +810,11 @@ export namespace FilterEditor {
   };
 
   // Maak een builder aan voor een bestaande expressie
-  const fromExpression: Function3<Option<string>, ke.ToegevoegdeVectorLaag, fltr.Expression, ExpressionEditor> = (name, laag, expression) =>
+  const fromExpression: Function3<option.Option<string>, ke.ToegevoegdeVectorLaag, fltr.Expression, ExpressionEditor> = (
+    name,
+    laag,
+    expression
+  ) =>
     fltr.matchExpression({
       And: expr => fromConjunction(name, laag, expr),
       Or: expr => fromDisjunction(name, laag, expr),
@@ -846,12 +838,12 @@ export namespace FilterEditor {
 
   const matchComparisonOperator: <A>(_: ComparisonOperatorMatcher<A>) => Function1<ComparisonOperator, A> = matchers.matchKind;
 
-  const toComparison: Function1<TermEditor, Option<fltr.Comparison>> = termEditor => {
+  const toComparison: Function1<TermEditor, option.Option<fltr.Comparison>> = termEditor => {
     switch (termEditor.kind) {
       case "Completed":
-        return some(fltr.UnaryComparison(termEditor.selectedOperator.operator, termEditor.selectedProperty));
+        return option.some(fltr.UnaryComparison(termEditor.selectedOperator.operator, termEditor.selectedProperty));
       case "CompletedWithValue":
-        return some(
+        return option.some(
           fltr.BinaryComparison(
             termEditor.selectedOperator.operator,
             termEditor.selectedProperty,
@@ -860,32 +852,36 @@ export namespace FilterEditor {
           )
         );
       default:
-        return none; // De uiteindelijke conversie naar Expression zal falen als er ook maar 1 TermEditor niet Completed is
+        return option.none; // De uiteindelijke conversie naar Expression zal falen als er ook maar 1 TermEditor niet Completed is
     }
   };
 
-  const toConjunctionExpression: Function1<TermEditor[], Option<fltr.ConjunctionExpression>> = termEditors =>
-    ArrayMonad.traverse(option.option)(termEditors, toComparison).chain(comps =>
-      array.fold(
-        comps,
-        array.head(comps), // ingeval er maar 1 element is, bnehouden we dat gewoon
-        (first, next) => some(next.reduce<fltr.ConjunctionExpression>((sum, val) => fltr.Conjunction(sum, val), first))
-      )
-    );
+  const toConjunctionExpression: Function1<TermEditor[], option.Option<fltr.ConjunctionExpression>> = termEditors =>
+    array.array
+      .traverse(option.option)(termEditors, toComparison)
+      .chain(comps =>
+        array.fold(
+          comps,
+          array.head(comps), // ingeval er maar 1 element is, bnehouden we dat gewoon
+          (first, next) => option.some(next.reduce<fltr.ConjunctionExpression>((sum, val) => fltr.Conjunction(sum, val), first))
+        )
+      );
 
-  const toDisjunctionExpression: Function1<ConjunctionEditor[], Option<fltr.Expression>> = conjunctionEditors =>
-    ArrayMonad.traverse(option.option)(conjunctionEditors.map(ce => ce.termEditors), toConjunctionExpression).chain(conjs =>
-      array.fold(
-        conjs,
-        array.head(conjs), // ingeval er maar 1 element is, bnehouden we dat gewoon
-        (first, next) => some(next.reduce<fltr.Expression>((sum, val) => fltr.Disjunction(sum, val), first))
-      )
-    );
+  const toDisjunctionExpression: Function1<ConjunctionEditor[], option.Option<fltr.Expression>> = conjunctionEditors =>
+    array.array
+      .traverse(option.option)(conjunctionEditors.map(ce => ce.termEditors), toConjunctionExpression)
+      .chain(conjs =>
+        array.fold(
+          conjs,
+          array.head(conjs), // ingeval er maar 1 element is, bnehouden we dat gewoon
+          (first, next) => option.some(next.reduce<fltr.Expression>((sum, val) => fltr.Disjunction(sum, val), first))
+        )
+      );
 
-  const toExpression: Function1<ExpressionEditor, Option<fltr.Expression>> = expressionEditor =>
+  const toExpression: Function1<ExpressionEditor, option.Option<fltr.Expression>> = expressionEditor =>
     toDisjunctionExpression(expressionEditor.disjunctions.conjunctionEditors);
 
-  export const toExpressionFilter: Function1<ExpressionEditor, Option<fltr.ExpressionFilter>> = expressionEditor =>
+  export const toExpressionFilter: Function1<ExpressionEditor, option.Option<fltr.ExpressionFilter>> = expressionEditor =>
     toExpression(expressionEditor).map(expression => fltr.ExpressionFilter(expressionEditor.name, expression));
 
   export interface TermEditorMatcher<A> {
@@ -898,51 +894,70 @@ export namespace FilterEditor {
 
   export const matchTermEditor: <A>(_: TermEditorMatcher<A>) => Function1<TermEditor, A> = matchers.matchKind;
 
-  const setoidFieldSelection: Setoid<FilterEditor.FieldSelection> = getRecordSetoid({
-    kind: setoidString,
-    properties: array.getSetoid(contramap<string, Property>(p => p.ref, setoidString))
+  const setoidFieldSelection: eq.Eq<FilterEditor.FieldSelection> = eq.getStructEq({
+    kind: eq.eqString,
+    properties: array.getEq(eq.contramap<string, Property>(p => p.ref)(eq.eqString))
   });
 
-  const setoidBinaryComparisonOperator: Setoid<BinaryComparisonOperator> = contramap(o => o.operator, fltr.setoidBinaryComparisonOperator);
+  const setoidBinaryComparisonOperator: eq.Eq<BinaryComparisonOperator> = pipe(
+    fltr.setoidBinaryComparisonOperator,
+    eq.contramap(o => o.operator)
+  );
 
-  const setoidUnaryComparisonOperator: Setoid<UnaryComparisonOperator> = contramap(o => o.operator, fltr.setoidUnaryComparisonOperator);
+  const setoidUnaryComparisonOperator: eq.Eq<UnaryComparisonOperator> = pipe(
+    fltr.setoidUnaryComparisonOperator,
+    eq.contramap<fltr.UnaryComparisonOperator, UnaryComparisonOperator>(o => o.operator)
+  );
 
-  export const setoidComparisonOperator: Setoid<ComparisonOperator> = byKindSetoid<ComparisonOperator, string>({
+  export const setoidComparisonOperator: eq.Eq<ComparisonOperator> = byKindEq<ComparisonOperator, string>({
     BinaryComparisonOperator: setoidBinaryComparisonOperator,
     UnaryComparisonOperator: setoidUnaryComparisonOperator
   });
 
-  const setoidOperatorSelection: Setoid<OperatorSelection> = getRecordSetoid({
-    kind: setoidString,
+  const setoidOperatorSelection: eq.Eq<OperatorSelection> = eq.getStructEq({
+    kind: eq.eqString,
     properties: array.getSetoid(fltr.setoidPropertyByRef),
     selectedProperty: fltr.setoidPropertyByRef,
     operatorSelectors: array.getSetoid(setoidComparisonOperator)
   });
 
-  const freeInputValueTypeSetoid: Setoid<FreeInputValueType> = setoidString;
+  const freeInputValueTypeSetoid: eq.Eq<FreeInputValueType> = eq.eqString;
 
-  const freeInputValueSelectorSetoid: Setoid<FreeInputValueSelector> = contramap(vs => vs.valueType, freeInputValueTypeSetoid);
-
-  const rangeValueSelectorSetoid: Setoid<RangeValueSelector> = contramap(vs => vs.valueType, freeInputValueTypeSetoid);
-
-  const selectionValueSelectorSetoid: Setoid<SelectionValueSelector> = contramap(
-    vs => [vs.selectionType, vs.values] as [SelectionType, string[]],
-    getTupleSetoid(setoidString, getArraySetoid(setoidString))
+  const freeInputValueSelectorSetoid: eq.Eq<FreeInputValueSelector> = pipe(
+    freeInputValueTypeSetoid,
+    eq.contramap(vs => vs.valueType)
+  );
+  const freeInputValueSelectorSetoid2: eq.Eq<FreeInputValueSelector> = pipe(
+    freeInputValueTypeSetoid,
+    eq.contramap(vs => vs.valueType)
   );
 
-  const dateTypeSetoid: Setoid<DateType> = setoidString;
-  const dateValueSelectorSetoid: Setoid<DateValueSelector> = contramap(vs => vs.dateType, dateTypeSetoid);
+  const rangeValueSelectorSetoid: eq.Eq<RangeValueSelector> = pipe(
+    freeInputValueTypeSetoid,
+    eq.contramap(vs => vs.valueType)
+  );
 
-  const setoidValueSelector: Setoid<ValueSelector> = byKindSetoid({
-    empty: singletonSetoid,
+  const selectionValueSelectorSetoid: eq.Eq<SelectionValueSelector> = pipe(
+    eq.getTupleEq(eq.eqString, array.getEq(eq.eqString)),
+    eq.contramap(vs => [vs.selectionType, vs.values] as [SelectionType, string[]])
+  );
+
+  const dateTypeSetoid: eq.Eq<DateType> = eq.eqString;
+  const dateValueSelectorSetoid: eq.Eq<DateValueSelector> = pipe(
+    dateTypeSetoid,
+    eq.contramap(vs => vs.dateType)
+  );
+
+  const setoidValueSelector: eq.Eq<ValueSelector> = byKindEq({
+    empty: singletonEq,
     free: freeInputValueSelectorSetoid,
     selection: selectionValueSelectorSetoid,
     range: rangeValueSelectorSetoid,
     date: dateValueSelectorSetoid
   });
 
-  const setoidValueSelection: Setoid<ValueSelection> = getRecordSetoid({
-    kind: setoidString,
+  const setoidValueSelection: eq.Eq<ValueSelection> = eq.getStructEq({
+    kind: eq.eqString,
     properties: array.getSetoid(fltr.setoidPropertyByRef),
     selectedProperty: fltr.setoidPropertyByRef,
     operatorSelectors: array.getSetoid(setoidComparisonOperator),
@@ -950,20 +965,20 @@ export namespace FilterEditor {
     valueSelector: setoidValueSelector
   });
 
-  const setoidLiteralValue: Setoid<LiteralValue> = fromEquals(strictEqual); // de waarden zijn v/h type string, number of boolean
+  const setoidLiteralValue: eq.Eq<LiteralValue> = eq.fromEquals(eq.strictEqual); // de waarden zijn v/h type string, number of boolean
 
-  const setoidSelectedValue: Setoid<SelectedValue> = setoidLiteralValue;
+  const setoidSelectedValue: eq.Eq<SelectedValue> = setoidLiteralValue;
 
-  const setoidCompleted: Setoid<Completed> = getRecordSetoid({
-    kind: setoidString,
+  const setoidCompleted: eq.Eq<Completed> = eq.getStructEq({
+    kind: eq.eqString,
     properties: array.getSetoid(fltr.setoidPropertyByRef),
     selectedProperty: fltr.setoidPropertyByRef,
     operatorSelectors: array.getSetoid(setoidComparisonOperator),
     selectedOperator: setoidComparisonOperator
   });
 
-  const setoidCompletedWithValue: Setoid<CompletedWithValue> = getRecordSetoid({
-    kind: setoidString,
+  const setoidCompletedWithValue: eq.Eq<CompletedWithValue> = eq.getStructEq({
+    kind: eq.eqString,
     properties: array.getSetoid(fltr.setoidPropertyByRef),
     selectedProperty: fltr.setoidPropertyByRef,
     operatorSelectors: array.getSetoid(setoidComparisonOperator),
@@ -972,7 +987,7 @@ export namespace FilterEditor {
     selectedValue: setoidSelectedValue
   });
 
-  export const setoidTermEditor: Setoid<TermEditor> = fromEquals(
+  export const setoidTermEditor: eq.Eq<TermEditor> = eq.fromEquals(
     (te1, te2) =>
       te1.kind === te2.kind &&
       matchTermEditor({

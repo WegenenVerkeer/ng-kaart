@@ -1,7 +1,6 @@
 import { Component, ElementRef, Injector, Input } from "@angular/core";
-import * as array from "fp-ts/lib/Array";
+import { array, option } from "fp-ts";
 import { concat } from "fp-ts/lib/function";
-import { fromNullable } from "fp-ts/lib/Option";
 import { delay } from "rxjs/operators";
 
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
@@ -74,7 +73,7 @@ export class ClassicZoekerComponent extends ClassicUIElementSelectorDirective {
     this.initialising$.pipe(delay(100)).subscribe(() => {
       // Een beetje een ingewikkelde constructie, maar we willen dat we zowel met deze tag alleen kunnen werken (backwards compatibility)
       // als met deze tag + child tags
-      const inputZoekers = concat(toArray(fromNullable(this.zoeker)), this.zoekers);
+      const inputZoekers = concat(toArray(option.fromNullable(this.zoeker)), this.zoekers);
       const stdZoekers: ZoekerMetWeergaveopties[] = [
         zoekerMetPrioriteiten(googleZoeker, 1, 1, true, true),
         zoekerMetPrioriteiten(crabZoeker, 2, 2, true, true),

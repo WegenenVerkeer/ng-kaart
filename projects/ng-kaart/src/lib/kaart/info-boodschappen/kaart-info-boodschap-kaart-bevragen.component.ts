@@ -1,9 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core";
-import * as array from "fp-ts/lib/Array";
+import { array, option, ord } from "fp-ts";
 import { Curried2, Function1, Function2, Function3 } from "fp-ts/lib/function";
-import { fromNullable } from "fp-ts/lib/Option";
-import { Ord, ordNumber } from "fp-ts/lib/Ord";
-import * as ord from "fp-ts/lib/Ord";
 
 import { Adres, WegLocatie } from "..";
 import { formatCoordinate, lambert72ToWgs84, switchVolgorde } from "../../coordinaten/coordinaten.service";
@@ -27,7 +24,7 @@ export interface LaagInfo {
   veldinfos?: VeldinfoMap;
 }
 
-const projectafstandOrd: Ord<WegLocatie> = ord.contramap(wl => wl.projectieafstand, ordNumber);
+const projectafstandOrd: ord.Ord<WegLocatie> = ord.contramap(wl => wl.projectieafstand, ord.ordNumber);
 
 const textLaagLocationInfoToLaagInfo: Function2<string, TextLaagLocationInfo, LaagInfo> = (titel, tlli) => ({
   titel: titel,
@@ -89,10 +86,12 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildDirectiv
         )(value)
       );
     this.laagInfos = maps.fold(boodschap.laagLocatieInfoOpTitel)(foldF)([]);
-    this.coordinaatInformatieLambert72 = fromNullable(boodschap.coordinaat)
+    this.coordinaatInformatieLambert72 = option
+      .fromNullable(boodschap.coordinaat)
       .map(formatCoordinate(0))
       .getOrElse("");
-    this.coordinaatInformatieWgs84 = fromNullable(boodschap.coordinaat)
+    this.coordinaatInformatieWgs84 = option
+      .fromNullable(boodschap.coordinaat)
       .map(lambert72ToWgs84)
       .map(switchVolgorde) // andere volgorde weergeven voor wgs84
       .map(formatCoordinate(7))

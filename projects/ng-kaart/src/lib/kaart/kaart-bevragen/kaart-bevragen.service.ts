@@ -1,8 +1,6 @@
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
-import { either } from "fp-ts";
-import { left, right } from "fp-ts/lib/Either";
+import { either, option } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
-import { fromNullable } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { catchError, map } from "rxjs/operators";
 
@@ -133,13 +131,13 @@ function toAdres(agivAdres: AgivAdres): Adres {
 export function XY2AdresResponseToEither(response: XY2AdresResponse): AdresResult {
   if (!arrays.isArray(response)) {
     kaartLogger.warn("Fout bij opvragen adres", (response as XY2AdresError).error);
-    return left<BevragenErrorReason, Adres>("ServiceError");
+    return either.left<BevragenErrorReason, Adres>("ServiceError");
   } else {
     const succes = response as XY2AdresSucces[];
     if (arrays.isNonEmpty(succes)) {
-      return right(toAdres(succes[0].adres));
+      return either.right(toAdres(succes[0].adres));
     } else {
-      return left<BevragenErrorReason, Adres>("NoData");
+      return either.left<BevragenErrorReason, Adres>("NoData");
     }
   }
 }
@@ -149,7 +147,8 @@ export function LsWegLocatiesResultToEither(response: LsWegLocaties): WegLocatie
     .fromPredicate<BevragenErrorReason, LsWegLocaties>(
       r => r.items != null,
       r =>
-        fromNullable(r.error)
+        option
+          .fromNullable(r.error)
           .map<BevragenErrorReason>(() => "ServiceError")
           .getOrElse("NoData")
     )(response)
@@ -215,7 +214,7 @@ export function adresViaXY$(http: HttpClient, coordinaat: ol.Coordinate): rx.Obs
       catchError(error => {
         kaartLogger.error("Fout bij opvragen weglocatie", error);
         // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
-        return rx.of(left<BevragenErrorReason, Adres>(errorToReason(error)));
+        return rx.of(either.left<BevragenErrorReason, Adres>(errorToReason(error)));
       })
     );
 }
@@ -235,7 +234,7 @@ export function wegLocatiesViaXY$(http: HttpClient, coordinaat: ol.Coordinate, z
       catchError(error => {
         // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
         kaartLogger.error("Fout bij opvragen adres", error);
-        return rx.of(left<BevragenErrorReason, WegLocaties>(errorToReason(error)));
+        return rx.of(either.left<BevragenErrorReason, WegLocaties>(errorToReason(error)));
       })
     );
 }

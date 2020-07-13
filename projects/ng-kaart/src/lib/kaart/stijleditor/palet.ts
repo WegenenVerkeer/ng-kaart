@@ -1,4 +1,4 @@
-import * as array from "fp-ts/lib/Array";
+import { array } from "fp-ts";
 
 import * as clr from "../../stijl/colour";
 

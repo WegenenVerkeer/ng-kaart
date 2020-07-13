@@ -1,8 +1,6 @@
 import { Component, NgZone } from "@angular/core";
+import { eq, map as maps, option } from "fp-ts";
 import { Function1, Function2 } from "fp-ts/lib/function";
-import * as maps from "fp-ts/lib/Map";
-import { none } from "fp-ts/lib/Option";
-import { setoidString } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, mapTo, pairwise, switchMap } from "rxjs/operators";
 
@@ -60,20 +58,20 @@ const markerLayer: ke.VectorLaag = {
   type: ke.VectorType,
   titel: markerLayerTitle,
   source: new ol.source.Vector(),
-  clusterDistance: none,
-  styleSelector: none,
-  styleSelectorBron: none,
-  selectieStyleSelector: none,
-  hoverStyleSelector: none,
+  clusterDistance: option.none,
+  styleSelector: option.none,
+  styleSelectorBron: option.none,
+  selectieStyleSelector: option.none,
+  hoverStyleSelector: option.none,
   selecteerbaar: false,
   hover: false,
   minZoom: 2,
   maxZoom: 15,
   velden: new Map<string, ke.VeldInfo>(),
-  offsetveld: none,
+  offsetveld: option.none,
   verwijderd: false,
   rijrichtingIsDigitalisatieZin: false,
-  filter: none
+  filter: option.none
 };
 
 const vervangFeatures: Function1<ol.Feature[], prt.VervangFeaturesCmd<KaartInternalMsg>> = features => ({
@@ -102,10 +100,10 @@ export class MarkeerKaartklikComponent extends KaartChildDirective {
         magGetoondWorden: true,
         transparantie: Transparantie.opaak,
         laaggroep: "Tools",
-        legende: none,
-        stijlInLagenKiezer: none,
-        filterinstellingen: none,
-        laagtabelinstellingen: none,
+        legende: option.none,
+        stijlInLagenKiezer: option.none,
+        filterinstellingen: option.none,
+        laagtabelinstellingen: option.none,
         wrapper: kaartLogOnlyWrapper
       })
     );
@@ -127,7 +125,7 @@ export class MarkeerKaartklikComponent extends KaartChildDirective {
       map(
         msg =>
           maps
-            .lookup(setoidString)("kaart_bevragen", msg.infoBoodschappen)
+            .lookup(eq.eqString)("kaart_bevragen", msg.infoBoodschappen)
             .isSome() // was er een kaart bevragen boodschap bij?
       ),
       distinctUntilChanged(),

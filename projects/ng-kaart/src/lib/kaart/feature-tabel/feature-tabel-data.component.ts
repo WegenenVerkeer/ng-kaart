@@ -17,14 +17,14 @@ import {
   tap,
   withLatestFrom
 } from "rxjs/operators";
-import { isBoolean, isString } from "util";
 
 import * as arrays from "../../util/arrays";
+import { isBoolean } from "../../util/boolean";
 import { Feature } from "../../util/feature";
 import { PartialFunction1, PartialFunction2 } from "../../util/function";
 import * as ol from "../../util/openlayers-compat";
 import { collect } from "../../util/operators";
-import { join } from "../../util/string";
+import { isString, join } from "../../util/string";
 import { KaartChildDirective } from "../kaart-child.directive";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";

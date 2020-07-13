@@ -1,5 +1,4 @@
-import { findFirst } from "fp-ts/lib/Array";
-import { Option } from "fp-ts/lib/Option";
+import { array, option } from "fp-ts";
 import { browser, by, element, WebElement } from "protractor";
 
 import { KaartPage } from "../pages/kaart.po";
@@ -29,8 +28,8 @@ class AchtergrondSelectie {
     return (await this.alleTiles()).filter(tile => tile.zichtbaar);
   }
 
-  async zichtbareTileMetTitel(naam: string): Promise<Option<AchtergrondTile>> {
-    return findFirst(await this.zichtBareTiles(), tile => tile.titel === naam);
+  async zichtbareTileMetTitel(naam: string): Promise<option.Option<AchtergrondTile>> {
+    return array.findFirst(await this.zichtBareTiles(), tile => tile.titel === naam);
   }
 
   async zichtbaar(): Promise<boolean> {

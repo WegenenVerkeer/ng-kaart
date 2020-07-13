@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
-import { Option } from "fp-ts/lib/Option";
 
 import { KaartChildDirective } from "../kaart-child.directive";
 import { KaartComponent } from "../kaart.component";
@@ -18,7 +17,7 @@ export class FeatureTabelSorteringStatusComponent extends KaartChildDirective {
   public down: boolean;
 
   @Input()
-  public set sortering(value: Option<SortDirection>) {
+  public set sortering(value: option.Option<SortDirection>) {
     this.up = option.exists(direction => direction === "ASCENDING")(value);
     this.down = option.exists(direction => direction === "DESCENDING")(value);
   }

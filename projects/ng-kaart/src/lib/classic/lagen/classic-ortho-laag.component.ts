@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, Inject, Injector, ViewEncapsulation } from "@angular/core";
-import { fromNullable } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import { KAART_CFG, KaartConfig } from "../../kaart/kaart-config";
 import { TiledWmsType, WmsLaag } from "../../kaart/kaart-elementen";
@@ -27,10 +27,10 @@ export class ClassicOrthoLaagComponent extends ClassicWmsLaagComponent {
       titel: this._titel,
       naam: laagnaam,
       urls: urls,
-      versie: fromNullable(this.versie),
+      versie: option.fromNullable(this.versie),
       cqlFilter: this._cqlFilter,
-      tileSize: fromNullable(this._tileSize),
-      format: fromNullable(this.format),
+      tileSize: option.fromNullable(this._tileSize),
+      format: option.fromNullable(this.format),
       backgroundUrl: this.backgroundUrl(urls, laagnaam),
       minZoom: this._minZoom,
       maxZoom: this._maxZoom,

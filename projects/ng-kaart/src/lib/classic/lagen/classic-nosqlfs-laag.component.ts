@@ -1,7 +1,6 @@
 import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
 import { identity } from "fp-ts/lib/function";
-import { fromNullable } from "fp-ts/lib/Option";
 import { switchMap } from "rxjs/operators";
 
 import { kaartLogger } from "../../kaart";
@@ -149,8 +148,8 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeDirective 
       clusterDistance: this._clusterDistance,
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
-      selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
-      hoverStyleSelector: fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
+      selectieStyleSelector: option.fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
+      hoverStyleSelector: option.fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
       selecteerbaar: this._selecteerbaar,
       hover: this._hover,
       minZoom: this._minZoom,

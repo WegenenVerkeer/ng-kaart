@@ -1,4 +1,4 @@
-import { Validation } from "fp-ts/lib/Validation";
+import { validation } from "fp-ts";
 
 import { TypedRecord } from "../util/typed-record";
 
@@ -11,7 +11,7 @@ export type ModelConsumer<A> = (a: A) => void;
 export type MessageConsumer<Msg extends KaartMsg> = (msg: Msg) => void;
 export type Subscriber<Msg extends KaartMsg> = (mc: MessageConsumer<Msg>) => void;
 
-export type KaartCmdValidation<T> = Validation<string[], T>;
+export type KaartCmdValidation<T> = validation.Validation<string[], T>;
 export type Wrapper<T, Msg extends KaartMsg> = (t: T) => Msg;
 export type VoidWrapper<Msg extends KaartMsg> = Wrapper<undefined, Msg>;
 export type LazyWrapper<Msg extends KaartMsg> = () => Msg;

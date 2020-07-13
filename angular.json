@@ -54,7 +54,27 @@
               {
                 "input": "node_modules/document-register-element/build/document-register-element.js"
               }
-            ]
+            ],
+            "allowedCommonJsDependencies": [
+              "@turf/boolean-disjoint",
+              "@turf/boolean-intersects",
+              "@turf/meta",
+              "fp-ts/lib/Array",
+              "fp-ts/lib/Const",
+              "fp-ts/lib/Foldable",
+              "fp-ts/lib/Identity",
+              "fp-ts/lib/Monoid",
+              "fp-ts/lib/Option",
+              "fp-ts/lib/pipeable",
+              "loglevel",
+              "monocle-ts/lib/Index/Array",
+              "mustache",
+              "newtype-ts",
+              "newtype-ts/lib/NonNegativeInteger",
+              "ng4-click-outside",
+              "resize-observer",
+              "uuid"
+           ]
           },
           "configurations": {
             "production": {

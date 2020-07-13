@@ -1,6 +1,5 @@
 import { array, option } from "fp-ts";
 import { Curried2, Endomorphism, flow, Function1, Function2, Predicate } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import { fromTraversable, Getter, Lens, Traversal } from "monocle-ts";
 import * as rx from "rxjs";
@@ -56,10 +55,10 @@ export namespace TableModel {
     arrays.isNonEmpty
   );
 
-  export const laagForTitelOnLaagData: Curried2<string, LaagModel[], Option<LaagModel>> = titel => laagData =>
+  export const laagForTitelOnLaagData: Curried2<string, LaagModel[], option.Option<LaagModel>> = titel => laagData =>
     array.findFirst(laagData, laag => laag.titel === titel);
 
-  export const laagForTitel: Curried2<string, TableModel, Option<LaagModel>> = titel => model => {
+  export const laagForTitel: Curried2<string, TableModel, option.Option<LaagModel>> = titel => model => {
     // asFold geeft een bug: Zie https://github.com/gcanti/monocle-ts/issues/96
     // return laagForTitelTraversal(titel).asFold().headOption;
     return laagForTitelOnLaagData(titel)(model.laagData);

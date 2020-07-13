@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 import * as rx from "rxjs";
 import { catchError, map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
@@ -123,9 +123,9 @@ export class CrabHuisnummer implements CrabZoekInput {
 
 export class CrabZoekResultaat implements ZoekResultaat {
   readonly featureIdSuffix: string;
-  readonly kaartInfo: Option<ZoekKaartResultaat>;
-  readonly preferredPointZoomLevel = some(10);
-  readonly extraOmschrijving: Option<string> = none;
+  readonly kaartInfo: option.Option<ZoekKaartResultaat>;
+  readonly preferredPointZoomLevel = option.some(10);
+  readonly extraOmschrijving: option.Option<string> = option.none;
 
   constructor(
     x_lambert_72: number,
@@ -141,7 +141,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
   ) {
     this.featureIdSuffix = `${index + 1}`;
     const geometry = new ol.geom.Point([x_lambert_72, y_lambert_72]);
-    this.kaartInfo = some({
+    this.kaartInfo = option.some({
       style: style,
       highlightStyle: highlightStyle,
       geometry: geometry,

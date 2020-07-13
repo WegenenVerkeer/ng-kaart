@@ -1,11 +1,11 @@
-import { concat, Curried2, Curried3, Endomorphism, Function1, Function2, pipe, Refinement } from "fp-ts/lib/function";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
-import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
+import { eq, option } from "fp-ts";
+import { concat, Curried2, Curried3, Endomorphism, flow, Function1, Function2, Refinement } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import { Getter, Iso, Lens, Prism } from "monocle-ts";
 import { iso, Newtype, prism } from "newtype-ts";
-import { isNumber } from "util";
 
 import { hexByte } from "../util/hex";
+import { isNumber } from "../util/number";
 import * as ol from "../util/openlayers-compat";
 import { nonEmptyString, toLowerCaseString } from "../util/string";
 
@@ -22,11 +22,11 @@ const isoKleurcode: Iso<Kleurcode, string> = iso<Kleurcode>();
 const prismKleurnaam: Prism<string, Kleurnaam> = prism<Kleurnaam>(nonEmptyString);
 export const prismKleurcode: Prism<string, Kleurcode> = prism<Kleurcode>(s => /^#[a-f\d]{8}$/i.test(s)); // r,g,b,opacity
 
-const toKleurnaam: Function1<string, Option<Kleurnaam>> = prismKleurnaam.getOption;
+const toKleurnaam: Function1<string, option.Option<Kleurnaam>> = prismKleurnaam.getOption;
 // ietwat overdreven benaming, maar is enkel voor intern gebruik
 const ensureOpacity: Endomorphism<string> = s => (s.length < 8 ? s + "ff" : s);
 // kleurcode moet lowercase zijn om prism te kunnen passeren. Opacity wordt op 1 gezet indien niet aanwezig
-const toKleurcode: Function1<string, Option<Kleurcode>> = pipe(
+const toKleurcode: Function1<string, option.Option<Kleurcode>> = flow(
   toLowerCaseString,
   ensureOpacity,
   prismKleurcode.getOption
@@ -46,11 +46,11 @@ const redGetter: Getter<Kleurcode, number> = new Getter(getComponent(0));
 const greenGetter: Getter<Kleurcode, number> = new Getter(getComponent(1));
 const blueGetter: Getter<Kleurcode, number> = new Getter(getComponent(2));
 const opacityLens: Lens<Kleurcode, number> = new Lens(
-  pipe(
+  flow(
     getComponent(3),
     n => n / 255
   ),
-  pipe(
+  flow(
     n => n * 255,
     setComponent(3)
   )
@@ -64,20 +64,20 @@ const hexToRGBA: Function1<Kleurcode, string> = code => {
 
 // constructors en accessors
 export const Kleur: Curried2<Kleurnaam, Kleurcode, Kleur> = naam => code => ({ naam: naam, code: code });
-export const toKleur: Function2<string, string, Option<Kleur>> = (naam, code) => toKleurcode(code).ap(toKleurnaam(naam).map(Kleur));
+export const toKleur: Function2<string, string, option.Option<Kleur>> = (naam, code) => toKleurcode(code).ap(toKleurnaam(naam).map(Kleur));
 const fallback: Kleur = Kleur(isoKleurnaam.wrap("zwart"))(isoKleurcode.wrap("#000000ff")); // onveilig, maar geldig bij constructie!
 export const toKleurUnsafe: Function2<string, string, Kleur> = (naam, code) => toKleur(naam, code).getOrElse(fallback);
 export const kleurnaam: Function1<Kleur, Kleurnaam> = kleur => kleur.naam;
 export const kleurcode: Function1<Kleur, Kleurcode> = kleur => kleur.code;
-export const kleurnaamValue: Function1<Kleur, string> = pipe(
+export const kleurnaamValue: Function1<Kleur, string> = flow(
   kleurnaam,
   isoKleurnaam.unwrap
 );
-export const kleurcodeValue: Function1<Kleur, string> = pipe(
+export const kleurcodeValue: Function1<Kleur, string> = flow(
   kleurcode,
   isoKleurcode.unwrap
 );
-export const kleurRGBAValue: Function1<Kleur, string> = pipe(
+export const kleurRGBAValue: Function1<Kleur, string> = flow(
   kleurcode,
   hexToRGBA
 );
@@ -85,8 +85,14 @@ export const setOpacity: Curried2<number, Kleur, Kleur> = kleurcodeLens.compose(
 
 // type class instances voor Kleur
 export const isKleur: Refinement<object, Kleur> = (kleur): kleur is Kleur => kleur.hasOwnProperty("naam") && kleur.hasOwnProperty("code");
-export const setoidKleurcode: Setoid<Kleurcode> = contramap(isoKleurcode.unwrap, setoidString);
-export const setoidKleurOpCode: Setoid<Kleur> = contramap(kleurcode, setoidKleurcode);
+export const setoidKleurcode: eq.Eq<Kleurcode> = pipe(
+  eq.eqString,
+  eq.contramap(isoKleurcode.unwrap)
+);
+export const setoidKleurOpCode: eq.Eq<Kleur> = pipe(
+  setoidKleurcode,
+  eq.contramap(kleurcode)
+);
 
 // Onze vaste kleuren
 export const groen: Kleur = toKleurUnsafe("groen", "#46af4a");
@@ -182,10 +188,10 @@ const kleurByCode: KleurLookup = concat(standaardKleuren, extraKleuren).reduce(
 );
 
 // Probeer een kleurcode om te zetten naar een kleur. Faal als de code niet bekend is
-export const stringToKleur: Function1<string, Option<Kleur>> = txt => fromNullable(kleurByCode[txt]);
+export const stringToKleur: Function1<string, option.Option<Kleur>> = txt => option.fromNullable(kleurByCode[txt]);
 
 // Converteer vanaf open layers
-export const olToKleur: Function1<ol.Color | string, Option<Kleur>> = colorlike => {
+export const olToKleur: Function1<ol.Color | string, option.Option<Kleur>> = colorlike => {
   if (typeof colorlike === "string") {
     // Als het een kleurnaam is, dan kunnen we er helaas niks mee doen. In een overgangsfase zou dat wel nuttig
     // kunnen zijn, maar uiteindelijk gaan we alle kleuren genereren.
@@ -194,6 +200,6 @@ export const olToKleur: Function1<ol.Color | string, Option<Kleur>> = colorlike 
     return toKleur("afgeleid", "#" + colorlike.map(hexByte).join());
   } else {
     // Uint8Array en Uint8ClampedArray ondersteunen we niet
-    return none;
+    return option.none;
   }
 };

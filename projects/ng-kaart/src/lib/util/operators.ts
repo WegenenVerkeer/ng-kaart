@@ -1,7 +1,5 @@
-import { option } from "fp-ts";
+import { option, tuple } from "fp-ts";
 import { Function1, Function2, Refinement } from "fp-ts/lib/function";
-import { isSome, Option } from "fp-ts/lib/Option";
-import { Tuple } from "fp-ts/lib/Tuple";
 import * as rx from "rxjs";
 import { filter, map, scan, skipUntil, switchMap } from "rxjs/operators";
 
@@ -29,11 +27,11 @@ export function collect<A, B>(f: (a: A) => B | undefined): Pipeable<A, B> {
  *
  * @param f een transformatie van A naar B
  */
-export function collectOption<A, B>(f: (a: A) => Option<B>): Pipeable<A, B> {
+export function collectOption<A, B>(f: (a: A) => option.Option<B>): Pipeable<A, B> {
   return o =>
     o.pipe(
       map(f), //
-      filter(isSome),
+      filter(option.isSome),
       map(v => v.value)
     );
 }
@@ -41,9 +39,9 @@ export function collectOption<A, B>(f: (a: A) => Option<B>): Pipeable<A, B> {
 /**
  * Filtert de gedefinieerde Option<A>'s en converteert ze naar A's.
  */
-export const catOptions: <A>(o: rx.Observable<Option<A>>) => rx.Observable<A> = <A>(o: rx.Observable<Option<A>>) =>
+export const catOptions: <A>(o: rx.Observable<option.Option<A>>) => rx.Observable<A> = <A>(o: rx.Observable<option.Option<A>>) =>
   o.pipe(
-    filter(isSome), // emit niet als none
+    filter(option.isSome), // emit niet als none
     map(v => v.value) // omwille van filter hierboven nooit undefined. Properder met switchMap en foldl, maar minder efficiënt.
   );
 
@@ -136,10 +134,15 @@ export function scan2<A, B, C>(
   return rx.merge(obsA.pipe(TagA), rx.merge(obsB.pipe(TagB))).pipe(scan(accumulate, init));
 }
 
-export function scanState<A, S, B>(obsA: rx.Observable<A>, runState: Function2<S, A, Tuple<S, B>>, seed: S, rseed: B): rx.Observable<B> {
-  const initial: Tuple<S, B> = new Tuple(seed, rseed);
+export function scanState<A, S, B>(
+  obsA: rx.Observable<A>,
+  runState: Function2<S, A, tuple.Tuple<S, B>>,
+  seed: S,
+  rseed: B
+): rx.Observable<B> {
+  const initial: tuple.Tuple<S, B> = new tuple.Tuple(seed, rseed);
 
-  const accumulate: Function2<Tuple<S, B>, A, Tuple<S, B>> = (ps, a) => runState(ps.fst, a);
+  const accumulate: Function2<tuple.Tuple<S, B>, A, tuple.Tuple<S, B>> = (ps, a) => runState(ps.fst, a);
 
   return obsA.pipe(
     scan(accumulate, initial),

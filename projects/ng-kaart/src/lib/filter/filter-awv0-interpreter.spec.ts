@@ -1,5 +1,4 @@
-import { option } from "fp-ts";
-import { eqString } from "fp-ts/lib/Eq";
+import { eq, option } from "fp-ts";
 import { Function1, Lazy } from "fp-ts/lib/function";
 import { DateTime } from "luxon";
 
@@ -46,7 +45,7 @@ describe("De filterinterpreter", () => {
     const isNone = (obj): obj is option.None<string> => typeof obj === "object" && obj["_tag"] === "None";
     jasmine.addCustomEqualityTester((opt1, opt2) => {
       if (isStringSome(opt1) && isStringSome(opt2)) {
-        return option.getEq(eqString).equals(opt1, opt2);
+        return option.getEq(eq.eqString).equals(opt1, opt2);
       } else {
         return undefined;
       }

@@ -1,5 +1,5 @@
 import { constant, Function1, Function2, Function3, Lazy, Refinement } from "fp-ts/lib/function";
-import * as option from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import * as clr from "../../stijl/colour";
 import * as ol from "../../util/openlayers-compat";

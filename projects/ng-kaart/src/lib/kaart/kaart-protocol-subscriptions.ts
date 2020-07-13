@@ -1,8 +1,5 @@
-import { eq } from "fp-ts";
-import { Either } from "fp-ts/lib/Either";
-import { Eq } from "fp-ts/lib/Eq";
+import { either, eq, option } from "fp-ts";
 import { Curried2, Function1, Predicate } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
 import { Lens } from "monocle-ts";
 
 import { FeatureWithIdAndLaagnaam } from "../util/feature";
@@ -65,7 +62,7 @@ export interface Veldsortering {
 export namespace Veldsortering {
   export const create = (veldnaam: string, sort: "ASCENDING" | "DESCENDING"): Veldsortering => ({ veldnaam, sort });
 
-  export const eqVeldsortering: Eq<Veldsortering> = eq.getStructEq({ veldnaam: eq.eqString, sort: eq.eqString });
+  export const eqVeldsortering: eq.Eq<Veldsortering> = eq.getStructEq({ veldnaam: eq.eqString, sort: eq.eqString });
 }
 
 export interface Laagtabelinstellingen {
@@ -102,7 +99,7 @@ export interface GeselecteerdeFeatures {
 }
 
 export interface HoverFeature {
-  hover: Either<ol.Feature, ol.Feature>; // left = unhover, right = hover
+  hover: either.Either<ol.Feature, ol.Feature>; // left = unhover, right = hover
 }
 
 export type MsgGen<Input, Msg> = Function1<Input, Msg>;
@@ -180,7 +177,7 @@ export interface ZoekResultaatSelectieSubscription<Msg> {
 
 export interface ActieveModusSubscription<Msg> {
   readonly type: "ActieveModus";
-  readonly wrapper: (modus: Option<string>) => Msg;
+  readonly wrapper: (modus: option.Option<string>) => Msg;
 }
 
 export interface GeometryChangedSubscription<Msg> {
@@ -191,7 +188,7 @@ export interface GeometryChangedSubscription<Msg> {
 
 export interface TekenenSubscription<Msg> {
   readonly type: "Tekenen";
-  readonly wrapper: (settings: Option<ke.TekenSettings>) => Msg;
+  readonly wrapper: (settings: option.Option<ke.TekenSettings>) => Msg;
 }
 
 export interface InfoBoodschappenSubscription<Msg> {
@@ -370,11 +367,11 @@ export function GeometryChangedSubscription<Msg>(
   };
 }
 
-export function TekenenSubscription<Msg>(wrapper: (settings: Option<ke.TekenSettings>) => Msg): TekenenSubscription<Msg> {
+export function TekenenSubscription<Msg>(wrapper: (settings: option.Option<ke.TekenSettings>) => Msg): TekenenSubscription<Msg> {
   return { type: "Tekenen", wrapper: wrapper };
 }
 
-export function ActieveModusSubscription<Msg>(wrapper: (modus: Option<string>) => Msg): ActieveModusSubscription<Msg> {
+export function ActieveModusSubscription<Msg>(wrapper: (modus: option.Option<string>) => Msg): ActieveModusSubscription<Msg> {
   return { type: "ActieveModus", wrapper: wrapper };
 }
 

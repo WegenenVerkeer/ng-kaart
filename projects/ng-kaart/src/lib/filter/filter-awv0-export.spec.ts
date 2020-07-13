@@ -1,4 +1,4 @@
-import { none, some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 import { DateTime } from "luxon";
 
 import { FilterAwv0Json } from "./filter-awv0-export";
@@ -12,7 +12,7 @@ describe("De filter exporter", () => {
     it("moet een gezette naam naar een gezet 'name' veld omzetten", () => {
       const filter: fltr.ExpressionFilter = {
         kind: "ExpressionFilter",
-        name: some("testFilter"),
+        name: option.some("testFilter"),
         expression: {
           kind: "BinaryComparison",
           operator: "equality",
@@ -28,7 +28,7 @@ describe("De filter exporter", () => {
     it("moet een niet-gezette naam naar een definitie zonder 'name' veld omzetten", () => {
       const filter: fltr.ExpressionFilter = {
         kind: "ExpressionFilter",
-        name: none,
+        name: option.none,
         expression: {
           kind: "BinaryComparison",
           operator: "equality",
@@ -45,7 +45,7 @@ describe("De filter exporter", () => {
       it("moet een 'groter dan' kunnen exporteren", () => {
         const filter: fltr.ExpressionFilter = {
           kind: "ExpressionFilter",
-          name: none,
+          name: option.none,
           expression: {
             kind: "BinaryComparison",
             operator: "larger",
@@ -72,7 +72,7 @@ describe("De filter exporter", () => {
       it("moet een 'heeft een waarde' kunnen exporteren", () => {
         const filter: fltr.ExpressionFilter = {
           kind: "ExpressionFilter",
-          name: none,
+          name: option.none,
           expression: {
             kind: "UnaryComparison",
             operator: "isNotEmpty",
@@ -93,7 +93,7 @@ describe("De filter exporter", () => {
       it("moet een 'heeft geen waarde' kunnen exporteren", () => {
         const filter: fltr.ExpressionFilter = {
           kind: "ExpressionFilter",
-          name: none,
+          name: option.none,
           expression: {
             kind: "UnaryComparison",
             operator: "isEmpty",
@@ -116,7 +116,7 @@ describe("De filter exporter", () => {
       it("moet het sqlFormat attribuut weglaten", () => {
         const filter: fltr.ExpressionFilter = {
           kind: "ExpressionFilter",
-          name: none,
+          name: option.none,
           expression: {
             kind: "UnaryComparison",
             operator: "isNotEmpty",
@@ -145,7 +145,7 @@ describe("De filter exporter", () => {
         const date = DateTime.fromFormat("2019-11-01", "yyyy-MM-dd");
         const filter: fltr.ExpressionFilter = {
           kind: "ExpressionFilter",
-          name: none,
+          name: option.none,
           expression: {
             kind: "BinaryComparison",
             operator: "equality",

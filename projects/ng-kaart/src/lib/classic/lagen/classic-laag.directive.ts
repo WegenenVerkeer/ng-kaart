@@ -1,5 +1,5 @@
 import { AfterContentInit, Directive, ElementRef, Injector, Input, OnDestroy, OnInit } from "@angular/core";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import { Laag, Laaggroep } from "../../kaart/kaart-elementen";
 import { Legende } from "../../kaart/kaart-legende";
@@ -15,13 +15,13 @@ import * as val from "../webcomponent-support/params";
 export abstract class ClassicLaagDirective extends ClassicBaseDirective implements AfterContentInit, OnDestroy, OnInit {
   legendeItems: ClassicLegendeItemDirective[] = [];
 
-  protected laag: Option<Laag> = none;
+  protected laag: option.Option<Laag> = option.none;
 
   _titel = "";
-  _stijlInLagenKiezer: Option<string> = none;
+  _stijlInLagenKiezer: option.Option<string> = option.none;
   _zichtbaar = true;
   _transparantie: Transparantie = Transparantie.opaak;
-  _groep: Option<Laaggroep> = none;
+  _groep: option.Option<Laaggroep> = option.none;
   _minZoom = 2;
   _maxZoom = 16;
 
@@ -100,7 +100,7 @@ export abstract class ClassicLaagDirective extends ClassicBaseDirective implemen
 
   protected voegLaagToe() {
     const lg = this.createLayer();
-    this.laag = some(lg);
+    this.laag = option.some(lg);
     this.dispatch({
       type: "VoegLaagToe",
       positie: Number.MAX_SAFE_INTEGER,
@@ -108,10 +108,10 @@ export abstract class ClassicLaagDirective extends ClassicBaseDirective implemen
       laaggroep: this.gekozenLaagGroep(),
       magGetoondWorden: this._zichtbaar,
       transparantie: this._transparantie,
-      legende: none,
+      legende: option.none,
       stijlInLagenKiezer: this._stijlInLagenKiezer,
-      filterinstellingen: none,
-      laagtabelinstellingen: none,
+      filterinstellingen: option.none,
+      laagtabelinstellingen: option.none,
       wrapper: logOnlyWrapper
     });
   }

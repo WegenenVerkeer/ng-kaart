@@ -1,30 +1,23 @@
-import { validation } from "fp-ts";
-import { Applicative2C } from "fp-ts/lib/Applicative";
-import { array as Array } from "fp-ts/lib/Array";
+import { applicative, array, monad, option, semigroup, traversable, validation } from "fp-ts";
 import { Function1, Predicate, Refinement } from "fp-ts/lib/function";
-import { Monad2C } from "fp-ts/lib/Monad";
-import { none, Option, some } from "fp-ts/lib/Option";
-import { getArraySemigroup } from "fp-ts/lib/Semigroup";
-import { sequence } from "fp-ts/lib/Traversable";
-import { URI, Validation } from "fp-ts/lib/Validation";
 
-export type ErrValidation<A> = Validation<string[], A>;
+export type ErrValidation<A> = validation.Validation<string[], A>;
 export type Validator<A, B> = Function1<A, ErrValidation<B>>;
 
-export const validationSemigroup = getArraySemigroup<string>();
-export const validationAp: Applicative2C<URI, string[]> = validation.getApplicative(validationSemigroup);
+export const validationSemigroup = semigroup.getArraySemigroup<string>();
+export const validationAp: applicative.Applicative2C<validation.URI, string[]> = validation.getApplicative(validationSemigroup);
 
-export const allOf = sequence(validationAp, Array);
+export const allOf = traversable.sequence(validationAp, array.array);
 
 export const success = <A>(a: A): ErrValidation<A> => validation.success<string[], A>(a);
 export const failure = <A>(err: string): ErrValidation<A> => validation.failure<string[], A>([err]);
 
-export function fromOption<A>(maybe: Option<A>, errorMsg: string): ErrValidation<A> {
+export function fromOption<A>(maybe: option.Option<A>, errorMsg: string): ErrValidation<A> {
   return maybe.map(t => validation.success<string[], A>(t)).getOrElse(validation.failure([errorMsg]));
 }
 
-export function toOption<A>(validation: ErrValidation<A>): Option<A> {
-  return validation.map(some).getOrElse(none);
+export function toOption<A>(validation: ErrValidation<A>): option.Option<A> {
+  return validation.map(option.some).getOrElse(option.none);
 }
 
 export function fromPredicate<A, B extends A>(a: A, pred: Refinement<A, B>, errMsg: string): ErrValidation<B>;
@@ -33,11 +26,11 @@ export function fromPredicate<A>(a: A, pred: Predicate<A>, errMsg: string): ErrV
   return validation.fromPredicate(pred, () => [errMsg])(a);
 }
 
-export function fromBoolean(thruth: boolean, errMsg: string): Validation<string[], {}> {
+export function fromBoolean(thruth: boolean, errMsg: string): validation.Validation<string[], {}> {
   return thruth ? validation.success({}) : validation.failure([errMsg]);
 }
 
-export const validationMonad: Monad2C<URI, string[]> = validation.getMonad(getArraySemigroup<string>());
+export const validationMonad: monad.Monad2C<validation.URI, string[]> = validation.getMonad(semigroup.getArraySemigroup<string>());
 
 export const validationChain: <A, B>(fa: ErrValidation<A>, f: Validator<A, B>) => ErrValidation<B> = validationMonad.chain;
 
