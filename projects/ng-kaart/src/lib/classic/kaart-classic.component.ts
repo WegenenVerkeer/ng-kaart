@@ -14,7 +14,7 @@ import {
 import { option } from "fp-ts";
 import { Function1, pipe } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { debounceTime, map, share, tap } from "rxjs/operators";
+import { debounceTime, map, share, switchMap, tap } from "rxjs/operators";
 
 import { forChangedValue, KaartBaseDirective } from "../kaart/kaart-base.directive";
 import { BevraagKaartOpties } from "../kaart/kaart-bevragen/kaart-bevragen-opties";
@@ -98,10 +98,11 @@ const nop = () => {};
 export class KaartClassicComponent extends KaartBaseDirective implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<TypedRecord> {
   /** @ignore */
   private static counter = 1;
+
+  private kaartClassicSubMsgProvider: rx.ReplaySubject<rx.Observable<KaartClassicSubMsg>> = new rx.ReplaySubject();
   /** @ignore */
-  kaartClassicSubMsg$: rx.Observable<KaartClassicSubMsg> = rx.throwError(
-    "Gebruik kaartClassicSubMsg$ niet vooraleer die geinitaliseerd is. Subscribe pas later."
-  );
+  kaartClassicSubMsg$: rx.Observable<KaartClassicSubMsg> = this.kaartClassicSubMsgProvider.pipe(switchMap(provider => provider));
+
   /** @ignore */
   private hasFocus = false;
 
@@ -249,11 +250,13 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
 
     this.kaartMsgObservableConsumer = (msg$: rx.Observable<prt.KaartMsg>) => {
       // We zijn enkel geïnteresseerd in messages van ons eigen type
-      this.kaartClassicSubMsg$ = msg$.pipe(
-        ofType<KaartClassicMsg>("KaartClassic"),
-        map(m => m.payload),
-        tap(m => classicLogger.debug("Een classic msg werd ontvangen", m)),
-        share() // 1 rx subscription naar boven toe is genoeg
+      this.kaartClassicSubMsgProvider.next(
+        msg$.pipe(
+          ofType<KaartClassicMsg>("KaartClassic"),
+          map(m => m.payload),
+          tap(m => classicLogger.debug("Een classic msg werd ontvangen", m)),
+          share() // 1 rx subscription naar boven toe is genoeg
+        )
       );
 
       // Deze blok lift de boodschappen van de kaart component naar boodschappen voor de classic componenten
