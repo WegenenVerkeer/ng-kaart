@@ -55,9 +55,10 @@ export class ClassicStandaardInteractiesComponent extends ClassicBaseDirective i
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes["focusVoorZoom"] || changes["rotatie"]) {
+    if ((changes["focusVoorZoom"] && !changes["focusVoorZoom"].firstChange) || (changes["rotatie"] && !changes["rotatie"].firstChange)) {
+      // Een PasStandaardInteractiesAanCmd zou beter zijn
       this.kaart.dispatch(prt.VerwijderStandaardInteractiesCmd(kaartLogOnlyWrapper));
+      this.kaart.dispatch(prt.VoegStandaardInteractiesToeCmd(this._focusVoorZoom, this._rotatie, kaartLogOnlyWrapper));
     }
-    this.kaart.dispatch(prt.VoegStandaardInteractiesToeCmd(this._focusVoorZoom, this._rotatie, kaartLogOnlyWrapper));
   }
 }

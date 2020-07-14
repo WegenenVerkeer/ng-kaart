@@ -49,7 +49,7 @@ export abstract class ClassicSingleZoekerDirective extends KaartBaseDirective {
   /**
    * De prioriteit/volgorde van deze zoeker in de zoekresultaten. Let op: moet oplopen van 0 zonder gaten voor alle
    * zoekers. Een negatief getal betekent dat er geen zoekresultaten opgevraagd worden. Als de prioriteiten niet
-   * expliciet gezet worden, dan wordt de volgorde zoals ze voorkomen in de HTML/template gebruikt. Als er er voor één
+   * expliciet gezet worden, dan wordt de volgorde zoals ze voorkomen in de HTML/template gebruikt. Als er voor één
    * zoeker een prioriteit ingesteld is, dan moet dat voor alle zoekers zo zijn.
    */
   @Input()

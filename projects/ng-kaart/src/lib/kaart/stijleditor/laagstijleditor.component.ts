@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, ViewChildren, ViewEncapsulation } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { MatTabChangeEvent } from "@angular/material/tabs";
-import { array, option, eq } from "fp-ts";
+import { array, eq, option } from "fp-ts";
 import { Curried2, Function1, Function2, Predicate, Refinement, tuple } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { delay, filter, map, mapTo, sample, scan, shareReplay, startWith, switchMap } from "rxjs/operators";

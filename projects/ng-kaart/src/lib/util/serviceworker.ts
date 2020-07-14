@@ -1,7 +1,8 @@
 import { option } from "fp-ts";
 
 const sendMessage = (message: any) => {
-  option.fromNullable(navigator.serviceWorker)
+  option
+    .fromNullable(navigator.serviceWorker)
     .chain(sw => option.fromNullable(sw.controller))
     .map(swc => swc.postMessage(message))
     .orElse(() => {
