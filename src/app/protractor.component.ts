@@ -66,8 +66,8 @@ export class ProtractorComponent {
 
   constructor() {
     // Voorheen werd require gebruikt als de waarde van het source attribuut.
-    // Dat werkt nu echter niet meer. Een side effet van require is wel dat de
-    // resource beschikbaar komt onder het root pad. Vandaar dat er er kunnen
+    // Dat werkt nu echter niet meer. Een side effect van require is wel dat de
+    // resource beschikbaar komt onder het root pad. Vandaar dat we er kunnen
     // naar refereren in de img style.
     require("material-design-icons/maps/svg/production/ic_place_48px.svg");
     require("material-design-icons/maps/svg/production/ic_local_airport_48px.svg");
