@@ -11,8 +11,7 @@ import {
   SimpleChanges,
   ViewChild
 } from "@angular/core";
-import { option } from "fp-ts";
-import { sequenceT } from "fp-ts/lib/Apply";
+import { apply, option } from "fp-ts";
 import { Function1, pipe } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { debounceTime, map, share, switchMap, tap } from "rxjs/operators";
@@ -519,8 +518,8 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
   private zetKaartGrootte() {
     const maybeNativeMapElement = option.fromNullable(this.mapElement).chain(elt => option.fromNullable(elt.nativeElement));
 
-    forEach(sequenceT(option.option)(maybeNativeMapElement, this._breedte), ([elt, breedte]) => (elt.style.width = `${breedte}px`));
-    forEach(sequenceT(option.option)(maybeNativeMapElement, this._hoogte), ([elt, hoogte]) => (elt.style.height = `${hoogte}px`));
+    forEach(apply.sequenceT(option.option)(maybeNativeMapElement, this._breedte), ([elt, breedte]) => (elt.style.width = `${breedte}px`));
+    forEach(apply.sequenceT(option.option)(maybeNativeMapElement, this._hoogte), ([elt, hoogte]) => (elt.style.height = `${hoogte}px`));
   }
 
   /** @ignore */
