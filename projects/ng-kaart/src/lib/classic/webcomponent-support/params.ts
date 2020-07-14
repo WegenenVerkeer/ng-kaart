@@ -80,6 +80,8 @@ const getOptionalParameter: <A>(_: json.Interpreter<A>) => OptionalParamGetter<A
 
 export const str: ParamGetter<string> = identity;
 
+export const strOpt: ParamGetter<string | undefined> = identity;
+
 export const optStr: OptionalParamGetter<string> = param => {
   if (param) {
     return option.some(param);

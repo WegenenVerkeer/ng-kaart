@@ -30,7 +30,7 @@ export interface PrecacheFeatures {
 export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeDirective {
   _url = "/geolatte-nosqlfs";
   _database: string;
-  _view = "default";
+  _view: string | undefined;
   _collection: string;
   _filter: string;
   _gebruikCache = false;
@@ -54,7 +54,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeDirective 
 
   @Input()
   set view(param: string) {
-    this._view = val.str(param, this._view);
+    this._view = val.strOpt(param, this._view);
   }
 
   @Input()
