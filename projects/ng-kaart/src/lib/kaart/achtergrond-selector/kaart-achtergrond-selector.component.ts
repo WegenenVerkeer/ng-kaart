@@ -2,7 +2,7 @@ import { animate, state, style, transition, trigger } from "@angular/animations"
 import { BreakpointObserver, Breakpoints } from "@angular/cdk/layout";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
 import * as rx from "rxjs";
-import { map, switchMap, takeUntil } from "rxjs/operators";
+import { map, switchMapTo } from "rxjs/operators";
 
 import { ofType } from "../../util/operators";
 
@@ -81,28 +81,29 @@ export class KaartAchtergrondSelectorComponent extends KaartChildDirective imple
   ) {
     super(kaartComponent, zone);
 
-    this.backgroundTiles$ = this.initialising$.pipe(switchMap(() => this.modelChanges.lagenOpGroep.Achtergrond.pipe(map(lgn => lgn))));
+    this.backgroundTiles$ = this.initialising$.pipe(switchMapTo(this.modelChanges.lagenOpGroep.Achtergrond.pipe(map(lgn => lgn))));
 
-    this.initialising$
-      .pipe(
-        switchMap(() =>
+    this.bindToLifeCycle(
+      this.initialising$.pipe(
+        switchMapTo(
           this.internalMessage$.pipe(
             ofType<AchtergrondtitelGezetMsg>("AchtergrondtitelGezet"), //
-            map(a => a.titel),
-            takeUntil(this.destroying$)
+            map(a => a.titel)
           )
         )
       )
-      .subscribe(titel => {
-        this.achtergrondTitel = titel;
-        this.cdr.detectChanges();
-      });
-
-    breakpointObserver.observe([Breakpoints.HandsetPortrait]).subscribe(result => {
-      // Gebruik van built-in breakpoints uit de Material Design spec: https://material.angular.io/cdk/layout/overview
-      this.handsetPortrait = result.matches && this.onMobileDevice;
+    ).subscribe(titel => {
+      this.achtergrondTitel = titel;
       this.cdr.detectChanges();
     });
+
+    this.bindToLifeCycle(this.initialising$.pipe(switchMapTo(breakpointObserver.observe([Breakpoints.HandsetPortrait])))).subscribe(
+      result => {
+        // Gebruik van built-in breakpoints uit de Material Design spec: https://material.angular.io/cdk/layout/overview
+        this.handsetPortrait = result.matches && this.onMobileDevice;
+        this.cdr.detectChanges();
+      }
+    );
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {

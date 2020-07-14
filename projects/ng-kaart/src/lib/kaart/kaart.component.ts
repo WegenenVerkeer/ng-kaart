@@ -119,7 +119,7 @@ export class KaartComponent extends KaartBaseDirective {
       filter(m => m.type === "KaartInternal"), //
       map(m => (m as KaartInternalMsg).payload),
       catOptions,
-      tap(m => kaartLogger.debug("een interne message werd ontvangen:", m)),
+      tap(m => kaartLogger.debug("Een interne message werd ontvangen:", m)),
       shareReplay(1) // Waarom hebben we eigenlijk het vorige commando nog nodig?
     );
 

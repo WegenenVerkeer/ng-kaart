@@ -1,6 +1,6 @@
+import { option } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { Predicate } from "fp-ts/lib/function";
-import { option } from "fp-ts";
 import * as strmap from "fp-ts/lib/StrMap";
 
 export function find<A>(strMap: strmap.StrMap<A>, p: Predicate<A>): option.Option<A> {
