@@ -467,6 +467,21 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     this.rotatieSubj.next(0);
   }
 
+  trackingTooltip(state: State): string {
+    switch (this.getStateMachine()[state]["ClickEvent"]) {
+      case "NoTracking":
+        return "Stop locatie tracking";
+      case "TrackingCenter":
+        return "Zoom naar locatie";
+      case "TrackingDisabled":
+        return "Stop locatie tracking";
+      case "Tracking":
+        return "Start locatie tracking";
+      case "TrackingAutoRotate":
+        return "Start locatie tracking";
+    }
+  }
+
   isTrackingActief(state: State): boolean {
     return state !== "TrackingDisabled" && state !== "NoTracking";
   }

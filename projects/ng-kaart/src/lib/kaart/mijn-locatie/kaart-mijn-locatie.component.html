@@ -4,7 +4,7 @@
     [ngClass]="handsetPortrait ? 'mat-fab' : 'mat-icon-button'"
     color=""
     [disabled]="currentState === 'TrackingDisabled'"
-    [matTooltip]="isTrackingActief(currentState) ? 'Stop locatie tracking' : 'Start locatie tracking'"
+    [matTooltip]="trackingTooltip(currentState)"
     matTooltipPosition="left">
     <ng-container [ngSwitch]="currentState">
       <ng-container *ngSwitchCase="'Tracking'">
