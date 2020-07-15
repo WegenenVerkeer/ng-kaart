@@ -9,6 +9,7 @@
     "watch": "ng build --watch",
     "clean": "rimraf out; rimraf dist; mkdirp out",
     "build": "npm ci && npm prune && ng build && cp -R src/workbox dist/ng-kaart",
+    "build-prod": "npm ci && npm prune && ng build --prod && cp -R src/workbox dist/ng-kaart",
     "pretest": "npm ci && npm prune",
     "test": "ng test ng-kaart --watch=false --code-coverage --browsers=ChromeHeadlessNoSandbox",
     "test-debug": "karma start karma.conf.js --watch=true --browsers=PhantomJS --debug",

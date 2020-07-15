@@ -10,4 +10,4 @@ $BASEDIR/bin/zet-versie.sh
 
 echo "bouw ng-kaart"
 cd $BASEDIR || exit
-npm run build
+npm run build-prod
