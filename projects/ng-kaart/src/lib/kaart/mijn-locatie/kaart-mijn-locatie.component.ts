@@ -470,6 +470,21 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
     return state !== "TrackingDisabled" && state !== "NoTracking";
   }
 
+  trackingTooltip(state: State): string {
+    switch (this.getStateMachine()[state]["ClickEvent"]) {
+      case "NoTracking":
+        return "Stop locatie tracking";
+      case "TrackingCenter":
+        return "Zoom naar locatie";
+      case "TrackingDisabled":
+        return "Stop locatie tracking";
+      case "Tracking":
+        return "Start locatie tracking";
+      case "TrackingAutoRotate":
+        return "Start locatie tracking";
+    }
+  }
+
   // Dit is het statemachine van deze modus: Altijd tussen TrackingCenter en NoTracking, initialState: NoTracking
   protected getStateMachine(): StateMachine {
     return {
