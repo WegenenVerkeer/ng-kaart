@@ -1,5 +1,5 @@
 import { Component, Input, NgZone } from "@angular/core";
-import { Function1 } from "fp-ts/lib/function";
+import { Function1, Function2 } from "fp-ts/lib/function";
 
 import { copyToClipboard } from "../../util/clipboard";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
@@ -29,8 +29,10 @@ const formatLength: Function1<number, string> = length => {
   }
 };
 
-const formatCoordinates: Function1<number[], string> = coords => {
-  return coords.reduce((acc, coord, idx) => acc + (idx % 2 === 0 ? `${coord}` : `,${coord} `), "").trim();
+const formatCoordinates: Function2<number[], boolean, string> = (coords, delimiter) => {
+  return coords //
+    .reduce((acc, coord, idx) => acc + (idx % 2 === 0 ? `${coord}` : `,${coord}${delimiter ? ";" : ""} `), "")
+    .trim();
 };
 
 @Component({
@@ -52,8 +54,8 @@ export class KaartInfoBoodschapMetenComponent extends KaartChildComponentBase {
     this.lengthCopyInfo = bsch.length.map(l => "" + l).toUndefined();
     this.area = bsch.area.map(formatArea).toUndefined();
     this.areaCopyInfo = bsch.area.map(a => "" + a).toUndefined();
-    this.coordinates = bsch.coordinates.map(formatCoordinates).toUndefined();
-    this.coordinatesCopyInfo = bsch.coordinates.map(formatCoordinates).toUndefined();
+    this.coordinates = bsch.coordinates.map(c => formatCoordinates(c, false)).toUndefined();
+    this.coordinatesCopyInfo = bsch.coordinates.map(c => formatCoordinates(c, true)).toUndefined();
   }
 
   constructor(parent: KaartComponent, zone: NgZone) {
