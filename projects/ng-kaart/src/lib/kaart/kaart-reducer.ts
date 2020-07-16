@@ -1109,7 +1109,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               model.map.getView().animate({
                 zoom: option
                   .fromNullable(model.map.getView().getZoom())
-                  .map(zoom => zoom + 1)
+                  .map(zoom => Math.min(zoom + 1, model.map.getView().getMaxZoom()))
                   .toUndefined(),
                 center: ol.extent.getCenter(cluster.getGeometry()!.getExtent()),
                 duration: 500
