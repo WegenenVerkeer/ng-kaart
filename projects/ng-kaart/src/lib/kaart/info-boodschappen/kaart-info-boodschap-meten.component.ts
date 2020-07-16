@@ -29,11 +29,10 @@ const formatLength: Function1<number, string> = length => {
   }
 };
 
-const formatCoordinates: Function2<number[], boolean, string> = (coords, delimiter) => {
-  return coords //
-    .reduce((acc, coord, idx) => acc + (idx % 2 === 0 ? `${coord}` : `,${coord}${delimiter ? ";" : ""} `), "")
+const formatCoordinates: Function2<number[], boolean, string> = (coords, delimiter) =>
+  coords //
+    .reduce((acc, coord, idx) => acc + (idx % 2 === 0 ? `${Math.round(coord)}` : `,${Math.round(coord)}${delimiter ? ";" : ""} `), "")
     .trim();
-};
 
 @Component({
   selector: "awv-kaart-info-boodschap-meten",
