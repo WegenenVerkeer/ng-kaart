@@ -30,6 +30,7 @@ export interface InfoBoodschapMeten extends InfoBoodschapBase {
   readonly type: "InfoBoodschapMeten";
   readonly length: Option<number>;
   readonly area: Option<number>;
+  readonly coordinates: Option<number[]>;
 }
 
 export interface InfoBoodschapIdentify extends InfoBoodschapBase {
