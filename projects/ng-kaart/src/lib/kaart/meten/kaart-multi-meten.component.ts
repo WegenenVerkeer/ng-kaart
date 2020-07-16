@@ -6,7 +6,7 @@ import { debounceTime, distinctUntilChanged, filter, map, share, startWith, swit
 
 import * as clr from "../../stijl/colour";
 import * as arrays from "../../util/arrays";
-import { distance, geometryLength, matchGeometryType, toLineString } from "../../util/geometries";
+import { distance, geometryCoordinates, geometryLength, matchGeometryType, toLineString } from "../../util/geometries";
 import * as ol from "../../util/openlayers-compat";
 import { ofType, select } from "../../util/operators";
 import { tekenInfoboodschapGeslotenMsgWrapper, VerwijderTekenFeatureMsg } from "../kaart-internal-messages";
@@ -36,6 +36,7 @@ const defaultOptions: MultiMetenOpties = {
 interface Measure {
   readonly length: option.Option<number>;
   readonly area: option.Option<number>;
+  readonly coordinates: option.Option<number[]>;
 }
 
 const InfoBoodschapId = "multi-meten-resultaat";
@@ -103,7 +104,8 @@ export class KaartMultiMetenComponent extends KaartModusDirective {
                 }
               }
             }).chain(option.fromPredicate<number>(area => area > 0)); // flatten had ook gekund, maar dit is analoog aan lengte
-            return { length: length, area: area };
+            const coordinates = option.some(geometryCoordinates(geom));
+            return { length: length, area: area, coordinates: coordinates };
           })
         )
       )
@@ -153,6 +155,7 @@ export class KaartMultiMetenComponent extends KaartModusDirective {
                         bron: option.some("multi-meten"),
                         length: measures.length,
                         area: measures.area,
+                        coordinates: measures.coordinates,
                         verbergMsgGen: () => option.some(tekenInfoboodschapGeslotenMsgWrapper())
                       })
                     )
