@@ -72,6 +72,20 @@ export function geometryLength(geometry: ol.geom.Geometry): number {
   }).getOrElse(0);
 }
 
+export function geometryCoordinates(geometry: ol.geom.Geometry): number[] {
+  return matchGeometryType(geometry, {
+    point: point => point.getFlatCoordinates(),
+    multiPoint: multiPoint => multiPoint.getFlatCoordinates(),
+    lineString: line => line.getFlatCoordinates(),
+    multiLineString: lines => lines.getFlatCoordinates(),
+    polygon: poly => poly.getFlatCoordinates(),
+    geometryCollection: collection => [].concat.apply([], collection.getGeometries().map(geom => geometryCoordinates(geom))),
+    circle: circle => circle.getCenter(),
+    linearRing: ring => ring.getFlatCoordinates(),
+    multiPolygon: polys => polys.getFlatCoordinates()
+  }).getOrElse(0);
+}
+
 export function distance(coord1: ol.Coordinate, coord2: ol.Coordinate): number {
   return ol.Sphere.getLength(new ol.geom.LineString([coord1, coord2]));
 }

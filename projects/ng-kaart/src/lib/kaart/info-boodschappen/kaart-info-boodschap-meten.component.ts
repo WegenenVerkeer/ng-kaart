@@ -1,5 +1,5 @@
 import { Component, Input, NgZone } from "@angular/core";
-import { Function1 } from "fp-ts/lib/function";
+import { Function1, Function2 } from "fp-ts/lib/function";
 
 import { copyToClipboard } from "../../util/clipboard";
 import { KaartChildDirective } from "../kaart-child.directive";
@@ -29,6 +29,12 @@ const formatLength: Function1<number, string> = length => {
   }
 };
 
+const formatCoordinates: Function2<number[], boolean, string> = (coords, delimiter) => {
+  return coords //
+    .reduce((acc, coord, idx) => acc + (idx % 2 === 0 ? `${coord}` : `,${coord}${delimiter ? ";" : ""} `), "")
+    .trim();
+};
+
 @Component({
   selector: "awv-kaart-info-boodschap-meten",
   templateUrl: "./kaart-info-boodschap-meten.component.html",
@@ -37,8 +43,10 @@ const formatLength: Function1<number, string> = length => {
 export class KaartInfoBoodschapMetenComponent extends KaartChildDirective {
   length?: string;
   area?: string;
+  coordinates?: string;
   lengthCopyInfo?: string;
   areaCopyInfo?: string;
+  coordinatesCopyInfo?: string;
 
   @Input()
   set boodschap(bsch: InfoBoodschapMeten) {
@@ -46,6 +54,8 @@ export class KaartInfoBoodschapMetenComponent extends KaartChildDirective {
     this.lengthCopyInfo = bsch.length.map(l => "" + l).toUndefined();
     this.area = bsch.area.map(formatArea).toUndefined();
     this.areaCopyInfo = bsch.area.map(a => "" + a).toUndefined();
+    this.coordinates = bsch.coordinates.map(c => formatCoordinates(c, false)).toUndefined();
+    this.coordinatesCopyInfo = bsch.coordinates.map(c => formatCoordinates(c, true)).toUndefined();
   }
 
   constructor(parent: KaartComponent, zone: NgZone) {

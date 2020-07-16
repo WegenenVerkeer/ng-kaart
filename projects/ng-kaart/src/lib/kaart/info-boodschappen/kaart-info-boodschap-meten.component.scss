@@ -35,6 +35,12 @@
   color: rgba(0, 0, 0, 0.87);
 }
 
+.coordinates {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .copy {
   order: 3;
   flex-basis: 10%;

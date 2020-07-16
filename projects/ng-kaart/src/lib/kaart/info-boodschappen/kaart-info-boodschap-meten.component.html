@@ -13,4 +13,11 @@
         <mat-icon (click)="copyToClipboard(areaCopyInfo)">content_copy</mat-icon>
     </button>
   </div>
+  <div class="velden" *ngIf="coordinates">
+    <div class="veldnamen">Coördinaten</div>
+    <div class="veldwaarden coordinates">{{ coordinates }}</div>
+    <button mat-icon-button class="copy" matTooltip="Kopieer coordinaten">
+      <mat-icon (click)="copyToClipboard(coordinatesCopyInfo)">content_copy</mat-icon>
+    </button>
+  </div>
 </div>

@@ -29,6 +29,7 @@ export interface InfoBoodschapMeten extends InfoBoodschapBase {
   readonly type: "InfoBoodschapMeten";
   readonly length: option.Option<number>;
   readonly area: option.Option<number>;
+  readonly coordinates: option.Option<number[]>;
 }
 
 export interface InfoBoodschapIdentify extends InfoBoodschapBase {
