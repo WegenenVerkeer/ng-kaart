@@ -1,6 +1,7 @@
 import { Component, Input, NgZone } from "@angular/core";
 import { Function1, Function2 } from "fp-ts/lib/function";
 
+import { eqCoordinate } from "../../util";
 import { copyToClipboard } from "../../util/clipboard";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { InfoBoodschapMeten } from "../kaart-with-info-model";
@@ -34,6 +35,26 @@ const formatCoordinates: Function2<number[], boolean, string> = (coords, delimit
     .reduce((acc, coord, idx) => acc + (idx % 2 === 0 ? `${Math.round(coord)}` : `,${Math.round(coord)}${delimiter ? ";" : ""} `), "")
     .trim();
 
+// Coordinaten voor multilines bevatten duplicates voor de eind waarde van de vorige lijn en begin van de volgende. Die zijn niet
+// relevant voor de gebruiker, dus filteren we ze weg.
+const removeDuplicates: Function1<number[], number[]> = coordinates =>
+  coordinates.reduce(
+    (acc, coord, idx, coords) => {
+      // enkel x values als start bekijken
+      if (idx % 2 === 0) {
+        // check of huidige coordinaat dezelfde is als de vorige
+        if (idx > 1 && eqCoordinate.equals([coords[idx - 2], coords[idx - 1]], [coords[idx], coords[idx + 1]])) {
+          return acc;
+        } else {
+          return acc.concat([coords[idx], coords[idx + 1]]);
+        }
+      } else {
+        return acc;
+      }
+    },
+    [] as number[]
+  );
+
 @Component({
   selector: "awv-kaart-info-boodschap-meten",
   templateUrl: "./kaart-info-boodschap-meten.component.html",
@@ -53,8 +74,8 @@ export class KaartInfoBoodschapMetenComponent extends KaartChildComponentBase {
     this.lengthCopyInfo = bsch.length.map(l => "" + l).toUndefined();
     this.area = bsch.area.map(formatArea).toUndefined();
     this.areaCopyInfo = bsch.area.map(a => "" + a).toUndefined();
-    this.coordinates = bsch.coordinates.map(c => formatCoordinates(c, false)).toUndefined();
-    this.coordinatesCopyInfo = bsch.coordinates.map(c => formatCoordinates(c, true)).toUndefined();
+    this.coordinates = bsch.coordinates.map(c => formatCoordinates(removeDuplicates(c), false)).toUndefined();
+    this.coordinatesCopyInfo = bsch.coordinates.map(c => formatCoordinates(removeDuplicates(c), true)).toUndefined();
   }
 
   constructor(parent: KaartComponent, zone: NgZone) {
