@@ -449,7 +449,6 @@ export class FeatureDemoComponent {
     // --- Meten opties
     optieDivider3a: { divider: true, value: true, label: "Meten opties (teken modus op en afzetten na veranderingen)" },
     metenToon: { value: true, label: "Toon infopaneel" },
-    metRouting: { value: false, label: "Verbinding via weg staat standaard aan" },
     keuzemogelijkheidTonen: { value: true, label: "Laat keuze tussen 'rechte lijn'/'via de weg' toe" },
 
     // --- Identify
