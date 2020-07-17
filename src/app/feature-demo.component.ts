@@ -1,5 +1,6 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectorRef, Component, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
+import { AwvV0DynamicStyleSpec } from "@wegenenverkeer/ng-kaart";
 import { array } from "fp-ts";
 import { option } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
@@ -78,6 +79,41 @@ export class FeatureDemoComponent {
   private selectieKaart: KaartClassicComponent;
   @ViewChild("kaartInfoKaart")
   private kaartInfoKaart: KaartClassicComponent;
+
+  // resolutions: [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125],
+  // minZoom 10 = resolutions[9] => 1.0
+  clusterStyle: AwvV0DynamicStyleSpec = {
+    type: "DynamicStyle",
+    definition: {
+      rules: [
+        {
+          condition: {
+            kind: "<=>",
+            lower: {
+              kind: "Literal",
+              value: 0
+            },
+            upper: {
+              kind: "Literal",
+              value: 0.99999
+            },
+            value: {
+              ref: "resolution",
+              kind: "Environment",
+              type: "number"
+            }
+          },
+          style: {
+            definition: {
+              circle: { radius: 4, fill: { color: "dodgerblue" }, stroke: { color: "#171F8F", width: 2 } },
+              fill: { color: "dodgerblue" },
+              stroke: { color: "#171F8F", width: 2 }
+            }
+          }
+        }
+      ]
+    }
+  };
 
   private readonly fietspadStijlDef: AwvV0DynamicStyle = {
     rules: [
