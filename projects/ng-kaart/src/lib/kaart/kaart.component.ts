@@ -255,7 +255,6 @@ export class KaartComponent extends KaartBaseDirective {
       controls: [],
       interactions: [],
       layers: [],
-      pixelRatio: 1, // dit moet op 1 staan anders zal OL 512x512 tiles ophalen op retina displays en die zitten niet in onze geowebcache
       target: this.mapElement.nativeElement,
       moveTolerance: envParams(this.config).moveTolerance,
       view: new ol.View({
