@@ -18,6 +18,8 @@ Eerst:
     npm adduser --registry=https://registry.npmjs.org/
 
 Dan:
+    
+    npm run build
     npm run build:elements
     npm run publishToNpmjs
     cd dist/webcomponent/
