@@ -62,6 +62,10 @@ function createEditingStyles() {
   const styles = {};
   styles["Polygon"] = [
     new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: blue,
+        width: width
+      }),
       fill: new ol.style.Fill({
         color: [255, 255, 255, 0.5]
       })

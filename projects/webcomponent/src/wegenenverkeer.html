@@ -1,0 +1,143 @@
+@@ -0,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8" />
+    <title>Webcomponent</title>
+    <base href="." />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html,
+      body {
+        margin: 0px;
+        font-size: 14px;
+        font-family: Roboto, "Helvetica Neue", sans-serif;
+        height: 100%;
+      }
+    </style>
+    <script>
+      window.onload = () => {
+        const kaartElement = document.getElementById("k1");
+        kaartElement.addEventListener("extentChange", function(event) { console.log("***** extent", event.detail);});
+        kaartElement.addEventListener("zoomChange", function(event) { console.log("***** zoom ", event.detail);});
+        kaartElement.addEventListener("geselecteerdeFeaturesChange", function(event) { console.log("Features geselecteerd", event.detail);});
+
+      };
+    </script>
+  </head>
+
+  <body>
+    <awv-kaart-classic id="k1" zoom="2" selectie-modus="single" produceer-geojson-output="true">
+      <awv-kaart-lagenkiezer verwijderbare-lagen="true" verplaatsbare-lagen="true" toon-legende="true"></awv-kaart-lagenkiezer>
+      <awv-kaart-tilecache-laag titel="Dienstkaart grijs" laag-naam="dienstkaart-grijs"></awv-kaart-tilecache-laag>
+      <awv-kaart-ortho-laag titel="Ortho" groep="Achtergrond"></awv-kaart-ortho-laag>
+      <awv-kaart-standaard-interacties focus-voor-zoom="false"></awv-kaart-standaard-interacties>
+      <awv-kaart-multi-meet-knop toon-info-boodschap="true"></awv-kaart-multi-meet-knop>
+
+      <awv-kaart-geoserver-laag titel="Referentiepunten" laag-naam="referentiepunten" versie="1.1.1" min-zoom="10">
+        <awv-legende-bolletje-item beschrijving="Referentiepunt met opschrift" kleur="black"></awv-legende-bolletje-item>
+      </awv-kaart-geoserver-laag>
+
+      <awv-kaart-wfs-laag titel="Korte Straten" type-names="awv:straten" min-zoom="10" cql-filter="shape_leng<100"></awv-kaart-wfs-laag>
+
+      <awv-kaart-wmts-laag titel="GRB" laag-naam="grb_bsk" urls='["https://tile.informatievlaanderen.be/ws/raadpleegdiensten/wmts"]'
+                           extent="[ 9928, 66928, 272072, 329072 ]" origin="[ 9928, 329072 ]"
+                           matrix-set="BPL72VL" matrix-ids='[ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15" ]'>
+      </awv-kaart-wmts-laag>
+
+      <awv-kaart-wfs-laag titel="Werven - clustering" type-names="awv:Werf_Werven_middelpunten" geom="geometry" zichtbaar="true" groep="Voorgrond.Hoog"
+                          url="https://opendata.apps.mow.vlaanderen.be/opendata-geoserver/awv/wfs"
+                          cors="true"
+                          cql-filter="Werf_ID IN (33384,31716,31363,31314,31769,18811,33360,15769,17844,31704,30893,12801,33242,32108 ,32826,33068,33406,33073,32700,33241,30835,18712,18870,32849,33101,31766,31770,18867,31847,15836,14722,14722,15675,18779,31627,33334,33470,31389,31367,15842,30527,18080,16928,30345,18291,30545,30424,13189,31353,32347,32608,32661,32342,15677,32536,15417,14163,32663,17447,33267,18516,31505,31248, 31948,23887,32219,32875,33202,32220,34048,31299,33704, 33705,33349, 14840,13796,15833,18718,32976,31188,33538,31532,33456,32320,31698,15176,7406,33218,31353,31334,31198,15841,31360,14909,33011,32634  ,14082,17655,32405,17595,32079,32082,32436,33479,31624,31890,33788,33070,33468,33900,15051,18339,18369,33873,17967,16313,18351,33964,16680,33986,33959,33969,33404,14077,33979,33930,33054,31471,33971,33958,33987,33851,34001,34000,33975.,34025, 33803,33796,33423,33797,33794,33791,33522,33678,33696,32079,33976,32682,33504,33793,34061,33624,33790,30578,33804,32080,34057,33278,33511,31482,17610,17610,32432,17321,33513,34134,33469,34144,34177,34157,33801,34263,34258, 31705,34280,34285,30577,33216, 31703,34281,32336, 34389,34474,33424,33373,34038,32795, 32085,34039,34107,34387,34082,33514,32650,30843,33716,30562, 33445,34315,34438,31692,34352,32084,34391,34444,34421,34488,31624,34413,31354,34505,32745,34540,32983,32659)"
+                          min-zoom="1"
+                          max-zoom="4"
+                          cluster-distance="150"
+                          cluster-text-color = "white"
+                          cluster-circle-color = "#171F8F"
+                          cluster-circle-stroke-color = "dodgerblue"
+                          cluster-size-factor = "0.1"
+                          stijl-spec='
+                            {
+                              "type": "StaticStyle",
+                              "definition": {
+                                        "circle": { "radius": 4, "fill": { "color": "red" }, "stroke": { "color": "#ff", "width": 2 } },
+                                        "fill": { "color": "red" },
+                                        "stroke": { "color": "#ff", "width": 2 }
+                                      },
+                              "version": "awv-v0"
+                            }'
+      ></awv-kaart-wfs-laag>
+
+
+      <awv-kaart-wfs-laag titel="Werven - details" type-names="awv:Werf_Werven" geom="geometry" zichtbaar="true" groep="Voorgrond.Hoog"
+                          url="https://opendata.apps.mow.vlaanderen.be/opendata-geoserver/awv/wfs"
+                          cql-filter="Werf_ID IN (33384,31716,31363,31314,31769,18811,33360,15769,17844,31704,30893,12801,33242,32108 ,32826,33068,33406,33073,32700,33241,30835,18712,18870,32849,33101,31766,31770,18867,31847,15836,14722,14722,15675,18779,31627,33334,33470,31389,31367,15842,30527,18080,16928,30345,18291,30545,30424,13189,31353,32347,32608,32661,32342,15677,32536,15417,14163,32663,17447,33267,18516,31505,31248, 31948,23887,32219,32875,33202,32220,34048,31299,33704, 33705,33349, 14840,13796,15833,18718,32976,31188,33538,31532,33456,32320,31698,15176,7406,33218,31353,31334,31198,15841,31360,14909,33011,32634  ,14082,17655,32405,17595,32079,32082,32436,33479,31624,31890,33788,33070,33468,33900,15051,18339,18369,33873,17967,16313,18351,33964,16680,33986,33959,33969,33404,14077,33979,33930,33054,31471,33971,33958,33987,33851,34001,34000,33975.,34025, 33803,33796,33423,33797,33794,33791,33522,33678,33696,32079,33976,32682,33504,33793,34061,33624,33790,30578,33804,32080,34057,33278,33511,31482,17610,17610,32432,17321,33513,34134,33469,34144,34177,34157,33801,34263,34258, 31705,34280,34285,30577,33216, 31703,34281,32336, 34389,34474,33424,33373,34038,32795, 32085,34039,34107,34387,34082,33514,32650,30843,33716,30562, 33445,34315,34438,31692,34352,32084,34391,34444,34421,34488,31624,34413,31354,34505,32745,34540,32983,32659)"
+                          cors="true"
+                          min-zoom="4"
+                          stijl-spec='{
+                        "type": "DynamicStyle",
+                        "definition": {
+                        "rules": [
+                          {
+                            "condition": {
+                              "kind": "<=>",
+                        "lower": {
+                          "kind": "Literal",
+                          "value": 0
+                        },
+                        "upper": {
+                          "kind": "Literal",
+                            "value": 63.999
+                          },
+                        "value": {
+                        "ref": "resolution",
+                        "kind": "Environment",
+                        "type": "number"
+                        }
+                        },
+                        "style": {
+                        "definition": {
+                                "circle": {
+                                  "radius": 4,
+                        "fill": {
+                          "color": "#ff0000"
+                        },
+                        "stroke": {
+                          "color": "#ff0000",
+                            "width": 4
+                          }
+                        },
+                        "fill": {
+                        "color": "#ff0000"
+                        },
+                        "stroke": {
+                        "color": "#ff0000",
+                        "width": 4
+                        }
+                      }
+                    }
+                    }
+                 ]
+             }
+           }'
+      ></awv-kaart-wfs-laag>
+
+      <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+      <awv-kaart-streetview></awv-kaart-streetview>
+      <awv-kaart-schaal></awv-kaart-schaal>
+      <awv-kaart-voorwaarden titel="Hello"></awv-kaart-voorwaarden>
+      <awv-kaart-copyright copyright="BoeBoe"></awv-kaart-copyright>
+      <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
+
+      <awv-kaart-zoeker>
+        <awv-kaart-crab-zoeker></awv-kaart-crab-zoeker>
+      </awv-kaart-zoeker>
+
+      <awv-bevraag-kaart></awv-bevraag-kaart>
+
+    </awv-kaart-classic>
+  </body>
+
+</html>
