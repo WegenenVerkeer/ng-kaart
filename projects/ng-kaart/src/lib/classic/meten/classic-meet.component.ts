@@ -1,6 +1,9 @@
 import { Component, Injector, Input } from "@angular/core";
 
-import { MetenOpties, MetenUiSelector } from "../../kaart/meten/kaart-meten.component";
+import {
+  MetenOpties,
+  MetenUiSelector,
+} from "../../kaart/meten/kaart-meten.component";
 import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 import * as val from "../webcomponent-support/params";
 
@@ -11,7 +14,7 @@ import * as val from "../webcomponent-support/params";
  */
 @Component({
   selector: "awv-meet-knop",
-  template: ""
+  template: "",
 })
 export class ClassicMetenComponent extends ClassicUIElementSelectorDirective {
   _toonInfoBoodschap = true;
@@ -34,7 +37,7 @@ export class ClassicMetenComponent extends ClassicUIElementSelectorDirective {
   protected opties(): MetenOpties {
     return {
       toonInfoBoodschap: this._toonInfoBoodschap,
-      meerdereGeometrieen: this._meerdereGeometrieen
+      meerdereGeometrieen: this._meerdereGeometrieen,
     };
   }
 }

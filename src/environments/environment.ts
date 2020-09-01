@@ -6,6 +6,6 @@
 export const environment = {
   production: false,
   backend: {
-    baseUrl: "http://localhost:12345/districtcenter-service"
-  }
+    baseUrl: "http://localhost:12345/districtcenter-service",
+  },
 };

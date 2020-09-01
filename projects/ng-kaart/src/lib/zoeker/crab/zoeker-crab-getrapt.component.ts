@@ -9,10 +9,16 @@ import {
   GetraptZoekerDirective,
   toNonEmptyDistinctLowercaseString,
   toTrimmedLowerCasedString,
-  ZoekerBoxComponent
+  ZoekerBoxComponent,
 } from "../box/zoeker-box.component";
 
-import { CrabGemeente, CrabHuisnummer, CrabStraat, CrabZoekInput, ZoekerCrabService } from "./zoeker-crab.service";
+import {
+  CrabGemeente,
+  CrabHuisnummer,
+  CrabStraat,
+  CrabZoekInput,
+  ZoekerCrabService,
+} from "./zoeker-crab.service";
 
 const NIVEAU_ALLES = 0;
 const NIVEAU_VANAFGEMEENTE = 1;
@@ -22,9 +28,11 @@ const NIVEAU_VANAFHUISNUMMER = 3;
 @Component({
   selector: "awv-zoeker-crab-getrapt",
   templateUrl: "./zoeker-crab-getrapt.component.html",
-  styleUrls: ["./zoeker-crab-getrapt.component.scss"]
+  styleUrls: ["./zoeker-crab-getrapt.component.scss"],
 })
-export class ZoekerCrabGetraptComponent extends GetraptZoekerDirective implements OnInit {
+export class ZoekerCrabGetraptComponent
+  extends GetraptZoekerDirective
+  implements OnInit {
   private alleGemeenten: CrabGemeente[] = [];
   gefilterdeGemeenten: CrabGemeente[] = [];
 
@@ -38,24 +46,33 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerDirective implement
   @Output()
   leegMakenDisabledChange: EventEmitter<boolean> = new EventEmitter();
 
-  constructor(private crabService: ZoekerCrabService, kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
+  constructor(
+    private crabService: ZoekerCrabService,
+    kaartComponent: KaartComponent,
+    zoekerComponent: ZoekerBoxComponent,
+    zone: NgZone
+  ) {
     super(kaartComponent, zoekerComponent, zone);
   }
 
   ngOnInit(): void {
     super.ngOnInit();
     this.maakVeldenLeeg(NIVEAU_ALLES);
-    this.bindToLifeCycle(this.busy(this.crabService.getAlleGemeenten$())).subscribe(
+    this.bindToLifeCycle(
+      this.busy(this.crabService.getAlleGemeenten$())
+    ).subscribe(
       (gemeenten: CrabGemeente[]) => {
         // De gemeentecontrol was disabled tot nu, om te zorgen dat de gebruiker niet kan filteren voordat de gemeenten binnen zijn.
         this.gemeenteControl.enable();
         this.alleGemeenten = gemeenten;
         this.gefilterdeGemeenten = this.alleGemeenten;
       },
-      error => this.meldFout(error)
+      (error) => this.meldFout(error)
     );
 
-    const cleanedGemeenteNaam$ = this.gemeenteControl.valueChanges.pipe(toNonEmptyDistinctLowercaseString());
+    const cleanedGemeenteNaam$ = this.gemeenteControl.valueChanges.pipe(
+      toNonEmptyDistinctLowercaseString()
+    );
 
     // De gemeente control is speciaal, omdat we met gecachte gemeentes werken.
     // Het heeft geen zin om iedere keer dezelfde lijst van gemeenten op te vragen.
@@ -72,9 +89,13 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerDirective implement
         .sort((a, b) => {
           function eersteVoorkomenZoekString(gemeente: CrabGemeente): Number {
             // we zoeken de kleinste index van de zoekTerm in de naam en postcode van de gemeente (niet in de nis: die wordt niet getoond)
-            const indexNaam = gemeente.naam.toLocaleLowerCase().indexOf(zoekTerm);
+            const indexNaam = gemeente.naam
+              .toLocaleLowerCase()
+              .indexOf(zoekTerm);
             const indexPostcode = gemeente.postcodes.indexOf(zoekTerm);
-            const positiveIndexes = [indexNaam, indexPostcode].filter(index => index !== -1).concat(Infinity);
+            const positiveIndexes = [indexNaam, indexPostcode]
+              .filter((index) => index !== -1)
+              .concat(Infinity);
             return Math.min(...positiveIndexes);
           }
 
@@ -97,10 +118,10 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerDirective implement
     });
 
     this.leegMakenDisabled$ = this.gemeenteControl.valueChanges.pipe(
-      map(c => toTrimmedLowerCasedString(c).length === 0),
+      map((c) => toTrimmedLowerCasedString(c).length === 0),
       startWith(true)
     );
-    this.bindToLifeCycle(this.leegMakenDisabled$).subscribe(value => {
+    this.bindToLifeCycle(this.leegMakenDisabled$).subscribe((value) => {
       this.leegMakenDisabledChange.emit(value);
     });
 
@@ -118,8 +139,16 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerDirective implement
     );
 
     // Wanneer de waardes leeg zijn, mag je de control disablen, maak ook de volgende velden leeg.
-    this.subscribeToDisableWhenEmpty(this.straten$, this.straatControl, NIVEAU_VANAFSTRAAT);
-    this.subscribeToDisableWhenEmpty(this.huisnummers$, this.huisnummerControl, NIVEAU_VANAFHUISNUMMER);
+    this.subscribeToDisableWhenEmpty(
+      this.straten$,
+      this.straatControl,
+      NIVEAU_VANAFSTRAAT
+    );
+    this.subscribeToDisableWhenEmpty(
+      this.huisnummers$,
+      this.huisnummerControl,
+      NIVEAU_VANAFHUISNUMMER
+    );
 
     // Hier gaan we automatisch zoeken op huisnummer.
     this.bindToLifeCycle(
@@ -127,13 +156,15 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerDirective implement
         filter(isNotNullObject),
         distinctUntilChanged()
       )
-    ).subscribe(v => {
+    ).subscribe((v) => {
       this.toonOpKaart();
     });
   }
 
   toonGemeenteInLijst(gemeente?: CrabGemeente): string {
-    return gemeente ? `${gemeente.naam} <span class="crab-postcodes">(${gemeente.postcodes})</span>` : "";
+    return gemeente
+      ? `${gemeente.naam} <span class="crab-postcodes">(${gemeente.postcodes})</span>`
+      : "";
   }
 
   toonGemeente(gemeente?: CrabGemeente): string | undefined {

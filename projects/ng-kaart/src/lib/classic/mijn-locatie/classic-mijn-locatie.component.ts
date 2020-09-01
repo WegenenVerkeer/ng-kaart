@@ -9,7 +9,7 @@ import { ClassicMijnLocatieDirective } from "./classic-mijn-locatie-base.compone
  */
 @Component({
   selector: "awv-mijn-locatie",
-  template: ""
+  template: "",
 })
 export class ClassicMijnLocatieComponent extends ClassicMijnLocatieDirective {
   constructor(injector: Injector) {

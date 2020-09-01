@@ -1,4 +1,10 @@
-import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import {
+  Component,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  ViewEncapsulation,
+} from "@angular/core";
 import { option } from "fp-ts";
 import { Subject } from "rxjs";
 import { distinctUntilChanged, map, skipWhile } from "rxjs/operators";
@@ -13,7 +19,12 @@ import { forEach } from "../../util/option";
 import { KaartChildDirective } from "../kaart-child.directive";
 import * as ke from "../kaart-elementen";
 import { VeldInfo } from "../kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper, tekenWrapper, VerwijderTekenFeatureMsg } from "../kaart-internal-messages";
+import {
+  KaartInternalMsg,
+  kaartLogOnlyWrapper,
+  tekenWrapper,
+  VerwijderTekenFeatureMsg,
+} from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { asStyleSelector, toStylish } from "../stijl-selector";
@@ -22,45 +33,47 @@ export const TekenenUiSelector = "Kaarttekenen";
 export const TekenLaagNaam = "Tekenen van geometrie";
 const defaultlaagStyle = new ol.style.Style({
   fill: new ol.style.Fill({
-    color: "rgba(255, 255, 255, 0.2)"
+    color: "rgba(255, 255, 255, 0.2)",
   }),
   stroke: new ol.style.Stroke({
     color: "#ffcc33",
-    width: 2
+    width: 2,
   }),
   image: new ol.style.Circle({
     radius: 7,
     fill: new ol.style.Fill({
-      color: "#ffcc33"
-    })
-  })
+      color: "#ffcc33",
+    }),
+  }),
 });
 const defaultDrawStyle = new ol.style.Style({
   fill: new ol.style.Fill({
-    color: "rgba(255, 255, 255, 0.2)"
+    color: "rgba(255, 255, 255, 0.2)",
   }),
   stroke: new ol.style.Stroke({
     color: "rgba(0, 0, 0, 0.5)",
     lineDash: [10, 10],
-    width: 2
+    width: 2,
   }),
   image: new ol.style.Circle({
     radius: 5,
     stroke: new ol.style.Stroke({
-      color: "rgba(0, 0, 0, 0.7)"
+      color: "rgba(0, 0, 0, 0.7)",
     }),
     fill: new ol.style.Fill({
-      color: "rgba(255, 255, 255, 0.2)"
-    })
-  })
+      color: "rgba(255, 255, 255, 0.2)",
+    }),
+  }),
 });
 @Component({
   selector: "awv-kaart-teken-laag",
   template: "<ng-content></ng-content>",
   styleUrls: ["./kaart-teken-laag.component.scss"],
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
-export class KaartTekenLaagComponent extends KaartChildDirective implements OnInit, OnDestroy {
+export class KaartTekenLaagComponent
+  extends KaartChildDirective
+  implements OnInit, OnDestroy {
   private changedGeometriesSubj: Subject<ke.Tekenresultaat>;
 
   private tekenen = false;
@@ -87,7 +100,7 @@ export class KaartTekenLaagComponent extends KaartChildDirective implements OnIn
         ofType<VerwijderTekenFeatureMsg>("VerwijderTekenFeature"), //
         observeOnAngular(this.zone)
       )
-    ).subscribe(msg => {
+    ).subscribe((msg) => {
       const feature = this.source.getFeatureById(msg.featureId);
       if (feature) {
         const tooltip = feature.get("measuretooltip") as ol.Overlay;
@@ -101,21 +114,23 @@ export class KaartTekenLaagComponent extends KaartChildDirective implements OnIn
     // Hou de subject bij.
     this.bindToLifeCycle(
       this.kaartModel$.pipe(
-        distinctUntilChanged((k1, k2) => k1.geometryChangedSubj === k2.geometryChangedSubj), //
-        map(kwi => kwi.geometryChangedSubj)
+        distinctUntilChanged(
+          (k1, k2) => k1.geometryChangedSubj === k2.geometryChangedSubj
+        ), //
+        map((kwi) => kwi.geometryChangedSubj)
       )
-    ).subscribe(gcSubj => (this.changedGeometriesSubj = gcSubj));
+    ).subscribe((gcSubj) => (this.changedGeometriesSubj = gcSubj));
 
     this.bindToLifeCycle(
       this.kaartModel$.pipe(
-        map(kwi => kwi.tekenSettingsSubj.getValue()), //
+        map((kwi) => kwi.tekenSettingsSubj.getValue()), //
         distinctUntilChanged(),
-        skipWhile(settings => settings.isNone()) // De eerste keer willen we startMetTekenen emitten
+        skipWhile((settings) => settings.isNone()) // De eerste keer willen we startMetTekenen emitten
       )
-    ).subscribe(settings => {
+    ).subscribe((settings) => {
       settings.foldL(
         () => this.stopMetTekenen(), //
-        ts => this.startMetTekenen(ts) //
+        (ts) => this.startMetTekenen(ts) //
       );
     });
   }
@@ -130,11 +145,14 @@ export class KaartTekenLaagComponent extends KaartChildDirective implements OnIn
       this.stopMetTekenen();
     }
 
-    this.source = tekenSettings.geometry.fold<ol.source.Vector>(new ol.source.Vector(), geom => {
-      const source = new ol.source.Vector();
-      source.addFeature(new ol.Feature(geom));
-      return source;
-    });
+    this.source = tekenSettings.geometry.fold<ol.source.Vector>(
+      new ol.source.Vector(),
+      (geom) => {
+        const source = new ol.source.Vector();
+        source.addFeature(new ol.Feature(geom));
+        return source;
+      }
+    );
     this.dispatch({
       type: "VoegLaagToe",
       positie: 0,
@@ -146,10 +164,13 @@ export class KaartTekenLaagComponent extends KaartChildDirective implements OnIn
       stijlInLagenKiezer: option.none,
       filterinstellingen: option.none,
       laagtabelinstellingen: option.none,
-      wrapper: kaartLogOnlyWrapper
+      wrapper: kaartLogOnlyWrapper,
     });
 
-    this.drawInteraction = this.createDrawInteraction(this.source, tekenSettings);
+    this.drawInteraction = this.createDrawInteraction(
+      this.source,
+      tekenSettings
+    );
     this.dispatch(prt.VoegInteractieToeCmd(this.drawInteraction));
 
     this.modifyInteraction = new ol.interaction.Modify({ source: this.source });
@@ -172,13 +193,18 @@ export class KaartTekenLaagComponent extends KaartChildDirective implements OnIn
     this.tekenen = false;
   }
 
-  private createLayer(source: ol.source.Vector, tekenSettings: ke.TekenSettings): ke.VectorLaag {
+  private createLayer(
+    source: ol.source.Vector,
+    tekenSettings: ke.TekenSettings
+  ): ke.VectorLaag {
     return {
       type: ke.VectorType,
       titel: TekenLaagNaam,
       source: source,
       clusterDistance: option.none,
-      styleSelector: tekenSettings.laagStyle.orElse(() => asStyleSelector(defaultlaagStyle)),
+      styleSelector: tekenSettings.laagStyle.orElse(() =>
+        asStyleSelector(defaultlaagStyle)
+      ),
       styleSelectorBron: option.none,
       selectieStyleSelector: option.none,
       hoverStyleSelector: option.none,
@@ -190,7 +216,7 @@ export class KaartTekenLaagComponent extends KaartChildDirective implements OnIn
       velden: new Map<string, VeldInfo>(),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false,
-      filter: option.none
+      filter: option.none,
     };
   }
 
@@ -200,12 +226,12 @@ export class KaartTekenLaagComponent extends KaartChildDirective implements OnIn
     const measureTooltip = new ol.Overlay({
       element: measureTooltipElement,
       offset: [0, -15],
-      positioning: ol.overlay.Positioning.BOTTOM_CENTER
+      positioning: ol.overlay.Positioning.BOTTOM_CENTER,
     });
 
     this.dispatch({
       type: "VoegOverlayToe",
-      overlay: measureTooltip
+      overlay: measureTooltip,
     });
 
     this.overlays.push(measureTooltip);
@@ -213,31 +239,45 @@ export class KaartTekenLaagComponent extends KaartChildDirective implements OnIn
     return [measureTooltipElement, measureTooltip];
   }
 
-  private initializeFeature(feature: ol.Feature, meerdereGeometrieen: Boolean): void {
+  private initializeFeature(
+    feature: ol.Feature,
+    meerdereGeometrieen: Boolean
+  ): void {
     const [measureTooltipElement, measureTooltip] = this.createMeasureTooltip();
     const volgnummer = this.volgendeVolgnummer();
     feature.set("volgnummer", volgnummer);
     feature.set("measuretooltip", measureTooltip);
     feature.setId(uuid.v4());
-    feature.getGeometry()!.on("change", evt => {
+    feature.getGeometry()!.on("change", (evt) => {
       // TODO na OL upgrade -> is this pointer OK?
       const geometry = evt.target as ol.geom.Geometry;
-      this.changedGeometriesSubj.next(ke.TekenResultaat(geometry, volgnummer, feature.getId()!));
+      this.changedGeometriesSubj.next(
+        ke.TekenResultaat(geometry, volgnummer, feature.getId()!)
+      );
       const omschrijving = dimensieBeschrijving(geometry, false);
-      measureTooltipElement.innerHTML = meerdereGeometrieen ? volgnummer + ": " + omschrijving : omschrijving;
-      forEach(this.tooltipCoord(geometry), coord => measureTooltip.setPosition(coord));
+      measureTooltipElement.innerHTML = meerdereGeometrieen
+        ? volgnummer + ": " + omschrijving
+        : omschrijving;
+      forEach(this.tooltipCoord(geometry), (coord) =>
+        measureTooltip.setPosition(coord)
+      );
     });
     feature.getGeometry()!.changed();
   }
 
-  private createDrawInteraction(source: ol.source.Vector, tekenSettings: ke.TekenSettings): ol.interaction.Draw {
+  private createDrawInteraction(
+    source: ol.source.Vector,
+    tekenSettings: ke.TekenSettings
+  ): ol.interaction.Draw {
     const draw = new ol.interaction.Draw({
       source: source,
       type: tekenSettings.geometryType,
-      style: tekenSettings.drawStyle.map(toStylish).getOrElse(defaultDrawStyle)
+      style: tekenSettings.drawStyle.map(toStylish).getOrElse(defaultDrawStyle),
     });
 
-    source.forEachFeature(feature => this.initializeFeature(feature, tekenSettings.meerdereGeometrieen));
+    source.forEachFeature((feature) =>
+      this.initializeFeature(feature, tekenSettings.meerdereGeometrieen)
+    );
 
     draw.on(
       // TODO na OL upgrade -> is this pointer OK?
@@ -265,19 +305,27 @@ export class KaartTekenLaagComponent extends KaartChildDirective implements OnIn
   private volgendeVolgnummer(): number {
     const maxVolgNummer = this.source
       .getFeatures()
-      .map(feature => option.fromNullable(feature.get("volgnummer")))
-      .filter(optional => optional.isSome())
-      .map(optional => optional.toNullable())
-      .reduce((maxVolgNummer: number, volgNummer: number) => Math.max(maxVolgNummer, volgNummer), 0);
+      .map((feature) => option.fromNullable(feature.get("volgnummer")))
+      .filter((optional) => optional.isSome())
+      .map((optional) => optional.toNullable())
+      .reduce(
+        (maxVolgNummer: number, volgNummer: number) =>
+          Math.max(maxVolgNummer, volgNummer),
+        0
+      );
     return maxVolgNummer + 1;
   }
 
   tooltipCoord(geometry: ol.geom.Geometry): option.Option<ol.Coordinate> {
     switch (geometry.getType()) {
       case "Polygon":
-        return option.some((geometry as ol.geom.Polygon).getInteriorPoint().getCoordinates());
+        return option.some(
+          (geometry as ol.geom.Polygon).getInteriorPoint().getCoordinates()
+        );
       case "LineString":
-        return option.some((geometry as ol.geom.LineString).getLastCoordinate());
+        return option.some(
+          (geometry as ol.geom.LineString).getLastCoordinate()
+        );
       default:
         return option.none;
     }

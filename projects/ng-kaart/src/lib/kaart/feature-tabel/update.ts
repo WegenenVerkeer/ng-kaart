@@ -1,5 +1,12 @@
 import { array, option } from "fp-ts";
-import { constant, Endomorphism, flow, Function1, identity, Predicate } from "fp-ts/lib/function";
+import {
+  constant,
+  Endomorphism,
+  flow,
+  Function1,
+  identity,
+  Predicate,
+} from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { map } from "rxjs/operators";
 
@@ -12,37 +19,59 @@ export interface Update<A> {
 }
 
 export namespace Update {
-  export const create: <A>(s: SyncUpdate<A>) => (a: AsyncUpdate<A>) => Update<A> = syncUpdate => asyncUpdate => ({
+  export const create: <A>(
+    s: SyncUpdate<A>
+  ) => (a: AsyncUpdate<A>) => Update<A> = (syncUpdate) => (asyncUpdate) => ({
     syncUpdate,
-    asyncUpdate
+    asyncUpdate,
   });
 
   // Eigenlijk definieren we hier een paar Monoids. Nog te bezien of het voordelig is
   // dat formeel te doen.
-  export const mappendS: <A>(s1: SyncUpdate<A>, s2: SyncUpdate<A>) => SyncUpdate<A> = flow;
-  export const mappendA = <A>(u1: AsyncUpdate<A>, u2: AsyncUpdate<A>) => (a: A) => rx.merge(u1(a), u2(a));
-  export const mappend: <A>(a1: Update<A>, a2: Update<A>) => Update<A> = (u1, u2) =>
-    create(mappendS(u1.syncUpdate, u2.syncUpdate))(mappendA(u1.asyncUpdate, u2.asyncUpdate));
+  export const mappendS: <A>(
+    s1: SyncUpdate<A>,
+    s2: SyncUpdate<A>
+  ) => SyncUpdate<A> = flow;
+  export const mappendA = <A>(u1: AsyncUpdate<A>, u2: AsyncUpdate<A>) => (
+    a: A
+  ) => rx.merge(u1(a), u2(a));
+  export const mappend: <A>(a1: Update<A>, a2: Update<A>) => Update<A> = (
+    u1,
+    u2
+  ) =>
+    create(mappendS(u1.syncUpdate, u2.syncUpdate))(
+      mappendA(u1.asyncUpdate, u2.asyncUpdate)
+    );
 
   export const memptyS = identity;
   export const memptyA = constant(rx.EMPTY);
   export const mempty = create<never>(memptyS)(memptyA);
 
   export const createSync = <A>(f: SyncUpdate<A>) => create(f)(memptyA);
-  export const createAsync = <A>(f: AsyncUpdate<A>) => create(memptyS)(f) as Update<A>; // geen cast in hogere TS versie (werkt in VS code)!
+  export const createAsync = <A>(f: AsyncUpdate<A>) =>
+    create(memptyS)(f) as Update<A>; // geen cast in hogere TS versie (werkt in VS code)!
 
-  export const combineAll = <A>(...updates: Update<A>[]) => array.reduce(mempty, (us: Update<A>, u: Update<A>) => mappend(us, u))(updates);
+  export const combineAll = <A>(...updates: Update<A>[]) =>
+    array.reduce(mempty, (us: Update<A>, u: Update<A>) => mappend(us, u))(
+      updates
+    );
 
   // Opgelet! Het predicaat wordt 2x uitgevoerd. Het is mogelijk dat het een verschillend resultaat heeft en dus dat
   // syncUpdate niet maar asyncUpdate wel uitgevoerd wordt (of omgekeerd).
-  export const ifOrElse = <A>(pred: Predicate<A>) => (ifTrue: Update<A>, ifFalse: Update<A>): Update<A> => ({
+  export const ifOrElse = <A>(pred: Predicate<A>) => (
+    ifTrue: Update<A>,
+    ifFalse: Update<A>
+  ): Update<A> => ({
     syncUpdate: (a: A) => {
       const res = pred(a);
       return res ? ifTrue.syncUpdate(a) : ifFalse.syncUpdate(a);
     },
-    asyncUpdate: (a: A) => (pred(a) ? ifTrue.asyncUpdate(a) : ifFalse.asyncUpdate(a))
+    asyncUpdate: (a: A) =>
+      pred(a) ? ifTrue.asyncUpdate(a) : ifFalse.asyncUpdate(a),
   });
-  export const filter = <A>(pred: Predicate<A>) => (ifTrue: Update<A>): Update<A> => ifOrElse(pred)(ifTrue, mempty);
+  export const filter = <A>(pred: Predicate<A>) => (
+    ifTrue: Update<A>
+  ): Update<A> => ifOrElse(pred)(ifTrue, mempty);
 
   // Vormt een Update<A> om naar een Update<B>
   export const liftUpdate: <A, B>(
@@ -55,8 +84,11 @@ export namespace Update {
     syncUpdate: lift(ua.syncUpdate),
     asyncUpdate: flow(
       extract,
-      option.fold(() => rx.EMPTY, (a: A) => ua.asyncUpdate(a).pipe(map(lift)))
-    )
+      option.fold(
+        () => rx.EMPTY,
+        (a: A) => ua.asyncUpdate(a).pipe(map(lift))
+      )
+    ),
   });
   // interface Z {
   //   a: number;

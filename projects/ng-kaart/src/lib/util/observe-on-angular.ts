@@ -4,7 +4,7 @@ import { ZoneLike } from "./zone-like";
 
 export function observeOnAngular<T>(zone: ZoneLike) {
   return (source: rx.Observable<T>) =>
-    new rx.Observable<T>(observer => {
+    new rx.Observable<T>((observer) => {
       return source.subscribe({
         next(x) {
           zone.run(() => observer.next(x));
@@ -14,7 +14,7 @@ export function observeOnAngular<T>(zone: ZoneLike) {
         },
         complete() {
           observer.complete();
-        }
+        },
       });
     });
 }

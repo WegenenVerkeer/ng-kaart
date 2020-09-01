@@ -7,7 +7,7 @@ import * as ol from "../util/openlayers-compat";
 export const geoJSONOptions = <ol.format.GeoJSONOptions>{
   ignoreExtraDims: true,
   defaultDataProjection: undefined,
-  featureProjection: undefined
+  featureProjection: undefined,
 };
 
 export interface IconDescription {
@@ -51,13 +51,20 @@ export interface Zoeker {
 export type PrioriteitenOpZoekertype = strmap.StrMap<number>;
 
 // Vreemde manier van werken, maar constructor heeft een type nodig
-export const emptyPrioriteitenOpZoekertype: PrioriteitenOpZoekertype = strmap.remove("dummy", new strmap.StrMap({ dummy: 0 }));
+export const emptyPrioriteitenOpZoekertype: PrioriteitenOpZoekertype = strmap.remove(
+  "dummy",
+  new strmap.StrMap({ dummy: 0 })
+);
 
-const maybeInsertPrioriteit: Function3<option.Option<number>, Zoektype, PrioriteitenOpZoekertype, PrioriteitenOpZoekertype> = (
-  maybePrio,
-  zoektype,
-  prioriteiten
-) => maybePrio.map(prio => strmap.insert(zoektype, prio, prioriteiten)).getOrElse(prioriteiten);
+const maybeInsertPrioriteit: Function3<
+  option.Option<number>,
+  Zoektype,
+  PrioriteitenOpZoekertype,
+  PrioriteitenOpZoekertype
+> = (maybePrio, zoektype, prioriteiten) =>
+  maybePrio
+    .map((prio) => strmap.insert(zoektype, prio, prioriteiten))
+    .getOrElse(prioriteiten);
 
 export interface Weergaveopties {
   readonly prioriteiten: PrioriteitenOpZoekertype;
@@ -101,7 +108,10 @@ export class ZoekAntwoord {
       return new ZoekAntwoord(
         this.zoeker,
         this.zoektype,
-        this.fouten.concat([`Er werden meer dan ${maxAantal} resultaten gevonden, ` + `de eerste ${maxAantal} worden hier opgelijst`]),
+        this.fouten.concat([
+          `Er werden meer dan ${maxAantal} resultaten gevonden, ` +
+            `de eerste ${maxAantal} worden hier opgelijst`,
+        ]),
         this.resultaten.slice(0, maxAantal),
         this.legende
       );
@@ -111,7 +121,10 @@ export class ZoekAntwoord {
   }
 }
 
-export const nietOndersteund: Function2<string, Zoektype, ZoekAntwoord> = (naam, zoektype) => new ZoekAntwoord(naam, zoektype);
+export const nietOndersteund: Function2<string, Zoektype, ZoekAntwoord> = (
+  naam,
+  zoektype
+) => new ZoekAntwoord(naam, zoektype);
 
 const nonNegative = option.fromPredicate((n: number) => n >= 0);
 
@@ -121,19 +134,34 @@ export const zoekerMetPrioriteiten: (
   suggestiesPrioriteit: number,
   toonIcoon?: boolean,
   toonOppervlak?: boolean
-) => ZoekerMetWeergaveopties = (zoeker, volledigPrioriteit, suggestiesPrioriteit, toonIcoon = true, toonOppervlak = true) => ({
+) => ZoekerMetWeergaveopties = (
+  zoeker,
+  volledigPrioriteit,
+  suggestiesPrioriteit,
+  toonIcoon = true,
+  toonOppervlak = true
+) => ({
   zoeker: zoeker,
   prioriteiten: maybeInsertPrioriteit(
     nonNegative(volledigPrioriteit),
     "Volledig",
-    maybeInsertPrioriteit(nonNegative(suggestiesPrioriteit), "Suggesties", emptyPrioriteitenOpZoekertype)
+    maybeInsertPrioriteit(
+      nonNegative(suggestiesPrioriteit),
+      "Suggesties",
+      emptyPrioriteitenOpZoekertype
+    )
   ),
   toonIcoon: toonIcoon,
-  toonOppervlak: toonOppervlak
+  toonOppervlak: toonOppervlak,
 });
 
-export const zoekerMetNaam: Function1<string, Function1<ZoekerMetWeergaveopties[], option.Option<Zoeker>>> = naam => zmps =>
-  array.findFirst(zmps, zmp => zmp.zoeker.naam() === naam).map(zmp => zmp.zoeker);
+export const zoekerMetNaam: Function1<
+  string,
+  Function1<ZoekerMetWeergaveopties[], option.Option<Zoeker>>
+> = (naam) => (zmps) =>
+  array
+    .findFirst(zmps, (zmp) => zmp.zoeker.naam() === naam)
+    .map((zmp) => zmp.zoeker);
 
 // De resultaten worden getoond volgens een bepaalde hiërarchie
 // - Eerst wordt er gesorteerd volgens zoekernaam.
@@ -156,7 +184,11 @@ export function zoekResultaatOrdering(
 }
 
 //  - Dan wordt er gekeken naar de resultaten in de tekst (als de 3 tekens matchen met de 3 eerste tekens van het resultaat)
-function compareOpInhoud(a: ZoekResultaat, b: ZoekResultaat, input: string): ordering.Ordering {
+function compareOpInhoud(
+  a: ZoekResultaat,
+  b: ZoekResultaat,
+  input: string
+): ordering.Ordering {
   const aMatchesInput = matchesInput(a, input);
   const bMatchesInput = matchesInput(b, input);
 
@@ -179,17 +211,31 @@ function matchesInput(res: ZoekResultaat, input: string): boolean {
   return res.omschrijving.toLowerCase().startsWith(input.toLowerCase());
 }
 
-export const StringZoekInput: Function1<string, StringZoekInput> = value => ({ type: "string", value: value });
-export const UrlZoekInput: Function1<string, UrlZoekInput> = value => ({ type: "url", value: value });
-
-export const VolledigeZoekOpdracht: Function2<string[], ZoekInput, Zoekopdracht> = (zoekernamen, zoekpatroon) => ({
-  zoektype: "Volledig",
-  zoekernamen,
-  zoekpatroon
+export const StringZoekInput: Function1<string, StringZoekInput> = (value) => ({
+  type: "string",
+  value: value,
+});
+export const UrlZoekInput: Function1<string, UrlZoekInput> = (value) => ({
+  type: "url",
+  value: value,
 });
 
-export const SuggestiesZoekOpdracht: Function2<string[], ZoekInput, Zoekopdracht> = (zoekernamen, zoekpatroon) => ({
+export const VolledigeZoekOpdracht: Function2<
+  string[],
+  ZoekInput,
+  Zoekopdracht
+> = (zoekernamen, zoekpatroon) => ({
+  zoektype: "Volledig",
+  zoekernamen,
+  zoekpatroon,
+});
+
+export const SuggestiesZoekOpdracht: Function2<
+  string[],
+  ZoekInput,
+  Zoekopdracht
+> = (zoekernamen, zoekpatroon) => ({
   zoektype: "Suggesties",
   zoekernamen,
-  zoekpatroon
+  zoekpatroon,
 });

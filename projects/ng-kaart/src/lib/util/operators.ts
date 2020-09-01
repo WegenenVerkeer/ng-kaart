@@ -15,10 +15,10 @@ export type Pipeable<A, B> = Function1<rx.Observable<A>, rx.Observable<B>>;
  * @param f een transformatie van A naar B
  */
 export function collect<A, B>(f: (a: A) => B | undefined): Pipeable<A, B> {
-  return o =>
+  return (o) =>
     o.pipe(
       map(f), //
-      filter<B>(b => b !== undefined && b !== null)
+      filter<B>((b) => b !== undefined && b !== null)
     );
 }
 
@@ -27,51 +27,67 @@ export function collect<A, B>(f: (a: A) => B | undefined): Pipeable<A, B> {
  *
  * @param f een transformatie van A naar B
  */
-export function collectOption<A, B>(f: (a: A) => option.Option<B>): Pipeable<A, B> {
-  return o =>
+export function collectOption<A, B>(
+  f: (a: A) => option.Option<B>
+): Pipeable<A, B> {
+  return (o) =>
     o.pipe(
       map(f), //
       filter(option.isSome),
-      map(v => v.value)
+      map((v) => v.value)
     );
 }
 
 /**
  * Filtert de gedefinieerde Option<A>'s en converteert ze naar A's.
  */
-export const catOptions: <A>(o: rx.Observable<option.Option<A>>) => rx.Observable<A> = <A>(o: rx.Observable<option.Option<A>>) =>
+export const catOptions: <A>(
+  o: rx.Observable<option.Option<A>>
+) => rx.Observable<A> = <A>(o: rx.Observable<option.Option<A>>) =>
   o.pipe(
     filter(option.isSome), // emit niet als none
-    map(v => v.value) // omwille van filter hierboven nooit undefined. Properder met switchMap en foldl, maar minder efficiënt.
+    map((v) => v.value) // omwille van filter hierboven nooit undefined. Properder met switchMap en foldl, maar minder efficiënt.
   );
 
-function isOfType<A extends TypedRecord>(type: string): Refinement<TypedRecord, A> {
+function isOfType<A extends TypedRecord>(
+  type: string
+): Refinement<TypedRecord, A> {
   return (rec): rec is A => rec.type === type;
 }
 
-export const fromRefinement: <A, B extends A>(_: Refinement<A, B>) => Pipeable<A, B> = refinement => obs => obs.pipe(filter(refinement));
+export const fromRefinement: <A, B extends A>(
+  _: Refinement<A, B>
+) => Pipeable<A, B> = (refinement) => (obs) => obs.pipe(filter(refinement));
 
-export const ofType: <Target extends TypedRecord>(_: string) => Pipeable<TypedRecord, Target> = type => fromRefinement(isOfType(type));
+export const ofType: <Target extends TypedRecord>(
+  _: string
+) => Pipeable<TypedRecord, Target> = (type) => fromRefinement(isOfType(type));
 
 /**
  * Zorgt er voor dat eventuele replaywaarden overgeslagen worden tot het moment dat deze functie aangeroepen wordt.
  */
-export const skipOlder: <A>() => Pipeable<A, A> = () => obs => obs.pipe(skipUntil(rx.timer(0)));
+export const skipOlder: <A>() => Pipeable<A, A> = () => (obs) =>
+  obs.pipe(skipUntil(rx.timer(0)));
 
 /**
  * Een alias voor switchMap die de intentie uitdrukt. Voor elke emit van de `restarter` observable zal er een observable gecreëerd worden
  * op basis van de emit waarde en de opgegeven functie `fObs`.
  */
-export const forEvery: <A>(_: rx.Observable<A>) => <B>(_: Function1<A, rx.Observable<B>>) => rx.Observable<B> = restarter => fObs =>
-  restarter.pipe(switchMap(fObs));
+export const forEvery: <A>(
+  _: rx.Observable<A>
+) => <B>(_: Function1<A, rx.Observable<B>>) => rx.Observable<B> = (
+  restarter
+) => (fObs) => restarter.pipe(switchMap(fObs));
 
 /**
  * Een handige helper om na te gaan waarom events niet doorstromen. Met tap kunnen we wel next e.d. opvangen, maar vaak is het heel
  * interessant om te weten of en wanneer een observable gesubscribed wordt.
  * Het is uiteraard niet de bedoeling code die hiervan gebruikt maakt te releasen.
  */
-export const subSpy: (_: string) => <A>(_: rx.Observable<A>) => rx.Observable<A> = lbl => source =>
-  new rx.Observable(observer => {
+export const subSpy: (
+  _: string
+) => <A>(_: rx.Observable<A>) => rx.Observable<A> = (lbl) => (source) =>
+  new rx.Observable((observer) => {
     console.log("subscribing to " + lbl);
     const subscription = source.subscribe({
       next(x) {
@@ -85,7 +101,7 @@ export const subSpy: (_: string) => <A>(_: rx.Observable<A>) => rx.Observable<A>
       complete() {
         console.log("completing " + lbl);
         observer.complete();
-      }
+      },
     });
     subscription.add(() => console.log("unsubscribing from " + lbl));
     return subscription;
@@ -117,10 +133,10 @@ export function scan2<A, B, C>(
     value: B;
     label: "B";
   }
-  const TaggedA: Function1<A, TaggedA> = a => ({ value: a, label: "A" });
-  const TaggedB: Function1<B, TaggedB> = b => ({ value: b, label: "B" });
-  const TagA: Pipeable<A, TaggedA> = a$ => a$.pipe(map(TaggedA));
-  const TagB: Pipeable<B, TaggedB> = b$ => b$.pipe(map(TaggedB));
+  const TaggedA: Function1<A, TaggedA> = (a) => ({ value: a, label: "A" });
+  const TaggedB: Function1<B, TaggedB> = (b) => ({ value: b, label: "B" });
+  const TagA: Pipeable<A, TaggedA> = (a$) => a$.pipe(map(TaggedA));
+  const TagB: Pipeable<B, TaggedB> = (b$) => b$.pipe(map(TaggedB));
 
   const accumulate: Function2<C, Tagged, C> = (c, tagged) => {
     switch (tagged.label) {
@@ -131,7 +147,9 @@ export function scan2<A, B, C>(
     }
   };
 
-  return rx.merge(obsA.pipe(TagA), rx.merge(obsB.pipe(TagB))).pipe(scan(accumulate, init));
+  return rx
+    .merge(obsA.pipe(TagA), rx.merge(obsB.pipe(TagB)))
+    .pipe(scan(accumulate, init));
 }
 
 export function scanState<A, S, B>(
@@ -142,11 +160,14 @@ export function scanState<A, S, B>(
 ): rx.Observable<B> {
   const initial: tuple.Tuple<S, B> = new tuple.Tuple(seed, rseed);
 
-  const accumulate: Function2<tuple.Tuple<S, B>, A, tuple.Tuple<S, B>> = (ps, a) => runState(ps.fst, a);
+  const accumulate: Function2<tuple.Tuple<S, B>, A, tuple.Tuple<S, B>> = (
+    ps,
+    a
+  ) => runState(ps.fst, a);
 
   return obsA.pipe(
     scan(accumulate, initial),
-    map(ps => ps.snd)
+    map((ps) => ps.snd)
   );
 }
 
@@ -161,10 +182,12 @@ export interface ObsSelectOps<A> {
  * @param selectOps de 2 observables waarvan er 1 gekozen zal worden
  */
 export function select<A>(selectOps: ObsSelectOps<A>): Pipeable<boolean, A> {
-  return obs =>
+  return (obs) =>
     obs.pipe(
-      switchMap(value =>
-        value ? option.fromNullable(selectOps.ifTrue).getOrElse(rx.EMPTY) : option.fromNullable(selectOps.ifFalse).getOrElse(rx.EMPTY)
+      switchMap((value) =>
+        value
+          ? option.fromNullable(selectOps.ifTrue).getOrElse(rx.EMPTY)
+          : option.fromNullable(selectOps.ifFalse).getOrElse(rx.EMPTY)
       )
     );
 }

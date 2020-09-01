@@ -44,6 +44,8 @@ export interface KaartConfig {
 }
 
 // pointer: coarse -> The primary input mechanism of the device includes a pointing device of limited accuracy.
-export const mobile = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+export const mobile =
+  window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
 
-export const envParams: Function1<KaartConfig, EnvParams> = config => config.envParams[mobile ? "mobile" : "desktop"];
+export const envParams: Function1<KaartConfig, EnvParams> = (config) =>
+  config.envParams[mobile ? "mobile" : "desktop"];

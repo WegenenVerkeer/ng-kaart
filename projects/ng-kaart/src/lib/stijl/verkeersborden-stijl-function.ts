@@ -20,32 +20,37 @@ const format = new ol.format.GeoJSON();
 
 const basisOpstellingStyle: ol.style.Style = definitieToStyle(
   "json",
-  // tslint:disable-next-line:max-line-length
+  // eslint-disable-next-line max-len
   '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "black", "width": 1.5}, "fill": {"color": "black"}, "radius": 3}}}'
-).getOrElseL(msg => {
+).getOrElseL((msg) => {
   throw new Error(`slecht formaat ${join(",")(msg)}`);
 });
 
 const basisOpstellingGeselecteerdStyle: ol.style.Style = definitieToStyle(
   "json",
-  // tslint:disable-next-line:max-line-length
+  // eslint-disable-next-line max-len
   '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "#25FFFF", "width": 1.5}, "fill": {"color": "#25FFFF"}, "radius": 3}}}'
-).getOrElseL(msg => {
+).getOrElseL((msg) => {
   throw new Error(`slecht formaat ${join(",")(msg)}`);
 });
 
 const basisVerbindingsLijnStyle: ol.style.Style = definitieToStyle(
   "json",
   '{"version": "awv-v0", "definition": {"stroke": {"color": "black", "width": 2}}}'
-).getOrElseL(msg => {
+).getOrElseL((msg) => {
   throw new Error(`slecht formaat ${join(",")(msg)}`);
 });
 
 basisOpstellingStyle.setZIndex(0);
 basisVerbindingsLijnStyle.setZIndex(-1);
 
-export function verkeersbordenStyleFunction(geselecteerd: boolean): ol.style.StyleFunction {
-  function styleFunc(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
+export function verkeersbordenStyleFunction(
+  geselecteerd: boolean
+): ol.style.StyleFunction {
+  function styleFunc(
+    feature: ol.Feature,
+    resolution: number
+  ): ol.style.Style | ol.style.Style[] {
     // [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125]
 
     if (resolution <= 0.125) {
@@ -62,7 +67,11 @@ export function verkeersbordenStyleFunction(geselecteerd: boolean): ol.style.Sty
   return styleFunc;
 }
 
-function opstellingMetAanzichten(feature: ol.Feature, geselecteerd: boolean, klein: boolean): ol.style.Style[] {
+function opstellingMetAanzichten(
+  feature: ol.Feature,
+  geselecteerd: boolean,
+  klein: boolean
+): ol.style.Style[] {
   const opstelling: Opstelling = feature.getProperties()["properties"];
 
   const opstellingPoint: ol.geom.Point = feature.getGeometry() as ol.geom.Point;
@@ -74,7 +83,7 @@ function opstellingMetAanzichten(feature: ol.Feature, geselecteerd: boolean, kle
     return [opstellingAlsPunt(feature, geselecteerd)]; // val terug op simpele voorstelling
   }
 
-  opstelling.aanzichten.forEach(aanzicht => {
+  opstelling.aanzichten.forEach((aanzicht) => {
     const ankerGeometry: ol.geom.Point = aanzicht.anker
       ? (format.readGeometry(aanzicht.anker) as ol.geom.Point)
       : (opstellingPoint.clone() as ol.geom.Point);
@@ -82,8 +91,13 @@ function opstellingMetAanzichten(feature: ol.Feature, geselecteerd: boolean, kle
     const rotation: number = transformeerHoek(aanzicht.hoek);
 
     const aanzichtStyle = new ol.style.Style({
-      image: createIcon(encodeAsSrc(image.mime, image.data), [image.properties.breedte, image.properties.hoogte], rotation, true),
-      geometry: ankerGeometry
+      image: createIcon(
+        encodeAsSrc(image.mime, image.data),
+        [image.properties.breedte, image.properties.hoogte],
+        rotation,
+        true
+      ),
+      geometry: ankerGeometry,
     });
     aanzichtStyle.setZIndex(1);
 
@@ -93,7 +107,12 @@ function opstellingMetAanzichten(feature: ol.Feature, geselecteerd: boolean, kle
     if (geselecteerd) {
       verbindingsLijn.getStroke().setColor("#25FFFF");
     }
-    verbindingsLijn.setGeometry(new ol.geom.LineString([opstellingPoint.getCoordinates(), ankerGeometry.getCoordinates()]));
+    verbindingsLijn.setGeometry(
+      new ol.geom.LineString([
+        opstellingPoint.getCoordinates(),
+        ankerGeometry.getCoordinates(),
+      ])
+    );
     aanzichtStyles.push(verbindingsLijn);
   });
 
@@ -101,7 +120,10 @@ function opstellingMetAanzichten(feature: ol.Feature, geselecteerd: boolean, kle
   return aanzichtStyles;
 }
 
-function opstellingMetHoek(feature: ol.Feature, geselecteerd: boolean): ol.style.Style {
+function opstellingMetHoek(
+  feature: ol.Feature,
+  geselecteerd: boolean
+): ol.style.Style {
   const opstelling: Opstelling = feature.getProperties()["properties"];
   const opstellingStyle = basisOpstellingStyle.clone();
   const image = imageOpstelling(opstelling.binaireData, geselecteerd);
@@ -112,7 +134,12 @@ function opstellingMetHoek(feature: ol.Feature, geselecteerd: boolean): ol.style
     opstellingStyle.setGeometry(geometry);
   }
   opstellingStyle.setImage(
-    createIcon(encodeAsSrc(image.mime, image.data), [image.properties.breedte, image.properties.hoogte], rotation, false)
+    createIcon(
+      encodeAsSrc(image.mime, image.data),
+      [image.properties.breedte, image.properties.hoogte],
+      rotation,
+      false
+    )
   );
 
   if (geselecteerd) {
@@ -126,7 +153,10 @@ function opstellingMetHoek(feature: ol.Feature, geselecteerd: boolean): ol.style
   return opstellingStyle;
 }
 
-function opstellingAlsPunt(feature: ol.Feature, geselecteerd: boolean): ol.style.Style {
+function opstellingAlsPunt(
+  feature: ol.Feature,
+  geselecteerd: boolean
+): ol.style.Style {
   return geselecteerd ? basisOpstellingGeselecteerdStyle : basisOpstellingStyle;
 }
 
@@ -167,7 +197,11 @@ interface ImageDimensie {
 
 type base64 = string;
 
-function imageAanzicht(data: BinaireAanzichtData, geselecteerd: boolean, klein: boolean): ImageData {
+function imageAanzicht(
+  data: BinaireAanzichtData,
+  geselecteerd: boolean,
+  klein: boolean
+): ImageData {
   if (!geselecteerd && !klein) {
     return data.platgeslagenvoorstelling;
   } else if (geselecteerd && !klein) {
@@ -179,7 +213,10 @@ function imageAanzicht(data: BinaireAanzichtData, geselecteerd: boolean, klein: 
   }
 }
 
-function imageOpstelling(data: BinaireOpstellingData, geselecteerd: boolean): ImageData {
+function imageOpstelling(
+  data: BinaireOpstellingData,
+  geselecteerd: boolean
+): ImageData {
   if (!geselecteerd) {
     return data.kaartvoorstelling;
   } else {
@@ -187,7 +224,12 @@ function imageOpstelling(data: BinaireOpstellingData, geselecteerd: boolean): Im
   }
 }
 
-function createIcon(iconData: base64, size: ol.Size, rotation: number, zetAnchor: boolean): ol.style.Icon {
+function createIcon(
+  iconData: base64,
+  size: ol.Size,
+  rotation: number,
+  zetAnchor: boolean
+): ol.style.Icon {
   // Door openlayers bug kan je hier geen image aanmaken via deze code, want dat geeft flikkering bij herhaaldelijk onnodig tekenen
   // indien er meer dan 33 features zijn.
   //
@@ -206,7 +248,7 @@ function createIcon(iconData: base64, size: ol.Size, rotation: number, zetAnchor
     img: image,
     imgSize: size,
     rotation: rotation,
-    anchor: zetAnchor ? [0.5, 1] : [0.5, 0.5] // indien gezet, zet icon anchor midden onderaan bord, anders default in midden van icon
+    anchor: zetAnchor ? [0.5, 1] : [0.5, 0.5], // indien gezet, zet icon anchor midden onderaan bord, anders default in midden van icon
   });
 }
 

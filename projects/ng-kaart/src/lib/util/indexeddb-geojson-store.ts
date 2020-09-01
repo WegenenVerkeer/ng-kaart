@@ -4,7 +4,13 @@ import * as rx from "rxjs";
 import { filter, mergeAll, switchMap } from "rxjs/operators";
 
 import { GeoJsonKeyType, GeoJsonLike } from "./geojson-types";
-import { deleteByIndexWithPredicate, unsafeGet, unsafeGetAll, unsafeGetAllByIndex, writeMany } from "./indexeddb";
+import {
+  deleteByIndexWithPredicate,
+  unsafeGet,
+  unsafeGetAll,
+  unsafeGetAllByIndex,
+  writeMany,
+} from "./indexeddb";
 import * as ol from "./openlayers-compat";
 
 const dbNaam = "nosql-features";
@@ -14,10 +20,12 @@ const dbNaam = "nosql-features";
  */
 const openStore = (storeName: string): rx.Observable<idb.DB> => {
   return rx.from(
-    idb.openDb(dbNaam, 1, upgradeDB => {
+    idb.openDb(dbNaam, 1, (upgradeDB) => {
       switch (upgradeDB.oldVersion) {
         case 0:
-          const store = upgradeDB.createObjectStore(storeName, { keyPath: "id" });
+          const store = upgradeDB.createObjectStore(storeName, {
+            keyPath: "id",
+          });
           store.createIndex("minx", "metadata.minx", { unique: false });
           store.createIndex("miny", "metadata.miny", { unique: false });
       }
@@ -25,52 +33,87 @@ const openStore = (storeName: string): rx.Observable<idb.DB> => {
   );
 };
 
-export const clear: (storeName: string) => rx.Observable<void> = (storeName: string) => {
+export const clear: (storeName: string) => rx.Observable<void> = (
+  storeName: string
+) => {
   return openStore(storeName).pipe(
-    switchMap(db =>
+    switchMap((db) =>
       rx.from(
-        db
-          .transaction(storeName, "readwrite")
-          .objectStore(storeName)
-          .clear()
+        db.transaction(storeName, "readwrite").objectStore(storeName).clear()
       )
     )
   );
 };
 
-export const deleteFeatures = (storeName: string, extent: ol.Extent): rx.Observable<number> => {
+export const deleteFeatures = (
+  storeName: string,
+  extent: ol.Extent
+): rx.Observable<number> => {
   const [minx, miny, maxx, maxy] = extent;
-  const [index, keyRange] = maxx - minx < maxy - miny ? ["minx", IDBKeyRange.bound(minx, maxx)] : ["miny", IDBKeyRange.bound(miny, maxy)];
+  const [index, keyRange] =
+    maxx - minx < maxy - miny
+      ? ["minx", IDBKeyRange.bound(minx, maxx)]
+      : ["miny", IDBKeyRange.bound(miny, maxy)];
   return openStore(storeName).pipe(
-    switchMap(db =>
+    switchMap((db) =>
       deleteByIndexWithPredicate<GeoJsonLike>(
         db,
         storeName,
         index,
         keyRange,
-        feature =>
-          feature.metadata.minx >= minx && feature.metadata.maxx <= maxx && feature.metadata.miny >= miny && feature.metadata.maxy <= maxy
+        (feature) =>
+          feature.metadata.minx >= minx &&
+          feature.metadata.maxx <= maxx &&
+          feature.metadata.miny >= miny &&
+          feature.metadata.maxy <= maxy
       )
     )
   );
 };
 
-export const writeFeatures = (storeName: string, features: GeoJsonLike[]): rx.Observable<number> =>
-  openStore(storeName).pipe(switchMap(db => writeMany(db, storeName, features)));
+export const writeFeatures = (
+  storeName: string,
+  features: GeoJsonLike[]
+): rx.Observable<number> =>
+  openStore(storeName).pipe(
+    switchMap((db) => writeMany(db, storeName, features))
+  );
 
-export const getFeature = (storeName: string, id: any): rx.Observable<GeoJsonLike> =>
-  openStore(storeName).pipe(switchMap(db => unsafeGet<GeoJsonLike>(db, storeName, id)));
+export const getFeature = (
+  storeName: string,
+  id: any
+): rx.Observable<GeoJsonLike> =>
+  openStore(storeName).pipe(
+    switchMap((db) => unsafeGet<GeoJsonLike>(db, storeName, id))
+  );
 
 export const getAllFeatures = (storeName: string): rx.Observable<GeoJsonLike> =>
-  openStore(storeName).pipe(switchMap(db => unsafeGetAll<GeoJsonLike>(db, storeName)));
+  openStore(storeName).pipe(
+    switchMap((db) => unsafeGetAll<GeoJsonLike>(db, storeName))
+  );
 
-export const getFeatures = (storeName: string, filterFunc: Predicate<GeoJsonLike>): rx.Observable<GeoJsonLike> =>
+export const getFeatures = (
+  storeName: string,
+  filterFunc: Predicate<GeoJsonLike>
+): rx.Observable<GeoJsonLike> =>
   getAllFeatures(storeName).pipe(filter(filterFunc));
 
-export const getFeaturesByIds = (storeName: string, keys: GeoJsonKeyType[]): rx.Observable<GeoJsonLike> =>
-  openStore(storeName).pipe(switchMap(db => rx.from(keys.map(key => unsafeGet<GeoJsonLike>(db, storeName, key))).pipe(mergeAll())));
+export const getFeaturesByIds = (
+  storeName: string,
+  keys: GeoJsonKeyType[]
+): rx.Observable<GeoJsonLike> =>
+  openStore(storeName).pipe(
+    switchMap((db) =>
+      rx
+        .from(keys.map((key) => unsafeGet<GeoJsonLike>(db, storeName, key)))
+        .pipe(mergeAll())
+    )
+  );
 
-export const getFeaturesByExtent = (storeName: string, extent: ol.Extent): rx.Observable<GeoJsonLike> => {
+export const getFeaturesByExtent = (
+  storeName: string,
+  extent: ol.Extent
+): rx.Observable<GeoJsonLike> => {
   const [minx, miny, maxx, maxy] = extent;
   const values$ =
     maxx - minx < maxy - miny
@@ -78,8 +121,11 @@ export const getFeaturesByExtent = (storeName: string, extent: ol.Extent): rx.Ob
       : getValuesInIndexedInRange(storeName, "miny", miny, maxy);
   return values$.pipe(
     filter(
-      feature =>
-        feature.metadata.minx >= minx && feature.metadata.maxx <= maxx && feature.metadata.miny >= miny && feature.metadata.maxy <= maxy
+      (feature) =>
+        feature.metadata.minx >= minx &&
+        feature.metadata.maxx <= maxx &&
+        feature.metadata.miny >= miny &&
+        feature.metadata.maxy <= maxy
     )
   );
 };
@@ -90,4 +136,13 @@ const getValuesInIndexedInRange = (
   lower: GeoJsonKeyType,
   upper: GeoJsonKeyType
 ): rx.Observable<GeoJsonLike> =>
-  openStore(storeName).pipe(switchMap(db => unsafeGetAllByIndex<GeoJsonLike>(db, storeName, idx, IDBKeyRange.bound(lower, upper))));
+  openStore(storeName).pipe(
+    switchMap((db) =>
+      unsafeGetAllByIndex<GeoJsonLike>(
+        db,
+        storeName,
+        idx,
+        IDBKeyRange.bound(lower, upper)
+      )
+    )
+  );

@@ -12,7 +12,7 @@ import { ClassicSingleZoekerDirective } from "./classic-single-zoeker.directive"
  */
 @Component({
   selector: "awv-kaart-perceel-zoeker",
-  template: ""
+  template: "",
 })
 export class ClassicPerceelZoekerComponent extends ClassicSingleZoekerDirective {
   constructor(injector: Injector, perceelZoeker: ZoekerPerceelService) {

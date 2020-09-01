@@ -24,7 +24,7 @@ import { validationChain } from "../../util/validation";
 export type ParamGetter<A> = Function2<A, A, A>;
 export type OptionalParamGetter<A> = Function1<A, option.Option<A>>;
 
-const parseJSON: (param: string) => json.Validation<Object> = param => {
+const parseJSON: (param: string) => json.Validation<Object> = (param) => {
   try {
     return json.ok(JSON.parse(param));
   } catch (e) {
@@ -32,10 +32,14 @@ const parseJSON: (param: string) => json.Validation<Object> = param => {
   }
 };
 
-const getParameter: <A>(_: json.Interpreter<A>) => ParamGetter<A> = interpreter => (param, fallback) => {
+const getParameter: <A>(_: json.Interpreter<A>) => ParamGetter<A> = (
+  interpreter
+) => (param, fallback) => {
   if (typeof param === "string") {
     return validationChain(parseJSON(param), interpreter).getOrElseL(() => {
-      kaartLogger.warn(`Een parameter met waarde '${param}' kon niet correct geïnterpreteerd worden.`);
+      kaartLogger.warn(
+        `Een parameter met waarde '${param}' kon niet correct geïnterpreteerd worden.`
+      );
       return fallback;
     });
   } else {
@@ -43,12 +47,18 @@ const getParameter: <A>(_: json.Interpreter<A>) => ParamGetter<A> = interpreter 
   }
 };
 
-export function enu<T extends string>(param: string | T, fallback: T, ...values: T[]): T {
+export function enu<T extends string>(
+  param: string | T,
+  fallback: T,
+  ...values: T[]
+): T {
   if (typeof param === "string") {
     return json
       .enu(...values)(param)
       .getOrElseL(() => {
-        kaartLogger.warn(`Een parameter met waarde '${param}' kon niet correct geïnterpreteerd worden.`);
+        kaartLogger.warn(
+          `Een parameter met waarde '${param}' kon niet correct geïnterpreteerd worden.`
+        );
         return fallback;
       });
   } else {
@@ -56,7 +66,10 @@ export function enu<T extends string>(param: string | T, fallback: T, ...values:
   }
 }
 
-export function optEnu<T extends string>(param: string | option.Option<T>, ...values: T[]): option.Option<T> {
+export function optEnu<T extends string>(
+  param: string | option.Option<T>,
+  ...values: T[]
+): option.Option<T> {
   if (typeof param === "string") {
     return json
       .optional(json.enu(...values))(param)
@@ -64,13 +77,20 @@ export function optEnu<T extends string>(param: string | option.Option<T>, ...va
         option.none // Dit kan niet omdat json.optional zelf al option.none returnt
       );
   } else {
-    return option.fromNullable(param as option.Option<T>).getOrElse(option.none);
+    return option
+      .fromNullable(param as option.Option<T>)
+      .getOrElse(option.none);
   }
 }
 
-const getOptionalParameter: <A>(_: json.Interpreter<A>) => OptionalParamGetter<A> = interpreter => param => {
+const getOptionalParameter: <A>(
+  _: json.Interpreter<A>
+) => OptionalParamGetter<A> = (interpreter) => (param) => {
   if (typeof param === "string") {
-    return validationChain(parseJSON(param), json.optional(interpreter)).getOrElse(
+    return validationChain(
+      parseJSON(param),
+      json.optional(interpreter)
+    ).getOrElse(
       option.none // Dit kan niet omdat json.optional zelf al option.none returnt
     );
   } else {
@@ -82,7 +102,7 @@ export const str: ParamGetter<string> = identity;
 
 export const strOpt: ParamGetter<string | undefined> = identity;
 
-export const optStr: OptionalParamGetter<string> = param => {
+export const optStr: OptionalParamGetter<string> = (param) => {
   if (param) {
     return option.some(param);
   } else {
@@ -91,45 +111,90 @@ export const optStr: OptionalParamGetter<string> = param => {
 };
 
 export const num: ParamGetter<number> = getParameter(json.num);
-export const optNum: OptionalParamGetter<number> = getOptionalParameter(json.num);
+export const optNum: OptionalParamGetter<number> = getOptionalParameter(
+  json.num
+);
 
 export const bool: ParamGetter<boolean> = getParameter(json.bool);
 
-const coordInter: json.Interpreter<ol.Coordinate> = json.arrSize(2, json.num) as json.Interpreter<ol.Coordinate>;
+const coordInter: json.Interpreter<ol.Coordinate> = json.arrSize(
+  2,
+  json.num
+) as json.Interpreter<ol.Coordinate>;
 export const coord: ParamGetter<ol.Coordinate> = getParameter(coordInter);
-export const optCoord: OptionalParamGetter<ol.Coordinate> = getOptionalParameter(coordInter);
+export const optCoord: OptionalParamGetter<ol.Coordinate> = getOptionalParameter(
+  coordInter
+);
 
 const extentInter = json.arrSize(4, json.num) as json.Interpreter<ol.Extent>;
 export const extent: ParamGetter<ol.Extent> = getParameter(extentInter);
-export const optExtent: OptionalParamGetter<ol.Extent> = getOptionalParameter(extentInter);
+export const optExtent: OptionalParamGetter<ol.Extent> = getOptionalParameter(
+  extentInter
+);
 
-export const stringArray: ParamGetter<string[]> = getParameter(json.arr(json.str));
+export const stringArray: ParamGetter<string[]> = getParameter(
+  json.arr(json.str)
+);
 
-const veldInfoInter: json.Interpreter<ke.VeldInfo> = json.interpretUndefinedRecord({
-  type: json.field("type", json.enu("string", "integer", "double", "geometry", "date", "boolean", "json", "url")),
-  naam: json.field("naam", json.str),
-  label: json.field("label", json.str),
-  isBasisVeld: json.field("isBasisVeld", json.bool),
-  constante: json.nullable(json.field("constante", json.str)),
-  template: json.nullable(json.field("template", json.str)),
-  html: json.nullable(json.field("html", json.str)),
-  uniekeWaarden: json.nullable(json.field("uniekeWaarden", json.arr(json.str))),
-  parseFormat: json.nullable(json.field("parseFormat", json.str)),
-  displayFormat: json.nullable(json.field("displayFormat", json.str)),
-  sqlFormat: json.nullable(json.field("sqlFormat", json.str)),
-  isGeenLocatieVeld: json.nullable(json.field("isGeenLocatieVeld", json.bool))
+const veldInfoInter: json.Interpreter<ke.VeldInfo> = json.interpretUndefinedRecord(
+  {
+    type: json.field(
+      "type",
+      json.enu(
+        "string",
+        "integer",
+        "double",
+        "geometry",
+        "date",
+        "boolean",
+        "json",
+        "url"
+      )
+    ),
+    naam: json.field("naam", json.str),
+    label: json.field("label", json.str),
+    isBasisVeld: json.field("isBasisVeld", json.bool),
+    constante: json.nullable(json.field("constante", json.str)),
+    template: json.nullable(json.field("template", json.str)),
+    html: json.nullable(json.field("html", json.str)),
+    uniekeWaarden: json.nullable(
+      json.field("uniekeWaarden", json.arr(json.str))
+    ),
+    parseFormat: json.nullable(json.field("parseFormat", json.str)),
+    displayFormat: json.nullable(json.field("displayFormat", json.str)),
+    sqlFormat: json.nullable(json.field("sqlFormat", json.str)),
+    isGeenLocatieVeld: json.nullable(
+      json.field("isGeenLocatieVeld", json.bool)
+    ),
+  }
+);
+export const veldInfoArray: ParamGetter<ke.VeldInfo[]> = getParameter(
+  json.arr(veldInfoInter)
+);
+export const optVeldInfoArray: OptionalParamGetter<
+  ke.VeldInfo[]
+> = getOptionalParameter(json.arr(veldInfoInter));
+
+const staticSpecInter: json.Interpreter<ss.AwvV0StyleSpec> = json.interpretUndefinedRecord(
+  {
+    type: json.field("type", json.enu("StaticStyle")),
+    definition: json.field(
+      "definition",
+      AwvV0StaticStyleInterpreters.jsonAwvV0Definition
+    ),
+  }
+);
+const dynamicSpecInter: json.Interpreter<ss.AwvV0StyleSpec> = json.interpretUndefinedRecord(
+  {
+    type: json.field("type", json.enu("DynamicStyle")),
+    definition: json.field("definition", jsonAwvV0RuleInterpreter),
+  }
+);
+
+const fullSpecInter = json.byTypeDiscriminator("type", {
+  StaticStyle: staticSpecInter,
+  DynamicStyle: dynamicSpecInter,
 });
-export const veldInfoArray: ParamGetter<ke.VeldInfo[]> = getParameter(json.arr(veldInfoInter));
-export const optVeldInfoArray: OptionalParamGetter<ke.VeldInfo[]> = getOptionalParameter(json.arr(veldInfoInter));
-
-const staticSpecInter: json.Interpreter<ss.AwvV0StyleSpec> = json.interpretUndefinedRecord({
-  type: json.field("type", json.enu("StaticStyle")),
-  definition: json.field("definition", AwvV0StaticStyleInterpreters.jsonAwvV0Definition)
-});
-const dynamicSpecInter: json.Interpreter<ss.AwvV0StyleSpec> = json.interpretUndefinedRecord({
-  type: json.field("type", json.enu("DynamicStyle")),
-  definition: json.field("definition", jsonAwvV0RuleInterpreter)
-});
-
-const fullSpecInter = json.byTypeDiscriminator("type", { StaticStyle: staticSpecInter, DynamicStyle: dynamicSpecInter });
-export const optStyleSpec: OptionalParamGetter<ss.AwvV0StyleSpec> = getOptionalParameter(fullSpecInter);
+export const optStyleSpec: OptionalParamGetter<ss.AwvV0StyleSpec> = getOptionalParameter(
+  fullSpecInter
+);

@@ -11,7 +11,13 @@ import { RouterModule } from "@angular/router";
 import { ClickOutsideModule } from "ng4-click-outside";
 import { TransparantieeditorModule } from "projects/ng-kaart/src/lib/transparantieeditor";
 
-import { ClassicModule, FilterModule, KaartModule, LagenkiezerModule, ZoekerModule } from "../../projects/ng-kaart/src/public_api";
+import {
+  ClassicModule,
+  FilterModule,
+  KaartModule,
+  LagenkiezerModule,
+  ZoekerModule,
+} from "../../projects/ng-kaart/src/public_api";
 
 import { AppComponent, routes } from "./app.component";
 import { AvKaartInnerComponent } from "./av-kaart-inner.component";
@@ -33,7 +39,7 @@ registerLocaleData(localeBe);
     PatKaartComponent,
     PerceelPopupComponent,
     ProtractorComponent,
-    TestSectieComponent
+    TestSectieComponent,
   ],
   imports: [
     BrowserModule,
@@ -47,8 +53,8 @@ registerLocaleData(localeBe);
     RouterModule.forRoot(routes),
     ZoekerModule.forRoot({
       googleWdb: {
-        apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I"
-      }
+        apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I",
+      },
     }),
     LagenkiezerModule.withDefaults(),
     // Deze lijkt niet te werken. Zie main.ts voor registratie
@@ -57,9 +63,9 @@ registerLocaleData(localeBe);
     // }),
     FilterModule,
     TransparantieeditorModule,
-    ClickOutsideModule
+    ClickOutsideModule,
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
 export class AppModule {}

@@ -78,7 +78,7 @@ export const componentMap = {
   "awv-legende-lijn-item": ClassicLegendeLijnItemComponent,
   "awv-legende-polygoon-item": ClassicLegendePolygoonItemComponent,
   "awv-meet-knop": ClassicMetenComponent,
-  "awv-feature-tabel": ClassicFeatureTabelComponent
+  "awv-feature-tabel": ClassicFeatureTabelComponent,
 };
 
 const components = [
@@ -118,13 +118,13 @@ const components = [
   ClassicZoekerComponent,
   ClassicZoomComponent,
   ClassicKaartLadenComponent,
-  KaartClassicComponent
+  KaartClassicComponent,
 ];
 
 @NgModule({
   imports: [CommonModule, KaartModule],
   declarations: [components],
-  exports: [components]
+  exports: [components],
 })
 export class ClassicModule {}
 

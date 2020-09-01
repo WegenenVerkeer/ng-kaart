@@ -24,23 +24,30 @@ interface WegEdge {
 
 const toWegNode: Interpreter<WegNode> = st.interpretRecord({
   x: st.field("x", st.num),
-  y: st.field("y", st.num)
+  y: st.field("y", st.num),
 });
 
 const geoJSONformat = new ol.format.GeoJSON();
 
-const toGeometry: Interpreter<ol.geom.Geometry> = json => {
+const toGeometry: Interpreter<ol.geom.Geometry> = (json) => {
   try {
-    return st.ok(geoJSONformat.readGeometry(json, { dataProjection: "EPSG:31370", featureProjection: "EPSG:31370" }));
+    return st.ok(
+      geoJSONformat.readGeometry(json, {
+        dataProjection: "EPSG:31370",
+        featureProjection: "EPSG:31370",
+      })
+    );
   } catch (e) {
-    return st.fail("Kon GeoJson niet parsen: " + e + ". JSON:" + JSON.stringify(json));
+    return st.fail(
+      "Kon GeoJson niet parsen: " + e + ". JSON:" + JSON.stringify(json)
+    );
   }
 };
 
 const toWegEdge: Interpreter<WegEdge> = st.interpretRecord({
   fromNode: st.field("fromNode", toWegNode),
   toNode: st.field("toNode", toWegNode),
-  geometry: st.field("geometry", toGeometry)
+  geometry: st.field("geometry", toGeometry),
 });
 
 const toWegEdges: Interpreter<Array<WegEdge>> = st.arr(toWegEdge);
@@ -49,9 +56,15 @@ export interface RoutingService {
   resolve(protoRoute: ProtoRoute): Observable<GeometryRoute>;
 }
 
-const protoRouteToFallbackGeometryRoute: Function1<ProtoRoute, GeometryRoute> = protoRoute => ({
+const protoRouteToFallbackGeometryRoute: Function1<
+  ProtoRoute,
+  GeometryRoute
+> = (protoRoute) => ({
   ...protoRoute,
-  geometry: new ol.geom.LineString([protoRoute.begin.location, protoRoute.end.location])
+  geometry: new ol.geom.LineString([
+    protoRoute.begin.location,
+    protoRoute.end.location,
+  ]),
 });
 
 export class VerfijndeRoutingService implements RoutingService {
@@ -61,26 +74,38 @@ export class VerfijndeRoutingService implements RoutingService {
   public resolve(protoRoute: ProtoRoute): Observable<GeometryRoute> {
     const url =
       `/routing/rest/routing` +
-      `/from/${ol.coordinate.format(protoRoute.begin.location, "{x}/{y}", 0)}/projected` +
-      `/to/${ol.coordinate.format(protoRoute.end.location, "{x}/{y}", 0)}/projected` +
+      `/from/${ol.coordinate.format(
+        protoRoute.begin.location,
+        "{x}/{y}",
+        0
+      )}/projected` +
+      `/to/${ol.coordinate.format(
+        protoRoute.end.location,
+        "{x}/{y}",
+        0
+      )}/projected` +
       `?precision=50`;
 
     return this.http.get<object>(url).pipe(
       map(toWegEdges),
-      map(vldtn =>
-        vldtn.getOrElseL(errs => {
-          kaartLogger.error(`Onverwacht antwoordformaat van routeservice: ${errs}. We gaan verder zonder dit antwoord.`);
+      map((vldtn) =>
+        vldtn.getOrElseL((errs) => {
+          kaartLogger.error(
+            `Onverwacht antwoordformaat van routeservice: ${errs}. We gaan verder zonder dit antwoord.`
+          );
           throw errs;
         })
       ),
-      map(wegEdges => ({
+      map((wegEdges) => ({
         id: protoRoute.id,
         version: protoRoute.version,
         begin: protoRoute.begin,
         end: protoRoute.end,
-        geometry: new ol.geom.GeometryCollection(wegEdges.map(edge => edge.geometry))
+        geometry: new ol.geom.GeometryCollection(
+          wegEdges.map((edge) => edge.geometry)
+        ),
       })),
-      catchError(err => {
+      catchError((err) => {
         kaartLogger.error(`Routing heeft gefaald: ${err.message}`, err);
         return rx.of(protoRouteToFallbackGeometryRoute(protoRoute));
       })
@@ -95,7 +120,10 @@ export class SimpleRoutingService implements RoutingService {
       version: protoRoute.version,
       begin: protoRoute.begin,
       end: protoRoute.end,
-      geometry: new ol.geom.LineString([protoRoute.begin.location, protoRoute.end.location])
+      geometry: new ol.geom.LineString([
+        protoRoute.begin.location,
+        protoRoute.end.location,
+      ]),
     });
   }
 }
@@ -110,6 +138,8 @@ export class CompositeRoutingService implements RoutingService {
   constructor(private routingServices: RoutingService[]) {}
 
   public resolve(protoRoute: ProtoRoute): Observable<GeometryRoute> {
-    return rx.merge(...this.routingServices.map(rs => rs.resolve(protoRoute)));
+    return rx.merge(
+      ...this.routingServices.map((rs) => rs.resolve(protoRoute))
+    );
   }
 }

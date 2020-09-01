@@ -1,5 +1,14 @@
 import { HttpClient } from "@angular/common/http";
-import { Component, EventEmitter, Injector, Input, OnChanges, Output, SimpleChanges, ViewEncapsulation } from "@angular/core";
+import {
+  Component,
+  EventEmitter,
+  Injector,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  ViewEncapsulation,
+} from "@angular/core";
 import { array, eq } from "fp-ts";
 import { identity } from "fp-ts/lib/function";
 
@@ -37,15 +46,20 @@ const stdFeatureEquality = (feat1: ol.Feature, feat2: ol.Feature) => {
   return id1 !== undefined && id2 !== undefined && id1 === id2;
 };
 
-const featureEqualityToFeaturesSetoid = (eq: FeatureEqualityFn) => array.getSetoid({ equals: eq });
+const featureEqualityToFeaturesSetoid = (eq: FeatureEqualityFn) =>
+  array.getSetoid({ equals: eq });
 
 @Component({
   selector: "awv-kaart-features-laag",
   template: "<ng-content></ng-content>",
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
-export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent implements OnChanges {
-  private featuresSetoid: eq.Eq<ol.Feature[]> = featureEqualityToFeaturesSetoid(stdFeatureEquality);
+export class ClassicFeaturesLaagComponent
+  extends ClassicVectorLaagComponent
+  implements OnChanges {
+  private featuresSetoid: eq.Eq<ol.Feature[]> = featureEqualityToFeaturesSetoid(
+    stdFeatureEquality
+  );
 
   // Er wordt verwacht dat alle features een unieke ID hebben. Null of undefined ID's zorgen voor onnodige updates. Bovendien moet de hele
   // feature array aangepast worden. Dwz, je mag de array niet aanpassen en de referentie ongewijzigd laten. Dit is om performantieredenen.
@@ -56,7 +70,9 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
 
   // TODO combineren met 'selecteerbaar' van kaart-vector-laag
   @Output()
-  featureGeselecteerd: EventEmitter<ol.Feature> = new EventEmitter<ol.Feature>();
+  featureGeselecteerd: EventEmitter<ol.Feature> = new EventEmitter<
+    ol.Feature
+  >();
 
   constructor(injector: Injector, private readonly http: HttpClient) {
     super(injector);
@@ -70,7 +86,7 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
 
   @Input()
   set featuresUrl(url: string) {
-    this.http.get<GeoJsonCore[]>(url).subscribe(result => {
+    this.http.get<GeoJsonCore[]>(url).subscribe((result) => {
       this.features = result.map(toOlFeature(this._titel));
       this.dispatchVervangFeatures(this.features);
     });
@@ -87,23 +103,34 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    forChangedValue<FeatureEqualityFn, FeatureEqualityFn>(changes, "featureEquality", eq => {
-      this.featuresSetoid = featureEqualityToFeaturesSetoid(eq);
-    });
+    forChangedValue<FeatureEqualityFn, FeatureEqualityFn>(
+      changes,
+      "featureEquality",
+      (eq) => {
+        this.featuresSetoid = featureEqualityToFeaturesSetoid(eq);
+      }
+    );
     if (changes.features && !changes.features.firstChange) {
       forChangedValue<ol.Feature[], ol.Feature[]>(
         changes,
         "features",
-        features => this.dispatchVervangFeatures(features),
+        (features) => this.dispatchVervangFeatures(features),
         identity,
         (curFeatures: ol.Feature[], prevFeatures: ol.Feature[]) =>
-          prevFeatures !== undefined && !this.featuresSetoid.equals(curFeatures, prevFeatures)
+          prevFeatures !== undefined &&
+          !this.featuresSetoid.equals(curFeatures, prevFeatures)
       );
     }
     super.ngOnChanges(changes);
   }
 
   private dispatchVervangFeatures(features: ol.Feature[]) {
-    this.dispatch(prt.VervangFeaturesCmd(this._titel, arrays.fromNullable(features), logOnlyWrapper));
+    this.dispatch(
+      prt.VervangFeaturesCmd(
+        this._titel,
+        arrays.fromNullable(features),
+        logOnlyWrapper
+      )
+    );
   }
 }

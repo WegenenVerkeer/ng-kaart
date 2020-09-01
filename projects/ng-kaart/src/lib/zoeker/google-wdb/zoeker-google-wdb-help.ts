@@ -1,4 +1,5 @@
-// tslint:disable:max-line-length
+/* eslint-disable max-len */
+
 export const vrijAdres = `Voer het adres in in het zoekveld.
 
 De zoekmachine zoekt zowel via de <a target="_blank" href="https://overheid.vlaanderen.be/informatie-vlaanderen/producten-diensten/centraal-referentieadressenbestand-crab">CRAB</a> als Google diensten. `;

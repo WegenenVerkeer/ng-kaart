@@ -1,7 +1,23 @@
 import { HttpClient } from "@angular/common/http";
-import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import {
+  Component,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  ViewEncapsulation,
+} from "@angular/core";
 import { array, eq, option } from "fp-ts";
-import { Curried2, Endomorphism, flow, Function1, Function2, Function3, identity, Predicate, Refinement } from "fp-ts/lib/function";
+import {
+  Curried2,
+  Endomorphism,
+  flow,
+  Function1,
+  Function2,
+  Function3,
+  identity,
+  Predicate,
+  Refinement,
+} from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import { Lens, Optional } from "monocle-ts";
 import * as rx from "rxjs";
@@ -18,7 +34,7 @@ import {
   take,
   tap,
   timeInterval,
-  withLatestFrom
+  withLatestFrom,
 } from "rxjs/operators";
 
 import { Coordinates } from "../../coordinaten";
@@ -27,23 +43,38 @@ import { disc, solidLine } from "../../stijl/common-shapes";
 import { Transparantie } from "../../transparantieeditor/transparantie";
 import { eqCoordinate } from "../../util";
 import { asap } from "../../util/asap";
-import { applySequential, Consumer1, PartialFunction1, ReduceFunction } from "../../util/function";
+import {
+  applySequential,
+  Consumer1,
+  PartialFunction1,
+  ReduceFunction,
+} from "../../util/function";
 import {
   numberMapOptional,
   NumberMapped,
   removeFromNumberMap,
   removeFromStringMap,
   stringMapOptional,
-  StringMapped
+  StringMapped,
 } from "../../util/lenses";
 import * as ol from "../../util/openlayers-compat";
 import { forEach } from "../../util/option";
-import { BevraagKaartOpties, BevraagKaartUiSelector } from "../kaart-bevragen/kaart-bevragen-opties";
+import {
+  BevraagKaartOpties,
+  BevraagKaartUiSelector,
+} from "../kaart-bevragen/kaart-bevragen-opties";
 import { KaartChildDirective } from "../kaart-child.directive";
 import * as ke from "../kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
+import {
+  KaartInternalMsg,
+  kaartLogOnlyWrapper,
+} from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
-import { Command, DrawOpsCmd, VerwijderLaagCmd } from "../kaart-protocol-commands";
+import {
+  Command,
+  DrawOpsCmd,
+  VerwijderLaagCmd,
+} from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
 import * as ss from "../stijl-selector";
 
@@ -59,10 +90,16 @@ import {
   RedrawRoute,
   SnapWaypoint,
   StartDrawing,
-  StopDrawing
+  StopDrawing,
 } from "./tekenen-model";
 import { directeRoutes, routesViaRoutering } from "./waypoint-ops";
-import { AddWaypoint, RemoveWaypoint, Waypoint, WaypointId, WaypointOperation } from "./waypoint.msg";
+import {
+  AddWaypoint,
+  RemoveWaypoint,
+  Waypoint,
+  WaypointId,
+  WaypointOperation,
+} from "./waypoint.msg";
 
 export const MultiTekenenUiSelector = "MultiKaarttekenen";
 
@@ -88,7 +125,7 @@ interface PointProperties {
 
 // Onze state is wel immutable, maar de features zelf worden beheerd door OL en die is helemaal niet immutable dus de features
 // in pointFeature worden achter onze rug aangepast.
-const initialState: Function1<ol.Map, DrawState> = olMap => ({
+const initialState: Function1<ol.Map, DrawState> = (olMap) => ({
   map: olMap,
   featureColour: clr.zwartig,
   drawInteractions: [],
@@ -96,36 +133,67 @@ const initialState: Function1<ol.Map, DrawState> = olMap => ({
   pointFeatures: [],
   nextId: 0,
   dragFeature: option.none,
-  listeners: []
+  listeners: [],
 });
 
-const PointProperties: Function2<option.Option<ol.Feature>, option.Option<ol.Feature>, PointProperties> = (previous, next) => ({
+const PointProperties: Function2<
+  option.Option<ol.Feature>,
+  option.Option<ol.Feature>,
+  PointProperties
+> = (previous, next) => ({
   type: "Waypoint",
   next: next,
-  previous: previous
+  previous: previous,
 });
 
 type DrawLens<A> = Lens<DrawState, A>;
-const drawInteractionsLens: DrawLens<ol.interaction.Interaction[]> = Lens.fromProp("drawInteractions");
-const selectInteractionLens: DrawLens<option.Option<ol.interaction.Select>> = Lens.fromProp("selectInteraction");
-const pointFeaturesLens: DrawLens<ol.Feature[]> = Lens.fromProp("pointFeatures");
+const drawInteractionsLens: DrawLens<
+  ol.interaction.Interaction[]
+> = Lens.fromProp("drawInteractions");
+const selectInteractionLens: DrawLens<option.Option<
+  ol.interaction.Select
+>> = Lens.fromProp("selectInteraction");
+const pointFeaturesLens: DrawLens<ol.Feature[]> = Lens.fromProp(
+  "pointFeatures"
+);
 const nextIdLens: DrawLens<number> = Lens.fromProp("nextId");
-const incrementNextId: Endomorphism<DrawState> = nextIdLens.modify(n => n + 1);
-const dragFeatureLens: DrawLens<option.Option<ol.Feature>> = Lens.fromProp("dragFeature");
-const listenersLens: DrawLens<ol.events.EventsKey[]> = Lens.fromProp("listeners");
+const incrementNextId: Endomorphism<DrawState> = nextIdLens.modify(
+  (n) => n + 1
+);
+const dragFeatureLens: DrawLens<option.Option<ol.Feature>> = Lens.fromProp(
+  "dragFeature"
+);
+const listenersLens: DrawLens<ol.events.EventsKey[]> = Lens.fromProp(
+  "listeners"
+);
 const featureColourLens: DrawLens<clr.Kleur> = Lens.fromProp("featureColour");
 
 type PointFeaturePropertyLens<A> = Lens<PointProperties, A>;
-const nextLens: PointFeaturePropertyLens<option.Option<ol.Feature>> = Lens.fromProp("next");
-const previousLens: PointFeaturePropertyLens<option.Option<ol.Feature>> = Lens.fromProp("previous");
-const replaceNext: Function1<option.Option<ol.Feature>, Endomorphism<PointProperties>> = nextLens.set;
-const replacePrevious: Function1<option.Option<ol.Feature>, Endomorphism<PointProperties>> = previousLens.set;
+const nextLens: PointFeaturePropertyLens<option.Option<
+  ol.Feature
+>> = Lens.fromProp("next");
+const previousLens: PointFeaturePropertyLens<option.Option<
+  ol.Feature
+>> = Lens.fromProp("previous");
+const replaceNext: Function1<
+  option.Option<ol.Feature>,
+  Endomorphism<PointProperties>
+> = nextLens.set;
+const replacePrevious: Function1<
+  option.Option<ol.Feature>,
+  Endomorphism<PointProperties>
+> = previousLens.set;
 
-const createMarkerStyle: Function1<clr.Kleur, ss.Stylish> = colour => disc.stylish(colour, clr.wit, 3, 5);
+const createMarkerStyle: Function1<clr.Kleur, ss.Stylish> = (colour) =>
+  disc.stylish(colour, clr.wit, 3, 5);
 
-const createLineStyle: Function1<clr.Kleur, ss.Stylish> = colour => solidLine.stylish(colour, 2);
+const createLineStyle: Function1<clr.Kleur, ss.Stylish> = (colour) =>
+  solidLine.stylish(colour, 2);
 
-const createLayer: Function2<string, ol.source.Vector, ke.VectorLaag> = (titel, source) => {
+const createLayer: Function2<string, ol.source.Vector, ke.VectorLaag> = (
+  titel,
+  source
+) => {
   source.set("laagTitel", titel);
   return {
     type: ke.VectorType,
@@ -144,54 +212,78 @@ const createLayer: Function2<string, ol.source.Vector, ke.VectorLaag> = (titel, 
     velden: new Map<string, ke.VeldInfo>(),
     verwijderd: false,
     rijrichtingIsDigitalisatieZin: false,
-    filter: option.none
+    filter: option.none,
   };
 };
 
-const isTekenLayer: Predicate<ol.layer.Layer> = layer =>
+const isTekenLayer: Predicate<ol.layer.Layer> = (layer) =>
   option
     .fromNullable(ke.underlyingSource(layer))
-    .chain(source => option.fromNullable(source.get("laagTitel")))
+    .chain((source) => option.fromNullable(source.get("laagTitel")))
     .contains(eq.eqString, PuntLaagNaam);
 
 type FeaturePicker = PartialFunction1<ol.Pixel, ol.Feature>;
-const featurePicker: Function1<ol.Map, FeaturePicker> = map => pixel => {
-  const featuresAtPixel = map.getFeaturesAtPixel(pixel, { layerFilter: isTekenLayer }) as ol.Feature[];
+const featurePicker: Function1<ol.Map, FeaturePicker> = (map) => (pixel) => {
+  const featuresAtPixel = map.getFeaturesAtPixel(pixel, {
+    layerFilter: isTekenLayer,
+  }) as ol.Feature[];
   return option.fromNullable(featuresAtPixel).chain(array.head);
 };
 
-const isPoint: Refinement<ol.geom.Geometry, ol.geom.Point> = (geom): geom is ol.geom.Point => geom instanceof ol.geom.Point;
-const isNumber: Refinement<any, number> = (value): value is number => typeof value === "number";
-const isWaypointProperties: Refinement<any, PointProperties> = (value): value is PointProperties =>
-  typeof value === "object" && option.fromNullable(value.type).exists(type => type === "Waypoint");
+const isPoint: Refinement<ol.geom.Geometry, ol.geom.Point> = (
+  geom
+): geom is ol.geom.Point => geom instanceof ol.geom.Point;
+const isNumber: Refinement<any, number> = (value): value is number =>
+  typeof value === "number";
+const isWaypointProperties: Refinement<any, PointProperties> = (
+  value
+): value is PointProperties =>
+  typeof value === "object" &&
+  option.fromNullable(value.type).exists((type) => type === "Waypoint");
 
-const extractCoordinate: PartialFunction1<ol.Feature, ol.Coordinate> = feature =>
+const extractCoordinate: PartialFunction1<ol.Feature, ol.Coordinate> = (
+  feature
+) =>
   pipe(
     feature.getGeometry(),
     option.fromNullable,
     option.filter(isPoint),
-    option.map(point => point.getFirstCoordinate())
+    option.map((point) => point.getFirstCoordinate())
   );
 
-const extractId: PartialFunction1<ol.Feature, number> = feature =>
+const extractId: PartialFunction1<ol.Feature, number> = (feature) =>
   option.fromNullable(feature.getId()).chain(option.fromPredicate(isNumber));
 
-const extractPointProperties: PartialFunction1<ol.Feature, PointProperties> = feature =>
-  option.fromPredicate(isWaypointProperties)(feature.getProperties());
+const extractPointProperties: PartialFunction1<ol.Feature, PointProperties> = (
+  feature
+) => option.fromPredicate(isWaypointProperties)(feature.getProperties());
 
-const toWaypoint: PartialFunction1<ol.Feature, Waypoint> = feature =>
-  extractId(feature).chain(id => extractCoordinate(feature).map(coordinate => Waypoint(id, coordinate)));
+const toWaypoint: PartialFunction1<ol.Feature, Waypoint> = (feature) =>
+  extractId(feature).chain((id) =>
+    extractCoordinate(feature).map((coordinate) => Waypoint(id, coordinate))
+  );
 
-const findPreviousFeature: PartialFunction1<ol.Feature, ol.Feature> = feature => extractPointProperties(feature).chain(previousLens.get);
+const findPreviousFeature: PartialFunction1<ol.Feature, ol.Feature> = (
+  feature
+) => extractPointProperties(feature).chain(previousLens.get);
 
-const findNextFeature: PartialFunction1<ol.Feature, ol.Feature> = feature => extractPointProperties(feature).chain(nextLens.get);
+const findNextFeature: PartialFunction1<ol.Feature, ol.Feature> = (feature) =>
+  extractPointProperties(feature).chain(nextLens.get);
 
-const findPreviousWaypoint: PartialFunction1<ol.Feature, Waypoint> = feature => findPreviousFeature(feature).chain(toWaypoint);
+const findPreviousWaypoint: PartialFunction1<ol.Feature, Waypoint> = (
+  feature
+) => findPreviousFeature(feature).chain(toWaypoint);
 
-const selectFilter: ol.interaction.SelectFilterFunction = feature => isWaypointProperties(feature.getProperties());
+const selectFilter: ol.interaction.SelectFilterFunction = (feature) =>
+  isWaypointProperties(feature.getProperties());
 
-const updatePointProperties: Function1<Endomorphism<PointProperties>, Consumer1<ol.Feature>> = f => feature =>
-  forEach(extractPointProperties(feature), props => feature.setProperties(f(props)));
+const updatePointProperties: Function1<
+  Endomorphism<PointProperties>,
+  Consumer1<ol.Feature>
+> = (f) => (feature) =>
+  forEach(extractPointProperties(feature), (props) =>
+    feature.setProperties(f(props))
+  );
 
 function drawStateTransformer(
   dispatchDrawOps: Consumer1<DrawOps>,
@@ -200,16 +292,18 @@ function drawStateTransformer(
   state: DrawState,
   ops: DrawOps
 ): Endomorphism<DrawState> {
-  const handleAdd: Consumer1<ol.events.Event> = event => {
+  const handleAdd: Consumer1<ol.events.Event> = (event) => {
     const drawEvent = event as ol.interaction.DrawEvent;
     const maybeCurrentCoordinate = extractCoordinate(drawEvent.feature);
-    forEach(maybeCurrentCoordinate, coordinate => dispatchDrawOps(AddPoint(coordinate)));
+    forEach(maybeCurrentCoordinate, (coordinate) =>
+      dispatchDrawOps(AddPoint(coordinate))
+    );
   };
 
   // Jammer genoeg hebben we in het move event hieronder geen informatie over welke feature er precies van plaats veranderd is.
   // Daarom maken we een tussentijds event waarin we deze informatie wel hebben. In principe zouden we ook een heleboel move
   // events kunnen genereren, maar dat zou belastend zijn voor de server en flikkeren aan de client.
-  const handleFeatureDrag: Consumer1<ol.events.Event> = evt => {
+  const handleFeatureDrag: Consumer1<ol.events.Event> = (evt) => {
     const feature: ol.Feature = evt.target as ol.Feature;
     dispatchDrawOps(DraggingPoint(feature));
   };
@@ -217,28 +311,31 @@ function drawStateTransformer(
   // We krijgen in het event enkel alle features samen. Er is wel een revision methode op een feature, maar om die te gebruiken
   // zouden we ergens de versies van alle features moeten bijhouden. En bovendien zouden we dan alle soorten interacties met die
   // features die de versie ophogen moeten opvangen.
-  const handleFeatureMove: Consumer1<ol.events.Event> = () => dispatchDrawOps(MovePoint());
+  const handleFeatureMove: Consumer1<ol.events.Event> = () =>
+    dispatchDrawOps(MovePoint());
 
-  const handleDoubleClick: Consumer1<ol.events.Event> = () => dispatchCmd(DrawOpsCmd(StopDrawing()));
+  const handleDoubleClick: Consumer1<ol.events.Event> = () =>
+    dispatchCmd(DrawOpsCmd(StopDrawing()));
 
-  const handleSelect: Consumer1<ol.events.Event> = evt => {
+  const handleSelect: Consumer1<ol.events.Event> = (evt) => {
     const selectEvent = evt as ol.interaction.SelectEvent;
     forEach(
       array.head(selectEvent.selected),
-      flow(
-        DeletePoint,
-        dispatchDrawOps
-      )
+      flow(DeletePoint, dispatchDrawOps)
     );
   };
 
-  const handlePointermove: Function2<FeaturePicker, ol.source.Vector, Consumer1<ol.events.Event>> = (featurePicker, source) => evt => {
+  const handlePointermove: Function2<
+    FeaturePicker,
+    ol.source.Vector,
+    Consumer1<ol.events.Event>
+  > = (featurePicker, source) => (evt) => {
     const moveEvent = evt as ol.MapBrowserEvent;
     if (!moveEvent.dragging) {
-      forEach(featurePicker(moveEvent.pixel), selectedFeature => {
+      forEach(featurePicker(moveEvent.pixel), (selectedFeature) => {
         array.head(source.getFeatures()).foldL(
           () => source.addFeature(selectedFeature),
-          movedFeature => {
+          (movedFeature) => {
             if (movedFeature !== selectedFeature) {
               source.clear();
               source.addFeature(selectedFeature);
@@ -258,17 +355,17 @@ function drawStateTransformer(
         type: ol.geom.GeometryType.POINT,
         freehandCondition: ol.events.condition.never,
         style: puntStijl,
-        snapTolerance: 5
+        snapTolerance: 5,
       });
       const modifyInteraction = new ol.interaction.Modify({
         source: modifySource,
         style: disc.stylish(clr.transparant, clr.transparant, 0, 0),
-        deleteCondition: ol.events.condition.never
+        deleteCondition: ol.events.condition.never,
       });
       const selectInteraction = new ol.interaction.Select({
         condition: ol.events.condition.click,
         filter: selectFilter,
-        multi: false
+        multi: false,
       });
       const drawInteractions = [drawInteraction, modifyInteraction];
       drawInteraction.on("drawend", handleAdd);
@@ -285,7 +382,7 @@ function drawStateTransformer(
         stijlInLagenKiezer: option.none,
         filterinstellingen: option.none,
         laagtabelinstellingen: option.none,
-        wrapper: kaartLogOnlyWrapper
+        wrapper: kaartLogOnlyWrapper,
       });
       dispatchCmd({
         type: "VoegLaagToe",
@@ -298,34 +395,48 @@ function drawStateTransformer(
         stijlInLagenKiezer: option.none,
         filterinstellingen: option.none,
         laagtabelinstellingen: option.none,
-        wrapper: kaartLogOnlyWrapper
+        wrapper: kaartLogOnlyWrapper,
       });
-      drawInteractions.forEach(inter => state.map.addInteraction(inter));
+      drawInteractions.forEach((inter) => state.map.addInteraction(inter));
       state.map.addInteraction(selectInteraction);
       state.map.on("dblclick", handleDoubleClick);
-      const moveKey = state.map.on("pointermove", handlePointermove(featurePicker(state.map), modifySource));
+      const moveKey = state.map.on(
+        "pointermove",
+        handlePointermove(featurePicker(state.map), modifySource)
+      );
       return applySequential([
         drawInteractionsLens.set(drawInteractions),
         selectInteractionLens.set(option.some(selectInteraction)),
         listenersLens.set([moveKey]),
-        featureColourLens.set(ops.featureColour)
+        featureColourLens.set(ops.featureColour),
       ]);
     }
 
     case "EndDrawing": {
       dispatchCmd(VerwijderLaagCmd(PuntLaagNaam, kaartLogOnlyWrapper));
       dispatchCmd(VerwijderLaagCmd(SegmentLaagNaam, kaartLogOnlyWrapper));
-      state.drawInteractions.forEach(inter => state.map.removeInteraction(inter));
-      forEach(state.selectInteraction, inter => state.map.removeInteraction(inter));
-      state.listeners.forEach(key => ol.observable.unByKey(key));
+      state.drawInteractions.forEach((inter) =>
+        state.map.removeInteraction(inter)
+      );
+      forEach(state.selectInteraction, (inter) =>
+        state.map.removeInteraction(inter)
+      );
+      state.listeners.forEach((key) => ol.observable.unByKey(key));
       return identity; // Hierna gooien we onze state toch weg -> mag corrupt zijn
     }
 
     case "StopDrawing": {
-      state.drawInteractions.forEach(inter => state.map.removeInteraction(inter));
-      forEach(state.selectInteraction, inter => state.map.removeInteraction(inter));
-      state.listeners.forEach(key => ol.observable.unByKey(key));
-      return applySequential([drawInteractionsLens.set([]), listenersLens.set([])]);
+      state.drawInteractions.forEach((inter) =>
+        state.map.removeInteraction(inter)
+      );
+      forEach(state.selectInteraction, (inter) =>
+        state.map.removeInteraction(inter)
+      );
+      state.listeners.forEach((key) => ol.observable.unByKey(key));
+      return applySequential([
+        drawInteractionsLens.set([]),
+        listenersLens.set([]),
+      ]);
     }
 
     case "RedrawRoute": {
@@ -333,11 +444,15 @@ function drawStateTransformer(
       // Wat we doen is een klein beetje tricky. We sturen alle waypoints opnieuw naar de observer
       // die de route tekent. We rekenen erop dat die observer gereset is vooraleer hij die waypoints
       // binnen krijgt. Dat is zo omdat de dispatch asynchroon gebeurt.
-      state.pointFeatures.forEach(feature => {
+      state.pointFeatures.forEach((feature) => {
         const maybePointProperties = extractPointProperties(feature);
-        const maybePreviousPoint: option.Option<Waypoint> = maybePointProperties.chain(p => p.previous).chain(toWaypoint);
+        const maybePreviousPoint: option.Option<Waypoint> = maybePointProperties
+          .chain((p) => p.previous)
+          .chain(toWaypoint);
         const maybeCurrentWaypoint = toWaypoint(feature);
-        forEach(maybeCurrentWaypoint, currentWaypoint => dispatchWaypointOps(AddWaypoint(maybePreviousPoint, currentWaypoint)));
+        forEach(maybeCurrentWaypoint, (currentWaypoint) =>
+          dispatchWaypointOps(AddWaypoint(maybePreviousPoint, currentWaypoint))
+        );
       });
       return identity; // geen state changes
     }
@@ -349,7 +464,9 @@ function drawStateTransformer(
       const feature = new ol.Feature(new ol.geom.Point(coordinate));
 
       const maybePreviousCoordinate = lastFeature.chain(extractCoordinate);
-      const sameLocationAsPrevious = maybePreviousCoordinate.exists(p => p[0] === coordinate[0] && p[1] === coordinate[1]);
+      const sameLocationAsPrevious = maybePreviousCoordinate.exists(
+        (p) => p[0] === coordinate[0] && p[1] === coordinate[1]
+      );
 
       // Openlayers (in elk geval zoals wij het gebruiken) heeft de vervelende eigenschap dat het een drawend genereert bij
       // een klik als de muispointer nog niet bewogen is. We voegen dan maw. Nog een extra punt toe opdezelfde locatie. En
@@ -359,12 +476,25 @@ function drawStateTransformer(
         feature.setId(state.nextId);
         feature.setStyle(createMarkerStyle(state.featureColour));
         feature.setProperties(PointProperties(lastFeature, option.none));
-        forEach(lastFeature, updatePointProperties(replaceNext(option.some(feature))));
+        forEach(
+          lastFeature,
+          updatePointProperties(replaceNext(option.some(feature)))
+        );
         feature.on("change", handleFeatureDrag);
         const newFeatures = array.snoc(currentFeatures, feature);
-        dispatchWaypointOps(AddWaypoint(lastFeature.chain(toWaypoint), Waypoint(state.nextId, coordinate)));
-        dispatchCmd(prt.VervangFeaturesCmd(PuntLaagNaam, newFeatures, kaartLogOnlyWrapper));
-        return applySequential([pointFeaturesLens.set(newFeatures), incrementNextId]);
+        dispatchWaypointOps(
+          AddWaypoint(
+            lastFeature.chain(toWaypoint),
+            Waypoint(state.nextId, coordinate)
+          )
+        );
+        dispatchCmd(
+          prt.VervangFeaturesCmd(PuntLaagNaam, newFeatures, kaartLogOnlyWrapper)
+        );
+        return applySequential([
+          pointFeaturesLens.set(newFeatures),
+          incrementNextId,
+        ]);
       } else {
         return identity;
       }
@@ -381,8 +511,8 @@ function drawStateTransformer(
     case "MovePoint": {
       return dragFeatureLens
         .get(state)
-        .chain(draggedFeature =>
-          toWaypoint(draggedFeature).map(current => {
+        .chain((draggedFeature) =>
+          toWaypoint(draggedFeature).map((current) => {
             // laat onze subscriber weten dat er een punt verplaatst is
             const previous = findPreviousWaypoint(draggedFeature);
             dispatchWaypointOps(RemoveWaypoint(current));
@@ -399,30 +529,43 @@ function drawStateTransformer(
       // Het eerste punt mag niet verwijderd worden. Een klik op het eerste punt zal daarentegen een punt toevoegen zodat de polygon quasi
       // gesloten is. Het eerste punt is, uiteraard, het enige punt dat geen vorig punt heeft. Dat gebruiken we dus als identificator.
       return maybePrevious
-        .map(previous => {
+        .map((previous) => {
           updatePointProperties(replaceNext(maybeNext))(previous);
-          forEach(maybeNext, updatePointProperties(replacePrevious(maybePrevious)));
-          const newFeatures = array.filter(state.pointFeatures, f => f.getId() !== ops.feature.getId());
-          forEach(state.selectInteraction, interaction => interaction.getFeatures().clear());
-          dispatchCmd(prt.VervangFeaturesCmd(PuntLaagNaam, newFeatures, kaartLogOnlyWrapper));
+          forEach(
+            maybeNext,
+            updatePointProperties(replacePrevious(maybePrevious))
+          );
+          const newFeatures = array.filter(
+            state.pointFeatures,
+            (f) => f.getId() !== ops.feature.getId()
+          );
+          forEach(state.selectInteraction, (interaction) =>
+            interaction.getFeatures().clear()
+          );
+          dispatchCmd(
+            prt.VervangFeaturesCmd(
+              PuntLaagNaam,
+              newFeatures,
+              kaartLogOnlyWrapper
+            )
+          );
           forEach(
             toWaypoint(ops.feature),
-            flow(
-              RemoveWaypoint,
-              dispatchWaypointOps
-            )
+            flow(RemoveWaypoint, dispatchWaypointOps)
           );
           return applySequential([pointFeaturesLens.set(newFeatures)]);
         })
         .getOrElseL(() => {
           // Maak een Add command obv de coordinaten van de geklikte feature.
-          forEach(extractCoordinate(ops.feature), coords => dispatchDrawOps(AddPoint(coords)));
+          forEach(extractCoordinate(ops.feature), (coords) =>
+            dispatchDrawOps(AddPoint(coords))
+          );
           return identity;
         });
     }
 
     case "SnapWaypoint": {
-      state.pointFeatures.forEach(feature => {
+      state.pointFeatures.forEach((feature) => {
         if (extractId(feature).contains(eq.eqNumber, ops.waypoint.id)) {
           feature.setGeometry(new ol.geom.Point(ops.waypoint.location));
         }
@@ -438,7 +581,13 @@ const drawOpsReducer: Function3<
   Consumer1<Command<KaartInternalMsg>>,
   ReduceFunction<DrawState, DrawOps>
 > = (dispatchDrawOps, dispatchWaypointOps, dispatchCmd) => (state, ops) =>
-  drawStateTransformer(dispatchDrawOps, dispatchWaypointOps, dispatchCmd, state, ops)(state);
+  drawStateTransformer(
+    dispatchDrawOps,
+    dispatchWaypointOps,
+    dispatchCmd,
+    state,
+    ops
+  )(state);
 
 type FeaturesByWaypointId = NumberMapped<ol.Feature>;
 type FeaturesByRouteId = StringMapped<ol.Feature>;
@@ -448,8 +597,12 @@ interface RouteSegmentState {
   readonly featuresByRouteId: FeaturesByRouteId; // Elke route id heeft exact 1 feature/geometry
 }
 
-const edgesToPolygon: Function1<ol.geom.LineString[], ol.geom.Polygon> = edges => {
-  const coordinates = array.flatten(array.map((l: ol.geom.LineString) => l.getCoordinates())(edges));
+const edgesToPolygon: Function1<ol.geom.LineString[], ol.geom.Polygon> = (
+  edges
+) => {
+  const coordinates = array.flatten(
+    array.map((l: ol.geom.LineString) => l.getCoordinates())(edges)
+  );
   coordinates.push(coordinates[0]);
   return new ol.geom.Polygon([coordinates]);
 };
@@ -458,13 +611,13 @@ const featuresIn: Curried2<
   option.Option<ol.style.StyleFunction>,
   RouteSegmentState,
   Array<ol.Feature>
-> = maybePolygonStylefunction => state => {
+> = (maybePolygonStylefunction) => (state) => {
   const routes: Array<ol.Feature> = Object.values(state.featuresByRouteId);
 
-  return maybePolygonStylefunction.fold(routes, polygonStyleFunction => {
-    const lines = routes.map(f => <ol.geom.LineString>f.getGeometry());
-    const firsts = lines.map(l => l.getFirstCoordinate());
-    const lasts = lines.map(l => l.getLastCoordinate());
+  return maybePolygonStylefunction.fold(routes, (polygonStyleFunction) => {
+    const lines = routes.map((f) => <ol.geom.LineString>f.getGeometry());
+    const firsts = lines.map((l) => l.getFirstCoordinate());
+    const lasts = lines.map((l) => l.getLastCoordinate());
     const begins = array.difference(eqCoordinate)(firsts, lasts);
     const ends = array.difference(eqCoordinate)(lasts, firsts);
     const maybeBegin = array.head(begins);
@@ -472,18 +625,18 @@ const featuresIn: Curried2<
 
     const maybePhantomLine = pipe(
       maybeBegin,
-      option.chain(begin =>
+      option.chain((begin) =>
         pipe(
           maybeEnd,
-          option.map(end => new ol.geom.LineString([begin, end]))
+          option.map((end) => new ol.geom.LineString([begin, end]))
         )
       )
     );
 
     return pipe(
-      maybePhantomLine.fold(lines, l => lines.concat(l)),
+      maybePhantomLine.fold(lines, (l) => lines.concat(l)),
       edgesToPolygon,
-      poly => {
+      (poly) => {
         const polyF = new ol.Feature(poly);
         polyF.setStyle(polygonStyleFunction);
         return [polyF];
@@ -492,26 +645,51 @@ const featuresIn: Curried2<
   });
 };
 
-const featuresByStartWaypointIdLens: Lens<RouteSegmentState, FeaturesByWaypointId> = Lens.fromProp("featuresByStartWaypointId");
-const startWaypointIdOptional: Function1<WaypointId, Optional<RouteSegmentState, ol.Feature>> = waypointId =>
+const featuresByStartWaypointIdLens: Lens<
+  RouteSegmentState,
+  FeaturesByWaypointId
+> = Lens.fromProp("featuresByStartWaypointId");
+const startWaypointIdOptional: Function1<
+  WaypointId,
+  Optional<RouteSegmentState, ol.Feature>
+> = (waypointId) =>
   featuresByStartWaypointIdLens.composeOptional(numberMapOptional(waypointId));
-const featuresByRouteIdLens: Lens<RouteSegmentState, FeaturesByRouteId> = Lens.fromProp("featuresByRouteId");
-const routeIdOptional: Function1<RouteEventId, Optional<RouteSegmentState, ol.Feature>> = routeId =>
+const featuresByRouteIdLens: Lens<
+  RouteSegmentState,
+  FeaturesByRouteId
+> = Lens.fromProp("featuresByRouteId");
+const routeIdOptional: Function1<
+  RouteEventId,
+  Optional<RouteSegmentState, ol.Feature>
+> = (routeId) =>
   featuresByRouteIdLens.composeOptional(stringMapOptional(routeId));
 
-const addFeature: Function3<RouteEventId, WaypointId, ol.Feature, Endomorphism<RouteSegmentState>> = (routeId, waypointId, feature) =>
-  applySequential([startWaypointIdOptional(waypointId).set(feature), routeIdOptional(routeId).set(feature)]);
-
-const removeFeature: Function2<RouteEventId, WaypointId, Endomorphism<RouteSegmentState>> = (routeId, waypointId) =>
+const addFeature: Function3<
+  RouteEventId,
+  WaypointId,
+  ol.Feature,
+  Endomorphism<RouteSegmentState>
+> = (routeId, waypointId, feature) =>
   applySequential([
-    featuresByStartWaypointIdLens.modify(removeFromNumberMap(waypointId)),
-    featuresByRouteIdLens.modify(removeFromStringMap(routeId))
+    startWaypointIdOptional(waypointId).set(feature),
+    routeIdOptional(routeId).set(feature),
   ]);
 
-const routeSegmentReducer: Function2<clr.Kleur, Consumer1<DrawOps>, ReduceFunction<RouteSegmentState, RouteEvent>> = (
-  lineColour,
-  dispatchDrawOps
-) => (state, ops) => {
+const removeFeature: Function2<
+  RouteEventId,
+  WaypointId,
+  Endomorphism<RouteSegmentState>
+> = (routeId, waypointId) =>
+  applySequential([
+    featuresByStartWaypointIdLens.modify(removeFromNumberMap(waypointId)),
+    featuresByRouteIdLens.modify(removeFromStringMap(routeId)),
+  ]);
+
+const routeSegmentReducer: Function2<
+  clr.Kleur,
+  Consumer1<DrawOps>,
+  ReduceFunction<RouteSegmentState, RouteEvent>
+> = (lineColour, dispatchDrawOps) => (state, ops) => {
   function handleOps(): Endomorphism<RouteSegmentState> {
     switch (ops.type) {
       case "RouteAdded":
@@ -520,14 +698,8 @@ const routeSegmentReducer: Function2<clr.Kleur, Consumer1<DrawOps>, ReduceFuncti
         line.setStyle(createLineStyle(lineColour));
 
         // dan kijken we of de eindpunten veranderd zijn en als dat zo is, dan maken we daar een DrawOps voor
-        [ops.beginSnap, ops.endSnap].forEach(snap =>
-          forEach(
-            snap,
-            flow(
-              SnapWaypoint,
-              dispatchDrawOps
-            )
-          )
+        [ops.beginSnap, ops.endSnap].forEach((snap) =>
+          forEach(snap, flow(SnapWaypoint, dispatchDrawOps))
         );
 
         // en tenslotte voegen we de feature toe aan de state
@@ -540,13 +712,17 @@ const routeSegmentReducer: Function2<clr.Kleur, Consumer1<DrawOps>, ReduceFuncti
   return handleOps()(state);
 };
 
-const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.Geometry> = (ids, featuresById) => {
+const stichGeometries: Function2<
+  WaypointId[],
+  FeaturesByWaypointId,
+  ol.geom.Geometry
+> = (ids, featuresById) => {
   return new ol.geom.GeometryCollection(
     array.catOptions(
-      ids.map(id =>
+      ids.map((id) =>
         numberMapOptional<ol.Feature>(id)
           .getOption(featuresById)
-          .chain(f => option.fromNullable(f.getGeometry()))
+          .chain((f) => option.fromNullable(f.getGeometry()))
       )
     )
   );
@@ -556,27 +732,40 @@ const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.Geo
   selector: "awv-kaart-multi-teken-laag",
   template: "<ng-content></ng-content>",
   styleUrls: ["./kaart-teken-laag.component.scss"],
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
-export class KaartMultiTekenLaagComponent extends KaartChildDirective implements OnInit, OnDestroy {
+export class KaartMultiTekenLaagComponent
+  extends KaartChildDirective
+  implements OnInit, OnDestroy {
   private readonly internalDrawOpsSubj: rx.Subject<DrawOps> = new rx.Subject();
 
-  constructor(parent: KaartComponent, zone: NgZone, private readonly http: HttpClient) {
+  constructor(
+    parent: KaartComponent,
+    zone: NgZone,
+    private readonly http: HttpClient
+  ) {
     super(parent, zone);
 
     // Trek de OL map binnen, zodat we niet voor alles een boodschap naar de globale kaart reducer moeten dispatchen.
     // We moeten er dan wel voor zorgen dat we alle resources mooi opkuisen.
     const olMap$ = this.kaartModel$.pipe(
-      map(m => m.map),
+      map((m) => m.map),
       take(1)
     );
 
     // Breng de externe DrawOps (start & stop) samen met de interne DrawOps
-    const drawEffects$ = rx.merge(this.modelChanges.tekenenOps$, this.internalDrawOpsSubj);
+    const drawEffects$ = rx.merge(
+      this.modelChanges.tekenenOps$,
+      this.internalDrawOpsSubj
+    );
 
     // Een event dat helpt om alle state te resetten
-    const drawingStarts$: rx.Observable<StartDrawing> = drawEffects$.pipe(filter(isStartDrawing));
-    const redrawStarts$: rx.Observable<RedrawRoute> = drawEffects$.pipe(filter(isRedrawRoute));
+    const drawingStarts$: rx.Observable<StartDrawing> = drawEffects$.pipe(
+      filter(isStartDrawing)
+    );
+    const redrawStarts$: rx.Observable<RedrawRoute> = drawEffects$.pipe(
+      filter(isRedrawRoute)
+    );
 
     // Maak een subject waar de drawReducer kan in schrijven
     const waypointObsSubj: rx.Subject<WaypointOperation> = new rx.Subject();
@@ -585,16 +774,16 @@ export class KaartMultiTekenLaagComponent extends KaartChildDirective implements
     // Dit is het hart van het zetten en bewerken van de punten.
     // Welke lijnen er getekened moeten worden zal afhangen van het antwoord op de WaypointOps die we genereren
     const drawOpsProcessor$: rx.Observable<DrawState> = olMap$.pipe(
-      switchMap(olMap =>
+      switchMap((olMap) =>
         drawingStarts$.pipe(
-          switchMap(startCmd =>
+          switchMap((startCmd) =>
             drawEffects$.pipe(
               startWith(startCmd), // We mogen ons startcommando niet verliezen omdat daar configuratie in zit
               scan(
                 drawOpsReducer(
-                  ops => asap(() => this.internalDrawOpsSubj.next(ops)), // achteraf gezien beter om scanState functie te gebruiken
-                  ops => asap(() => waypointObsSubj.next(ops)),
-                  cmd => this.dispatch(cmd)
+                  (ops) => asap(() => this.internalDrawOpsSubj.next(ops)), // achteraf gezien beter om scanState functie te gebruiken
+                  (ops) => asap(() => waypointObsSubj.next(ops)),
+                  (cmd) => this.dispatch(cmd)
                 ),
                 initialState(olMap)
               )
@@ -618,7 +807,10 @@ export class KaartMultiTekenLaagComponent extends KaartChildDirective implements
           prev.value.type === "AddWaypoint" &&
           curr.value.type === "RemoveWaypoint" &&
           prev.value.waypoint.id === curr.value.waypoint.id &&
-          Coordinates.equal(prev.value.waypoint.location, curr.value.waypoint.location)
+          Coordinates.equal(
+            prev.value.waypoint.location,
+            curr.value.waypoint.location
+          )
         );
       }),
       tap(([prev]) => {
@@ -627,10 +819,17 @@ export class KaartMultiTekenLaagComponent extends KaartChildDirective implements
       })
     );
     // Kies de correcte routering
-    const routeSegmentOps$: Function1<boolean, rx.Observable<RouteEvent>> = useRouting =>
-      waypointObsSubj.pipe(useRouting ? routesViaRoutering(this.http) : directeRoutes());
+    const routeSegmentOps$: Function1<boolean, rx.Observable<RouteEvent>> = (
+      useRouting
+    ) =>
+      waypointObsSubj.pipe(
+        useRouting ? routesViaRoutering(this.http) : directeRoutes()
+      );
 
-    const initialRouteSegmentState: RouteSegmentState = { featuresByStartWaypointId: {}, featuresByRouteId: {} };
+    const initialRouteSegmentState: RouteSegmentState = {
+      featuresByStartWaypointId: {},
+      featuresByRouteId: {},
+    };
 
     interface DrawOptions {
       readonly useRouting: boolean;
@@ -639,20 +838,27 @@ export class KaartMultiTekenLaagComponent extends KaartChildDirective implements
     }
 
     // Dit (her)start de routing service wanneer een nieuwe serie punten gestart wordt of het type van routing herzet wordt
-    const routingStart$: rx.Observable<DrawOptions> = rx.merge(drawingStarts$, redrawStarts$).pipe(
-      withLatestFrom(drawingStarts$),
-      map(([{ useRouting }, start]) => ({
-        useRouting: useRouting,
-        featureColour: start.featureColour,
-        polygonStyleFunction: start.polygonStyleFunction
-      }))
-    );
+    const routingStart$: rx.Observable<DrawOptions> = rx
+      .merge(drawingStarts$, redrawStarts$)
+      .pipe(
+        withLatestFrom(drawingStarts$),
+        map(([{ useRouting }, start]) => ({
+          useRouting: useRouting,
+          featureColour: start.featureColour,
+          polygonStyleFunction: start.polygonStyleFunction,
+        }))
+      );
 
     // Verbind de geproduceerde WaypointOps met de routing service
     const routeEventProcessor$: rx.Observable<RouteSegmentState> = routingStart$.pipe(
-      switchMap(start =>
+      switchMap((start) =>
         routeSegmentOps$(start.useRouting).pipe(
-          scan(routeSegmentReducer(start.featureColour, ops => asap(() => this.internalDrawOpsSubj.next(ops))), initialRouteSegmentState),
+          scan(
+            routeSegmentReducer(start.featureColour, (ops) =>
+              asap(() => this.internalDrawOpsSubj.next(ops))
+            ),
+            initialRouteSegmentState
+          ),
           debounceTime(start.useRouting ? 75 : 0)
         )
       ),
@@ -661,20 +867,37 @@ export class KaartMultiTekenLaagComponent extends KaartChildDirective implements
 
     // Vorm de deelroutes om tot 1 geometrie
     const combinedGeometry$: rx.Observable<ol.geom.Geometry> = routeEventProcessor$.pipe(
-      withLatestFrom(drawOpsProcessor$.pipe(map(drawState => array.catOptions(drawState.pointFeatures.map(extractId))))),
-      map(([routeSegmentState, pointFeatureIds]) => stichGeometries(pointFeatureIds, routeSegmentState.featuresByStartWaypointId))
+      withLatestFrom(
+        drawOpsProcessor$.pipe(
+          map((drawState) =>
+            array.catOptions(drawState.pointFeatures.map(extractId))
+          )
+        )
+      ),
+      map(([routeSegmentState, pointFeatureIds]) =>
+        stichGeometries(
+          pointFeatureIds,
+          routeSegmentState.featuresByStartWaypointId
+        )
+      )
     );
 
     // Steek alles in gang. Tot nu toe was het enkel compositie
     this.runInViewReady(
       rx.merge(
-        combinedGeometry$.pipe(tap(geom => this.dispatch(prt.ZetGetekendeGeometryCmd(geom)))),
+        combinedGeometry$.pipe(
+          tap((geom) => this.dispatch(prt.ZetGetekendeGeometryCmd(geom)))
+        ),
         routingStart$.pipe(
-          switchMap(start =>
+          switchMap((start) =>
             routeEventProcessor$.pipe(
-              tap(routeState =>
+              tap((routeState) =>
                 this.dispatch(
-                  prt.VervangFeaturesCmd(SegmentLaagNaam, featuresIn(start.polygonStyleFunction)(routeState), kaartLogOnlyWrapper)
+                  prt.VervangFeaturesCmd(
+                    SegmentLaagNaam,
+                    featuresIn(start.polygonStyleFunction)(routeState),
+                    kaartLogOnlyWrapper
+                  )
                 )
               )
             )
@@ -685,13 +908,24 @@ export class KaartMultiTekenLaagComponent extends KaartChildDirective implements
     );
 
     // TODO werkt selector weg
-    const onderdrukBoodschapOpties$ = this.accumulatedOpties$(BevraagKaartUiSelector).pipe(
+    const onderdrukBoodschapOpties$ = this.accumulatedOpties$(
+      BevraagKaartUiSelector
+    ).pipe(
       sample(this.initialising$),
       tap(() => {
-        this.dispatch(BevraagKaartOpties.ZetOptiesCmd({ infoServiceOnderdrukt: true, kaartBevragenOnderdrukt: true }));
+        this.dispatch(
+          BevraagKaartOpties.ZetOptiesCmd({
+            infoServiceOnderdrukt: true,
+            kaartBevragenOnderdrukt: true,
+          })
+        );
         // this.dispatch(ZetMaarkeerKaartklikOptiesCmd({ disabled: true }));
       }),
-      switchMap(opties => this.destroying$.pipe(tap(() => this.dispatch(BevraagKaartOpties.ZetOptiesCmd(opties)))))
+      switchMap((opties) =>
+        this.destroying$.pipe(
+          tap(() => this.dispatch(BevraagKaartOpties.ZetOptiesCmd(opties)))
+        )
+      )
     );
 
     onderdrukBoodschapOpties$.subscribe();

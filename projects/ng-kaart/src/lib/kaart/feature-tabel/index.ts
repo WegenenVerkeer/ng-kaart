@@ -31,7 +31,7 @@ const components: any[] = [
   FeatureTabelSorteringStatusComponent,
   FeatureTabelSelectieViaPolygonComponent,
   FeatureTabelSettingsComponent,
-  FeatureTabelSorteringStatusComponent
+  FeatureTabelSorteringStatusComponent,
 ];
 
 @NgModule({
@@ -48,16 +48,16 @@ const components: any[] = [
     MatSliderModule,
     MatSlideToggleModule,
     MatTabsModule,
-    MatTooltipModule
+    MatTooltipModule,
   ],
   declarations: [components],
-  exports: [components]
+  exports: [components],
 })
 export class FeatureTabelModule {
   static forRoot(): ModuleWithProviders<FeatureTabelModule> {
     return {
       ngModule: FeatureTabelModule,
-      providers: []
+      providers: [],
     };
   }
 }

@@ -26,19 +26,21 @@ const components: any[] = [LagenkiezerComponent, LaagmanipulatieComponent];
     MatButtonModule,
     MatMenuModule,
     MatTabsModule,
-    MatTooltipModule
+    MatTooltipModule,
   ],
   declarations: [components],
-  exports: [components]
+  exports: [components],
 })
 export class LagenkiezerModule {
   static withDefaults(): ModuleWithProviders<LagenkiezerModule> {
     return LagenkiezerModule.forRoot({});
   }
-  static forRoot(config: LagenkiezerConfig): ModuleWithProviders<LagenkiezerModule> {
+  static forRoot(
+    config: LagenkiezerConfig
+  ): ModuleWithProviders<LagenkiezerModule> {
     return {
       ngModule: LagenkiezerModule,
-      providers: [{ provide: LAGENKIEZER_CFG, useValue: config }]
+      providers: [{ provide: LAGENKIEZER_CFG, useValue: config }],
     };
   }
 }

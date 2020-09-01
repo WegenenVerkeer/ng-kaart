@@ -11,12 +11,20 @@ export interface IdentifyOpties {
 }
 
 export namespace IdentifyOpties {
-  export const ZetOptiesCmd = (opties: Partial<IdentifyOpties>): prt.ZetUiElementOpties =>
+  export const ZetOptiesCmd = (
+    opties: Partial<IdentifyOpties>
+  ): prt.ZetUiElementOpties =>
     prt.ZetUiElementOpties(IdentifyUiSelector, opties);
 
-  export const set = (opties: Partial<IdentifyOpties>): Endomorphism<OptiesOpUiElement> =>
+  export const set = (
+    opties: Partial<IdentifyOpties>
+  ): Endomorphism<OptiesOpUiElement> =>
     OptiesOpUiElement.extend(opties)(IdentifyUiSelector);
 
-  export const getOption = (optiesOpSelector: OptiesOpUiElement): option.Option<IdentifyOpties> =>
-    OptiesOpUiElement.getOption<IdentifyOpties>(IdentifyUiSelector)(optiesOpSelector);
+  export const getOption = (
+    optiesOpSelector: OptiesOpUiElement
+  ): option.Option<IdentifyOpties> =>
+    OptiesOpUiElement.getOption<IdentifyOpties>(IdentifyUiSelector)(
+      optiesOpSelector
+    );
 }

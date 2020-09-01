@@ -12,15 +12,22 @@ import { ClassicWmsLaagComponent } from "./classic-wms-laag.component";
 @Component({
   selector: "awv-kaart-tilecache-laag",
   template: "<ng-content></ng-content>",
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class ClassicTilecacheLaagComponent extends ClassicWmsLaagComponent {
-  constructor(injector: Injector, @Inject(KAART_CFG) private readonly config: KaartConfig, http: HttpClient) {
+  constructor(
+    injector: Injector,
+    @Inject(KAART_CFG) private readonly config: KaartConfig,
+    http: HttpClient
+  ) {
     super(injector, http);
   }
 
   createLayer(): ke.WmsLaag {
-    const urls = arrays.isArray(this._urls) && arrays.isNonEmpty(this._urls) ? this._urls : this.config.tilecache.urls;
+    const urls =
+      arrays.isArray(this._urls) && arrays.isNonEmpty(this._urls)
+        ? this._urls
+        : this.config.tilecache.urls;
     return {
       type: ke.TiledWmsType,
       titel: this._titel,
@@ -34,7 +41,7 @@ export class ClassicTilecacheLaagComponent extends ClassicWmsLaagComponent {
       minZoom: this._minZoom,
       maxZoom: this._maxZoom,
       verwijderd: false,
-      beschikbareProjecties: this._beschikbareProjecties
+      beschikbareProjecties: this._beschikbareProjecties,
     };
   }
 }

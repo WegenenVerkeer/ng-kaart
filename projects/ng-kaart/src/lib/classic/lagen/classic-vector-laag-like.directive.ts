@@ -1,4 +1,10 @@
-import { Directive, Injector, Input, OnChanges, SimpleChanges } from "@angular/core";
+import {
+  Directive,
+  Injector,
+  Input,
+  OnChanges,
+  SimpleChanges,
+} from "@angular/core";
 import { option } from "fp-ts";
 import * as rx from "rxjs";
 
@@ -6,7 +12,11 @@ import { forChangedValue } from "../../kaart/kaart-base.directive";
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
-import { getDefaultHoverStyleFunction, getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "../../kaart/styles";
+import {
+  getDefaultHoverStyleFunction,
+  getDefaultSelectionStyleFunction,
+  getDefaultStyleFunction,
+} from "../../kaart/styles";
 import * as arrays from "../../util/arrays";
 import { Consumer1 } from "../../util/function";
 import * as ol from "../../util/openlayers-compat";
@@ -18,7 +28,9 @@ import * as val from "../webcomponent-support/params";
 import { ClassicLaagDirective } from "./classic-laag.directive";
 
 @Directive()
-export abstract class ClassicVectorLaagLikeDirective extends ClassicLaagDirective implements OnChanges {
+export abstract class ClassicVectorLaagLikeDirective
+  extends ClassicLaagDirective
+  implements OnChanges {
   @Input()
   style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
   @Input()
@@ -34,8 +46,10 @@ export abstract class ClassicVectorLaagLikeDirective extends ClassicLaagDirectiv
   set refreshTrigger(obs: rx.Observable<void>) {
     this.refreshTriggerSub.unsubscribe();
     this.refreshTriggerSub = this.bindToLifeCycle(obs).subscribe(() => {
-      forEach(this.laag.chain(ke.asVectorLaag), laag => {
-        forEach(ke.asNosqlSource(laag.source), source => source.clearPrevExtent());
+      forEach(this.laag.chain(ke.asVectorLaag), (laag) => {
+        forEach(ke.asNosqlSource(laag.source), (source) =>
+          source.clearPrevExtent()
+        );
         laag.source.clear();
         laag.source.refresh();
       });
@@ -68,27 +82,37 @@ export abstract class ClassicVectorLaagLikeDirective extends ClassicLaagDirectiv
 
   @Input()
   set clusterMinSize(param: number) {
-    this._clusterMinSize = option.fromNullable(param).getOrElse(this._clusterMinSize);
+    this._clusterMinSize = option
+      .fromNullable(param)
+      .getOrElse(this._clusterMinSize);
   }
 
   @Input()
   set clusterSizeFactor(param: number) {
-    this._clusterSizeFactor = option.fromNullable(param).getOrElse(this._clusterSizeFactor);
+    this._clusterSizeFactor = option
+      .fromNullable(param)
+      .getOrElse(this._clusterSizeFactor);
   }
 
   @Input()
   set clusterTextColor(param: string) {
-    this._clusterTextColor = option.fromNullable(param).getOrElse(this._clusterTextColor);
+    this._clusterTextColor = option
+      .fromNullable(param)
+      .getOrElse(this._clusterTextColor);
   }
 
   @Input()
   set clusterCircleColor(param: string) {
-    this._clusterCircleColor = option.fromNullable(param).getOrElse(this._clusterCircleColor);
+    this._clusterCircleColor = option
+      .fromNullable(param)
+      .getOrElse(this._clusterCircleColor);
   }
 
   @Input()
   set clusterCircleStrokeColor(param: string) {
-    this._clusterCircleStrokeColor = option.fromNullable(param).getOrElse(this._clusterCircleStrokeColor);
+    this._clusterCircleStrokeColor = option
+      .fromNullable(param)
+      .getOrElse(this._clusterCircleStrokeColor);
   }
 
   @Input()
@@ -129,34 +153,48 @@ export abstract class ClassicVectorLaagLikeDirective extends ClassicLaagDirectiv
       .map(ss.DynamicStyle)
       .orElse(() => {
         const maybeUnclusteredStyleSelector = this._stijlSpec
-          .chain(spec => fromValidation(ss.validateAwvV0StyleSpec(spec)))
+          .chain((spec) => fromValidation(ss.validateAwvV0StyleSpec(spec)))
           .orElse(() => option.fromNullable(this.style))
           .orElse(() => option.fromNullable(this.styleFunction))
           .chain(ss.asStyleSelector);
 
-        const maybeClusterStyleSelector = this._clusterDistance.chain(_ =>
-          maybeUnclusteredStyleSelector.map(unclusteredStylish => ss.DynamicStyle(this.clusterStyle(unclusteredStylish)))
+        const maybeClusterStyleSelector = this._clusterDistance.chain((_) =>
+          maybeUnclusteredStyleSelector.map((unclusteredStylish) =>
+            ss.DynamicStyle(this.clusterStyle(unclusteredStylish))
+          )
         );
-        return maybeClusterStyleSelector.orElse(() => maybeUnclusteredStyleSelector);
+        return maybeClusterStyleSelector.orElse(
+          () => maybeUnclusteredStyleSelector
+        );
       });
   }
 
   /** @ignore */
   ngOnChanges(changes: SimpleChanges) {
-    const dispatch: Consumer1<prt.Command<TypedRecord>> = cmd => this.kaart.dispatch(cmd);
+    const dispatch: Consumer1<prt.Command<TypedRecord>> = (cmd) =>
+      this.kaart.dispatch(cmd);
     forChangedValue<boolean, boolean>(
       changes,
       "zichtbaar",
-      zichtbaar =>
+      (zichtbaar) =>
         dispatch(
-          zichtbaar ? prt.MaakLaagZichtbaarCmd(this._titel, logOnlyWrapper) : prt.MaakLaagOnzichtbaarCmd(this._titel, logOnlyWrapper)
+          zichtbaar
+            ? prt.MaakLaagZichtbaarCmd(this._titel, logOnlyWrapper)
+            : prt.MaakLaagOnzichtbaarCmd(this._titel, logOnlyWrapper)
         ),
       (value: boolean) => val.bool(value, this._zichtbaar)
     );
     forChangedValue<boolean, boolean>(
       changes,
       "selecteerbaar",
-      selecteerbaar => dispatch(prt.ZetLaagSelecteerbaarCmd(this._titel, selecteerbaar, logOnlyWrapper)),
+      (selecteerbaar) =>
+        dispatch(
+          prt.ZetLaagSelecteerbaarCmd(
+            this._titel,
+            selecteerbaar,
+            logOnlyWrapper
+          )
+        ),
       (value: boolean) => val.bool(value, this._selecteerbaar)
     );
   }
@@ -167,34 +205,43 @@ export abstract class ClassicVectorLaagLikeDirective extends ClassicLaagDirectiv
         .fromNullable(feature.get("features"))
         .filter(arrays.isArray)
         .filter(arrays.isNonEmpty)
-        .map(features => {
+        .map((features) => {
           const size = features.length;
 
           if (size > 1) {
             return new ol.style.Style({
               image: new ol.style.Circle({
-                radius: Math.max(this._clusterMinSize, this._clusterSizeFactor * size),
+                radius: Math.max(
+                  this._clusterMinSize,
+                  this._clusterSizeFactor * size
+                ),
                 stroke: new ol.style.Stroke({
                   color: this._clusterCircleStrokeColor,
-                  width: 1.5
+                  width: 1.5,
                 }),
                 fill: new ol.style.Fill({
-                  color: this._clusterCircleColor
-                })
+                  color: this._clusterCircleColor,
+                }),
               }),
               text: new ol.style.Text({
                 text: size.toString(),
                 fill: new ol.style.Fill({
-                  color: this._clusterTextColor
-                })
-              })
+                  color: this._clusterTextColor,
+                }),
+              }),
             });
           } else {
-            return ss.matchStyleSelector(s => s.style, s => s.styleFunction(features[0], resolution), s => s.styles)(defaultStyleSelector);
+            return ss.matchStyleSelector(
+              (s) => s.style,
+              (s) => s.styleFunction(features[0], resolution),
+              (s) => s.styles
+            )(defaultStyleSelector);
           }
         })
         .getOrElseL(() => {
-          throw new Error("Voor cluster stijl hebben we geclusterde features nodig");
+          throw new Error(
+            "Voor cluster stijl hebben we geclusterde features nodig"
+          );
         });
     };
   }
@@ -202,7 +249,7 @@ export abstract class ClassicVectorLaagLikeDirective extends ClassicLaagDirectiv
   voegLaagToe() {
     super.voegLaagToe();
 
-    forEach(this.getMaybeStyleSelector(), styleselector => {
+    forEach(this.getMaybeStyleSelector(), (styleselector) => {
       this.dispatch(
         prt.ZetStijlVoorLaagCmd(
           this._titel,

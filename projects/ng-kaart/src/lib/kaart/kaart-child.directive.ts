@@ -5,7 +5,10 @@ import { distinctUntilChanged, shareReplay, tap } from "rxjs/operators";
 import { collectOption } from "../util/operators";
 
 import { KaartBaseDirective } from "./kaart-base.directive";
-import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
+import {
+  KaartInternalMsg,
+  KaartInternalSubMsg,
+} from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 import { KaartComponent } from "./kaart.component";
@@ -18,7 +21,9 @@ import { OptiesOpUiElement } from "./ui-element-opties";
  * Voor classes die view children zijn van kaart.component
  */
 @Directive()
-export abstract class KaartChildDirective extends KaartBaseDirective implements OnInit, OnDestroy {
+export abstract class KaartChildDirective
+  extends KaartBaseDirective
+  implements OnInit, OnDestroy {
   constructor(protected readonly kaartComponent: KaartComponent, zone: NgZone) {
     super(zone);
   }
@@ -32,11 +37,16 @@ export abstract class KaartChildDirective extends KaartBaseDirective implements 
     if (this.kaartSubscriptions().length > 0) {
       this.bindToLifeCycle(
         this.internalMessage$.lift(
-          internalMsgSubscriptionCmdOperator(this.kaartComponent.internalCmdDispatcher, ...this.kaartSubscriptions())
+          internalMsgSubscriptionCmdOperator(
+            this.kaartComponent.internalCmdDispatcher,
+            ...this.kaartSubscriptions()
+          )
         )
       ).subscribe(
-        err => kaartLogger.error("De subscription gaf een logische fout", err),
-        err => kaartLogger.error("De subscription gaf een technische fout", err),
+        (err) =>
+          kaartLogger.error("De subscription gaf een logische fout", err),
+        (err) =>
+          kaartLogger.error("De subscription gaf een technische fout", err),
         () => kaartLogger.debug("De source is gestopt")
       );
     }
@@ -46,7 +56,9 @@ export abstract class KaartChildDirective extends KaartBaseDirective implements 
     super.ngOnDestroy();
   }
 
-  protected accumulatedOpties$<A extends object>(selectorName: string): rx.Observable<A> {
+  protected accumulatedOpties$<A extends object>(
+    selectorName: string
+  ): rx.Observable<A> {
     // Dispatch zodat elke component de begintoestand kan kennen ipv enkel deze component.
     // if (init !== undefined) {
     //   this.dispatch(prt.InitUiElementOpties(selectorName, init));
@@ -59,12 +71,18 @@ export abstract class KaartChildDirective extends KaartBaseDirective implements 
     );
   }
 
-  protected dispatch(cmd: prt.Command<KaartInternalMsg> | prt.Command<prt.KaartMsg>) {
+  protected dispatch(
+    cmd: prt.Command<KaartInternalMsg> | prt.Command<prt.KaartMsg>
+  ) {
     this.kaartComponent.internalCmdDispatcher.dispatch(cmd);
   }
 
-  protected dispatchCmdsInViewReady(...cmds: (rx.Observable<prt.Command<KaartInternalMsg | prt.KaartMsg>>)[]) {
-    this.runInViewReady(rx.merge(...cmds).pipe(tap(cmd => this.dispatch(cmd))));
+  protected dispatchCmdsInViewReady(
+    ...cmds: rx.Observable<prt.Command<KaartInternalMsg | prt.KaartMsg>>[]
+  ) {
+    this.runInViewReady(
+      rx.merge(...cmds).pipe(tap((cmd) => this.dispatch(cmd)))
+    );
   }
 
   protected get internalMessage$(): rx.Observable<KaartInternalSubMsg> {

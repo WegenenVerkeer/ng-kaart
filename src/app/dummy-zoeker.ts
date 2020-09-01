@@ -12,18 +12,26 @@ import {
   ZoekInput,
   ZoekKaartResultaat,
   Zoekopdracht,
-  Zoektype
+  Zoektype,
 } from "../../projects/ng-kaart/src/lib/zoeker";
 
 require("material-design-icons/toggle/svg/production/ic_star_border_24px.svg");
 require("material-design-icons/toggle/svg/production/ic_star_24px.svg");
 
-const randomResultaat: Function1<string, ZoekKaartResultaat> = color => {
-  const center = [100000 + Math.random() * 80000, 175000 + Math.random() * 30000] as [number, number];
+const randomResultaat: Function1<string, ZoekKaartResultaat> = (color) => {
+  const center = [
+    100000 + Math.random() * 80000,
+    175000 + Math.random() * 30000,
+  ] as [number, number];
   const radius = 2000 + Math.random() * 20000;
   return {
     geometry: new ol.geom.Circle(center, radius),
-    extent: [center[0] - radius, center[1] - radius, center[0] + radius, center[1] + radius],
+    extent: [
+      center[0] - radius,
+      center[1] - radius,
+      center[0] + radius,
+      center[1] + radius,
+    ],
     style: new ol.style.Style({
       image: new ol.style.Icon({
         anchor: [0.5, 0.5],
@@ -31,15 +39,15 @@ const randomResultaat: Function1<string, ZoekKaartResultaat> = color => {
         anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
         scale: 1,
         opacity: 0.75,
-        src: "ic_star_border_24px.svg"
+        src: "ic_star_border_24px.svg",
       }),
       stroke: new ol.style.Stroke({
         color: color,
-        width: 2
+        width: 2,
       }),
       fill: new ol.style.Fill({
-        color: color + "40" // hack: veronderstelt hex kleur code
-      })
+        color: color + "40", // hack: veronderstelt hex kleur code
+      }),
     }),
     highlightStyle: new ol.style.Style({
       image: new ol.style.Icon({
@@ -48,16 +56,16 @@ const randomResultaat: Function1<string, ZoekKaartResultaat> = color => {
         anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
         scale: 1,
         opacity: 0.75,
-        src: "ic_star_24px.svg"
+        src: "ic_star_24px.svg",
       }),
       stroke: new ol.style.Stroke({
         color: "yellow",
-        width: 2
+        width: 2,
       }),
       fill: new ol.style.Fill({
-        color: color + "40" // hack: veronderstelt hex kleur code
-      })
-    })
+        color: color + "40", // hack: veronderstelt hex kleur code
+      }),
+    }),
   };
 };
 
@@ -65,7 +73,10 @@ const randomResultaat: Function1<string, ZoekKaartResultaat> = color => {
  * Een Zoeker die vrij random resultaten genereert.
  */
 export class DummyZoeker implements Zoeker {
-  constructor(private readonly _naam = "dummy", private readonly colorCode: string) {}
+  constructor(
+    private readonly _naam = "dummy",
+    private readonly colorCode: string
+  ) {}
 
   naam() {
     return this._naam;
@@ -97,7 +108,7 @@ export class DummyZoeker implements Zoeker {
           zoeker: this.naam(),
           kaartInfo: option.some(randomResultaat(this.colorCode)),
           icoon: { type: "font" as "font", name: "Du" },
-          preferredPointZoomLevel: option.some(4 + Math.random() * 5)
+          preferredPointZoomLevel: option.some(4 + Math.random() * 5),
         });
         const resultaten = rangeArray(numResults).map(resultaat);
         return rx.of(new ZoekAntwoord(this.naam(), "Volledig", [], resultaten));
@@ -110,7 +121,7 @@ export class DummyZoeker implements Zoeker {
     switch (input.type) {
       case "string":
         const numResults = Math.floor(Math.pow(Math.random(), 1.3) * 4);
-        const resultaat = index => ({
+        const resultaat = (index) => ({
           partialMatch: Math.random() > 0.2,
           featureIdSuffix: index,
           omschrijving: `${input.value} (${this.naam()}_${index})`,
@@ -120,10 +131,12 @@ export class DummyZoeker implements Zoeker {
           kaartInfo: option.some(randomResultaat(this.colorCode)),
           icoon: { type: "font" as "font", name: "Du" },
           preferredPointZoomLevel: option.some(4 + Math.random() * 5),
-          zoektype: "Suggesties" as Zoektype
+          zoektype: "Suggesties" as Zoektype,
         });
         const resultaten = rangeArray(numResults).map(resultaat);
-        return rx.of(new ZoekAntwoord(this.naam(), "Suggesties", [], resultaten)).pipe(delay(Math.random() * 2000));
+        return rx
+          .of(new ZoekAntwoord(this.naam(), "Suggesties", [], resultaten))
+          .pipe(delay(Math.random() * 2000));
       default:
         return rx.of(nietOndersteund(this.naam(), "Suggesties"));
     }

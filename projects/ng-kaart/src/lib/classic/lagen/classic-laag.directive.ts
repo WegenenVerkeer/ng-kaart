@@ -1,10 +1,21 @@
-import { AfterContentInit, Directive, ElementRef, Injector, Input, OnDestroy, OnInit } from "@angular/core";
+import {
+  AfterContentInit,
+  Directive,
+  ElementRef,
+  Injector,
+  Input,
+  OnDestroy,
+  OnInit,
+} from "@angular/core";
 import { option } from "fp-ts";
 
 import { Laag, Laaggroep } from "../../kaart/kaart-elementen";
 import { Legende } from "../../kaart/kaart-legende";
 import * as prt from "../../kaart/kaart-protocol";
-import { Opaciteit, Transparantie } from "../../transparantieeditor/transparantie";
+import {
+  Opaciteit,
+  Transparantie,
+} from "../../transparantieeditor/transparantie";
 import { ClassicBaseDirective } from "../classic-base.directive";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 import { ClassicLegendeItemDirective } from "../legende/classic-legende-item.directive";
@@ -12,7 +23,9 @@ import { KaartClassicMsg, logOnlyWrapper } from "../messages";
 import * as val from "../webcomponent-support/params";
 
 @Directive()
-export abstract class ClassicLaagDirective extends ClassicBaseDirective implements AfterContentInit, OnDestroy, OnInit {
+export abstract class ClassicLaagDirective
+  extends ClassicBaseDirective
+  implements AfterContentInit, OnDestroy, OnInit {
   legendeItems: ClassicLegendeItemDirective[] = [];
 
   protected laag: option.Option<Laag> = option.none;
@@ -42,7 +55,13 @@ export abstract class ClassicLaagDirective extends ClassicBaseDirective implemen
 
   @Input()
   set groep(param: Laaggroep) {
-    this._groep = val.optEnu<Laaggroep>(param, "Achtergrond", "Voorgrond.Hoog", "Voorgrond.Laag", "Tools");
+    this._groep = val.optEnu<Laaggroep>(
+      param,
+      "Achtergrond",
+      "Voorgrond.Hoog",
+      "Voorgrond.Laag",
+      "Tools"
+    );
   }
 
   @Input()
@@ -74,8 +93,12 @@ export abstract class ClassicLaagDirective extends ClassicBaseDirective implemen
 
   constructor(injector: Injector) {
     super(injector);
-    const locatorService = injector.get(KaartClassicLocatorService) as KaartClassicLocatorService<ClassicLaagDirective>;
-    const el: ElementRef<Element> = injector.get<ElementRef<Element>>(ElementRef);
+    const locatorService = injector.get(
+      KaartClassicLocatorService
+    ) as KaartClassicLocatorService<ClassicLaagDirective>;
+    const el: ElementRef<Element> = injector.get<ElementRef<Element>>(
+      ElementRef
+    );
     locatorService.registerComponent(this, el);
   }
 
@@ -112,14 +135,18 @@ export abstract class ClassicLaagDirective extends ClassicBaseDirective implemen
       stijlInLagenKiezer: this._stijlInLagenKiezer,
       filterinstellingen: option.none,
       laagtabelinstellingen: option.none,
-      wrapper: logOnlyWrapper
+      wrapper: logOnlyWrapper,
     });
   }
 
   protected voegLegendeToe() {
     if (this.legendeItems.length > 0) {
-      const legende = Legende(this.legendeItems.map(item => item.maakLegendeItem()));
-      this.dispatch(prt.ZetLaagLegendeCmd(this._titel, legende, logOnlyWrapper));
+      const legende = Legende(
+        this.legendeItems.map((item) => item.maakLegendeItem())
+      );
+      this.dispatch(
+        prt.ZetLaagLegendeCmd(this._titel, legende, logOnlyWrapper)
+      );
     }
   }
 

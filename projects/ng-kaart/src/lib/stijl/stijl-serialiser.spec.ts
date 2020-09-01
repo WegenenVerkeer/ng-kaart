@@ -7,15 +7,18 @@ describe("De stijl serialiaser", () => {
       const staticStyle: AwvV0StaticStyle = {
         stroke: {
           color: "#FF0",
-          width: 5
-        }
+          width: 5,
+        },
       };
       const jsonStyle = {
         version: "awv-v0",
-        definition: staticStyle
+        definition: staticStyle,
       };
       const serialised = serialiseAwvV0StaticStyle(staticStyle);
-      const deserialisedDirect = definitieToStyle("json", JSON.stringify(jsonStyle));
+      const deserialisedDirect = definitieToStyle(
+        "json",
+        JSON.stringify(jsonStyle)
+      );
       const roundTripped = definitieToStyle("json", serialised);
       expect(deserialisedDirect).toEqual(roundTripped);
     });

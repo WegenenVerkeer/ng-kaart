@@ -1,8 +1,27 @@
-import { animate, state, style, transition, trigger } from "@angular/animations";
-import { Component, ElementRef, HostListener, NgZone, ViewChild } from "@angular/core";
+import {
+  animate,
+  state,
+  style,
+  transition,
+  trigger,
+} from "@angular/animations";
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  NgZone,
+  ViewChild,
+} from "@angular/core";
 import { option } from "fp-ts";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, pairwise, sample, share } from "rxjs/operators";
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  pairwise,
+  sample,
+  share,
+} from "rxjs/operators";
 
 import { catOptions, collectOption, scan2 } from "../../util";
 import { IdentifyOpties } from "../kaart-bevragen/kaart-identify-opties";
@@ -23,20 +42,24 @@ import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.compon
       state(
         "zichtbaar",
         style({
-          height: "{{hoogte}}px"
+          height: "{{hoogte}}px",
         }),
         { params: { hoogte: 0 } }
       ),
       state(
         "niet-zichtbaar",
         style({
-          height: "0px"
+          height: "0px",
         })
       ),
-      transition("zichtbaar => niet-zichtbaar", [animate("0.35s cubic-bezier(.62,.28,.23,.99)")]),
-      transition("niet-zichtbaar => zichtbaar", [animate("0.35s cubic-bezier(.62,.28,.23,.99)")])
-    ])
-  ]
+      transition("zichtbaar => niet-zichtbaar", [
+        animate("0.35s cubic-bezier(.62,.28,.23,.99)"),
+      ]),
+      transition("niet-zichtbaar => zichtbaar", [
+        animate("0.35s cubic-bezier(.62,.28,.23,.99)"),
+      ]),
+    ]),
+  ],
 })
 export class FeatureTabelInklapComponent extends KaartChildDirective {
   public tabelZichtbaar = false;
@@ -62,16 +85,18 @@ export class FeatureTabelInklapComponent extends KaartChildDirective {
       this.huidigeHoogte = this.standaardHoogte = (hoogte / 5) * 2;
     });
 
-    this.magGetoondWorden$ = this.modelChanges.tabelActiviteit$.pipe(map(activiteit => activiteit !== "Onbeschikbaar"));
+    this.magGetoondWorden$ = this.modelChanges.tabelActiviteit$.pipe(
+      map((activiteit) => activiteit !== "Onbeschikbaar")
+    );
 
     // volg de TabelState om te openen/sluiten
     const tabelZichtbaar$ = this.modelChanges.tabelActiviteit$.pipe(
-      map(activiteit => activiteit === "Opengeklapt"),
+      map((activiteit) => activiteit === "Opengeklapt"),
       distinctUntilChanged(),
       share()
     );
 
-    this.bindToLifeCycle(tabelZichtbaar$).subscribe(zichtbaar => {
+    this.bindToLifeCycle(tabelZichtbaar$).subscribe((zichtbaar) => {
       this.tabelZichtbaar = zichtbaar;
       if (zichtbaar) {
         this.huidigeHoogte = this.standaardHoogte;
@@ -82,22 +107,44 @@ export class FeatureTabelInklapComponent extends KaartChildDirective {
       pairwise(),
       share()
     );
-    const openNaarDicht$ = overgangen$.pipe(filter(([prev, cur]) => prev === TabelState.Opengeklapt && cur === TabelState.Dichtgeklapt));
-    const dichtNaarOpen$ = overgangen$.pipe(filter(([prev, cur]) => prev === TabelState.Dichtgeklapt && cur === TabelState.Opengeklapt));
-    const identifyOpties$ = this.modelChanges.optiesOpUiElement$.pipe(map(IdentifyOpties.getOption));
+    const openNaarDicht$ = overgangen$.pipe(
+      filter(
+        ([prev, cur]) =>
+          prev === TabelState.Opengeklapt && cur === TabelState.Dichtgeklapt
+      )
+    );
+    const dichtNaarOpen$ = overgangen$.pipe(
+      filter(
+        ([prev, cur]) =>
+          prev === TabelState.Dichtgeklapt && cur === TabelState.Opengeklapt
+      )
+    );
+    const identifyOpties$ = this.modelChanges.optiesOpUiElement$.pipe(
+      map(IdentifyOpties.getOption)
+    );
     const identifyOptiesByOpen$ = identifyOpties$.pipe(sample(dichtNaarOpen$));
 
-    const identifyOndrukInit: { readonly memo: option.Option<IdentifyOpties>; readonly action: option.Option<IdentifyOpties> } = {
+    const identifyOndrukInit: {
+      readonly memo: option.Option<IdentifyOpties>;
+      readonly action: option.Option<IdentifyOpties>;
+    } = {
       memo: option.none,
-      action: option.none
+      action: option.none,
     };
     const onderdrukUpdateCmd$ = scan2(
       identifyOptiesByOpen$,
       openNaarDicht$,
-      (_, optie) => ({ memo: optie, action: option.some({ identifyOnderdrukt: true }) }),
+      (_, optie) => ({
+        memo: optie,
+        action: option.some({ identifyOnderdrukt: true }),
+      }),
       (o, _) => ({ memo: option.none, action: o.memo }),
       identifyOndrukInit
-    ).pipe(collectOption(({ action }) => option.map(IdentifyOpties.ZetOptiesCmd)(action)));
+    ).pipe(
+      collectOption(({ action }) =>
+        option.map(IdentifyOpties.ZetOptiesCmd)(action)
+      )
+    );
 
     this.dispatchCmdsInViewReady(onderdrukUpdateCmd$);
   }
@@ -149,11 +196,13 @@ export class FeatureTabelInklapComponent extends KaartChildDirective {
           this.huidigeHoogte = 41;
           this.startSleepHoogte = 41;
           this.zetTabelZichtbaar(true);
-          this.dataContainer.nativeElement.style.height = this.huidigeHoogte + "px";
+          this.dataContainer.nativeElement.style.height =
+            this.huidigeHoogte + "px";
         }
       } else {
         this.zetTabelZichtbaar(true);
-        this.dataContainer.nativeElement.style.height = this.huidigeHoogte + "px";
+        this.dataContainer.nativeElement.style.height =
+          this.huidigeHoogte + "px";
       }
     }
   }

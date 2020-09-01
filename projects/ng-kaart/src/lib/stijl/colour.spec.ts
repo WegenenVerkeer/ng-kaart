@@ -1,6 +1,14 @@
 import { eq, option } from "fp-ts";
 
-import { kleurcode, kleurcodeValue, kleurnaam, kleurnaamValue, setOpacity, toKleur, toKleurUnsafe } from "./colour";
+import {
+  kleurcode,
+  kleurcodeValue,
+  kleurnaam,
+  kleurnaamValue,
+  setOpacity,
+  toKleur,
+  toKleurUnsafe,
+} from "./colour";
 
 describe("Een kleur", () => {
   describe("aanmaken", () => {
@@ -50,8 +58,12 @@ describe("Een kleur", () => {
         expect(blauw.isSome()).toEqual(true);
       });
       it("moet de componenten omvatten", () => {
-        expect(blauw.map(kleurnaamValue).contains(eq.eqString, "blauw")).toEqual(true);
-        expect(blauw.map(kleurcodeValue).contains(eq.eqString, "#0000ffff")).toEqual(true);
+        expect(
+          blauw.map(kleurnaamValue).contains(eq.eqString, "blauw")
+        ).toEqual(true);
+        expect(
+          blauw.map(kleurcodeValue).contains(eq.eqString, "#0000ffff")
+        ).toEqual(true);
       });
     });
     describe("op basis van een lege naam", () => {
@@ -72,11 +84,15 @@ describe("Een kleur", () => {
       expect(kleurcode(ondoorzichtigGroen) as any).toEqual("#00ff00ff");
     });
     it("moet een getal lager dan 0 aannemen als een 0-opaciteit", () => {
-      const groenen = [-2, -1, -0.00001].map(op => kleurcode(setOpacity(op)(groen)));
+      const groenen = [-2, -1, -0.00001].map((op) =>
+        kleurcode(setOpacity(op)(groen))
+      );
       expect(groenen as any[]).toEqual(["#00ff0000", "#00ff0000", "#00ff0000"]);
     });
     it("moet een getal hoger dan 1 aannemen als een 1-opaciteit", () => {
-      const groenen = [2, 1, 1.00001].map(op => kleurcode(setOpacity(op)(groen)));
+      const groenen = [2, 1, 1.00001].map((op) =>
+        kleurcode(setOpacity(op)(groen))
+      );
       expect(groenen as any[]).toEqual(["#00ff00ff", "#00ff00ff", "#00ff00ff"]);
     });
   });

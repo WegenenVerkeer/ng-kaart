@@ -18,9 +18,12 @@ import {
   ZoekInput,
   ZoekKaartResultaat,
   Zoekopdracht,
-  ZoekResultaat
+  ZoekResultaat,
 } from "../zoeker";
-import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
+import {
+  AbstractRepresentatieService,
+  ZOEKER_REPRESENTATIE,
+} from "../zoeker-representatie.service";
 
 import * as help from "./zoeker-perceel-help";
 
@@ -91,12 +94,14 @@ export class PerceelZoekResultaat implements ZoekResultaat {
   ) {
     this.featureIdSuffix = `${index + 1}`;
     try {
-      const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(details.shape);
+      const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(
+        details.shape
+      );
       this.kaartInfo = option.some({
         geometry: geometry,
         extent: geometry.getExtent(),
         style: style,
-        highlightStyle: highlightStyle
+        highlightStyle: highlightStyle,
       });
     } catch (e) {
       kaartLogger.error("Slechte geometry", e);
@@ -113,10 +118,15 @@ export class ZoekerPerceelService implements Zoeker {
   constructor(
     private readonly http: HttpClient,
     @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
-    @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
+    @Inject(ZOEKER_REPRESENTATIE)
+    private zoekerRepresentatie: AbstractRepresentatieService
   ) {
-    this.locatorServicesConfig = new ZoekerConfigLocatorServicesConfig(zoekerConfigData.locatorServices);
-    this.legende = new Map([[this.naam(), this.zoekerRepresentatie.getSvgIcon("Perceel")]]);
+    this.locatorServicesConfig = new ZoekerConfigLocatorServicesConfig(
+      zoekerConfigData.locatorServices
+    );
+    this.legende = new Map([
+      [this.naam(), this.zoekerRepresentatie.getSvgIcon("Perceel")],
+    ]);
   }
 
   naam(): string {
@@ -125,7 +135,12 @@ export class ZoekerPerceelService implements Zoeker {
 
   help(helpBoom: ZoekerHelpBoom) {
     helpBoom.voegItemToe(help.capakey, "een locatie", "een perceel", "Capakey");
-    helpBoom.voegItemToe(help.getrapt, "een locatie", "een perceel", "Getrapt zoeken naar een perceel");
+    helpBoom.voegItemToe(
+      help.getrapt,
+      "een locatie",
+      "een perceel",
+      "Getrapt zoeken naar een perceel"
+    );
   }
 
   getAlleGemeenten$(): rx.Observable<Gemeente[]> {
@@ -134,7 +149,11 @@ export class ZoekerPerceelService implements Zoeker {
     //   { niscode: 19010, naam: "Erpe-Mere" },
     //   { niscode: 19020, naam: "Herzele" }
     // ]);
-    return this.http.get<Gemeente[]>(this.locatorServicesConfig.url + "/rest/capakey/gemeenten").pipe(shareReplay(1));
+    return this.http
+      .get<Gemeente[]>(
+        this.locatorServicesConfig.url + "/rest/capakey/gemeenten"
+      )
+      .pipe(shareReplay(1));
   }
 
   getAfdelingen$(niscode: number): rx.Observable<Afdeling[]> {
@@ -143,10 +162,16 @@ export class ZoekerPerceelService implements Zoeker {
     //   { niscode: 20001, code: "1002/35", naam: "Afdeling 2" },
     //   { niscode: 20002, code: "1002/36", naam: "Afdeling 3" }
     // ]);
-    return this.http.get<Afdeling[]>(this.locatorServicesConfig.url + "/rest/capakey/afdelingen/" + niscode).pipe(
-      map(afdelingen => afdelingen.map(afdeling => ({ ...afdeling, niscode: niscode }))),
-      shareReplay(1)
-    );
+    return this.http
+      .get<Afdeling[]>(
+        this.locatorServicesConfig.url + "/rest/capakey/afdelingen/" + niscode
+      )
+      .pipe(
+        map((afdelingen) =>
+          afdelingen.map((afdeling) => ({ ...afdeling, niscode: niscode }))
+        ),
+        shareReplay(1)
+      );
   }
 
   getSecties$(niscode: number, afdelingcode: string): rx.Observable<Sectie[]> {
@@ -155,13 +180,31 @@ export class ZoekerPerceelService implements Zoeker {
     //   { niscode: 30000, afdelingcode: "1002/34", code: "1000-1000-11" },
     //   { niscode: 30000, afdelingcode: "1002/34", code: "1000-1000-12" }
     // ]);
-    return this.http.get<Sectie[]>(this.locatorServicesConfig.url + "/rest/capakey/secties/" + niscode + "/" + afdelingcode).pipe(
-      map(secties => secties.map(sectie => ({ ...sectie, niscode: niscode, afdelingcode: afdelingcode }))),
-      shareReplay(1)
-    );
+    return this.http
+      .get<Sectie[]>(
+        this.locatorServicesConfig.url +
+          "/rest/capakey/secties/" +
+          niscode +
+          "/" +
+          afdelingcode
+      )
+      .pipe(
+        map((secties) =>
+          secties.map((sectie) => ({
+            ...sectie,
+            niscode: niscode,
+            afdelingcode: afdelingcode,
+          }))
+        ),
+        shareReplay(1)
+      );
   }
 
-  getPerceelNummers$(niscode: number, afdelingcode: string, sectiecode: string): rx.Observable<PerceelNummer[]> {
+  getPerceelNummers$(
+    niscode: number,
+    afdelingcode: string,
+    sectiecode: string
+  ): rx.Observable<PerceelNummer[]> {
     // return Observable.of([
     //   { capakey: "capap1", perceelsnummer: "1238712" }, //
     //   { capakey: "capap2", perceelsnummer: "1238713" },
@@ -169,7 +212,13 @@ export class ZoekerPerceelService implements Zoeker {
     // ]);
     return this.http
       .get<PerceelNummer[]>(
-        this.locatorServicesConfig.url + "/rest/capakey/perceelsnummers/" + niscode + "/" + afdelingcode + "/" + sectiecode
+        this.locatorServicesConfig.url +
+          "/rest/capakey/perceelsnummers/" +
+          niscode +
+          "/" +
+          afdelingcode +
+          "/" +
+          sectiecode
       )
       .pipe(shareReplay(1));
   }
@@ -189,7 +238,11 @@ export class ZoekerPerceelService implements Zoeker {
     //   boundingbox: "bbox",
     //   center: "center"
     // });
-    return this.http.get<PerceelDetails>(this.locatorServicesConfig.url + "/rest/capakey/perceel/" + capakey).pipe(shareReplay(1));
+    return this.http
+      .get<PerceelDetails>(
+        this.locatorServicesConfig.url + "/rest/capakey/perceel/" + capakey
+      )
+      .pipe(shareReplay(1));
   }
 
   zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekAntwoord> {
@@ -204,9 +257,11 @@ export class ZoekerPerceelService implements Zoeker {
   zoek$(zoekterm: ZoekInput): rx.Observable<ZoekAntwoord> {
     switch (zoekterm.type) {
       case "Perceel":
-        return this.getPerceelDetails$((zoekterm as PerceelZoekInput).capaKey).pipe(
+        return this.getPerceelDetails$(
+          (zoekterm as PerceelZoekInput).capaKey
+        ).pipe(
           map(
-            details =>
+            (details) =>
               new ZoekAntwoord(
                 this.naam(),
                 "Volledig",
@@ -219,7 +274,7 @@ export class ZoekerPerceelService implements Zoeker {
                     this.zoekerRepresentatie.getSvgIcon("Perceel"),
                     this.zoekerRepresentatie.getOlStyle("Perceel"),
                     this.zoekerRepresentatie.getHighlightOlStyle("Perceel")
-                  )
+                  ),
                 ],
                 this.legende
               )

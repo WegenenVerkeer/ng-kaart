@@ -12,7 +12,7 @@ import { ClassicSingleZoekerDirective } from "./classic-single-zoeker.directive"
  */
 @Component({
   selector: "awv-kaart-crab-zoeker",
-  template: ""
+  template: "",
 })
 export class ClassicCrabZoekerComponent extends ClassicSingleZoekerDirective {
   constructor(injector: Injector, crabZoeker: ZoekerCrabService) {

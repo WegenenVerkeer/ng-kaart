@@ -5,8 +5,20 @@ import { ofType } from "../util/operators";
 import { TypedRecord } from "../util/typed-record";
 
 import { KaartCmdDispatcher } from "./kaart-event-dispatcher";
-import { KaartInternalMsg, KaartInternalSubMsg, SubscribedMsg, subscribedWrapper } from "./kaart-internal-messages";
-import { KaartCmdValidation, SubscribeCmd, Subscription, SubscriptionResult, UnsubscribeCmd, ValidationWrapper } from "./kaart-protocol";
+import {
+  KaartInternalMsg,
+  KaartInternalSubMsg,
+  SubscribedMsg,
+  subscribedWrapper,
+} from "./kaart-internal-messages";
+import {
+  KaartCmdValidation,
+  SubscribeCmd,
+  Subscription,
+  SubscriptionResult,
+  UnsubscribeCmd,
+  ValidationWrapper,
+} from "./kaart-protocol";
 
 /**
  * Een Rx Operator die een observable van messages transformeert in een observable van de foutboodschappen die de kaart subscriptions
@@ -23,7 +35,10 @@ import { KaartCmdValidation, SubscribeCmd, Subscription, SubscriptionResult, Uns
  * @param msgGen Een functie die Wrapper voor SubscriptionResults genereert
  * @param subscriptions De subscriptions die naar de dispatcher gestuurd moeten worden
  */
-export function subscriptionCmdOperator<MsgIn extends TypedRecord, MsgOut extends TypedRecord>(
+export function subscriptionCmdOperator<
+  MsgIn extends TypedRecord,
+  MsgOut extends TypedRecord
+>(
   dispatcher: KaartCmdDispatcher<MsgOut>,
   msgGen: (ref: any) => ValidationWrapper<SubscriptionResult, MsgOut>,
   ...subscriptions: Subscription<MsgOut>[]
@@ -37,8 +52,8 @@ export function subscriptionCmdOperator<MsgIn extends TypedRecord, MsgOut extend
     }
     _next(msg: SubscribedMsg): void {
       msg.subscription.fold(
-        err => this.subscriber.next(err), // De errors zenden we downstream
-        sub => subscriptionResults.push(sub) // De SubscriptionResults houden we bij om later te unsubscriben
+        (err) => this.subscriber.next(err), // De errors zenden we downstream
+        (sub) => subscriptionResults.push(sub) // De SubscriptionResults houden we bij om later te unsubscriben
       );
     }
     _complete(): void {
@@ -49,30 +64,38 @@ export function subscriptionCmdOperator<MsgIn extends TypedRecord, MsgOut extend
   }
 
   return {
-    call(subscriber: rx.Subscriber<string[]>, source: rx.Observable<MsgIn>): rx.Subscription {
+    call(
+      subscriber: rx.Subscriber<string[]>,
+      source: rx.Observable<MsgIn>
+    ): rx.Subscription {
       // Ik durf this niet te gebruiken, maar een leeg record heeft de gewenste eigenschap dat het aan zichzelf gelijk is en niet aan
       // een ander leeg record
       const self = {};
       // De gevalideerde SubscriptionResults moeten gewrapped en geïdentificeerd worden
-      const subscriptionWrapper = (v: KaartCmdValidation<SubscriptionResult>) => msgGen(self)(v);
+      const subscriptionWrapper = (v: KaartCmdValidation<SubscriptionResult>) =>
+        msgGen(self)(v);
       // De subscriptions moeten elk in een SubscribeCmd gestoken worden dat op de bus gezet wordt
-      subscriptions.forEach(subscription => dispatcher.dispatch(SubscribeCmd(subscription, subscriptionWrapper)));
+      subscriptions.forEach((subscription) =>
+        dispatcher.dispatch(SubscribeCmd(subscription, subscriptionWrapper))
+      );
       // We luisteren op de input observable naar messages van het type "Subscribed" en houden de geslaagde subscriptions bij
       // De errors sturen we uit
       const subscriptionsSubscription = source
         .pipe(
           ofType<SubscribedMsg>("Subscribed"), // We willen enkel de Subscribed messages
-          filter(m => m.reference === self), // en enkel die die we zelf de wereld ingestuurd hebben
+          filter((m) => m.reference === self), // en enkel die die we zelf de wereld ingestuurd hebben
           take(subscriptions.length) // als optimalisatie sluiten we de stream wanneer we evenveel resultaten als subscriptions hebben
         )
         .subscribe(new InternalSubscriber(subscriber));
       // We voegen extra TeardownLogic toe zodat we onze resources (de Kaart subscriptions) kunnen opkuisen
       subscriptionsSubscription.add(() => {
         // Stop de kaart subscriptions
-        subscriptionResults.forEach(sub => dispatcher.dispatch(UnsubscribeCmd(sub)));
+        subscriptionResults.forEach((sub) =>
+          dispatcher.dispatch(UnsubscribeCmd(sub))
+        );
       });
       return subscriptionsSubscription;
-    }
+    },
   };
 }
 
@@ -83,5 +106,9 @@ export function internalMsgSubscriptionCmdOperator(
   dispatcher: KaartCmdDispatcher<KaartInternalMsg>,
   ...subscriptions: Subscription<KaartInternalMsg>[]
 ): rx.Operator<KaartInternalSubMsg, string[]> {
-  return subscriptionCmdOperator(dispatcher, subscribedWrapper, ...subscriptions);
+  return subscriptionCmdOperator(
+    dispatcher,
+    subscribedWrapper,
+    ...subscriptions
+  );
 }

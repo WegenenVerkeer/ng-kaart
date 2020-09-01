@@ -4,17 +4,27 @@ import { Function1 } from "fp-ts/lib/function";
 
 import { PartialFunction1 } from "./function";
 
-const trimmed: Function1<any, any> = input => (typeof input === "string" ? input.trim() : input.toString());
+const trimmed: Function1<any, any> = (input) =>
+  typeof input === "string" ? input.trim() : input.toString();
 
 // Het probleem is dat bijv. "5x4" geparsed wordt als 5
-export const parseInteger: PartialFunction1<any, number> = input =>
+export const parseInteger: PartialFunction1<any, number> = (input) =>
   option
     .fromNullable(input)
-    .chain(i => option.fromPredicate((v: number) => Number.isSafeInteger(v) && v.toString() === trimmed(i))(parseInt(i, 10)));
+    .chain((i) =>
+      option.fromPredicate(
+        (v: number) => Number.isSafeInteger(v) && v.toString() === trimmed(i)
+      )(parseInt(i, 10))
+    );
 
-export const parseDouble: PartialFunction1<any, number> = input =>
+export const parseDouble: PartialFunction1<any, number> = (input) =>
   option
     .fromNullable(input)
-    .chain(i => option.fromPredicate((v: number) => Number.isFinite(v) && v.toString() === trimmed(i))(parseFloat(i)));
+    .chain((i) =>
+      option.fromPredicate(
+        (v: number) => Number.isFinite(v) && v.toString() === trimmed(i)
+      )(parseFloat(i))
+    );
 
-export const isNumber: Refinement<any, number> = (obj: any): obj is number => typeof obj === "number";
+export const isNumber: Refinement<any, number> = (obj: any): obj is number =>
+  typeof obj === "number";

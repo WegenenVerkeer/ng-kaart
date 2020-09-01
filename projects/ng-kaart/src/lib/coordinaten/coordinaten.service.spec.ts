@@ -13,7 +13,10 @@ describe("CoordinatenService", () => {
   describe("#transform Wgs84 -> Lambert72", () => {
     describe("Happy", () => {
       it("transformeert coordinaten", () => {
-        const result = lambert72ToWgs84([180048.06920228814, 190702.69932892825]);
+        const result = lambert72ToWgs84([
+          180048.06920228814,
+          190702.69932892825,
+        ]);
         expect(result).toEqual([4.7970552913413025, 51.02573170365698]);
       });
     });

@@ -2,8 +2,8 @@ export function urlWithParams(urlBase: string, params: object): string {
   const parsed = new URL(urlBase, window.location.href);
   const searchParams = parsed.searchParams;
   Object.keys(params)
-    .filter(key => isSimpleAttribute(params[key]))
-    .forEach(key => searchParams.set(key, params[key]));
+    .filter((key) => isSimpleAttribute(params[key]))
+    .forEach((key) => searchParams.set(key, params[key]));
   parsed.search = searchParams.toString();
   return parsed.href;
 }

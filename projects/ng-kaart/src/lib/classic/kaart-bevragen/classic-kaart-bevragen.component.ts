@@ -1,6 +1,11 @@
 import { Component, Injector, Input, OnChanges } from "@angular/core";
 
-import { BevraagKaartOpties, BevraagKaartUiSelector, UnitType, ZoekAfstand } from "../../kaart/kaart-bevragen/kaart-bevragen-opties";
+import {
+  BevraagKaartOpties,
+  BevraagKaartUiSelector,
+  UnitType,
+  ZoekAfstand,
+} from "../../kaart/kaart-bevragen/kaart-bevragen-opties";
 import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 import * as val from "../webcomponent-support/params";
 
@@ -13,9 +18,11 @@ import * as val from "../webcomponent-support/params";
  */
 @Component({
   selector: "awv-bevraag-kaart",
-  template: ""
+  template: "",
 })
-export class ClassicKaartBevragenComponent extends ClassicUIElementSelectorDirective implements OnChanges {
+export class ClassicKaartBevragenComponent
+  extends ClassicUIElementSelectorDirective
+  implements OnChanges {
   private _unit: UnitType = "Meter";
   private _zoekAfstand = 25;
   private _infoServicesOnderdrukt = false;
@@ -36,17 +43,26 @@ export class ClassicKaartBevragenComponent extends ClassicUIElementSelectorDirec
 
   @Input()
   set infoServicesOnderdrukt(value: boolean) {
-    this._infoServicesOnderdrukt = val.bool(value, this._infoServicesOnderdrukt);
+    this._infoServicesOnderdrukt = val.bool(
+      value,
+      this._infoServicesOnderdrukt
+    );
   }
 
   @Input()
   set kaartBevragenOnderdrukt(value: boolean) {
-    this._kaartBevragenOnderdrukt = val.bool(value, this._kaartBevragenOnderdrukt);
+    this._kaartBevragenOnderdrukt = val.bool(
+      value,
+      this._kaartBevragenOnderdrukt
+    );
   }
 
   @Input()
   set onderdrukInfoBoodschappen(value: boolean) {
-    this._onderdrukInfoBoodschappen = val.bool(value, this._onderdrukInfoBoodschappen);
+    this._onderdrukInfoBoodschappen = val.bool(
+      value,
+      this._onderdrukInfoBoodschappen
+    );
   }
 
   constructor(injector: Injector) {
@@ -58,7 +74,7 @@ export class ClassicKaartBevragenComponent extends ClassicUIElementSelectorDirec
       zoekAfstand: ZoekAfstand(this._unit, this._zoekAfstand),
       infoServiceOnderdrukt: this._infoServicesOnderdrukt,
       kaartBevragenOnderdrukt: this._kaartBevragenOnderdrukt,
-      onderdrukInfoBoodschappen: this._onderdrukInfoBoodschappen
+      onderdrukInfoBoodschappen: this._onderdrukInfoBoodschappen,
     };
   }
 }

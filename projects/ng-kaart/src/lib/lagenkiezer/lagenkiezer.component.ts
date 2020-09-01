@@ -1,15 +1,33 @@
 import { animate, style, transition, trigger } from "@angular/animations";
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  ViewEncapsulation,
+} from "@angular/core";
 import { MatTabChangeEvent } from "@angular/material/tabs";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { array, option } from "fp-ts";
 import { not, Predicate } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, shareReplay } from "rxjs/operators";
+import {
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  map,
+  shareReplay,
+} from "rxjs/operators";
 
 import { Filter } from "../filter/filter-model";
 import { KaartChildDirective } from "../kaart/kaart-child.directive";
-import { isToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
+import {
+  isToegevoegdeVectorLaag,
+  ToegevoegdeLaag,
+  ToegevoegdeVectorLaag,
+} from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { LegendeItem } from "../kaart/kaart-legende";
 import * as prt from "../kaart/kaart-protocol";
@@ -43,7 +61,7 @@ export const defaultOpties: LagenUiOpties = {
   verplaatsbareLagen: true,
   filterbareLagen: false,
   stijlbareVectorlagen: () => false,
-  transparantieaanpasbareLagen: () => false
+  transparantieaanpasbareLagen: () => false,
 };
 
 interface DragState {
@@ -54,11 +72,14 @@ interface DragState {
 const dndDataType = "text/plain";
 
 const setoidGroep = {
-  equals: (x: ToegevoegdeLaag, y: ToegevoegdeLaag) => x.laaggroep === y.laaggroep
+  equals: (x: ToegevoegdeLaag, y: ToegevoegdeLaag) =>
+    x.laaggroep === y.laaggroep,
 };
 
-const isSource = (laag: ToegevoegdeLaag) => (ds: DragState) => ds.from.titel === laag.titel;
-const isTarget = (laag: ToegevoegdeLaag) => (ds: DragState) => ds.currentDrop.titel === laag.titel;
+const isSource = (laag: ToegevoegdeLaag) => (ds: DragState) =>
+  ds.from.titel === laag.titel;
+const isTarget = (laag: ToegevoegdeLaag) => (ds: DragState) =>
+  ds.currentDrop.titel === laag.titel;
 
 @Component({
   selector: "awv-lagenkiezer",
@@ -68,18 +89,26 @@ const isTarget = (laag: ToegevoegdeLaag) => (ds: DragState) => ds.currentDrop.ti
     trigger("enterAnimation", [
       transition(":enter", [
         style({ opacity: 0, "max-height": 0 }),
-        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 1, "max-height": "400px" }))
+        animate(
+          "0.35s cubic-bezier(.62,.28,.23,.99)",
+          style({ opacity: 1, "max-height": "400px" })
+        ),
       ]),
       transition(":leave", [
         style({ opacity: 1, "max-height": "400px" }),
-        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 0, "max-height": 0 }))
-      ])
-    ])
+        animate(
+          "0.35s cubic-bezier(.62,.28,.23,.99)",
+          style({ opacity: 0, "max-height": 0 })
+        ),
+      ]),
+    ]),
   ],
   encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush // Omdat angular anders veel te veel change detection uitvoert
+  changeDetection: ChangeDetectionStrategy.OnPush, // Omdat angular anders veel te veel change detection uitvoert
 })
-export class LagenkiezerComponent extends KaartChildDirective implements OnInit, OnDestroy {
+export class LagenkiezerComponent
+  extends KaartChildDirective
+  implements OnInit, OnDestroy {
   private dragState: option.Option<DragState> = option.none;
   private dichtgeklapt = false;
   public geselecteerdeTab = 0;
@@ -94,7 +123,12 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
   readonly opties$: rx.Observable<LagenUiOpties>;
   readonly tabelState$: rx.Observable<TabelActiviteit>;
 
-  constructor(parent: KaartComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef, private readonly sanitizer: DomSanitizer) {
+  constructor(
+    parent: KaartComponent,
+    ngZone: NgZone,
+    private readonly cdr: ChangeDetectorRef,
+    private readonly sanitizer: DomSanitizer
+  ) {
     super(parent, ngZone);
 
     function isZichtbaar(laag: ToegevoegdeLaag, zoom: number): boolean {
@@ -102,7 +136,7 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
     }
 
     const zoom$ = parent.modelChanges.viewinstellingen$.pipe(
-      map(i => i.zoom),
+      map((i) => i.zoom),
       distinctUntilChanged()
     );
     this.lagenHoog$ = this.modelChanges.lagenOpGroep["Voorgrond.Hoog"].pipe(
@@ -113,27 +147,45 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
       debounceTime(100),
       shareReplay(1)
     );
-    const achtergrondLagen$ = this.modelChanges.lagenOpGroep["Achtergrond"].pipe(
-      debounceTime(100),
-      shareReplay(1)
-    );
+    const achtergrondLagen$ = this.modelChanges.lagenOpGroep[
+      "Achtergrond"
+    ].pipe(debounceTime(100), shareReplay(1));
     this.lagenMetLegende$ = rx
-      .combineLatest(this.lagenHoog$, this.lagenLaag$, achtergrondLagen$, zoom$, (lagenHoog, lagenLaag, achtergrondLagen, zoom) => {
-        const lagen = lagenHoog.concat(lagenLaag, achtergrondLagen);
-        return lagen.filter(laag => isZichtbaar(laag, zoom) && laag.magGetoondWorden && laag.legende.isSome());
-      })
+      .combineLatest(
+        this.lagenHoog$,
+        this.lagenLaag$,
+        achtergrondLagen$,
+        zoom$,
+        (lagenHoog, lagenLaag, achtergrondLagen, zoom) => {
+          const lagen = lagenHoog.concat(lagenLaag, achtergrondLagen);
+          return lagen.filter(
+            (laag) =>
+              isZichtbaar(laag, zoom) &&
+              laag.magGetoondWorden &&
+              laag.legende.isSome()
+          );
+        }
+      )
       .pipe(shareReplay(1));
     const lagenHoogLeeg$ = this.lagenHoog$.pipe(map(array.isEmpty));
     const lagenLaagLeeg$ = this.lagenLaag$.pipe(map(array.isEmpty));
-    this.heeftDivider$ = rx.combineLatest(lagenHoogLeeg$, lagenLaagLeeg$, (h, l) => !h && !l).pipe(shareReplay(1));
-    this.geenLagen$ = rx.combineLatest(lagenHoogLeeg$, lagenLaagLeeg$, (h, l) => h && l).pipe(shareReplay(1));
+    this.heeftDivider$ = rx
+      .combineLatest(lagenHoogLeeg$, lagenLaagLeeg$, (h, l) => !h && !l)
+      .pipe(shareReplay(1));
+    this.geenLagen$ = rx
+      .combineLatest(lagenHoogLeeg$, lagenLaagLeeg$, (h, l) => h && l)
+      .pipe(shareReplay(1));
     this.geenLegende$ = this.lagenMetLegende$.pipe(
       map(array.isEmpty),
       shareReplay(1)
     );
     this.lagenMetFilter$ = this.lagenHoog$.pipe(
-      map(lagen => array.filter(lagen, isToegevoegdeVectorLaag)),
-      map(vlagen => array.filter(vlagen, vlaag => Filter.isDefined(vlaag.filterinstellingen.spec)))
+      map((lagen) => array.filter(lagen, isToegevoegdeVectorLaag)),
+      map((vlagen) =>
+        array.filter(vlagen, (vlaag) =>
+          Filter.isDefined(vlaag.filterinstellingen.spec)
+        )
+      )
     );
 
     this.heeftFilters$ = this.lagenMetFilter$.pipe(
@@ -141,14 +193,18 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
       shareReplay(1)
     );
     this.dispatch(prt.InitUiElementOpties(LagenUiSelector, defaultOpties));
-    this.opties$ = this.accumulatedOpties$<LagenUiOpties>(LagenUiSelector).pipe();
+    this.opties$ = this.accumulatedOpties$<LagenUiOpties>(
+      LagenUiSelector
+    ).pipe();
 
     this.tabelState$ = this.modelChanges.tabelActiviteit$;
 
     // Klap dicht wanneer laagstijleditor actief wordt. TODO via collapseUIRequest$
-    this.bindToLifeCycle(this.modelChanges.laagstijlaanpassingState$.pipe(filter(isAanpassingBezig))).subscribe(
-      () => (this.dichtgeklapt = true)
-    );
+    this.bindToLifeCycle(
+      this.modelChanges.laagstijlaanpassingState$.pipe(
+        filter(isAanpassingBezig)
+      )
+    ).subscribe(() => (this.dichtgeklapt = true));
 
     // Klap dicht wanneer tabel opengeklapt wordt
     const collapse$ = this.modelChanges.collapseUIRequest$;
@@ -161,11 +217,11 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
   ngOnInit() {
     super.ngOnInit();
     const initieelDichtgeklapt$ = this.opties$.pipe(
-      map(opties => opties.initieelDichtgeklapt),
+      map((opties) => opties.initieelDichtgeklapt),
       distinctUntilChanged()
     );
     // Zorg dat de lijst initieel open of dicht is zoals ingesteld
-    initieelDichtgeklapt$.pipe(debounceTime(50)).subscribe(dichtgeklapt => {
+    initieelDichtgeklapt$.pipe(debounceTime(50)).subscribe((dichtgeklapt) => {
       this.cdr.detectChanges();
       this.dichtgeklapt = dichtgeklapt;
     });
@@ -197,13 +253,13 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
   }
 
   isDropZone(laag: ToegevoegdeLaag): boolean {
-    return this.dragState.map(ds => ds.from).contains(setoidGroep, laag);
+    return this.dragState.map((ds) => ds.from).contains(setoidGroep, laag);
   }
 
   isDragSource(laag: ToegevoegdeLaag): boolean {
     return this.dragState.foldL(
       () => false,
-      ds => {
+      (ds) => {
         if (isSource(laag)(ds)) {
           return true;
         } else {
@@ -216,7 +272,7 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
   isDragTarget(laag: ToegevoegdeLaag): boolean {
     return this.dragState.foldL(
       () => false,
-      ds => {
+      (ds) => {
         if (isTarget(laag)(ds)) {
           return true;
         } else {
@@ -229,7 +285,7 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
   isDragUntargetable(laag: ToegevoegdeLaag): boolean {
     return this.dragState.foldL(
       () => false,
-      ds => {
+      (ds) => {
         if (ds.from.laaggroep !== laag.laaggroep) {
           return true;
         } else {
@@ -248,7 +304,7 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
     setTimeout(() => {
       this.dragState = option.some({
         from: laag,
-        currentDrop: laag
+        currentDrop: laag,
       });
     }, 0);
   }
@@ -266,13 +322,15 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
   onDragEnter(evt: DragEvent, laag: ToegevoegdeLaag) {
     evt.preventDefault(); // nodig opdat browser drop toelaat
     if (evt.dataTransfer) {
-      evt.dataTransfer.dropEffect = this.isDropZone(laag) ? "move" : "option.none";
+      evt.dataTransfer.dropEffect = this.isDropZone(laag)
+        ? "move"
+        : "option.none";
     }
-    this.dragState.map(ds => {
+    this.dragState.map((ds) => {
       if (!isSource(laag)(ds) && ds.from.laaggroep === laag.laaggroep) {
         this.dragState = option.some({
           ...ds,
-          currentDrop: laag
+          currentDrop: laag,
         });
       }
     });
@@ -282,10 +340,10 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
     if (this.isDropZone(laag)) {
       // enkel drop toelaten in zelfde groep
       evt.preventDefault();
-      this.dragState.map(ds => {
+      this.dragState.map((ds) => {
         this.dragState = option.some({
           ...ds,
-          currentDrop: laag
+          currentDrop: laag,
         });
       });
     }
@@ -294,11 +352,11 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
   onDragLeave(laag: ToegevoegdeLaag) {
     // De current drop enkel aanpassen als er ondertussen nog geen dragenter was die al een andere laag als drop target
     // aangeduid heeft. Dat kan als we buiten de lijst gaan met de cursor.
-    this.dragState.map(ds => {
+    this.dragState.map((ds) => {
       if (isTarget(laag)(ds)) {
         this.dragState = option.some({
           ...ds,
-          currentDrop: ds.from
+          currentDrop: ds.from,
         });
       }
     });
@@ -307,7 +365,13 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
   onDrop(evt: DragEvent, laag: ToegevoegdeLaag) {
     if (evt.dataTransfer) {
       const bronLaagtitel = evt.dataTransfer.getData(dndDataType);
-      this.dispatch(prt.VerplaatsLaagCmd(bronLaagtitel, laag.positieInGroep, kaartLogOnlyWrapper));
+      this.dispatch(
+        prt.VerplaatsLaagCmd(
+          bronLaagtitel,
+          laag.positieInGroep,
+          kaartLogOnlyWrapper
+        )
+      );
     }
     this.onDragEnd(); // wordt niet door de browser aangeroepen blijkbaar
     evt.preventDefault();
@@ -321,17 +385,17 @@ export class LagenkiezerComponent extends KaartChildDirective implements OnInit,
           return `<svg class="legende-svg"><circle cx="12" cy="12" r="4" fill="${item.kleur}" class="legende-svg-item"/></svg>`;
         case "Lijn":
           return item.achtergrondKleur.foldL(
-            () => `<svg class="legende-svg"><polygon points="0,8 24,8 24,16 0,16" fill="${item.kleur}" class="legende-svg-item"/></svg>`,
-            achtergrondKleur =>
+            () =>
+              `<svg class="legende-svg"><polygon points="0,8 24,8 24,16 0,16" fill="${item.kleur}" class="legende-svg-item"/></svg>`,
+            (achtergrondKleur) =>
               `<svg class="legende-svg">
                 <polygon points="0,8 24,8 24,16 0,16" fill="${achtergrondKleur}"/>
                 <polygon points="0,10 24,10 24,14 0,14" fill="${item.kleur}"/>
                </svg>`
           );
         case "Polygoon":
-          return `<svg class="legende-svg"><polygon points="0,24 5,0 20,4 24,24 10,20" fill="${
-            item.kleur
-          }" class="legende-svg-item"/></svg>`;
+          // eslint-disable-next-line max-len
+          return `<svg class="legende-svg"><polygon points="0,24 5,0 20,4 24,24 10,20" fill="${item.kleur}" class="legende-svg-item"/></svg>`;
         case "Image":
           return `<img class="legende-image" src="${item.image}"/>`;
       }

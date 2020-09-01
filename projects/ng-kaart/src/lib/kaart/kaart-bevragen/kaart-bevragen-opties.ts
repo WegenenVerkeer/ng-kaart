@@ -13,7 +13,7 @@ export interface MeterUnit {
 export function MeterUnit(waarde: number): MeterUnit {
   return {
     type: "Meter",
-    waarde: waarde
+    waarde: waarde,
   };
 }
 
@@ -24,7 +24,7 @@ export interface PixelUnit {
 export function PixelUnit(waarde: number): PixelUnit {
   return {
     type: "Pixel",
-    waarde: waarde
+    waarde: waarde,
   };
 }
 
@@ -48,12 +48,20 @@ export interface BevraagKaartOpties {
 }
 
 export namespace BevraagKaartOpties {
-  export const ZetOptiesCmd = (opties: Partial<BevraagKaartOpties>): prt.ZetUiElementOpties =>
+  export const ZetOptiesCmd = (
+    opties: Partial<BevraagKaartOpties>
+  ): prt.ZetUiElementOpties =>
     prt.ZetUiElementOpties(BevraagKaartUiSelector, opties);
 
-  export const set = (opties: Partial<BevraagKaartOpties>): Endomorphism<OptiesOpUiElement> =>
+  export const set = (
+    opties: Partial<BevraagKaartOpties>
+  ): Endomorphism<OptiesOpUiElement> =>
     OptiesOpUiElement.extend(opties)(BevraagKaartUiSelector);
 
-  export const getOption = (optiesOpSelector: OptiesOpUiElement): option.Option<BevraagKaartOpties> =>
-    OptiesOpUiElement.getOption<BevraagKaartOpties>(BevraagKaartUiSelector)(optiesOpSelector);
+  export const getOption = (
+    optiesOpSelector: OptiesOpUiElement
+  ): option.Option<BevraagKaartOpties> =>
+    OptiesOpUiElement.getOption<BevraagKaartOpties>(BevraagKaartUiSelector)(
+      optiesOpSelector
+    );
 }

@@ -1,4 +1,11 @@
-import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
+import {
+  Component,
+  EventEmitter,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  Output,
+} from "@angular/core";
 import { option } from "fp-ts";
 import * as rx from "rxjs";
 import { map, takeUntil, tap } from "rxjs/operators";
@@ -10,7 +17,12 @@ import * as ol from "../../util/openlayers-compat";
 import { ofType } from "../../util/operators";
 import * as sets from "../../util/sets";
 import { TekenSettings } from "../kaart-elementen";
-import { GeometryChangedMsg, InfoBoodschappenMsg, tekenResultaatWrapper, verwijderTekenFeatureWrapper } from "../kaart-internal-messages";
+import {
+  GeometryChangedMsg,
+  InfoBoodschappenMsg,
+  tekenResultaatWrapper,
+  verwijderTekenFeatureWrapper,
+} from "../kaart-internal-messages";
 import { KaartModusDirective } from "../kaart-modus.directive";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
@@ -27,7 +39,7 @@ export interface MetenOpties extends OptiesRecord {
 
 const defaultOpties: MetenOpties = {
   toonInfoBoodschap: true,
-  meerdereGeometrieen: true
+  meerdereGeometrieen: true,
 };
 
 /**
@@ -38,9 +50,11 @@ const defaultOpties: MetenOpties = {
 @Component({
   selector: "awv-kaart-meten",
   templateUrl: "./kaart-meten.component.html",
-  styleUrls: ["./kaart-meten.component.scss"]
+  styleUrls: ["./kaart-meten.component.scss"],
 })
-export class KaartMetenComponent extends KaartModusDirective implements OnInit, OnDestroy {
+export class KaartMetenComponent
+  extends KaartModusDirective
+  implements OnInit, OnDestroy {
   @Output()
   getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
 
@@ -67,10 +81,12 @@ export class KaartMetenComponent extends KaartModusDirective implements OnInit, 
 
   ngOnInit(): void {
     super.ngOnInit();
-    this.bindToLifeCycle(this.modusOpties$(defaultOpties)).subscribe(opties => {
-      this.toonInfoBoodschap = opties.toonInfoBoodschap;
-      this.meerdereGeometrieen = opties.meerdereGeometrieen;
-    });
+    this.bindToLifeCycle(this.modusOpties$(defaultOpties)).subscribe(
+      (opties) => {
+        this.toonInfoBoodschap = opties.toonInfoBoodschap;
+        this.meerdereGeometrieen = opties.meerdereGeometrieen;
+      }
+    );
   }
 
   ngOnDestroy(): void {
@@ -79,7 +95,8 @@ export class KaartMetenComponent extends KaartModusDirective implements OnInit, 
   }
 
   private startMetMeten(): void {
-    const boodschapVanMeten = boodschap => boodschap.bron.exists(bron => bron === "meten");
+    const boodschapVanMeten = (boodschap) =>
+      boodschap.bron.exists((bron) => bron === "meten");
 
     this.eersteIsGetekend = false;
 
@@ -88,7 +105,13 @@ export class KaartMetenComponent extends KaartModusDirective implements OnInit, 
         internalMsgSubscriptionCmdOperator(
           this.kaartComponent.internalCmdDispatcher,
           prt.GeometryChangedSubscription(
-            TekenSettings(ol.geom.GeometryType.POLYGON, option.none, option.none, option.none, this.meerdereGeometrieen),
+            TekenSettings(
+              ol.geom.GeometryType.POLYGON,
+              option.none,
+              option.none,
+              option.none,
+              this.meerdereGeometrieen
+            ),
             tekenResultaatWrapper
           )
         )
@@ -96,8 +119,13 @@ export class KaartMetenComponent extends KaartModusDirective implements OnInit, 
     )
       .pipe(takeUntil(this.stopTekenenSubj))
       .subscribe(
-        err => kaartLogger.error("De meten subscription gaf een logische fout", err),
-        err => kaartLogger.error("De meten subscription gaf een technische fout", err),
+        (err) =>
+          kaartLogger.error("De meten subscription gaf een logische fout", err),
+        (err) =>
+          kaartLogger.error(
+            "De meten subscription gaf een technische fout",
+            err
+          ),
         () => kaartLogger.debug("De meten source is gestopt")
       );
 
@@ -105,9 +133,13 @@ export class KaartMetenComponent extends KaartModusDirective implements OnInit, 
     this.bindToLifeCycle(
       this.internalMessage$.pipe(
         ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
-        map(msg => Array.from(maps.filter(msg.infoBoodschappen, boodschapVanMeten).keys()))
+        map((msg) =>
+          Array.from(
+            maps.filter(msg.infoBoodschappen, boodschapVanMeten).keys()
+          )
+        )
       )
-    ).subscribe(boodschappen => {
+    ).subscribe((boodschappen) => {
       this.openBoodschappen = new Set(boodschappen);
       if (this.eersteIsGetekend && sets.isEmpty(this.openBoodschappen)) {
         // Wanneer alle info-boxen van meten gesloten zijn, kan je stoppen met meten.
@@ -126,8 +158,9 @@ export class KaartMetenComponent extends KaartModusDirective implements OnInit, 
         ofType<GeometryChangedMsg>("GeometryChanged"), //
         observeOnAngular(this.zone)
       )
-      .subscribe(msg => {
-        const infoSluitCallback = () => option.some(verwijderTekenFeatureWrapper(msg.featureId));
+      .subscribe((msg) => {
+        const infoSluitCallback = () =>
+          option.some(verwijderTekenFeatureWrapper(msg.featureId));
 
         this.getekendeGeom.next(msg.geometry);
         if (this.toonInfoBoodschap) {
@@ -140,7 +173,7 @@ export class KaartMetenComponent extends KaartModusDirective implements OnInit, 
               bron: option.some("meten"),
               message: this.helpText(msg.geometry),
               iconName: option.some("straighten"),
-              verbergMsgGen: infoSluitCallback
+              verbergMsgGen: infoSluitCallback,
             })
           );
         }
@@ -156,7 +189,9 @@ export class KaartMetenComponent extends KaartModusDirective implements OnInit, 
     this.stopMeten();
 
     // Sluit alle meten infoboxen.
-    this.openBoodschappen.forEach(boodschap => this.dispatch(prt.VerbergInfoBoodschapCmd(boodschap!)));
+    this.openBoodschappen.forEach((boodschap) =>
+      this.dispatch(prt.VerbergInfoBoodschapCmd(boodschap!))
+    );
   }
 
   helpText(geometry: ol.geom.Geometry): string {

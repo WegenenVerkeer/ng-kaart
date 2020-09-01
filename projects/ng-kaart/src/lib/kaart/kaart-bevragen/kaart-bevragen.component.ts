@@ -2,7 +2,17 @@ import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { either, option, tuple } from "fp-ts";
 import * as rx from "rxjs";
-import { catchError, debounceTime, filter, map, mergeAll, scan, startWith, switchMap, timeoutWith } from "rxjs/operators";
+import {
+  catchError,
+  debounceTime,
+  filter,
+  map,
+  mergeAll,
+  scan,
+  startWith,
+  switchMap,
+  timeoutWith,
+} from "rxjs/operators";
 
 import * as arrays from "../../util/arrays";
 import { observeOnAngular } from "../../util/observe-on-angular";
@@ -15,7 +25,11 @@ import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
 
-import { BevraagKaartOpties, BevraagKaartUiSelector, ZoekAfstand } from "./kaart-bevragen-opties";
+import {
+  BevraagKaartOpties,
+  BevraagKaartUiSelector,
+  ZoekAfstand,
+} from "./kaart-bevragen-opties";
 import * as srv from "./kaart-bevragen.service";
 import {
   AdresResult,
@@ -23,17 +37,17 @@ import {
   LaagLocationInfo,
   LaagLocationInfoResult,
   LaagLocationInfoService,
-  WegLocatiesResult
+  WegLocatiesResult,
 } from "./laaginfo.model";
 
 const defaultOptions: BevraagKaartOpties = {
   zoekAfstand: {
     type: "Meter",
-    waarde: 25
+    waarde: 25,
   },
   kaartBevragenOnderdrukt: false,
   infoServiceOnderdrukt: false,
-  onderdrukInfoBoodschappen: false
+  onderdrukInfoBoodschappen: false,
 };
 
 // Deze component zorgt voor het klikken op de kaart _naast_ een feature. Het is deze component die de service calls
@@ -41,9 +55,11 @@ const defaultOptions: BevraagKaartOpties = {
 // KaartIdentifyComponent.
 @Component({
   selector: "awv-kaart-bevragen",
-  template: ""
+  template: "",
 })
-export class KaartBevragenComponent extends KaartModusDirective implements OnInit, OnDestroy {
+export class KaartBevragenComponent
+  extends KaartModusDirective
+  implements OnInit, OnDestroy {
   constructor(parent: KaartComponent, zone: NgZone, private http: HttpClient) {
     super(parent, zone);
   }
@@ -59,7 +75,10 @@ export class KaartBevragenComponent extends KaartModusDirective implements OnIni
   ngOnInit(): void {
     super.ngOnInit();
 
-    const zoekAfstandInMeter = (resolution: number, zoekAfstand: ZoekAfstand) => {
+    const zoekAfstandInMeter = (
+      resolution: number,
+      zoekAfstand: ZoekAfstand
+    ) => {
       switch (zoekAfstand.type) {
         case "Meter":
           return zoekAfstand.waarde;
@@ -70,10 +89,16 @@ export class KaartBevragenComponent extends KaartModusDirective implements OnIni
     };
 
     const options$ = this.modusOpties$(defaultOptions);
-    const stableReferentielagen$ = this.modelChanges.lagenOpGroep["Voorgrond.Laag"].pipe(debounceTime(250));
+    const stableReferentielagen$ = this.modelChanges.lagenOpGroep[
+      "Voorgrond.Laag"
+    ].pipe(debounceTime(250));
     const stableInfoServices$ = options$.pipe(
-      switchMap(options =>
-        options.infoServiceOnderdrukt ? rx.EMPTY : this.modelChanges.laagLocationInfoServicesOpTitel$.pipe(debounceTime(250))
+      switchMap((options) =>
+        options.infoServiceOnderdrukt
+          ? rx.EMPTY
+          : this.modelChanges.laagLocationInfoServicesOpTitel$.pipe(
+              debounceTime(250)
+            )
       )
     );
     const infoServiceCalls$ = (
@@ -88,8 +113,10 @@ export class KaartBevragenComponent extends KaartModusDirective implements OnIni
         : rx
             .from(
               lgn
-                .filter(lg => lg!.layer.getVisible() && svcs.has(lg!.titel)) // zichtbare lagen met een info service
-                .map(lg => infoForLaag(timestamp, locatie, lg!, svcs.get(lg!.titel)!))
+                .filter((lg) => lg!.layer.getVisible() && svcs.has(lg!.titel)) // zichtbare lagen met een info service
+                .map((lg) =>
+                  infoForLaag(timestamp, locatie, lg!, svcs.get(lg!.titel)!)
+                )
             )
             .pipe(mergeAll(4));
     const kaartBevragenServiceCalls$ = (
@@ -103,15 +130,25 @@ export class KaartBevragenComponent extends KaartModusDirective implements OnIni
         : rx.merge(
             srv
               .wegLocatiesViaXY$(this.http, locatie, zoekAfstandInMeter)
-              .pipe(map(weglocatie => srv.fromWegLocaties(timestamp, locatie, weglocatie))),
-            srv.adresViaXY$(this.http, locatie).pipe(map(adres => srv.withAdres(timestamp, locatie, adres)))
+              .pipe(
+                map((weglocatie) =>
+                  srv.fromWegLocaties(timestamp, locatie, weglocatie)
+                )
+              ),
+            srv
+              .adresViaXY$(this.http, locatie)
+              .pipe(map((adres) => srv.withAdres(timestamp, locatie, adres)))
           );
-    const clickOutsideFeature$ = this.modelChanges.kaartKlikLocatie$.pipe(filter(l => !l.coversFeature));
-    const geklikteLocatie$ = this.isActief$.pipe(switchMap(isActief => (isActief ? clickOutsideFeature$ : rx.EMPTY)));
+    const clickOutsideFeature$ = this.modelChanges.kaartKlikLocatie$.pipe(
+      filter((l) => !l.coversFeature)
+    );
+    const geklikteLocatie$ = this.isActief$.pipe(
+      switchMap((isActief) => (isActief ? clickOutsideFeature$ : rx.EMPTY))
+    );
     const stableZoekAfstand$ = (options: BevraagKaartOpties) =>
       this.modelChanges.viewinstellingen$.pipe(
         debounceTime(250),
-        map(view => zoekAfstandInMeter(view.resolution, options.zoekAfstand))
+        map((view) => zoekAfstandInMeter(view.resolution, options.zoekAfstand))
       );
 
     const allSvcCalls = (
@@ -124,25 +161,42 @@ export class KaartBevragenComponent extends KaartModusDirective implements OnIni
       const timestamp = Date.now();
       return rx.merge(
         infoServiceCalls$(lgn, svcs, locatie, timestamp, options),
-        kaartBevragenServiceCalls$(locatie, timestamp, zoekAfstandInMeter, options)
+        kaartBevragenServiceCalls$(
+          locatie,
+          timestamp,
+          zoekAfstandInMeter,
+          options
+        )
       );
     };
 
     this.bindToLifeCycle(
       stableReferentielagen$.pipe(
-        switchMap(lgn =>
+        switchMap((lgn) =>
           stableInfoServices$.pipe(
-            switchMap(svcs =>
+            switchMap((svcs) =>
               options$.pipe(
-                switchMap(options =>
+                switchMap((options) =>
                   stableZoekAfstand$(options).pipe(
-                    switchMap(zoekAfstand =>
+                    switchMap((zoekAfstand) =>
                       geklikteLocatie$.pipe(
-                        switchMap(locatie =>
-                          allSvcCalls(lgn, svcs, locatie.coordinate, zoekAfstand, options) //
+                        switchMap((locatie) =>
+                          allSvcCalls(
+                            lgn,
+                            svcs,
+                            locatie.coordinate,
+                            zoekAfstand,
+                            options
+                          ) //
                             .pipe(
                               scan(srv.merge),
-                              map(locatieInfo => new tuple.Tuple<srv.LocatieInfo, BevraagKaartOpties>(locatieInfo, options))
+                              map(
+                                (locatieInfo) =>
+                                  new tuple.Tuple<
+                                    srv.LocatieInfo,
+                                    BevraagKaartOpties
+                                  >(locatieInfo, options)
+                              )
                             )
                         )
                       )
@@ -155,15 +209,26 @@ export class KaartBevragenComponent extends KaartModusDirective implements OnIni
         ),
         observeOnAngular(this.zone)
       )
-    ).subscribe(tuple => {
+    ).subscribe((tuple) => {
       const msg = tuple.fst;
       const options = tuple.snd;
       const adres = msg.adres;
       const wegLocaties = msg.weglocaties;
       if (!options.onderdrukInfoBoodschappen) {
-        this.toonInfoBoodschap(msg.kaartLocatie, adres, wegLocaties, msg.lagenLocatieInfo);
+        this.toonInfoBoodschap(
+          msg.kaartLocatie,
+          adres,
+          wegLocaties,
+          msg.lagenLocatieInfo
+        );
       }
-      this.publiceerInfoBoodschap(msg.timestamp, msg.kaartLocatie, adres, wegLocaties, msg.lagenLocatieInfo);
+      this.publiceerInfoBoodschap(
+        msg.timestamp,
+        msg.kaartLocatie,
+        adres,
+        wegLocaties,
+        msg.lagenLocatieInfo
+      );
     });
   }
 
@@ -183,9 +248,11 @@ export class KaartBevragenComponent extends KaartModusDirective implements OnIni
         coordinaat: coordinaat,
         adres: progress.toOption(maybeAdres).chain(option.fromEither),
         // We moeten een Progress<Either<A, B[]>> omzetten naar een B[]
-        weglocaties: arrays.fromOption(progress.toOption(wegLocaties).map(arrays.fromEither)),
+        weglocaties: arrays.fromOption(
+          progress.toOption(wegLocaties).map(arrays.fromEither)
+        ),
         laagLocatieInfoOpTitel: lagenLocatieInfo,
-        verbergMsgGen: () => option.none
+        verbergMsgGen: () => option.none,
       })
     );
   }
@@ -203,7 +270,7 @@ export class KaartBevragenComponent extends KaartModusDirective implements OnIni
         coordinaat: coordinaat,
         maybeAdres: maybeAdres,
         wegLocaties: wegLocaties,
-        lagenLocatieInfo: lagenLocatieInfo
+        lagenLocatieInfo: lagenLocatieInfo,
       })
     );
   }
@@ -218,23 +285,42 @@ function infoForLaag(
   return svc
     .infoByLocation$(location) //
     .pipe(
-      map(info =>
+      map((info) =>
         srv.withLaagLocationInfo(
           srv.fromTimestampAndCoordinate(timestamp, location),
           laag.titel,
           Received(either.right<BevragenErrorReason, LaagLocationInfo>(info))
         )
       ),
-      startWith(srv.withLaagLocationInfo(srv.fromTimestampAndCoordinate(timestamp, location), laag.titel, Requested)),
-      timeoutWith(5000, rx.of(srv.withLaagLocationInfo(srv.fromTimestampAndCoordinate(timestamp, location), laag.titel, TimedOut))),
-      catchError(error => {
+      startWith(
+        srv.withLaagLocationInfo(
+          srv.fromTimestampAndCoordinate(timestamp, location),
+          laag.titel,
+          Requested
+        )
+      ),
+      timeoutWith(
+        5000,
+        rx.of(
+          srv.withLaagLocationInfo(
+            srv.fromTimestampAndCoordinate(timestamp, location),
+            laag.titel,
+            TimedOut
+          )
+        )
+      ),
+      catchError((error) => {
         // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
         kaartLogger.error("Fout bij opvragen laaginfo", error);
         return rx.of(
           srv.withLaagLocationInfo(
             srv.fromTimestampAndCoordinate(timestamp, location),
             laag.titel,
-            Received(either.left<BevragenErrorReason, LaagLocationInfo>(srv.errorToReason(error)))
+            Received(
+              either.left<BevragenErrorReason, LaagLocationInfo>(
+                srv.errorToReason(error)
+              )
+            )
           )
         );
       })

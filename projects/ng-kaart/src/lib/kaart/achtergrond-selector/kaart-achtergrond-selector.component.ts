@@ -1,6 +1,18 @@
-import { animate, state, style, transition, trigger } from "@angular/animations";
+import {
+  animate,
+  state,
+  style,
+  transition,
+  trigger,
+} from "@angular/animations";
 import { BreakpointObserver, Breakpoints } from "@angular/cdk/layout";
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  NgZone,
+  OnInit,
+} from "@angular/core";
 import * as rx from "rxjs";
 import { map, switchMapTo } from "rxjs/operators";
 
@@ -9,13 +21,18 @@ import { ofType } from "../../util/operators";
 import { KaartChildDirective } from "../kaart-child.directive";
 import { mobile } from "../kaart-config";
 import { AchtergrondLaag, ToegevoegdeLaag } from "../kaart-elementen";
-import { AchtergrondtitelGezetMsg, achtergrondtitelGezetWrapper, KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
+import {
+  AchtergrondtitelGezetMsg,
+  achtergrondtitelGezetWrapper,
+  KaartInternalMsg,
+  kaartLogOnlyWrapper,
+} from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 
 enum DisplayMode {
   SHOWING_STATUS,
-  SELECTING
+  SELECTING,
 }
 
 const Visible = "visible";
@@ -31,7 +48,7 @@ const Invisible = "invisible";
         Visible,
         style({
           opacity: "1.0",
-          maxWidth: "80px"
+          maxWidth: "80px",
         })
       ),
       state(
@@ -39,32 +56,40 @@ const Invisible = "invisible";
         style({
           opacity: "0.0",
           maxWidth: "0px",
-          marginRight: "0px"
+          marginRight: "0px",
         })
       ),
-      transition(Invisible + " => " + Visible, animate("0.2s cubic-bezier(.62,.28,.23,.99)")),
-      transition(Visible + " => " + Invisible, animate("0.15s cubic-bezier(.62,.28,.23,.99)"))
+      transition(
+        Invisible + " => " + Visible,
+        animate("0.2s cubic-bezier(.62,.28,.23,.99)")
+      ),
+      transition(
+        Visible + " => " + Invisible,
+        animate("0.15s cubic-bezier(.62,.28,.23,.99)")
+      ),
     ]),
     trigger("popOverState", [
       state(
         "show",
         style({
-          opacity: 1
+          opacity: 1,
         })
       ),
       state(
         "hide",
         style({
-          opacity: 0
+          opacity: 0,
         })
       ),
       transition("show => hide", animate("600ms ease-out")),
-      transition("hide => show", animate("1000ms ease-in"))
-    ])
+      transition("hide => show", animate("1000ms ease-in")),
+    ]),
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush // Bij default is er een endless loop van updates
+  changeDetection: ChangeDetectionStrategy.OnPush, // Bij default is er een endless loop van updates
 })
-export class KaartAchtergrondSelectorComponent extends KaartChildDirective implements OnInit {
+export class KaartAchtergrondSelectorComponent
+  extends KaartChildDirective
+  implements OnInit {
   public readonly DisplayMode = DisplayMode;
   public displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   public achtergrondTitel = "";
@@ -81,29 +106,35 @@ export class KaartAchtergrondSelectorComponent extends KaartChildDirective imple
   ) {
     super(kaartComponent, zone);
 
-    this.backgroundTiles$ = this.initialising$.pipe(switchMapTo(this.modelChanges.lagenOpGroep.Achtergrond.pipe(map(lgn => lgn))));
+    this.backgroundTiles$ = this.initialising$.pipe(
+      switchMapTo(
+        this.modelChanges.lagenOpGroep.Achtergrond.pipe(map((lgn) => lgn))
+      )
+    );
 
     this.bindToLifeCycle(
       this.initialising$.pipe(
         switchMapTo(
           this.internalMessage$.pipe(
             ofType<AchtergrondtitelGezetMsg>("AchtergrondtitelGezet"), //
-            map(a => a.titel)
+            map((a) => a.titel)
           )
         )
       )
-    ).subscribe(titel => {
+    ).subscribe((titel) => {
       this.achtergrondTitel = titel;
       this.cdr.detectChanges();
     });
 
-    this.bindToLifeCycle(this.initialising$.pipe(switchMapTo(breakpointObserver.observe([Breakpoints.HandsetPortrait])))).subscribe(
-      result => {
-        // Gebruik van built-in breakpoints uit de Material Design spec: https://material.angular.io/cdk/layout/overview
-        this.handsetPortrait = result.matches && this.onMobileDevice;
-        this.cdr.detectChanges();
-      }
-    );
+    this.bindToLifeCycle(
+      this.initialising$.pipe(
+        switchMapTo(breakpointObserver.observe([Breakpoints.HandsetPortrait]))
+      )
+    ).subscribe((result) => {
+      // Gebruik van built-in breakpoints uit de Material Design spec: https://material.angular.io/cdk/layout/overview
+      this.handsetPortrait = result.matches && this.onMobileDevice;
+      this.cdr.detectChanges();
+    });
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {

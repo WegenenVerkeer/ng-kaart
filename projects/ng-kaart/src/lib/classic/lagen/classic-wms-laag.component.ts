@@ -1,7 +1,22 @@
 import { HttpClient } from "@angular/common/http";
-import { AfterViewInit, Component, EventEmitter, Injector, Input, OnInit, Output, ViewEncapsulation } from "@angular/core";
+import {
+  AfterViewInit,
+  Component,
+  EventEmitter,
+  Injector,
+  Input,
+  OnInit,
+  Output,
+  ViewEncapsulation,
+} from "@angular/core";
 import { array, eq, map as fpMap, option } from "fp-ts";
-import { Curried2, Function1, Function2, Function4, pipe } from "fp-ts/lib/function";
+import {
+  Curried2,
+  Function1,
+  Function2,
+  Function4,
+  pipe,
+} from "fp-ts/lib/function";
 import { merge } from "rxjs";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, tap } from "rxjs/operators";
@@ -15,7 +30,7 @@ import {
   progressFailure,
   TextLaagLocationInfo,
   VeldinfoLaagLocationInfo,
-  Veldwaarde
+  Veldwaarde,
 } from "../../kaart/kaart-bevragen/laaginfo.model";
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
@@ -25,21 +40,33 @@ import * as ol from "../../util/openlayers-compat";
 import * as progress from "../../util/progress";
 import { urlWithParams } from "../../util/url";
 import { classicMsgSubscriptionCmdOperator } from "../kaart-classic.component";
-import { KaartClassicMsg, LaatsteCacheRefreshMsg, logOnlyWrapper, PrecacheProgressMsg, PublishedKaartLocatiesMsg } from "../messages";
+import {
+  KaartClassicMsg,
+  LaatsteCacheRefreshMsg,
+  logOnlyWrapper,
+  PrecacheProgressMsg,
+  PublishedKaartLocatiesMsg,
+} from "../messages";
 import * as val from "../webcomponent-support/params";
 
 import { ClassicLaagDirective } from "./classic-laag.directive";
 
-const wmsFeatureInfo: Function2<HttpClient, Function1<ol.Coordinate, string>, Function1<ol.Coordinate, rx.Observable<string>>> = (
-  httpClient,
-  queryUrlFn
-) => location => httpClient.get(queryUrlFn(location), { responseType: "text" });
+const wmsFeatureInfo: Function2<
+  HttpClient,
+  Function1<ol.Coordinate, string>,
+  Function1<ol.Coordinate, rx.Observable<string>>
+> = (httpClient, queryUrlFn) => (location) =>
+  httpClient.get(queryUrlFn(location), { responseType: "text" });
 
 const textWmsFeatureInfo: Function2<
   HttpClient,
   Function1<ol.Coordinate, string>,
   Function1<ol.Coordinate, rx.Observable<LaagLocationInfo>>
-> = (httpClient, queryUrlFn) => location => wmsFeatureInfo(httpClient, queryUrlFn)(location).pipe(map(TextLaagLocationInfo));
+> = (httpClient, queryUrlFn) => (location) =>
+  wmsFeatureInfo(
+    httpClient,
+    queryUrlFn
+  )(location).pipe(map(TextLaagLocationInfo));
 
 const veldWmsFeatureInfo: Function4<
   HttpClient,
@@ -47,8 +74,13 @@ const veldWmsFeatureInfo: Function4<
   Function1<string, Veldwaarde[]>,
   ke.VeldInfo[],
   Function1<ol.Coordinate, rx.Observable<LaagLocationInfo>>
-> = (httpClient, queryUrlFn, parser, veldinfos) => location =>
-  wmsFeatureInfo(httpClient, queryUrlFn)(location).pipe(map(text => VeldinfoLaagLocationInfo(parser(text), veldinfos)));
+> = (httpClient, queryUrlFn, parser, veldinfos) => (location) =>
+  wmsFeatureInfo(
+    httpClient,
+    queryUrlFn
+  )(location).pipe(
+    map((text) => VeldinfoLaagLocationInfo(parser(text), veldinfos))
+  );
 
 export interface PrecacheWMS {
   readonly startZoom: number;
@@ -65,12 +97,15 @@ export interface ClassicLaagKlikInfoEnStatus {
   readonly laagInfoFailure?: BevragenErrorReason;
 }
 
-const flatten: Curried2<string, KaartLocaties, option.Option<ClassicLaagKlikInfoEnStatus>> = titel => kaartLocaties => {
-  const maybeLaagInfoResult: option.Option<progress.Progress<LaagLocationInfoResult>> = fpMap.lookup(eq.eqString)(
-    titel,
-    kaartLocaties.lagenLocatieInfo
-  );
-  return maybeLaagInfoResult.map(laagInfoResult => ({
+const flatten: Curried2<
+  string,
+  KaartLocaties,
+  option.Option<ClassicLaagKlikInfoEnStatus>
+> = (titel) => (kaartLocaties) => {
+  const maybeLaagInfoResult: option.Option<progress.Progress<
+    LaagLocationInfoResult
+  >> = fpMap.lookup(eq.eqString)(titel, kaartLocaties.lagenLocatieInfo);
+  return maybeLaagInfoResult.map((laagInfoResult) => ({
     timestamp: kaartLocaties.timestamp,
     coordinaat: kaartLocaties.coordinaat,
     laagInfoStatus: progress.toProgressStatus(laagInfoResult),
@@ -78,22 +113,24 @@ const flatten: Curried2<string, KaartLocaties, option.Option<ClassicLaagKlikInfo
       .toOption(laagInfoResult)
       .chain(option.fromEither)
       .toUndefined(),
-    laagInfoFailure: progressFailure(laagInfoResult)
+    laagInfoFailure: progressFailure(laagInfoResult),
   }));
 };
 
 const infoSetoid: eq.Eq<ClassicLaagKlikInfoEnStatus> = eq.getStructEq({
   timestamp: eq.eqNumber,
   coordinaat: array.getEq(eq.eqNumber),
-  laagInfoStatus: progress.setoidProgressStatus
+  laagInfoStatus: progress.setoidProgressStatus,
 });
 
 @Component({
   selector: "awv-kaart-wms-laag",
   template: "<ng-content></ng-content>",
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
-export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnInit, AfterViewInit {
+export class ClassicWmsLaagComponent
+  extends ClassicLaagDirective
+  implements OnInit, AfterViewInit {
   // Een functie die de output van een WMS featureInfo of een WFS GetFeature request omzet naar een lijst van key-value paren.
   // De keys moeten een subset zijn van de titels van de veldinfos
   @Input()
@@ -107,7 +144,14 @@ export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnI
   set precache(input: PrecacheWMS | undefined) {
     if (input) {
       this.dispatch(
-        prt.VulCacheVoorWMSLaag(this._titel, input.startZoom, input.eindZoom, input.wkt, input.startMetLegeCache, logOnlyWrapper)
+        prt.VulCacheVoorWMSLaag(
+          this._titel,
+          input.startZoom,
+          input.eindZoom,
+          input.wkt,
+          input.startMetLegeCache,
+          logOnlyWrapper
+        )
       );
     }
   }
@@ -184,7 +228,10 @@ export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnI
 
   @Input()
   public set beschikbareProjecties(param: string[]) {
-    this._beschikbareProjecties = val.stringArray(param, this._beschikbareProjecties);
+    this._beschikbareProjecties = val.stringArray(
+      param,
+      this._beschikbareProjecties
+    );
   }
 
   constructor(injector: Injector, private readonly http: HttpClient) {
@@ -192,30 +239,45 @@ export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnI
   }
 
   ngOnInit() {
-    if (["Voorgrond.Laag", "Voorgrond.Hoog", "Achtergrond"].indexOf(this.gekozenLaagGroep()) < 0) {
-      throw new Error("groep moet 'Voorgrond.Laag', 'Voorgrond.Hoog' of 'Achtergrond' zijn");
+    if (
+      ["Voorgrond.Laag", "Voorgrond.Hoog", "Achtergrond"].indexOf(
+        this.gekozenLaagGroep()
+      ) < 0
+    ) {
+      throw new Error(
+        "groep moet 'Voorgrond.Laag', 'Voorgrond.Hoog' of 'Achtergrond' zijn"
+      );
     }
     super.ngOnInit();
   }
 
   protected voegLaagToe() {
     super.voegLaagToe();
-    forEach(option.fromNullable(this.queryUrlFn), queryUrlFn =>
+    forEach(option.fromNullable(this.queryUrlFn), (queryUrlFn) =>
       this.dispatch(
         this._veldInfos
-          .chain(veldinfos =>
-            option
-              .fromNullable(this.textParser)
-              .map(textParser =>
-                VoegLaagLocatieInformatieServiceToe(
-                  this._titel,
-                  { infoByLocation$: veldWmsFeatureInfo(this.http, queryUrlFn, textParser, veldinfos) },
-                  logOnlyWrapper
-                )
+          .chain((veldinfos) =>
+            option.fromNullable(this.textParser).map((textParser) =>
+              VoegLaagLocatieInformatieServiceToe(
+                this._titel,
+                {
+                  infoByLocation$: veldWmsFeatureInfo(
+                    this.http,
+                    queryUrlFn,
+                    textParser,
+                    veldinfos
+                  ),
+                },
+                logOnlyWrapper
               )
+            )
           )
           .getOrElseL(() =>
-            VoegLaagLocatieInformatieServiceToe(this._titel, { infoByLocation$: textWmsFeatureInfo(this.http, queryUrlFn) }, logOnlyWrapper)
+            VoegLaagLocatieInformatieServiceToe(
+              this._titel,
+              { infoByLocation$: textWmsFeatureInfo(this.http, queryUrlFn) },
+              logOnlyWrapper
+            )
           )
       )
     );
@@ -236,7 +298,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnI
         minZoom: this._minZoom,
         maxZoom: this._maxZoom,
         verwijderd: false,
-        beschikbareProjecties: this._beschikbareProjecties
+        beschikbareProjecties: this._beschikbareProjecties,
       };
     } else {
       return {
@@ -252,7 +314,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnI
         minZoom: this._minZoom,
         maxZoom: this._maxZoom,
         verwijderd: false,
-        beschikbareProjecties: this._beschikbareProjecties
+        beschikbareProjecties: this._beschikbareProjecties,
       };
     }
   }
@@ -276,7 +338,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnI
       format: this._format,
       srs: "EPSG:31370",
       crs: "EPSG:31370",
-      bbox: "104528,188839.75,105040,189351.75"
+      bbox: "104528,188839.75,105040,189351.75",
     });
   }
 
@@ -292,31 +354,29 @@ export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnI
             classicMsgSubscriptionCmdOperator(
               this.kaart.dispatcher,
               prt.PrecacheProgressSubscription(
-                pipe(
-                  PrecacheProgressMsg,
-                  KaartClassicMsg
-                )
+                pipe(PrecacheProgressMsg, KaartClassicMsg)
               ),
               prt.LaatsteCacheRefreshSubscription(
-                pipe(
-                  LaatsteCacheRefreshMsg,
-                  KaartClassicMsg
-                )
+                pipe(LaatsteCacheRefreshMsg, KaartClassicMsg)
               )
             )
           ),
           this.kaart.kaartClassicSubMsg$.pipe(
             ofType<PrecacheProgressMsg>("PrecacheProgress"),
-            map(m => (m.progress[this._titel] ? m.progress[this._titel] : 0)),
+            map((m) => (m.progress[this._titel] ? m.progress[this._titel] : 0)),
             distinctUntilChanged(),
-            tap(progress => this.precacheProgress.emit(progress))
+            tap((progress) => this.precacheProgress.emit(progress))
           ),
           this.kaart.kaartClassicSubMsg$.pipe(
             ofType<LaatsteCacheRefreshMsg>("LaatsteCacheRefresh"),
-            filter(m => option.fromNullable(m.laatsteCacheRefresh[this._titel]).isSome()),
-            map(m => m.laatsteCacheRefresh[this._titel]),
+            filter((m) =>
+              option.fromNullable(m.laatsteCacheRefresh[this._titel]).isSome()
+            ),
+            map((m) => m.laatsteCacheRefresh[this._titel]),
             distinctUntilChanged(),
-            tap(laatsteCacheRefresh => this.laatsteCacheRefresh.emit(laatsteCacheRefresh))
+            tap((laatsteCacheRefresh) =>
+              this.laatsteCacheRefresh.emit(laatsteCacheRefresh)
+            )
           )
         )
       ).subscribe();
@@ -324,10 +384,10 @@ export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnI
     this.bindToLifeCycle(
       this.kaart.kaartClassicSubMsg$.pipe(
         ofType<PublishedKaartLocatiesMsg>("PublishedKaartLocaties"),
-        map(loc => loc.locaties),
+        map((loc) => loc.locaties),
         collectOption(flatten(this._titel)),
         distinctUntilChanged(infoSetoid.equals),
-        tap(info => this.laagLocaties.emit(info))
+        tap((info) => this.laagLocaties.emit(info))
       )
     ).subscribe();
   }

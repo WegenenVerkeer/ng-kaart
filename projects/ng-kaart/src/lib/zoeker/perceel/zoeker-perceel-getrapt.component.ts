@@ -1,7 +1,13 @@
 import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, startWith, switchMap } from "rxjs/operators";
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  startWith,
+  switchMap,
+} from "rxjs/operators";
 
 import { KaartComponent } from "../../kaart/kaart.component";
 import { isNotNullObject } from "../../util/function";
@@ -10,11 +16,18 @@ import {
   GetraptZoekerDirective,
   toNonEmptyDistinctLowercaseString,
   toTrimmedLowerCasedString,
-  ZoekerBoxComponent
+  ZoekerBoxComponent,
 } from "../box/zoeker-box.component";
 import { zoekerMetNaam } from "../zoeker";
 
-import { Afdeling, Gemeente, PERCEEL_SVC_NAAM, PerceelNummer, Sectie, ZoekerPerceelService } from "./zoeker-perceel.service";
+import {
+  Afdeling,
+  Gemeente,
+  PERCEEL_SVC_NAAM,
+  PerceelNummer,
+  Sectie,
+  ZoekerPerceelService,
+} from "./zoeker-perceel.service";
 
 const NIVEAU_ALLES = 0;
 const NIVEAU_VANAFGEMEENTE = 1;
@@ -25,9 +38,11 @@ const NIVEAU_VANAFPERCEEL = 4;
 @Component({
   selector: "awv-zoeker-perceel-getrapt",
   templateUrl: "./zoeker-perceel-getrapt.component.html",
-  styleUrls: ["./zoeker-perceel-getrapt.component.scss"]
+  styleUrls: ["./zoeker-perceel-getrapt.component.scss"],
 })
-export class ZoekerPerceelGetraptComponent extends GetraptZoekerDirective implements OnInit {
+export class ZoekerPerceelGetraptComponent
+  extends GetraptZoekerDirective
+  implements OnInit {
   private alleGemeenten: Gemeente[] = [];
 
   gefilterdeGemeenten: Gemeente[] = [];
@@ -45,7 +60,11 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerDirective implem
   @Output()
   leegMakenDisabledChange: EventEmitter<boolean> = new EventEmitter();
 
-  constructor(kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
+  constructor(
+    kaartComponent: KaartComponent,
+    zoekerComponent: ZoekerBoxComponent,
+    zone: NgZone
+  ) {
     super(kaartComponent, zoekerComponent, zone);
   }
 
@@ -55,13 +74,29 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerDirective implem
 
     const perceelService$: rx.Observable<ZoekerPerceelService> = this.kaartComponent.modelChanges.zoekerServices$.pipe(
       collectOption(zoekerMetNaam(PERCEEL_SVC_NAAM)),
-      map(zoeker => zoeker as ZoekerPerceelService)
+      map((zoeker) => zoeker as ZoekerPerceelService)
     );
-    const alleGemeenten$ = perceelService$.pipe(switchMap(svc => svc.getAlleGemeenten$()));
-    const afdelingen$ = (gemeente: Gemeente) => perceelService$.pipe(switchMap(svc => svc.getAfdelingen$(gemeente.niscode)));
-    const secties$ = (afdeling: Afdeling) => perceelService$.pipe(switchMap(svc => svc.getSecties$(afdeling.niscode, afdeling.code)));
+    const alleGemeenten$ = perceelService$.pipe(
+      switchMap((svc) => svc.getAlleGemeenten$())
+    );
+    const afdelingen$ = (gemeente: Gemeente) =>
+      perceelService$.pipe(
+        switchMap((svc) => svc.getAfdelingen$(gemeente.niscode))
+      );
+    const secties$ = (afdeling: Afdeling) =>
+      perceelService$.pipe(
+        switchMap((svc) => svc.getSecties$(afdeling.niscode, afdeling.code))
+      );
     const perceelNummers$ = (sectie: Sectie) =>
-      perceelService$.pipe(switchMap(svc => svc.getPerceelNummers$(sectie.niscode, sectie.afdelingcode, sectie.code)));
+      perceelService$.pipe(
+        switchMap((svc) =>
+          svc.getPerceelNummers$(
+            sectie.niscode,
+            sectie.afdelingcode,
+            sectie.code
+          )
+        )
+      );
 
     this.bindToLifeCycle(this.busy(alleGemeenten$)).subscribe(
       (gemeenten: Gemeente[]) => {
@@ -70,24 +105,33 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerDirective implem
         this.alleGemeenten = gemeenten;
         this.gefilterdeGemeenten = this.alleGemeenten;
       },
-      error => this.meldFout(error)
+      (error) => this.meldFout(error)
     );
 
     // De gemeente control is speciaal, omdat we met gecachte gemeentes werken.
     // Het heeft geen zin om iedere keer dezelfde lijst van gemeenten op te vragen.
-    this.bindToLifeCycle(this.gemeenteControl.valueChanges.pipe(toNonEmptyDistinctLowercaseString())).subscribe((gemeenteOfNis: string) => {
+    this.bindToLifeCycle(
+      this.gemeenteControl.valueChanges.pipe(
+        toNonEmptyDistinctLowercaseString()
+      )
+    ).subscribe((gemeenteOfNis: string) => {
       // We moeten kunnen filteren op (een deel van) de naam van een gemeente of op (een deel van) de niscode.
       this.gefilterdeGemeenten = this.alleGemeenten
         .filter(
           (gemeente: Gemeente) =>
-            gemeente.naam.toLocaleLowerCase().includes(gemeenteOfNis) || gemeente.niscode.toString().includes(gemeenteOfNis)
+            gemeente.naam.toLocaleLowerCase().includes(gemeenteOfNis) ||
+            gemeente.niscode.toString().includes(gemeenteOfNis)
         )
         .sort((a, b) => {
           function eersteVoorkomenZoekString(gemeente: Gemeente): Number {
             // we zoeken de kleinste index van de zoekTerm in de naam en niscode van de gemeente
-            const indexNaam = gemeente.naam.toLocaleLowerCase().indexOf(gemeenteOfNis);
+            const indexNaam = gemeente.naam
+              .toLocaleLowerCase()
+              .indexOf(gemeenteOfNis);
             const indexNis = gemeente.niscode.toString().indexOf(gemeenteOfNis);
-            const positiveIndexes = [indexNaam, indexNis].filter(index => index !== -1).concat(Infinity);
+            const positiveIndexes = [indexNaam, indexNis]
+              .filter((index) => index !== -1)
+              .concat(Infinity);
             return Math.min(...positiveIndexes);
           }
 
@@ -112,9 +156,19 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerDirective implem
     // Gebruik de waarde van de VORIGE control om een request te doen,
     //   maar alleen als die vorige waarde een object was (dus door de gebruiker aangeklikt in de lijst).
     // Filter het antwoord daarvan met de (eventuele) waarde van onze HUIDIGE control, dit om autocomplete te doen.
-    this.afdelingen$ = this.autocomplete(this.gemeenteControl, afdelingen$, this.afdelingControl, (afdeling: Afdeling) => afdeling.naam);
+    this.afdelingen$ = this.autocomplete(
+      this.gemeenteControl,
+      afdelingen$,
+      this.afdelingControl,
+      (afdeling: Afdeling) => afdeling.naam
+    );
 
-    this.secties$ = this.autocomplete(this.afdelingControl, secties$, this.sectieControl, (sectie: Sectie) => sectie.code);
+    this.secties$ = this.autocomplete(
+      this.afdelingControl,
+      secties$,
+      this.sectieControl,
+      (sectie: Sectie) => sectie.code
+    );
 
     this.percelen$ = this.autocomplete(
       this.sectieControl,
@@ -124,15 +178,27 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerDirective implem
     );
 
     // Wanneer de waardes leeg zijn, mag je de control disablen, maak ook de volgende velden leeg.
-    this.subscribeToDisableWhenEmpty(this.afdelingen$, this.afdelingControl, NIVEAU_VANAFAFDELING);
-    this.subscribeToDisableWhenEmpty(this.secties$, this.sectieControl, NIVEAU_VANAFSECTIE);
-    this.subscribeToDisableWhenEmpty(this.percelen$, this.perceelControl, NIVEAU_VANAFPERCEEL);
+    this.subscribeToDisableWhenEmpty(
+      this.afdelingen$,
+      this.afdelingControl,
+      NIVEAU_VANAFAFDELING
+    );
+    this.subscribeToDisableWhenEmpty(
+      this.secties$,
+      this.sectieControl,
+      NIVEAU_VANAFSECTIE
+    );
+    this.subscribeToDisableWhenEmpty(
+      this.percelen$,
+      this.perceelControl,
+      NIVEAU_VANAFPERCEEL
+    );
 
     this.leegMakenDisabled$ = this.gemeenteControl.valueChanges.pipe(
-      map(c => toTrimmedLowerCasedString(c).length === 0),
+      map((c) => toTrimmedLowerCasedString(c).length === 0),
       startWith(true)
     );
-    this.bindToLifeCycle(this.leegMakenDisabled$).subscribe(value => {
+    this.bindToLifeCycle(this.leegMakenDisabled$).subscribe((value) => {
       this.leegMakenDisabledChange.emit(value);
     });
 
@@ -143,7 +209,9 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerDirective implem
         distinctUntilChanged()
       )
     ).subscribe((perceelDetails: PerceelNummer) => {
-      this.zoek({ type: "Perceel", capaKey: perceelDetails.capakey }, [PERCEEL_SVC_NAAM]);
+      this.zoek({ type: "Perceel", capaKey: perceelDetails.capakey }, [
+        PERCEEL_SVC_NAAM,
+      ]);
     });
   }
 

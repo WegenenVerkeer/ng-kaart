@@ -5,7 +5,7 @@ import * as ol from "projects/ng-kaart/src/lib/util/openlayers-compat";
 @Component({
   selector: "awv-pat-perceel-popup",
   templateUrl: "./perceel-popup.component.html",
-  styleUrls: ["./perceel-popup.component.scss"]
+  styleUrls: ["./perceel-popup.component.scss"],
 })
 export class PerceelPopupComponent implements OnChanges {
   readonly offset = 10;
@@ -24,7 +24,9 @@ export class PerceelPopupComponent implements OnChanges {
   update(feature: option.Option<ol.Feature>) {
     this.feature = feature;
     this.toggleVisibility(this.feature.isSome());
-    this.text = this.feature.chain(f => option.fromNullable(f.get("id"))).getOrElse("");
+    this.text = this.feature
+      .chain((f) => option.fromNullable(f.get("id")))
+      .getOrElse("");
   }
 
   private toggleVisibility(onOff) {

@@ -3,7 +3,7 @@ import { Component, Input } from "@angular/core";
 @Component({
   selector: "awv-filter-logical-connective",
   templateUrl: "./filter-logical-connective.component.html",
-  styleUrls: ["./filter-logical-connective.component.scss"]
+  styleUrls: ["./filter-logical-connective.component.scss"],
 })
 export class FilterLogicalConnectiveComponent {
   @Input()

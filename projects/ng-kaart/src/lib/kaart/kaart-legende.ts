@@ -32,7 +32,7 @@ export interface Legende {
   readonly items: Array<LegendeItem>;
 }
 
-///////////////
+/// ////////////
 // Constructors
 //
 
@@ -40,9 +40,14 @@ export function Legende(items: LegendeItem[]) {
   return { items: items };
 }
 
-export const LijnItem: Function3<string, string, option.Option<string>, LijnItem> = (beschrijving, kleur, achtergrondKleur) => ({
+export const LijnItem: Function3<
+  string,
+  string,
+  option.Option<string>,
+  LijnItem
+> = (beschrijving, kleur, achtergrondKleur) => ({
   type: "Lijn",
   beschrijving: beschrijving,
   kleur: kleur,
-  achtergrondKleur: achtergrondKleur
+  achtergrondKleur: achtergrondKleur,
 });

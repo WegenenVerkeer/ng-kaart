@@ -1,5 +1,13 @@
+/* eslint-disable max-len */
+
 import { animate, style, transition, trigger } from "@angular/animations";
-import { ChangeDetectorRef, Component, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
+import {
+  ChangeDetectorRef,
+  Component,
+  NgZone,
+  ViewChild,
+  ViewEncapsulation,
+} from "@angular/core";
 import { AwvV0DynamicStyleSpec } from "@wegenenverkeer/ng-kaart";
 import { array } from "fp-ts";
 import { option } from "fp-ts";
@@ -31,7 +39,7 @@ import {
   Veldwaarde,
   verkeersbordenStyleFunction,
   zoekerMetPrioriteiten,
-  ZoekerMetWeergaveopties
+  ZoekerMetWeergaveopties,
 } from "../../projects/ng-kaart/src/public_api";
 
 import { DummyZoeker } from "./dummy-zoeker";
@@ -50,18 +58,27 @@ export interface FietspadSelectie {
     trigger("enterAnimation", [
       transition(":enter", [
         style({ opacity: 0, "max-height": 0 }),
-        animate("0.2s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 1, "max-height": "1000px" }))
+        animate(
+          "0.2s cubic-bezier(.62,.28,.23,.99)",
+          style({ opacity: 1, "max-height": "1000px" })
+        ),
       ]),
       transition(":leave", [
         style({ opacity: 1, "max-height": "1000px" }),
-        animate("0.15s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 0, "max-height": 0 }))
-      ])
-    ])
+        animate(
+          "0.15s cubic-bezier(.62,.28,.23,.99)",
+          style({ opacity: 0, "max-height": 0 })
+        ),
+      ]),
+    ]),
   ],
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class FeatureDemoComponent {
-  constructor(private changeDetectorRef: ChangeDetectorRef, private readonly zone: NgZone) {
+  constructor(
+    private changeDetectorRef: ChangeDetectorRef,
+    private readonly zone: NgZone
+  ) {
     // Voorheen werd require gebruikt als de waarde van het source attribuut.
     // Dat werkt nu echter niet meer. Een side effect van require is wel dat de
     // resource beschikbaar komt onder het root pad. Vandaar dat we er kunnen
@@ -72,7 +89,13 @@ export class FeatureDemoComponent {
     this.addIcon();
   }
 
-  private static readonly zoekerKleurCodes = ["#626c7a", "#6b7d43", "#f8df98", "#e38d83", "#6e312f"];
+  private static readonly zoekerKleurCodes = [
+    "#626c7a",
+    "#6b7d43",
+    "#f8df98",
+    "#e38d83",
+    "#6e312f",
+  ];
   @ViewChild("verplaats")
   private verplaatsKaart: KaartClassicComponent;
   @ViewChild("selectie")
@@ -91,28 +114,32 @@ export class FeatureDemoComponent {
             kind: "<=>",
             lower: {
               kind: "Literal",
-              value: 0
+              value: 0,
             },
             upper: {
               kind: "Literal",
-              value: 0.99999
+              value: 0.99999,
             },
             value: {
               ref: "resolution",
               kind: "Environment",
-              type: "number"
-            }
+              type: "number",
+            },
           },
           style: {
             definition: {
-              circle: { radius: 4, fill: { color: "dodgerblue" }, stroke: { color: "#171F8F", width: 2 } },
+              circle: {
+                radius: 4,
+                fill: { color: "dodgerblue" },
+                stroke: { color: "#171F8F", width: 2 },
+              },
               fill: { color: "dodgerblue" },
-              stroke: { color: "#171F8F", width: 2 }
-            }
-          }
-        }
-      ]
-    }
+              stroke: { color: "#171F8F", width: 2 },
+            },
+          },
+        },
+      ],
+    },
   };
 
   private readonly fietspadStijlDef: AwvV0DynamicStyle = {
@@ -121,33 +148,33 @@ export class FeatureDemoComponent {
         condition: {
           kind: "==",
           left: { kind: "Property", type: "string", ref: "typefietspad" },
-          right: { kind: "Literal", value: "Vrijliggend" }
+          right: { kind: "Literal", value: "Vrijliggend" },
         },
         style: {
-          definition: { stroke: { color: "green", width: 4 } }
-        }
+          definition: { stroke: { color: "green", width: 4 } },
+        },
       },
       {
         condition: {
           kind: "==",
           left: { kind: "Property", type: "string", ref: "typefietspad" },
-          right: { kind: "Literal", value: "Aanliggend Verhoogd" }
+          right: { kind: "Literal", value: "Aanliggend Verhoogd" },
         },
         style: {
-          definition: { stroke: { color: "#FFFF00", width: 4 } }
-        }
+          definition: { stroke: { color: "#FFFF00", width: 4 } },
+        },
       },
       {
         condition: {
           kind: "==",
           left: { kind: "Property", type: "string", ref: "typefietspad" },
-          right: { kind: "Literal", value: "Aanliggend" }
+          right: { kind: "Literal", value: "Aanliggend" },
         },
         style: {
-          definition: { stroke: { color: "#FF7F00", width: 4 } }
-        }
-      }
-    ]
+          definition: { stroke: { color: "#FF7F00", width: 4 } },
+        },
+      },
+    ],
   };
 
   private readonly afgeleideSnelheidsRegimesStijlDef: AwvV0DynamicStyle = {
@@ -156,23 +183,23 @@ export class FeatureDemoComponent {
         condition: {
           kind: "<=",
           left: { kind: "Property", type: "number", ref: "snelheid" },
-          right: { kind: "Literal", value: 30 }
+          right: { kind: "Literal", value: 30 },
         },
         style: {
-          definition: { stroke: { color: "blue", width: 4 } }
-        }
+          definition: { stroke: { color: "blue", width: 4 } },
+        },
       },
       {
         condition: {
           kind: ">=",
           left: { kind: "Property", type: "number", ref: "snelheid" },
-          right: { kind: "Literal", value: 50 }
+          right: { kind: "Literal", value: 50 },
         },
         style: {
-          definition: { stroke: { color: "black", width: 4 } }
-        }
-      }
-    ]
+          definition: { stroke: { color: "black", width: 4 } },
+        },
+      },
+    ],
   };
 
   readonly featuresToCluster: ol.Feature[] = this.generateFeaturesToCluster();
@@ -191,10 +218,10 @@ export class FeatureDemoComponent {
       laagnaam: "Fietspaden",
       properties: {
         ident8: "R0010001",
-        typefietspad: "Vrijliggend"
+        typefietspad: "Vrijliggend",
       },
-      geometry: new ol.geom.Point(this.installatieCoordinaat)
-    })
+      geometry: new ol.geom.Point(this.installatieCoordinaat),
+    }),
   ];
   mechelenFeatures: ol.Feature[] = [
     new ol.Feature({
@@ -203,9 +230,9 @@ export class FeatureDemoComponent {
         vorm: "punt",
         merk: "ACME",
         gesloten: false,
-        legnte: 0
+        legnte: 0,
       },
-      geometry: new ol.geom.Point([157562, 190726])
+      geometry: new ol.geom.Point([157562, 190726]),
     }),
     new ol.Feature({
       id: 2,
@@ -213,19 +240,19 @@ export class FeatureDemoComponent {
         vorm: "punt",
         merk: "Globex",
         gesloten: false,
-        lengte: 0
+        lengte: 0,
       },
-      geometry: new ol.geom.Point([158149, 190676])
+      geometry: new ol.geom.Point([158149, 190676]),
     }),
     new ol.Feature({
       id: 3,
       properties: {
         vorm: "punt",
         merk: "ACME",
-        gesloten: false
+        gesloten: false,
         // geen lengte om terugvalkleur te testen
       },
-      geometry: new ol.geom.Point([157758, 190810])
+      geometry: new ol.geom.Point([157758, 190810]),
     }),
     new ol.Feature({
       id: 4,
@@ -233,9 +260,13 @@ export class FeatureDemoComponent {
         vorm: "lijn",
         merk: "Globex",
         gesloten: false,
-        lengte: 10.0
+        lengte: 10.0,
       },
-      geometry: new ol.geom.LineString([[157977, 190729], [158024, 190519], [158024, 190519]])
+      geometry: new ol.geom.LineString([
+        [157977, 190729],
+        [158024, 190519],
+        [158024, 190519],
+      ]),
     }),
     new ol.Feature({
       id: 5,
@@ -243,9 +274,13 @@ export class FeatureDemoComponent {
         vorm: "lijn",
         merk: "ACME",
         gesloten: false,
-        lengte: 20
+        lengte: 20,
       },
-      geometry: new ol.geom.LineString([[157367, 191062], [157527, 190997], [157647, 190995]])
+      geometry: new ol.geom.LineString([
+        [157367, 191062],
+        [157527, 190997],
+        [157647, 190995],
+      ]),
     }),
     new ol.Feature({
       id: 6,
@@ -253,9 +288,9 @@ export class FeatureDemoComponent {
         vorm: "cirkel",
         merk: "Globex",
         gesloten: true,
-        lengte: 20
+        lengte: 20,
       },
-      geometry: new ol.geom.Circle([157820, 190922], 100)
+      geometry: new ol.geom.Circle([157820, 190922], 100),
     }),
     new ol.Feature({
       id: 7,
@@ -263,15 +298,23 @@ export class FeatureDemoComponent {
         vorm: "veelvlak",
         merk: "ACME",
         gesloten: true,
-        lengte: 30
+        lengte: 30,
       },
-      geometry: new ol.geom.Polygon([[[157636, 190292], [157731, 190371], [157786, 190346], [157910, 190276], [157762, 190108]]])
+      geometry: new ol.geom.Polygon([
+        [
+          [157636, 190292],
+          [157731, 190371],
+          [157786, 190346],
+          [157910, 190276],
+          [157762, 190108],
+        ],
+      ]),
     }),
     new ol.Feature({
       id: 8,
       properties: {}, // altijd fallback
-      geometry: new ol.geom.Circle([157821, 190530], 50)
-    })
+      geometry: new ol.geom.Circle([157821, 190530], 50),
+    }),
   ];
   mechelenCentrum: ol.Coordinate = [157562, 190726];
   mechelenVeldInfos: VeldInfo[] = [
@@ -283,7 +326,7 @@ export class FeatureDemoComponent {
       constante: undefined,
       template: undefined,
       uniekeWaarden: ["punt", "lijn", "cirkel", "veelvlak"],
-      html: ""
+      html: "",
     },
     {
       naam: "merk",
@@ -293,7 +336,7 @@ export class FeatureDemoComponent {
       constante: undefined,
       template: undefined,
       uniekeWaarden: ["ACME", "Globex"],
-      html: ""
+      html: "",
     },
     {
       naam: "lengte",
@@ -303,7 +346,7 @@ export class FeatureDemoComponent {
       constante: undefined,
       template: undefined,
       uniekeWaarden: ["10", "20", "30", "1"],
-      html: ""
+      html: "",
     },
     {
       naam: "gesloten",
@@ -313,8 +356,8 @@ export class FeatureDemoComponent {
       constante: undefined,
       template: undefined,
       uniekeWaarden: ["true", "false"],
-      html: ""
-    }
+      html: "",
+    },
   ];
   zoekresultaten: ol.Collection<ol.Feature> = new ol.Collection();
   vanPositie = 0;
@@ -327,7 +370,7 @@ export class FeatureDemoComponent {
       anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
       scale: 1,
       opacity: 1,
-      src: "ng-kaart/ic_place_48px.svg"
+      src: "ng-kaart/ic_place_48px.svg",
     }),
     text: new ol.style.Text({
       font: "12px 'Helvetica Neue', sans-serif",
@@ -335,10 +378,10 @@ export class FeatureDemoComponent {
       offsetY: -60,
       stroke: new ol.style.Stroke({
         color: "#fff",
-        width: 2
+        width: 2,
       }),
-      text: "Zis is a pin"
-    })
+      text: "Zis is a pin",
+    }),
   });
 
   pinIconSelect = new ol.style.Style({
@@ -348,7 +391,7 @@ export class FeatureDemoComponent {
       anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
       scale: 1,
       opacity: 1,
-      src: "ng-kaart/ic_place_48px.svg"
+      src: "ng-kaart/ic_place_48px.svg",
     }),
     text: new ol.style.Text({
       font: "12px 'Helvetica Neue', sans-serif",
@@ -356,10 +399,10 @@ export class FeatureDemoComponent {
       offsetY: -60,
       stroke: new ol.style.Stroke({
         color: "#f88",
-        width: 2
+        width: 2,
       }),
-      text: "Selected"
-    })
+      text: "Selected",
+    }),
   });
 
   pinIcon2 = new ol.style.Style({
@@ -370,7 +413,7 @@ export class FeatureDemoComponent {
       scale: 1,
       opacity: 1,
       color: "#FA1",
-      src: "ng-kaart/ic_local_airport_48px.svg"
+      src: "ng-kaart/ic_local_airport_48px.svg",
     }),
     text: new ol.style.Text({
       font: "12px 'Helvetica Neue', sans-serif",
@@ -378,19 +421,19 @@ export class FeatureDemoComponent {
       offsetY: -60,
       stroke: new ol.style.Stroke({
         color: "#fff",
-        width: 2
+        width: 2,
       }),
-      text: "Feature 2"
-    })
+      text: "Feature 2",
+    }),
   });
 
   meetpuntStyle = new ol.style.Style({
     image: new ol.style.Circle({
       fill: new ol.style.Fill({
-        color: "green"
+        color: "green",
       }),
-      radius: 5
-    })
+      radius: 5,
+    }),
   });
 
   geselecteerdeFeatures: ol.Feature[] = [];
@@ -412,7 +455,11 @@ export class FeatureDemoComponent {
   geometryType = "Polygon";
   private getekendeGeom: option.Option<ol.geom.Geometry> = option.none;
 
-  private alleVoorwaarden = ["Voorwaarden disclaimer", "Er zijn nieuwe voorwaarden", "Er zijn nog nieuwere voorwaarden"];
+  private alleVoorwaarden = [
+    "Voorwaarden disclaimer",
+    "Er zijn nieuwe voorwaarden",
+    "Er zijn nog nieuwere voorwaarden",
+  ];
   voorwaarden = this.alleVoorwaarden[0];
   private voorwaardenIndex = 0;
 
@@ -426,20 +473,44 @@ export class FeatureDemoComponent {
     optieDivider1: { divider: true, value: true, label: "Algemene opties" },
     standaardinteracties: { value: true, label: "Pannen en zoomen" },
     bevraagkaart: { value: true, label: "Bevraag kaart" },
-    rotatie: { value: true, label: "Kaart roteren (alt+shift+drag op desktop)" },
+    rotatie: {
+      value: true,
+      label: "Kaart roteren (alt+shift+drag op desktop)",
+    },
     // --- Linkerpaneel
-    optieDivider2: { divider: true, value: true, label: "Opties linker paneel" },
+    optieDivider2: {
+      divider: true,
+      value: true,
+      label: "Opties linker paneel",
+    },
     zoeker: { value: true, label: "Zoeker" },
     lagenkiezer: { value: true, label: "Lagen" },
     lagenVerwijderbaar: { value: true, label: "Lagen verwijderbaar" },
     legende: { value: true, label: "Legende (enkel in combinatie met lagen)" },
-    kaartLinksFixedHeader: { value: false, label: "Custom vaste header in linker paneel" },
-    kaartLinksExtraElements: { value: false, label: "Custom extra elementen in linker paneel" },
-    kaartLinksBreedte: { value: false, label: "Custom breedte van 300px (default: 480px bij > 1240px en 360px bij <= 1240px)" },
-    onderdrukKaartBevragenBoodschappen: { value: false, label: "Onderdruk kaart bevragen boodschappenpaneel" },
+    kaartLinksFixedHeader: {
+      value: false,
+      label: "Custom vaste header in linker paneel",
+    },
+    kaartLinksExtraElements: {
+      value: false,
+      label: "Custom extra elementen in linker paneel",
+    },
+    kaartLinksBreedte: {
+      value: false,
+      label:
+        "Custom breedte van 300px (default: 480px bij > 1240px en 360px bij <= 1240px)",
+    },
+    onderdrukKaartBevragenBoodschappen: {
+      value: false,
+      label: "Onderdruk kaart bevragen boodschappenpaneel",
+    },
 
     // --- Widgets
-    optieDivider3: { divider: true, value: true, label: "Widgets onderaan rechts" },
+    optieDivider3: {
+      divider: true,
+      value: true,
+      label: "Widgets onderaan rechts",
+    },
     achtergrond: { value: true, label: "Meerdere achtergrondlagen" },
     streetview: { value: true, label: "Streetview" },
     meten: { value: true, label: "Meten" },
@@ -447,9 +518,16 @@ export class FeatureDemoComponent {
     zoomknoppen: { value: true, label: "Zoomknoppen" },
 
     // --- Meten opties
-    optieDivider3a: { divider: true, value: true, label: "Meten opties (teken modus op en afzetten na veranderingen)" },
+    optieDivider3a: {
+      divider: true,
+      value: true,
+      label: "Meten opties (teken modus op en afzetten na veranderingen)",
+    },
     metenToon: { value: true, label: "Toon infopaneel" },
-    keuzemogelijkheidTonen: { value: true, label: "Laat keuze tussen 'rechte lijn'/'via de weg' toe" },
+    keuzemogelijkheidTonen: {
+      value: true,
+      label: "Laat keuze tussen 'rechte lijn'/'via de weg' toe",
+    },
 
     // --- Identify
     optieDivider3b: { divider: true, value: true, label: "Identify opties" },
@@ -457,7 +535,11 @@ export class FeatureDemoComponent {
     customKlikIcon: { value: true, label: "Gecustomiseerd icoon" },
 
     // --- Kaartinfo
-    optieDivider4: { divider: true, value: true, label: "Kaartinfo onderaan rechts" },
+    optieDivider4: {
+      divider: true,
+      value: true,
+      label: "Kaartinfo onderaan rechts",
+    },
     schaal: { value: true, label: "Kaartschaal" },
     voorwaarden: { value: true, label: "Voorwaarden disclaimer" },
     copyright: { value: true, label: "Copyright boodschap" },
@@ -465,7 +547,7 @@ export class FeatureDemoComponent {
     // -- progressbar dingen
     optieDivider5: { divider: true, value: true, label: "Laden opties" },
     forceProgressBar: { value: false, label: "Activeer progressbar" },
-    progressbar: { value: false, label: "Progressbar zichtbaar" }
+    progressbar: { value: false, label: "Progressbar zichtbaar" },
   };
 
   configuratorMiddelpunt = [130000, 193000];
@@ -473,7 +555,7 @@ export class FeatureDemoComponent {
   readonly districtStyle: ol.style.Style = definitieToStyle(
     "json",
     '{"version": "awv-v0", "definition": {"stroke": {"color": "rgba(0,127,255,0.8)", "width": 1.5}}}'
-  ).getOrElseL(msg => {
+  ).getOrElseL((msg) => {
     throw new Error(`slecht formaat ${join(",")(msg)}`);
   });
 
@@ -481,7 +563,7 @@ export class FeatureDemoComponent {
     "json",
     // tslint:disable-next-line:max-line-length
     '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "#7D3C98", "width": 1.5}, "fill": {"color": "#D7BDE2"}, "radius": 6}}}'
-  ).getOrElseL(msg => {
+  ).getOrElseL((msg) => {
     throw new Error(`slecht formaat ${join(",")(msg)}`);
   });
 
@@ -489,17 +571,19 @@ export class FeatureDemoComponent {
     "json",
     // tslint:disable-next-line:max-line-length
     '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "navy", "width": 1.5}, "fill": {"color": "dodgerblue"}, "radius": 6}}}'
-  ).getOrElseL(msg => {
+  ).getOrElseL((msg) => {
     throw new Error(`slecht formaat ${join(",")(msg)}`);
   });
 
-  readonly fietspadStyle: ol.style.StyleFunction = validateAwvV0RuleDefintion(this.fietspadStijlDef).getOrElse(msg => {
+  readonly fietspadStyle: ol.style.StyleFunction = validateAwvV0RuleDefintion(
+    this.fietspadStijlDef
+  ).getOrElse((msg) => {
     throw new Error(`slecht formaat ${msg}`);
   });
 
   readonly afgeleideSnelheidsRegimesStyle: ol.style.StyleFunction = validateAwvV0RuleDefintion(
     this.afgeleideSnelheidsRegimesStijlDef
-  ).getOrElse(msg => {
+  ).getOrElse((msg) => {
     throw new Error(`slecht formaat ${msg}`);
   });
 
@@ -515,23 +599,23 @@ export class FeatureDemoComponent {
             condition: {
               kind: "<=",
               left: { kind: "Environment", type: "number", ref: "resolution" },
-              right: { kind: "Literal", value: 2.0 }
+              right: { kind: "Literal", value: 2.0 },
             },
             style: {
               definition: {
                 circle: {
                   radius: 5,
                   fill: {
-                    color: "rgb(144, 202, 249)"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
+                    color: "rgb(144, 202, 249)",
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
     })
-  ).getOrElseL(msg => {
+  ).getOrElseL((msg) => {
     throw new Error(`slecht formaat ${join(",")(msg)}`);
   });
 
@@ -545,83 +629,127 @@ export class FeatureDemoComponent {
             condition: {
               kind: "<=",
               left: { kind: "Environment", type: "number", ref: "resolution" },
-              right: { kind: "Literal", value: 2.0 }
+              right: { kind: "Literal", value: 2.0 },
             },
             style: {
               definition: {
                 circle: {
                   radius: 5,
                   fill: {
-                    color: "rgb(255, 0, 0)"
+                    color: "rgb(255, 0, 0)",
                   },
                   stroke: {
                     color: "rgba(255, 0, 0, 0.15)",
-                    width: 100
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
+                    width: 100,
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
     })
-  ).getOrElseL(msg => {
+  ).getOrElseL((msg) => {
     throw new Error(`slecht formaat ${join(",")(msg)}`);
   });
 
   readonly verkeersbordenStyleFunction = verkeersbordenStyleFunction(false);
-  readonly verkeersbordenSelectieStyleFunction = verkeersbordenStyleFunction(true);
+  readonly verkeersbordenSelectieStyleFunction = verkeersbordenStyleFunction(
+    true
+  );
 
-  readonly fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 3, false);
-  readonly fietspadStyleMetOffset2 = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 6, false);
+  readonly fietspadStyleMetOffset = offsetStyleFunction(
+    this.fietspadStyle,
+    "ident8",
+    "zijderijbaan",
+    3,
+    false
+  );
+  readonly fietspadStyleMetOffset2 = offsetStyleFunction(
+    this.fietspadStyle,
+    "ident8",
+    "zijderijbaan",
+    6,
+    false
+  );
 
-  readonly fietspadSelectieStyleMetOffset = function(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
-    const applySelectionColor = function(s: ol.style.Style): ol.style.Style {
-      const selectionStyle = s.clone();
-      selectionStyle.getStroke().setColor([0, 153, 255, 1]);
-      return selectionStyle;
-    };
-    const offsetFunc = offsetStyleFunction(this!.fietspadStyle, "ident8", "zijderijbaan", 3, false);
-    const style = offsetFunc(feature, resolution);
-    if (style instanceof ol.style.Style) {
-      return applySelectionColor(style);
-    } else {
-      return style ? style.map(s => applySelectionColor(s)) : [];
-    }
-  }.bind(this);
-
-  readonly fietspadSelectieStyleMetOffset2 = function(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
-    const applySelectionColor = function(s: ol.style.Style): ol.style.Style {
-      const selectionStyle = s.clone();
-      selectionStyle.getStroke().setColor([0, 153, 255, 1]);
-      return selectionStyle;
-    };
-    const offsetFunc = offsetStyleFunction(this!.fietspadStyle, "ident8", "zijderijbaan", 6, false);
-    const style = offsetFunc(feature, resolution);
-    if (style instanceof ol.style.Style) {
-      return applySelectionColor(style);
-    } else {
-      return style ? style.map(s => applySelectionColor(s)) : [];
-    }
-  }.bind(this);
-
-  readonly afgeleideSnelheidsregimesStyleMetOffset = offsetStyleFunction(this.afgeleideSnelheidsRegimesStyle, "", "zijderijbaan", 4, true);
-
-  readonly afgeleideSnelheidsregimesSelectieStyleMetOffset = function(
+  readonly fietspadSelectieStyleMetOffset = function (
     feature: ol.Feature,
     resolution: number
   ): ol.style.Style | ol.style.Style[] {
-    const applySelectionColor = function(s: ol.style.Style): ol.style.Style {
+    const applySelectionColor = function (s: ol.style.Style): ol.style.Style {
       const selectionStyle = s.clone();
       selectionStyle.getStroke().setColor([0, 153, 255, 1]);
       return selectionStyle;
     };
-    const offsetFunc = offsetStyleFunction(this!.afgeleideSnelheidsRegimesStyle, "", "zijderijbaan", 4, true);
+    const offsetFunc = offsetStyleFunction(
+      this!.fietspadStyle,
+      "ident8",
+      "zijderijbaan",
+      3,
+      false
+    );
     const style = offsetFunc(feature, resolution);
     if (style instanceof ol.style.Style) {
       return applySelectionColor(style);
     } else {
-      return style ? style.map(s => applySelectionColor(s)) : [];
+      return style ? style.map((s) => applySelectionColor(s)) : [];
+    }
+  }.bind(this);
+
+  readonly fietspadSelectieStyleMetOffset2 = function (
+    feature: ol.Feature,
+    resolution: number
+  ): ol.style.Style | ol.style.Style[] {
+    const applySelectionColor = function (s: ol.style.Style): ol.style.Style {
+      const selectionStyle = s.clone();
+      selectionStyle.getStroke().setColor([0, 153, 255, 1]);
+      return selectionStyle;
+    };
+    const offsetFunc = offsetStyleFunction(
+      this!.fietspadStyle,
+      "ident8",
+      "zijderijbaan",
+      6,
+      false
+    );
+    const style = offsetFunc(feature, resolution);
+    if (style instanceof ol.style.Style) {
+      return applySelectionColor(style);
+    } else {
+      return style ? style.map((s) => applySelectionColor(s)) : [];
+    }
+  }.bind(this);
+
+  readonly afgeleideSnelheidsregimesStyleMetOffset = offsetStyleFunction(
+    this.afgeleideSnelheidsRegimesStyle,
+    "",
+    "zijderijbaan",
+    4,
+    true
+  );
+
+  readonly afgeleideSnelheidsregimesSelectieStyleMetOffset = function (
+    feature: ol.Feature,
+    resolution: number
+  ): ol.style.Style | ol.style.Style[] {
+    const applySelectionColor = function (s: ol.style.Style): ol.style.Style {
+      const selectionStyle = s.clone();
+      selectionStyle.getStroke().setColor([0, 153, 255, 1]);
+      return selectionStyle;
+    };
+    const offsetFunc = offsetStyleFunction(
+      this!.afgeleideSnelheidsRegimesStyle,
+      "",
+      "zijderijbaan",
+      4,
+      true
+    );
+    const style = offsetFunc(feature, resolution);
+    if (style instanceof ol.style.Style) {
+      return applySelectionColor(style);
+    } else {
+      return style ? style.map((s) => applySelectionColor(s)) : [];
     }
   }.bind(this);
 
@@ -629,11 +757,24 @@ export class FeatureDemoComponent {
   readonly fietspadenRefresh$ = this.fietspadenRefreshSubj.asObservable();
 
   readonly demoZoekers: ZoekerMetWeergaveopties[] = [
-    zoekerMetPrioriteiten(new DummyZoeker("dummy0", FeatureDemoComponent.zoekerKleurCodes[0]), 1, 1, true, true),
-    zoekerMetPrioriteiten(new DummyZoeker("dummy1", FeatureDemoComponent.zoekerKleurCodes[1]), 2, 2, true, true)
+    zoekerMetPrioriteiten(
+      new DummyZoeker("dummy0", FeatureDemoComponent.zoekerKleurCodes[0]),
+      1,
+      1,
+      true,
+      true
+    ),
+    zoekerMetPrioriteiten(
+      new DummyZoeker("dummy1", FeatureDemoComponent.zoekerKleurCodes[1]),
+      2,
+      2,
+      true,
+      true
+    ),
   ];
 
-  private cachedFeaturesProvider: option.Option<CachedFeatureLookup> = option.none;
+  private cachedFeaturesProvider: option.Option<CachedFeatureLookup> =
+    option.none;
 
   offlineGeselecteerdeFeatures: ol.Feature[] = [];
 
@@ -642,56 +783,56 @@ export class FeatureDemoComponent {
       isBasisVeld: false,
       label: "ID",
       naam: "id",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: false,
       label: "Wegsegment ID",
       naam: "wegsegmentId",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: false,
       label: "ID vorige wegsegment",
       naam: "vorigeWegsegmentId",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: true,
       label: "Bepalende bord",
       naam: "bepalendBordCode",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: false,
       label: "Gescheiden rijbaan geen autostrade?",
       naam: "gescheidenrijbaan",
-      type: "boolean"
+      type: "boolean",
     },
     {
       isBasisVeld: false,
       label: "Wegcategorie autosnelweg?",
       naam: "autosnelweg",
-      type: "boolean"
+      type: "boolean",
     },
     {
       isBasisVeld: false,
       label: "Zone",
       naam: "zones",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: true,
       label: "Ident8",
       naam: "ident8",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: true,
       label: "Snelheid",
       naam: "snelheid",
-      type: "integer"
-    }
+      type: "integer",
+    },
   ];
 
   readonly referentiepuntenVeldinfos: VeldInfo[] = [
@@ -699,99 +840,99 @@ export class FeatureDemoComponent {
       isBasisVeld: false,
       label: "ID",
       naam: "id",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: false,
       label: "Ident8",
       naam: "locatie.ident8",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: false,
       label: "Opschrift",
       naam: "locatie.opschrift",
-      type: "double"
+      type: "double",
     },
     {
       isBasisVeld: true,
       label: "Positie",
       naam: "locatie.positie",
-      type: "double"
+      type: "double",
     },
     {
       isBasisVeld: false,
       label: "Opnamedatum",
       naam: "opnamedatum",
       sqlFormat: "DD/MM/YYYY",
-      type: "date"
+      type: "date",
     },
     {
       isBasisVeld: false,
       label: "Wijzigingsdatum",
       naam: "wijzigingsdatum",
       sqlFormat: "DD/MM/YYYY",
-      type: "date"
+      type: "date",
     },
     {
       isBasisVeld: false,
       label: "Materiaal",
       naam: "materiaalpaal.naam",
       type: "string",
-      uniekeWaarden: []
+      uniekeWaarden: [],
     },
     {
       isBasisVeld: true,
       label: "Geldig beide richtingen",
       naam: "geldigBeideRichtingen",
-      type: "boolean"
+      type: "boolean",
     },
     {
       isBasisVeld: false,
       label: "Opmerking",
       naam: "opmerking",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: false,
       label: "Begindatum",
       naam: "begindatum",
       sqlFormat: "DD/MM/YYYY",
-      type: "date"
+      type: "date",
     },
     {
       isBasisVeld: false,
       label: "Creatiedatum",
       naam: "creatiedatum",
       sqlFormat: "DD/MM/YYYY",
-      type: "date"
+      type: "date",
     },
     {
       isBasisVeld: false,
       label: "Gebruiker",
       naam: "gebruiker",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: false,
       label: "Gebied",
       naam: "gebied",
       type: "string",
-      uniekeWaarden: []
+      uniekeWaarden: [],
     },
     {
       isBasisVeld: false,
       label: "Bebouwde kom",
       naam: "bebouwdekom",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: false,
       label: "Wegcategorie",
       naam: "wegcategorie",
       type: "string",
-      uniekeWaarden: []
-    }
+      uniekeWaarden: [],
+    },
   ];
 
   readonly kunstwerkenVeldinfos: VeldInfo[] = [
@@ -799,63 +940,122 @@ export class FeatureDemoComponent {
       isBasisVeld: false,
       label: "UIDN",
       naam: "UIDN",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: false,
       label: "OIDN",
       naam: "OIDN",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: true,
       label: "Type",
       naam: "LBLTYPE",
       type: "string",
-      uniekeWaarden: []
+      uniekeWaarden: [],
     },
     {
       isBasisVeld: true,
       label: "Vorm",
       naam: "LBLVORM",
       type: "string",
-      uniekeWaarden: []
+      uniekeWaarden: [],
     },
     {
       isBasisVeld: false,
       label: "Lengte (m)",
       naam: "LENGTE",
-      type: "double"
+      type: "double",
     },
     {
       isBasisVeld: false,
       label: "Opname datum",
       naam: "OPNDATUM",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: false,
       label: "Oppervlakte (m^2)",
       naam: "OPPERVL",
-      type: "double"
-    }
+      type: "double",
+    },
   ];
 
   readonly fietspadenVeldinfos: VeldInfo[] = [
     { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
     { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
-    { isBasisVeld: true, label: "Van refpunt", naam: "locatie.begin.opschrift", type: "double" },
-    { isBasisVeld: true, label: "Van afst", naam: "locatie.begin.afstand", type: "integer" },
-    { isBasisVeld: true, label: "Van positie", naam: "locatie.begin.positie", type: "double" },
-    { isBasisVeld: true, label: "Tot refpunt", naam: "locatie.eind.opschrift", type: "double" },
-    { isBasisVeld: true, label: "Tot afst", naam: "locatie.eind.afstand", type: "integer" },
-    { isBasisVeld: true, label: "Tot Positie", naam: "locatie.eind.positie", type: "double" },
-    { isBasisVeld: true, label: "Lengte", naam: "locatie.lengte", type: "double", displayFormat: "1.0-0" }, // custom formaat
-    { isBasisVeld: false, label: "Werkelijke lengte", naam: "werkelijkelengte", type: "double" },
+    {
+      isBasisVeld: true,
+      label: "Van refpunt",
+      naam: "locatie.begin.opschrift",
+      type: "double",
+    },
+    {
+      isBasisVeld: true,
+      label: "Van afst",
+      naam: "locatie.begin.afstand",
+      type: "integer",
+    },
+    {
+      isBasisVeld: true,
+      label: "Van positie",
+      naam: "locatie.begin.positie",
+      type: "double",
+    },
+    {
+      isBasisVeld: true,
+      label: "Tot refpunt",
+      naam: "locatie.eind.opschrift",
+      type: "double",
+    },
+    {
+      isBasisVeld: true,
+      label: "Tot afst",
+      naam: "locatie.eind.afstand",
+      type: "integer",
+    },
+    {
+      isBasisVeld: true,
+      label: "Tot Positie",
+      naam: "locatie.eind.positie",
+      type: "double",
+    },
+    {
+      isBasisVeld: true,
+      label: "Lengte",
+      naam: "locatie.lengte",
+      type: "double",
+      displayFormat: "1.0-0",
+    }, // custom formaat
+    {
+      isBasisVeld: false,
+      label: "Werkelijke lengte",
+      naam: "werkelijkelengte",
+      type: "double",
+    },
     { isBasisVeld: false, label: "Bron Id", naam: "bronid", type: "string" },
-    { isBasisVeld: false, label: "Opnamedatum", naam: "opnamedatum", type: "date", parseFormat: "dd/LL/yyyy", sqlFormat: "dd/MM/yyyy" },
-    { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date" }, // standaard sqlFormat
-    { isBasisVeld: true, label: "Zijde", naam: "zijderijbaan", type: "string", uniekeWaarden: ["R", "L", "M", "NVT"] }, // niet alfabetisch!
+    {
+      isBasisVeld: false,
+      label: "Opnamedatum",
+      naam: "opnamedatum",
+      type: "date",
+      parseFormat: "dd/LL/yyyy",
+      sqlFormat: "dd/MM/yyyy",
+    },
+    {
+      isBasisVeld: false,
+      label: "Wijzigingsdatum",
+      naam: "wijzigingsdatum",
+      type: "date",
+    }, // standaard sqlFormat
+    {
+      isBasisVeld: true,
+      label: "Zijde",
+      naam: "zijderijbaan",
+      type: "string",
+      uniekeWaarden: ["R", "L", "M", "NVT"],
+    }, // niet alfabetisch!
     {
       isBasisVeld: true,
       label: "Type",
@@ -870,18 +1070,35 @@ export class FeatureDemoComponent {
         "VRIJLIGGEND",
         "Vrijliggend",
         "aanliggend",
-        "vrijliggend"
-      ]
+        "vrijliggend",
+      ],
     },
-    { isBasisVeld: false, label: "Verhoogd", naam: "verhoogd", type: "boolean" },
-    { isBasisVeld: true, label: "Afst rijbaan", naam: "afstandrijbaan", type: "string" },
+    {
+      isBasisVeld: false,
+      label: "Verhoogd",
+      naam: "verhoogd",
+      type: "boolean",
+    },
+    {
+      isBasisVeld: true,
+      label: "Afst rijbaan",
+      naam: "afstandrijbaan",
+      type: "string",
+    },
     { isBasisVeld: true, label: "Breedte", naam: "breedte", type: "integer" },
     {
       isBasisVeld: true,
       label: "Hoofdverharding",
       naam: "wegverharding_1",
       type: "string",
-      uniekeWaarden: ["Andere en onbekend", "Asfalt", "Bestrating", "Beton", "Dunne Toplaag", "Ongebonden"]
+      uniekeWaarden: [
+        "Andere en onbekend",
+        "Asfalt",
+        "Bestrating",
+        "Beton",
+        "Dunne Toplaag",
+        "Ongebonden",
+      ],
     },
     {
       isBasisVeld: false,
@@ -908,26 +1125,79 @@ export class FeatureDemoComponent {
         "Onbekend",
         "Spitmastiekasfalt",
         "Steenslag",
-        "Zeer open asfalt"
-      ]
+        "Zeer open asfalt",
+      ],
     },
-    { isBasisVeld: false, label: "Kleur", naam: "kleur", type: "string", uniekeWaarden: ["Andere", "NVT", "Rood"] },
-    { isBasisVeld: true, label: "Dubbelrichting", naam: "dubbelerichting", type: "boolean" },
-    { isBasisVeld: false, label: "Gemarkeerd", naam: "gemarkeerd", type: "boolean" },
+    {
+      isBasisVeld: false,
+      label: "Kleur",
+      naam: "kleur",
+      type: "string",
+      uniekeWaarden: ["Andere", "NVT", "Rood"],
+    },
+    {
+      isBasisVeld: true,
+      label: "Dubbelrichting",
+      naam: "dubbelerichting",
+      type: "boolean",
+    },
+    {
+      isBasisVeld: false,
+      label: "Gemarkeerd",
+      naam: "gemarkeerd",
+      type: "boolean",
+    },
     {
       isBasisVeld: false,
       label: "Tussenstrook",
       naam: "tussenstrook",
       type: "string",
-      uniekeWaarden: ["--Onbekend--", "Geen", "NVT", "Type 1", "Type 2", "Type 3"]
+      uniekeWaarden: [
+        "--Onbekend--",
+        "Geen",
+        "NVT",
+        "Type 1",
+        "Type 2",
+        "Type 3",
+      ],
     },
-    { isBasisVeld: false, label: "Opmerking", naam: "opmerking", type: "string" },
-    { isBasisVeld: false, label: "Begindatum", naam: "begindatum", type: "date" },
-    { isBasisVeld: false, label: "Creatiedatum", naam: "creatiedatum", type: "date" },
+    {
+      isBasisVeld: false,
+      label: "Opmerking",
+      naam: "opmerking",
+      type: "string",
+    },
+    {
+      isBasisVeld: false,
+      label: "Begindatum",
+      naam: "begindatum",
+      type: "date",
+    },
+    {
+      isBasisVeld: false,
+      label: "Creatiedatum",
+      naam: "creatiedatum",
+      type: "date",
+    },
     { isBasisVeld: false, label: "Gebied", naam: "gebied", type: "string" },
-    { isBasisVeld: false, label: "Bebouwde kom", naam: "bebouwdekom", type: "string" },
-    { isBasisVeld: false, label: "Wegcategorie", naam: "wegcategorie", type: "string" },
-    { isBasisVeld: false, label: "Gebruiker", naam: "gebruiker", type: "string" }
+    {
+      isBasisVeld: false,
+      label: "Bebouwde kom",
+      naam: "bebouwdekom",
+      type: "string",
+    },
+    {
+      isBasisVeld: false,
+      label: "Wegcategorie",
+      naam: "wegcategorie",
+      type: "string",
+    },
+    {
+      isBasisVeld: false,
+      label: "Gebruiker",
+      naam: "gebruiker",
+      type: "string",
+    },
   ];
 
   readonly telpostenInfos: VeldInfo[] = [
@@ -935,21 +1205,21 @@ export class FeatureDemoComponent {
       isBasisVeld: true,
       label: "Ident8",
       naam: "ident8",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: true,
       label: "Datum recentste meting",
       naam: "datum_einde_laatste_bestand",
-      type: "date"
+      type: "date",
     },
     {
       isBasisVeld: true,
       label: "Rapport 2",
       naam: "rapport_url_2",
       type: "url",
-      html: "{telpost_code}-rapport 2"
-    }
+      html: "{telpost_code}-rapport 2",
+    },
   ];
 
   readonly adviesInfos: VeldInfo[] = [
@@ -957,28 +1227,29 @@ export class FeatureDemoComponent {
       isBasisVeld: true,
       label: "Nummer",
       naam: "nummer",
-      type: "string"
+      type: "string",
     },
     {
       isBasisVeld: true,
       label: "Datum advies verzonden",
       naam: "datumVerzonden",
       sqlFormat: "YYYY-MM-DD",
-      type: "date"
+      type: "date",
     },
     {
       isBasisVeld: true,
       label: "Bekijk in AV",
       naam: "link",
       type: "url",
-      html: "Open"
+      html: "Open",
     },
     {
       isBasisVeld: true,
       label: "Bekijk",
       naam: "bekijk",
-      constante: "https://localhost/av/test/{nummer};werf=werf%2Fapi%2Fwerf%2F{nummer}",
-      type: "url"
+      constante:
+        "https://localhost/av/test/{nummer};werf=werf%2Fapi%2Fwerf%2F{nummer}",
+      type: "url",
     },
     {
       isBasisVeld: true,
@@ -986,23 +1257,70 @@ export class FeatureDemoComponent {
       html: "{nummer}",
       naam: "dynamisch",
       type: "url",
-      constante: "https://localhost/av/test/{nummer};werf=werf%2Fapi%2Fwerf%2F{nummer}"
-    }
+      constante:
+        "https://localhost/av/test/{nummer};werf=werf%2Fapi%2Fwerf%2F{nummer}",
+    },
   ];
 
   readonly staatVanDeWegVeldInfos: VeldInfo[] = [
     { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
     { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
-    { isBasisVeld: true, label: "Van refpunt", naam: "locatie.begin.opschrift", type: "double" },
-    { isBasisVeld: true, label: "Van afst", naam: "locatie.begin.afstand", type: "integer" },
-    { isBasisVeld: true, label: "Van positie", naam: "locatie.begin.positie", type: "double" },
-    { isBasisVeld: true, label: "Tot refpunt", naam: "locatie.eind.opschrift", type: "double" },
-    { isBasisVeld: true, label: "Tot afst", naam: "locatie.eind.afstand", type: "integer" },
-    { isBasisVeld: true, label: "Tot Positie", naam: "locatie.eind.positie", type: "double" },
-    { isBasisVeld: true, label: "Lengte", naam: "locatie.lengte", type: "double", displayFormat: "1.0-0" }, // custom formaat
-    { isBasisVeld: false, label: "Werkelijke lengte", naam: "werkelijkelengte", type: "double" },
+    {
+      isBasisVeld: true,
+      label: "Van refpunt",
+      naam: "locatie.begin.opschrift",
+      type: "double",
+    },
+    {
+      isBasisVeld: true,
+      label: "Van afst",
+      naam: "locatie.begin.afstand",
+      type: "integer",
+    },
+    {
+      isBasisVeld: true,
+      label: "Van positie",
+      naam: "locatie.begin.positie",
+      type: "double",
+    },
+    {
+      isBasisVeld: true,
+      label: "Tot refpunt",
+      naam: "locatie.eind.opschrift",
+      type: "double",
+    },
+    {
+      isBasisVeld: true,
+      label: "Tot afst",
+      naam: "locatie.eind.afstand",
+      type: "integer",
+    },
+    {
+      isBasisVeld: true,
+      label: "Tot Positie",
+      naam: "locatie.eind.positie",
+      type: "double",
+    },
+    {
+      isBasisVeld: true,
+      label: "Lengte",
+      naam: "locatie.lengte",
+      type: "double",
+      displayFormat: "1.0-0",
+    }, // custom formaat
+    {
+      isBasisVeld: false,
+      label: "Werkelijke lengte",
+      naam: "werkelijkelengte",
+      type: "double",
+    },
     { isBasisVeld: false, label: "Bron Id", naam: "bronid", type: "string" },
-    { isBasisVeld: false, label: "Globale Index", naam: "globale_index.globaleIndex", type: "integer" }
+    {
+      isBasisVeld: false,
+      label: "Globale Index",
+      naam: "globale_index.globaleIndex",
+      type: "integer",
+    },
   ];
 
   readonly verkeersbordenVeldinfos: VeldInfo[] = [
@@ -1010,20 +1328,52 @@ export class FeatureDemoComponent {
     { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
     { isBasisVeld: true, label: "Refpunt", naam: "opschrift", type: "double" },
     { isBasisVeld: true, label: "Afstand", naam: "afstand", type: "integer" },
-    { isBasisVeld: true, label: "Zijde van de rijweg", naam: "zijdeVanDeRijweg", type: "string" },
-    { isBasisVeld: true, label: "Langs gewestweg", naam: "langsGewestweg", type: "boolean" },
+    {
+      isBasisVeld: true,
+      label: "Zijde van de rijweg",
+      naam: "zijdeVanDeRijweg",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Langs gewestweg",
+      naam: "langsGewestweg",
+      type: "boolean",
+    },
     { isBasisVeld: false, label: "Gebied", naam: "gebied", type: "string" },
     { isBasisVeld: false, label: "UUID", naam: "uuid", type: "string" },
     { isBasisVeld: true, label: "Status", naam: "status", type: "string" },
-    { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date", sqlFormat: "DD/MM/YYYY" }
+    {
+      isBasisVeld: false,
+      label: "Wijzigingsdatum",
+      naam: "wijzigingsdatum",
+      type: "date",
+      sqlFormat: "DD/MM/YYYY",
+    },
   ];
 
   readonly bordenVeldinfos: VeldInfo[] = [
-    { isBasisVeld: false, label: "Locatie X", naam: "geometry.location.0", type: "double" },
-    { isBasisVeld: false, label: "Locatie Y", naam: "geometry.location.1", type: "double" },
+    {
+      isBasisVeld: false,
+      label: "Locatie X",
+      naam: "geometry.location.0",
+      type: "double",
+    },
+    {
+      isBasisVeld: false,
+      label: "Locatie Y",
+      naam: "geometry.location.1",
+      type: "double",
+    },
     { isBasisVeld: true, label: "Type bord", naam: "code", type: "string" },
-    { isBasisVeld: true, label: "Breedte", naam: "breedte", type: "double", isGeenLocatieVeld: true },
-    { isBasisVeld: true, label: "Hoogte", naam: "hoogte", type: "double" }
+    {
+      isBasisVeld: true,
+      label: "Breedte",
+      naam: "breedte",
+      type: "double",
+      isGeenLocatieVeld: true,
+    },
+    { isBasisVeld: true, label: "Hoogte", naam: "hoogte", type: "double" },
   ];
 
   readonly percelenVeldinfos: VeldInfo[] = [
@@ -1032,39 +1382,164 @@ export class FeatureDemoComponent {
     { isBasisVeld: true, label: "Perceel", naam: "PERCID", type: "string" },
     { isBasisVeld: true, label: "Jaar", naam: "JAAR", type: "integer" },
     { isBasisVeld: true, label: "NIS code", naam: "NIS_CODE", type: "string" },
-    { isBasisVeld: true, label: "Gewest", naam: "LIGGING_GEWEST", type: "string" },
-    { isBasisVeld: true, label: "Gemeente", naam: "LIGGING_GEMEENTE", type: "string" },
-    { isBasisVeld: true, label: "Beheerder", naam: "BEHEERDER_NAAM_KORT", type: "string" },
-    { isBasisVeld: false, label: "Beheerder (lang)", naam: "BEHEERDER_NAAM_LANG", type: "string" },
-    { isBasisVeld: true, label: "Eigenaar", naam: "EIGENAAR_NAAM_KORT", type: "string" },
-    { isBasisVeld: false, label: "Eigenaar (lang)", naam: "EIGENAAR_NAAM_LANG", type: "string" },
-    { isBasisVeld: true, label: "Eigenaar KBO nr", naam: "EIGENAAR_KBONR", type: "string" },
-    { isBasisVeld: true, label: "Perceel categorie", naam: "PERCEEL_CATEGORIE", type: "string" },
-    { isBasisVeld: true, label: "Kadaster oppervlakte (m²)", naam: "KADASTER_OPPERVLAKTE_M2", type: "double" },
-    { isBasisVeld: true, label: "Cadmap oppervlakte (m²)", naam: "CADMAP_OPPERVLAKTE_M2", type: "double" },
-    { isBasisVeld: true, label: "Grb oppervlakte (m²)", naam: "GRB_OPPERVLAKTE_M2", type: "double" },
-    { isBasisVeld: true, label: "Opgemeten oppervlakte (m²)", naam: "OPGEMETEN_OPPERVLAKTE_M2", type: "double" },
+    {
+      isBasisVeld: true,
+      label: "Gewest",
+      naam: "LIGGING_GEWEST",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Gemeente",
+      naam: "LIGGING_GEMEENTE",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Beheerder",
+      naam: "BEHEERDER_NAAM_KORT",
+      type: "string",
+    },
+    {
+      isBasisVeld: false,
+      label: "Beheerder (lang)",
+      naam: "BEHEERDER_NAAM_LANG",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Eigenaar",
+      naam: "EIGENAAR_NAAM_KORT",
+      type: "string",
+    },
+    {
+      isBasisVeld: false,
+      label: "Eigenaar (lang)",
+      naam: "EIGENAAR_NAAM_LANG",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Eigenaar KBO nr",
+      naam: "EIGENAAR_KBONR",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Perceel categorie",
+      naam: "PERCEEL_CATEGORIE",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Kadaster oppervlakte (m²)",
+      naam: "KADASTER_OPPERVLAKTE_M2",
+      type: "double",
+    },
+    {
+      isBasisVeld: true,
+      label: "Cadmap oppervlakte (m²)",
+      naam: "CADMAP_OPPERVLAKTE_M2",
+      type: "double",
+    },
+    {
+      isBasisVeld: true,
+      label: "Grb oppervlakte (m²)",
+      naam: "GRB_OPPERVLAKTE_M2",
+      type: "double",
+    },
+    {
+      isBasisVeld: true,
+      label: "Opgemeten oppervlakte (m²)",
+      naam: "OPGEMETEN_OPPERVLAKTE_M2",
+      type: "double",
+    },
     { isBasisVeld: true, label: "Rbh code", naam: "RBH_CODE", type: "string" },
-    { isBasisVeld: false, label: "Rbh code (lang)", naam: "RBH_CODE_DESCR", type: "string" },
-    { isBasisVeld: true, label: "Percentage eigenaar", naam: "PERCENTAGE_EIGENAAR", type: "string" },
-    { isBasisVeld: true, label: "Kadastrale aard ", naam: "KADASTRALE_AARD_CODE", type: "string" },
-    { isBasisVeld: false, label: "Kadastrale aard (lang)", naam: "KADASTRALE_AARD_DESCR", type: "string" },
-    { isBasisVeld: true, label: "Kadastraal recht", naam: "KADASTRAAL_RECHT_CODE", type: "string" },
-    { isBasisVeld: false, label: "Kadastraal recht (lang)", naam: "KADASTRAAL_RECHT_DESCR", type: "string" },
-    { isBasisVeld: true, label: "Data beheerder vsgd", naam: "DATA_BEHEERDER_VSGD", type: "string" },
-    { isBasisVeld: true, label: "Bebouwde oppervlakte", naam: "BEBOUWDE_OPPERVLAKTE", type: "double" },
-    { isBasisVeld: true, label: "Bron geometrie", naam: "BRON_GEOMETRIE", type: "string" },
-    { isBasisVeld: true, label: "Bestemming symb", naam: "BESTEMMING_SYMB", type: "string" },
-    { isBasisVeld: true, label: "Percentage bebouwd", naam: "PERCENTAGE_BEBOUWD", type: "double" },
+    {
+      isBasisVeld: false,
+      label: "Rbh code (lang)",
+      naam: "RBH_CODE_DESCR",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Percentage eigenaar",
+      naam: "PERCENTAGE_EIGENAAR",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Kadastrale aard ",
+      naam: "KADASTRALE_AARD_CODE",
+      type: "string",
+    },
+    {
+      isBasisVeld: false,
+      label: "Kadastrale aard (lang)",
+      naam: "KADASTRALE_AARD_DESCR",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Kadastraal recht",
+      naam: "KADASTRAAL_RECHT_CODE",
+      type: "string",
+    },
+    {
+      isBasisVeld: false,
+      label: "Kadastraal recht (lang)",
+      naam: "KADASTRAAL_RECHT_DESCR",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Data beheerder vsgd",
+      naam: "DATA_BEHEERDER_VSGD",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Bebouwde oppervlakte",
+      naam: "BEBOUWDE_OPPERVLAKTE",
+      type: "double",
+    },
+    {
+      isBasisVeld: true,
+      label: "Bron geometrie",
+      naam: "BRON_GEOMETRIE",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Bestemming symb",
+      naam: "BESTEMMING_SYMB",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Percentage bebouwd",
+      naam: "PERCENTAGE_BEBOUWD",
+      type: "double",
+    },
     { isBasisVeld: true, label: "Bebouwd", naam: "BEBOUWD", type: "boolean" },
-    { isBasisVeld: false, label: "Shape length", naam: "SHAPE_Length", type: "double" },
-    { isBasisVeld: false, label: "Shape area", naam: "SHAPE_Area", type: "double" }
+    {
+      isBasisVeld: false,
+      label: "Shape length",
+      naam: "SHAPE_Length",
+      type: "double",
+    },
+    {
+      isBasisVeld: false,
+      label: "Shape area",
+      naam: "SHAPE_Area",
+      type: "double",
+    },
   ];
 
   readonly wfsStratenVeldinfos: VeldInfo[] = [
     { isBasisVeld: true, label: "ID", naam: "id", type: "string" },
     { isBasisVeld: true, label: "Straatnaam", naam: "name", type: "string" },
-    { isBasisVeld: true, label: "Lengte", naam: "meters", type: "double" }
+    { isBasisVeld: true, label: "Lengte", naam: "meters", type: "double" },
   ];
 
   readonly innamesVeldinfos: VeldInfo[] = [
@@ -1074,7 +1549,7 @@ export class FeatureDemoComponent {
       naam: "vandatum",
       type: "date",
       parseFormat: "yyyy-LL-dd'T'hh:mm:ss",
-      displayFormat: "dd/LL/yyyy hh:mm"
+      displayFormat: "dd/LL/yyyy hh:mm",
     },
     {
       isBasisVeld: true,
@@ -1082,7 +1557,7 @@ export class FeatureDemoComponent {
       naam: "totdatum",
       type: "date",
       parseFormat: "yyyy-LL-dd'T'hh:mm:ss",
-      displayFormat: "dd/LL/yyyy hh:mm"
+      displayFormat: "dd/LL/yyyy hh:mm",
     },
     {
       isBasisVeld: true,
@@ -1090,12 +1565,16 @@ export class FeatureDemoComponent {
       naam: "gewijzigd_op",
       type: "date",
       parseFormat: "yyyy-LL-dd'T'hh:mm:ss",
-      displayFormat: "dd/LL/yyyy hh:mm"
-    }
+      displayFormat: "dd/LL/yyyy hh:mm",
+    },
   ];
 
-  private readonly featureSelectieModusSubj: rx.Subject<SelectieModus> = new rx.Subject();
-  readonly featureSelectieModus$: rx.Observable<SelectieModus> = this.featureSelectieModusSubj.asObservable();
+  private readonly featureSelectieModusSubj: rx.Subject<
+    SelectieModus
+  > = new rx.Subject();
+  readonly featureSelectieModus$: rx.Observable<
+    SelectieModus
+  > = this.featureSelectieModusSubj.asObservable();
 
   readonly schopStijlSpec: AwvV0StaticStyleSpec = {
     type: "StaticStyle",
@@ -1108,9 +1587,9 @@ export class FeatureDemoComponent {
         opacity: 1,
         src:
           // tslint:disable-next-line: max-line-length
-          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAgMAAAAOFJJnAAAAGXRFWHRDb21tZW50AENyZWF0ZWQgd2l0aCBHSU1QV4EOFwAAAAlQTFRFAAAA//QA////2q2SgwAAAAF0Uk5TAEDm2GYAAAABYktHRAJmC3xkAAAALklEQVQY02NgYGAQDWGAAAEWKENEBMpgDYAxHKAMxkHPCA0lgQH3O5wB9zLYQAAL0AqM5iwu/gAAAABJRU5ErkJggg=="
-      }
-    }
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAgMAAAAOFJJnAAAAGXRFWHRDb21tZW50AENyZWF0ZWQgd2l0aCBHSU1QV4EOFwAAAAlQTFRFAAAA//QA////2q2SgwAAAAF0Uk5TAEDm2GYAAAABYktHRAJmC3xkAAAALklEQVQY02NgYGAQDWGAAAEWKENEBMpgDYAxHKAMxkHPCA0lgQH3O5wB9zLYQAAL0AqM5iwu/gAAAABJRU5ErkJggg==",
+      },
+    },
   };
 
   readonly schop = JSON.stringify(this.schopStijlSpec);
@@ -1125,9 +1604,9 @@ export class FeatureDemoComponent {
         anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
         scale: 1,
         opacity: 1,
-        src: "icon.svg"
-      }
-    }
+        src: "icon.svg",
+      },
+    },
   };
 
   // Dit is een arbitraire OL stijl.
@@ -1138,8 +1617,8 @@ export class FeatureDemoComponent {
       anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
       scale: 1,
       opacity: 1,
-      src: "icon.svg"
-    })
+      src: "icon.svg",
+    }),
   });
 
   // Dit is een arbitraire OL stijl. Toevallig gelijk aan de standaard.
@@ -1149,19 +1628,20 @@ export class FeatureDemoComponent {
 
   readonly mechelenZichtbaarToggleSubj: rx.Subject<null> = new rx.Subject();
   readonly mechelenZichtbaar$ = this.mechelenZichtbaarToggleSubj.pipe(
-    scan<null, boolean>(prev => !prev, true),
+    scan<null, boolean>((prev) => !prev, true),
     startWith(true)
   );
 
   readonly mechelenSelecteerbaarToggleSubj: rx.Subject<null> = new rx.Subject();
   readonly mechelenSelecteerbaar$ = this.mechelenSelecteerbaarToggleSubj.pipe(
-    scan<null, boolean>(prev => !prev, true),
+    scan<null, boolean>((prev) => !prev, true),
     startWith(true)
   );
 
-  readonly cachedFeaturesProviderConsumer = (cfpc: CachedFeatureLookup) => (this.cachedFeaturesProvider = option.some(cfpc));
+  readonly cachedFeaturesProviderConsumer = (cfpc: CachedFeatureLookup) =>
+    (this.cachedFeaturesProvider = option.some(cfpc));
 
-  readonly percelenQueryUrl: Function1<ol.Coordinate, string> = location => {
+  readonly percelenQueryUrl: Function1<ol.Coordinate, string> = (location) => {
     const params = {
       service: "WMS",
       request: "GetFeatureInfo",
@@ -1174,8 +1654,10 @@ export class FeatureDemoComponent {
       width: 2,
       x: 0,
       y: 0,
-      bbox: `${location[0] - 1},${location[1] - 1},${location[0] + 1},${location[1] + 1}`,
-      bron: "Bestuurszaken Percelen"
+      bbox: `${location[0] - 1},${location[1] - 1},${location[0] + 1},${
+        location[1] + 1
+      }`,
+      bron: "Bestuurszaken Percelen",
     };
     return urlWithParams("/geoloket/rest/externewms/featureInfo", params);
     // const corsProxy = "http://localhost:9090/"; // TODO iets dat altijd bereikbaar is
@@ -1184,7 +1666,7 @@ export class FeatureDemoComponent {
     // tslint:disable-next-line:semicolon
   };
 
-  readonly percelenWmsParser: Function1<string, Veldwaarde[]> = resp => {
+  readonly percelenWmsParser: Function1<string, Veldwaarde[]> = (resp) => {
     // Dit is maar een vb van een parser
     // vb:
     // tslint:disable-next-line:max-line-length
@@ -1198,7 +1680,10 @@ export class FeatureDemoComponent {
     const fragments = withoutWMSName.split(";");
     const headerNames = array.take(numHeaders, fragments);
     const header = headerNames.join(";");
-    const valueLine = withoutWMSName.substring(header.length + 1, withoutWMSName.length);
+    const valueLine = withoutWMSName.substring(
+      header.length + 1,
+      withoutWMSName.length
+    );
     const values = valueLine.split(/;(?! )/); // sommige waarden bevatten ;, maar dan staat er hopelijk een spatie achter
     // Een "echte" parser moet ook de datatypes juist zetten
     return array.zip(headerNames, values);
@@ -1210,14 +1695,14 @@ export class FeatureDemoComponent {
       startZoom: Number(start),
       eindZoom: Number(eind),
       wkt: this.precacheWMSWkt,
-      startMetLegeCache: startMetLegeCache
+      startMetLegeCache: startMetLegeCache,
     };
   }
 
   startPrecacheFeatures(startMetLegeCache: boolean) {
     this.precacheFeaturesInput = {
       wkt: `SRID=31370;${this.precacheFeaturesWkt}`,
-      startMetLegeCache: startMetLegeCache
+      startMetLegeCache: startMetLegeCache,
     };
   }
 
@@ -1227,7 +1712,7 @@ export class FeatureDemoComponent {
     }
     const locatie: [number, number] = [
       this.installatieCoordinaat[0] + (Math.random() - 0.5) * 3000,
-      this.installatieCoordinaat[1] + (Math.random() - 0.5) * 3000
+      this.installatieCoordinaat[1] + (Math.random() - 0.5) * 3000,
     ];
 
     const feature = new ol.Feature({
@@ -1235,9 +1720,9 @@ export class FeatureDemoComponent {
       laagnaam: "Fietspaden",
       properties: {
         ident8: "R0010001",
-        typefietspad: "Vrijliggend"
+        typefietspad: "Vrijliggend",
       },
-      geometry: new ol.geom.Point(locatie)
+      geometry: new ol.geom.Point(locatie),
     });
     feature.setStyle(this.pinIcon);
     this.installaties = array.snoc(this.installaties, feature);
@@ -1249,10 +1734,15 @@ export class FeatureDemoComponent {
   }
 
   installatieGeselecteerd(feature: ol.Feature) {
-    this.installatieGeselecteerdEvents.push(this.geoJsonFormatter.writeFeature(feature));
+    this.installatieGeselecteerdEvents.push(
+      this.geoJsonFormatter.writeFeature(feature)
+    );
   }
 
-  featuresGeselecteerd(event: ol.Feature[], selectieKaart: KaartClassicComponent) {
+  featuresGeselecteerd(
+    event: ol.Feature[],
+    selectieKaart: KaartClassicComponent
+  ) {
     console.log("Features geselecteerd", event);
   }
 
@@ -1290,7 +1780,8 @@ export class FeatureDemoComponent {
   }
 
   veranderVoorwaarden() {
-    this.voorwaardenIndex = (this.voorwaardenIndex + 1) % this.alleVoorwaarden.length;
+    this.voorwaardenIndex =
+      (this.voorwaardenIndex + 1) % this.alleVoorwaarden.length;
     this.voorwaarden = this.alleVoorwaarden[this.voorwaardenIndex];
   }
 
@@ -1375,22 +1866,31 @@ export class FeatureDemoComponent {
   }
 
   onFietspadsegmentenZichtbaar(features: Array<ol.Feature>): void {
-    this.fietspadsegmentenSelectie = features.map(feature => ({
+    this.fietspadsegmentenSelectie = features.map((feature) => ({
       feature: feature,
-      geselecteerd: false
+      geselecteerd: false,
     }));
     this.geselecteerdeFietspadsegmenten = [];
   }
 
-  onFietspadsegmentGeselecteerd(selectie: FietspadSelectie, geselecteerd: boolean) {
+  onFietspadsegmentGeselecteerd(
+    selectie: FietspadSelectie,
+    geselecteerd: boolean
+  ) {
     selectie.geselecteerd = geselecteerd;
-    this.geselecteerdeFietspadsegmenten = this.fietspadsegmentenSelectie.filter(fss => fss.geselecteerd).map(fss => fss.feature);
+    this.geselecteerdeFietspadsegmenten = this.fietspadsegmentenSelectie
+      .filter((fss) => fss.geselecteerd)
+      .map((fss) => fss.feature);
   }
 
   onFietspadsegmentViaKaartSelectie(features: Array<ol.Feature>) {
-    this.fietspadsegmentenSelectie.forEach(fss => (fss.geselecteerd = features.includes(fss.feature)));
+    this.fietspadsegmentenSelectie.forEach(
+      (fss) => (fss.geselecteerd = features.includes(fss.feature))
+    );
     if (features.length !== this.geselecteerdeFietspadsegmenten.length) {
-      this.geselecteerdeFietspadsegmenten = this.fietspadsegmentenSelectie.filter(fss => fss.geselecteerd).map(fss => fss.feature);
+      this.geselecteerdeFietspadsegmenten = this.fietspadsegmentenSelectie
+        .filter((fss) => fss.geselecteerd)
+        .map((fss) => fss.feature);
     }
   }
 
@@ -1410,23 +1910,39 @@ export class FeatureDemoComponent {
 
   scrollTo(idName: string): void {
     const element = document.getElementById(idName);
-    forEach(option.fromNullable(element), elt => elt.scrollIntoView({ behavior: "smooth" }));
+    forEach(option.fromNullable(element), (elt) =>
+      elt.scrollIntoView({ behavior: "smooth" })
+    );
   }
 
   onZetCenterManueel(coordTxt: string): void {
-    forEach(parseCoordinate(coordTxt), (coords: [number, number]) => (this.configuratorMiddelpunt = coords));
+    forEach(
+      parseCoordinate(coordTxt),
+      (coords: [number, number]) => (this.configuratorMiddelpunt = coords)
+    );
   }
 
   onAlleFeatures(): void {
     console.log("Alle features opvragen");
-    forEach(this.cachedFeaturesProvider, provider => this.verwerkSelectie(provider.all$()));
+    forEach(this.cachedFeaturesProvider, (provider) =>
+      this.verwerkSelectie(provider.all$())
+    );
   }
 
-  onAlleFeaturesInExtent(minX: string, minY: string, maxX: string, maxY: string): void {
+  onAlleFeaturesInExtent(
+    minX: string,
+    minY: string,
+    maxX: string,
+    maxY: string
+  ): void {
     try {
-      const extent: ol.Extent = [minX, minY, maxX, maxY].map(txt => Number.parseFloat(txt)) as ol.Extent;
+      const extent: ol.Extent = [minX, minY, maxX, maxY].map((txt) =>
+        Number.parseFloat(txt)
+      ) as ol.Extent;
       console.log(`Alle features in extent ${extent} opvragen`);
-      forEach(this.cachedFeaturesProvider, provider => this.verwerkSelectie(provider.inExtent$(extent)));
+      forEach(this.cachedFeaturesProvider, (provider) =>
+        this.verwerkSelectie(provider.inExtent$(extent))
+      );
     } catch (e) {
       console.warn("Waren dat wel nummers?", e);
     }
@@ -1434,14 +1950,21 @@ export class FeatureDemoComponent {
 
   onFeatureById(id: string): void {
     console.log("Features by id opvragen", id);
-    forEach(this.cachedFeaturesProvider, provider => this.verwerkSelectie(provider.byIds$([id])));
+    forEach(this.cachedFeaturesProvider, (provider) =>
+      this.verwerkSelectie(provider.byIds$([id]))
+    );
   }
 
   onFeaturesByIdent8(ident8: string): void {
     console.log("Features by ident8 opvragen", ident8);
-    forEach(this.cachedFeaturesProvider, provider =>
+    forEach(this.cachedFeaturesProvider, (provider) =>
       this.verwerkSelectie(
-        provider.filtered$(f => f.getProperties() && f.getProperties().properties && f.getProperties().properties.ident8 === ident8)
+        provider.filtered$(
+          (f) =>
+            f.getProperties() &&
+            f.getProperties().properties &&
+            f.getProperties().properties.ident8 === ident8
+        )
       )
     );
   }
@@ -1453,20 +1976,25 @@ export class FeatureDemoComponent {
     }
     const sharedFeature$ = feature$.pipe(share());
     sharedFeature$
-      .pipe(reduce<ol.Feature, Counter>((acc, feature) => ({ count: acc.count + 1, last: feature }), { count: 0, last: undefined }))
+      .pipe(
+        reduce<ol.Feature, Counter>(
+          (acc, feature) => ({ count: acc.count + 1, last: feature }),
+          { count: 0, last: undefined }
+        )
+      )
       .subscribe({
         next: ({ count, last }) => {
           console.log(`Aantal cached features gezien: ${count}`);
           console.log(`Laatste cached feature`, last);
         },
-        complete: () => console.log("Opvragen klaar")
+        complete: () => console.log("Opvragen klaar"),
       });
     sharedFeature$
       .pipe(
         scan<ol.Feature, ol.Feature[]>(array.snoc, []),
         throttleTime(500, undefined, { leading: true, trailing: true })
       )
-      .subscribe(features => {
+      .subscribe((features) => {
         this.offlineGeselecteerdeFeatures = features;
       });
   }
@@ -1475,7 +2003,12 @@ export class FeatureDemoComponent {
     const index = this.demoZoekers.length;
     this.demoZoekers.push(
       zoekerMetPrioriteiten(
-        new DummyZoeker(`Dummy${index}`, FeatureDemoComponent.zoekerKleurCodes[index % FeatureDemoComponent.zoekerKleurCodes.length]),
+        new DummyZoeker(
+          `Dummy${index}`,
+          FeatureDemoComponent.zoekerKleurCodes[
+            index % FeatureDemoComponent.zoekerKleurCodes.length
+          ]
+        ),
         index,
         index,
         toonIcoon,
@@ -1505,10 +2038,13 @@ export class FeatureDemoComponent {
     const pointFeature = (c: ol.Coordinate) =>
       new ol.Feature({
         id: id++,
-        geometry: new ol.geom.Point(c)
+        geometry: new ol.geom.Point(c),
       });
     const offset = (r: number) => (c: ol.Coordinate) =>
-      [c[0] + (Math.random() * 2 * r - r), c[1] + (Math.random() * 2 * r - r)] as ol.Coordinate;
+      [
+        c[0] + (Math.random() * 2 * r - r),
+        c[1] + (Math.random() * 2 * r - r),
+      ] as ol.Coordinate;
     const features: ol.Feature[] = [];
     const radius1 = 20000; // 20 km
     const radius2 = 2000; // 2 km

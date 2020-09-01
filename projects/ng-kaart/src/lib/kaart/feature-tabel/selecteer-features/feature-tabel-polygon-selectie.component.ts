@@ -4,7 +4,13 @@ import { DomSanitizer } from "@angular/platform-browser";
 import { default as booleanIntersects } from "@turf/boolean-intersects";
 import * as turf from "@turf/turf";
 import { array, option } from "fp-ts";
-import { Endomorphism, flow, Function1, Function2, identity } from "fp-ts/lib/function";
+import {
+  Endomorphism,
+  flow,
+  Function1,
+  Function2,
+  identity,
+} from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import { LineString, Point, Polygon } from "ol/geom";
 import * as rx from "rxjs";
@@ -23,7 +29,7 @@ import { KaartComponent } from "../../kaart.component";
 import { MultiTekenenUiSelector } from "../../tekenen/kaart-multi-teken-laag.component";
 import { EndDrawing, StartDrawing } from "../../tekenen/tekenen-model";
 
-// tslint:disable-next-line: max-line-length
+// eslint-disable-next-line max-len
 const viaPolygonSVG = `<svg width="100%" height="100%" viewBox="0 0 24 24" style="fill-rule:evenodd;clip-rule:evenodd;stroke-miterlimit:10;">
   <clipPath id="_clip1"><rect id="icons-toolbar-001" x="1.354" y="-19.5" width="84" height="63"/></clipPath>
   <g clip-path="url(#_clip1)"><g id="Toolbar">
@@ -66,76 +72,120 @@ export interface SelecteerFeaturesViaPolygonOpties {
   readonly polygonStyleFunction: ol.style.StyleFunction;
 }
 
-const defaultPolygonStyleFunction: Function2<ol.Feature, number, ol.style.Style[]> = () => [
+const defaultPolygonStyleFunction: Function2<
+  ol.Feature,
+  number,
+  ol.style.Style[]
+> = () => [
   new ol.style.Style({
     stroke: new ol.style.Stroke({
       color: clr.kleurcodeValue(clr.zwart),
-      width: 3
+      width: 3,
     }),
     fill: new ol.style.Fill({
-      color: clr.kleurcodeValue(clr.transparantgrijs)
-    })
-  })
+      color: clr.kleurcodeValue(clr.transparantgrijs),
+    }),
+  }),
 ];
 
 const defaultOptions: SelecteerFeaturesViaPolygonOpties = {
   markColour: clr.zwart,
   useRouting: false,
-  polygonStyleFunction: defaultPolygonStyleFunction
+  polygonStyleFunction: defaultPolygonStyleFunction,
 };
 
-export const SelecteerFeaturesViaPolygonModusSelector = "SelecteerFeaturesViaPolygon";
+export const SelecteerFeaturesViaPolygonModusSelector =
+  "SelecteerFeaturesViaPolygon";
 
-const geometryToTurfPolygon: Function1<ol.geom.Geometry, option.Option<turf.Feature<turf.Polygon, turf.Properties>>> = flow(
+const geometryToTurfPolygon: Function1<
+  ol.geom.Geometry,
+  option.Option<turf.Feature<turf.Polygon, turf.Properties>>
+> = flow(
   toLineString,
-  option.map(line => line.getCoordinates()),
+  option.map((line) => line.getCoordinates()),
   option.filter(arrays.hasAtLeastLength(3)),
-  option.map(coordinates =>
+  option.map((coordinates) =>
     // Sluit de polygoon als dat nog niet het geval is. Turf staat daar op
-    Coordinates.equal(coordinates[0], coordinates[coordinates.length - 1]) ? coordinates : array.snoc(coordinates, coordinates[0])
+    Coordinates.equal(coordinates[0], coordinates[coordinates.length - 1])
+      ? coordinates
+      : array.snoc(coordinates, coordinates[0])
   ),
-  option.map(coordinates => turf.polygon([coordinates]))
+  option.map((coordinates) => turf.polygon([coordinates]))
 );
 
-const pointIntersects = (p: Point, turfPolygon): boolean => turf.booleanPointInPolygon(turf.point(p.getCoordinates()), turfPolygon);
+const pointIntersects = (p: Point, turfPolygon): boolean =>
+  turf.booleanPointInPolygon(turf.point(p.getCoordinates()), turfPolygon);
 
 const lineIntersects = (l: LineString, turfPolygon): boolean => {
   const turfLineString = turf.lineString(l.getCoordinates());
-  return turf.booleanWithin(turfLineString, turfPolygon) || turf.booleanCrosses(turfLineString, turfPolygon);
+  return (
+    turf.booleanWithin(turfLineString, turfPolygon) ||
+    turf.booleanCrosses(turfLineString, turfPolygon)
+  );
 };
 
 const polygonIntersects = (p: Polygon, turfPolygon): boolean =>
   flow(
     geometryToTurfPolygon,
-    option.exists(featurePolygon => booleanIntersects(featurePolygon, turfPolygon))
+    option.exists((featurePolygon) =>
+      booleanIntersects(featurePolygon, turfPolygon)
+    )
   )(p);
 
-const geometryOverlapsPolygon = (polygon: ol.geom.Geometry) => (featureGeom: ol.geom.Geometry): boolean =>
+const geometryOverlapsPolygon = (polygon: ol.geom.Geometry) => (
+  featureGeom: ol.geom.Geometry
+): boolean =>
   pipe(
     polygon,
     geometryToTurfPolygon,
-    option.exists(turfPolygon => {
+    option.exists((turfPolygon) => {
       return pipe(
         matchGeometryType(featureGeom, {
-          point: p => pointIntersects(p, turfPolygon),
-          multiPoint: mp => mp.getPoints().reduce<boolean>((overlaps, p) => overlaps || pointIntersects(p, turfPolygon), false),
-          lineString: l => lineIntersects(l, turfPolygon),
-          multiLineString: ml => ml.getLineStrings().reduce<boolean>((overlaps, l) => overlaps || lineIntersects(l, turfPolygon), false),
-          polygon: p => polygonIntersects(p, turfPolygon),
-          multiPolygon: mp => mp.getPolygons().reduce<boolean>((overlaps, p) => overlaps || polygonIntersects(p, turfPolygon), false),
-          geometryCollection: gc =>
-            array.reduce<ol.geom.Geometry, boolean>(false, (overlaps, geom) => overlaps || geometryOverlapsPolygon(polygon)(geom))(
-              gc.getGeometries()
-            )
+          point: (p) => pointIntersects(p, turfPolygon),
+          multiPoint: (mp) =>
+            mp
+              .getPoints()
+              .reduce<boolean>(
+                (overlaps, p) => overlaps || pointIntersects(p, turfPolygon),
+                false
+              ),
+          lineString: (l) => lineIntersects(l, turfPolygon),
+          multiLineString: (ml) =>
+            ml
+              .getLineStrings()
+              .reduce<boolean>(
+                (overlaps, l) => overlaps || lineIntersects(l, turfPolygon),
+                false
+              ),
+          polygon: (p) => polygonIntersects(p, turfPolygon),
+          multiPolygon: (mp) =>
+            mp
+              .getPolygons()
+              .reduce<boolean>(
+                (overlaps, p) => overlaps || polygonIntersects(p, turfPolygon),
+                false
+              ),
+          geometryCollection: (gc) =>
+            array.reduce<ol.geom.Geometry, boolean>(
+              false,
+              (overlaps, geom) =>
+                overlaps || geometryOverlapsPolygon(polygon)(geom)
+            )(gc.getGeometries()),
         }),
         option.exists(identity)
       );
     })
   );
-const featureOverlapsPolygon = (polygon: ol.geom.Geometry) => (feature: ol.Feature): boolean =>
-  option.exists(geometryOverlapsPolygon(polygon))(option.fromNullable(feature.getGeometry()));
+const featureOverlapsPolygon = (polygon: ol.geom.Geometry) => (
+  feature: ol.Feature
+): boolean =>
+  option.exists(geometryOverlapsPolygon(polygon))(
+    option.fromNullable(feature.getGeometry())
+  );
 
-const featuresOverlappingPolygon = (polygon: ol.geom.Geometry): Endomorphism<ol.Feature[]> => array.filter(featureOverlapsPolygon(polygon));
+const featuresOverlappingPolygon = (
+  polygon: ol.geom.Geometry
+): Endomorphism<ol.Feature[]> => array.filter(featureOverlapsPolygon(polygon));
 
 interface TemplateData {
   readonly actief: boolean;
@@ -144,9 +194,11 @@ interface TemplateData {
 @Component({
   selector: "awv-feature-tabel-polygon-selectie",
   templateUrl: "./feature-tabel-polygon-selectie.component.html",
-  styleUrls: []
+  styleUrls: [],
 })
-export class FeatureTabelSelectieViaPolygonComponent extends KaartModusDirective implements OnInit, OnDestroy {
+export class FeatureTabelSelectieViaPolygonComponent
+  extends KaartModusDirective
+  implements OnInit, OnDestroy {
   public templateData$: rx.Observable<TemplateData>;
   private opties: SelecteerFeaturesViaPolygonOpties = defaultOptions;
 
@@ -160,23 +212,40 @@ export class FeatureTabelSelectieViaPolygonComponent extends KaartModusDirective
 
     this.matIconRegistry.addSvgIcon(
       "selecteer-via-polygon",
-      this.domSanitize.bypassSecurityTrustResourceUrl(encodeAsSvgUrl(viaPolygonSVG))
+      this.domSanitize.bypassSecurityTrustResourceUrl(
+        encodeAsSvgUrl(viaPolygonSVG)
+      )
     );
 
-    this.templateData$ = this.isActief$.pipe(map(actief => ({ actief })));
+    this.templateData$ = this.isActief$.pipe(map((actief) => ({ actief })));
 
     const drawingDone$ = this.isActief$.pipe(
-      switchMap(actief => (actief ? this.modelChanges.tekenenOps$.pipe(filter(drawOps => drawOps.type === "StopDrawing")) : rx.EMPTY))
+      switchMap((actief) =>
+        actief
+          ? this.modelChanges.tekenenOps$.pipe(
+              filter((drawOps) => drawOps.type === "StopDrawing")
+            )
+          : rx.EMPTY
+      )
     );
 
-    const selectedFeaturesAtDrawingDone$: rx.Observable<ol.Feature[]> = rx
-      .combineLatest(this.modelChanges.getekendeGeometry$, this.modelChanges.zichtbareFeatures$)
+    const selectedFeaturesAtDrawingDone$: rx.Observable<
+      ol.Feature[]
+    > = rx
+      .combineLatest(
+        this.modelChanges.getekendeGeometry$,
+        this.modelChanges.zichtbareFeatures$
+      )
       .pipe(
         sample(drawingDone$),
-        map(([getekendeGeometry, zichtbareFeatures]) => featuresOverlappingPolygon(getekendeGeometry)(zichtbareFeatures))
+        map(([getekendeGeometry, zichtbareFeatures]) =>
+          featuresOverlappingPolygon(getekendeGeometry)(zichtbareFeatures)
+        )
       );
 
-    const selectFeaturesCmd$ = selectedFeaturesAtDrawingDone$.pipe(map(prt.SelecteerExtraFeaturesCmd));
+    const selectFeaturesCmd$ = selectedFeaturesAtDrawingDone$.pipe(
+      map(prt.SelecteerExtraFeaturesCmd)
+    );
 
     const startCmds$ = this.wordtActief$.pipe(
       switchMapTo(
@@ -185,7 +254,13 @@ export class FeatureTabelSelectieViaPolygonComponent extends KaartModusDirective
           prt.VoegUiElementToe(MultiTekenenUiSelector),
           prt.PlaatsTabelInSluimertoestandCmd(),
           prt.DrawOpsCmd(EndDrawing()), // Om zeker te zijn dat de vorige afgesloten is
-          prt.DrawOpsCmd(StartDrawing(this.opties.markColour, this.opties.useRouting, option.some(this.opties.polygonStyleFunction)))
+          prt.DrawOpsCmd(
+            StartDrawing(
+              this.opties.markColour,
+              this.opties.useRouting,
+              option.some(this.opties.polygonStyleFunction)
+            )
+          ),
         ])
       )
     );
@@ -194,7 +269,7 @@ export class FeatureTabelSelectieViaPolygonComponent extends KaartModusDirective
       switchMapTo(
         rx.from([
           DrawOpsCmd(EndDrawing()), //
-          prt.VerwijderUiElement(MultiTekenenUiSelector)
+          prt.VerwijderUiElement(MultiTekenenUiSelector),
         ])
       )
     );
@@ -203,12 +278,17 @@ export class FeatureTabelSelectieViaPolygonComponent extends KaartModusDirective
       switchMapTo(
         rx.from([
           prt.OpenTabelCmd(), //
-          prt.ZetActieveModusCmd(option.none)
+          prt.ZetActieveModusCmd(option.none),
         ])
       )
     );
 
-    this.dispatchCmdsInViewReady(selectFeaturesCmd$, startCmds$, stopCmds$, restoreCmd$);
+    this.dispatchCmdsInViewReady(
+      selectFeaturesCmd$,
+      startCmds$,
+      stopCmds$,
+      restoreCmd$
+    );
   }
 
   modus(): string {

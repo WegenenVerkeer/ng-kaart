@@ -1,12 +1,18 @@
 import { option } from "fp-ts";
-import { constant, Function1, Function3, Lazy, Refinement } from "fp-ts/lib/function";
+import {
+  constant,
+  Function1,
+  Function3,
+  Lazy,
+  Refinement,
+} from "fp-ts/lib/function";
 
 import * as clr from "../../stijl/colour";
 import * as ol from "../../util/openlayers-compat";
 
 import { Waypoint } from "./waypoint.msg";
 
-////////////////////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////////////////
 // DrawOps: Operaties op het niveau van (ver)plaatsen en verwijderen van punten op de OL map
 //
 
@@ -76,18 +82,21 @@ export interface SnapWaypoint {
   readonly waypoint: Waypoint;
 }
 
-export const StartDrawing: Function3<clr.Kleur, boolean, option.Option<ol.style.StyleFunction>, StartDrawing> = (
-  featureColour,
-  useRouting,
-  polygonStyleFunction
-) => ({
+export const StartDrawing: Function3<
+  clr.Kleur,
+  boolean,
+  option.Option<ol.style.StyleFunction>,
+  StartDrawing
+> = (featureColour, useRouting, polygonStyleFunction) => ({
   type: "StartDrawing",
   featureColour: featureColour,
   useRouting: useRouting,
-  polygonStyleFunction: polygonStyleFunction
+  polygonStyleFunction: polygonStyleFunction,
 });
 
-export const isStartDrawing: Refinement<DrawOps, StartDrawing> = (ops): ops is StartDrawing => ops.type === "StartDrawing";
+export const isStartDrawing: Refinement<DrawOps, StartDrawing> = (
+  ops
+): ops is StartDrawing => ops.type === "StartDrawing";
 
 const endDrawing: EndDrawing = { type: "EndDrawing" };
 export const EndDrawing: Lazy<EndDrawing> = constant(endDrawing);
@@ -95,17 +104,33 @@ export const EndDrawing: Lazy<EndDrawing> = constant(endDrawing);
 const stopDrawing: StopDrawing = { type: "StopDrawing" };
 export const StopDrawing: Lazy<StopDrawing> = constant(stopDrawing);
 
-export const RedrawRoute: Function1<boolean, RedrawRoute> = useRouting => ({ type: "RedrawRoute", useRouting: useRouting });
+export const RedrawRoute: Function1<boolean, RedrawRoute> = (useRouting) => ({
+  type: "RedrawRoute",
+  useRouting: useRouting,
+});
 
-export const isRedrawRoute: Refinement<DrawOps, RedrawRoute> = (ops): ops is RedrawRoute => ops.type === "RedrawRoute";
+export const isRedrawRoute: Refinement<DrawOps, RedrawRoute> = (
+  ops
+): ops is RedrawRoute => ops.type === "RedrawRoute";
 
-export const AddPoint: Function1<ol.Coordinate, AddPoint> = coord => ({ type: "AddPoint", coordinate: coord });
+export const AddPoint: Function1<ol.Coordinate, AddPoint> = (coord) => ({
+  type: "AddPoint",
+  coordinate: coord,
+});
 
-export const DraggingPoint: Function1<ol.Feature, DraggingPoint> = feature => ({ type: "DraggingPoint", feature: feature });
+export const DraggingPoint: Function1<ol.Feature, DraggingPoint> = (
+  feature
+) => ({ type: "DraggingPoint", feature: feature });
 
 const movePoint: MovePoint = { type: "MovePoint" };
 export const MovePoint: Lazy<MovePoint> = constant(movePoint);
 
-export const DeletePoint: Function1<ol.Feature, DeletePoint> = feature => ({ type: "DeletePoint", feature: feature });
+export const DeletePoint: Function1<ol.Feature, DeletePoint> = (feature) => ({
+  type: "DeletePoint",
+  feature: feature,
+});
 
-export const SnapWaypoint: Function1<Waypoint, SnapWaypoint> = waypoint => ({ type: "SnapWaypoint", waypoint: waypoint });
+export const SnapWaypoint: Function1<Waypoint, SnapWaypoint> = (waypoint) => ({
+  type: "SnapWaypoint",
+  waypoint: waypoint,
+});

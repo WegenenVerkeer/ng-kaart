@@ -26,12 +26,18 @@ export interface LaagLocationInfoService {
   infoByLocation$(location: ol.Coordinate): rx.Observable<LaagLocationInfo>;
 }
 
-export const TextLaagLocationInfo: Function1<string, TextLaagLocationInfo> = text => ({ type: "TextLaagLocationInfo", text: text });
+export const TextLaagLocationInfo: Function1<string, TextLaagLocationInfo> = (
+  text
+) => ({ type: "TextLaagLocationInfo", text: text });
 
-export const VeldinfoLaagLocationInfo: Function2<Veldwaarde[], VeldInfo[], VeldinfoLaagLocationInfo> = (waarden, veldinfos) => ({
+export const VeldinfoLaagLocationInfo: Function2<
+  Veldwaarde[],
+  VeldInfo[],
+  VeldinfoLaagLocationInfo
+> = (waarden, veldinfos) => ({
   type: "VeldinfoLaagLocationInfo",
   waarden: waarden,
-  veldinfos: veldinfos
+  veldinfos: veldinfos,
 });
 
 export interface WegLocatie {
@@ -56,7 +62,10 @@ export type BevragenErrorReason = "Unreachable" | "ServiceError" | "NoData";
 
 export type AdresResult = either.Either<BevragenErrorReason, Adres>;
 export type WegLocatiesResult = either.Either<BevragenErrorReason, WegLocaties>;
-export type LaagLocationInfoResult = either.Either<BevragenErrorReason, LaagLocationInfo>;
+export type LaagLocationInfoResult = either.Either<
+  BevragenErrorReason,
+  LaagLocationInfo
+>;
 
 export interface KaartLocaties {
   readonly timestamp: number;
@@ -66,8 +75,10 @@ export interface KaartLocaties {
   readonly lagenLocatieInfo: Map<string, Progress<LaagLocationInfoResult>>;
 }
 
-export const progressFailure: <A>(_: Progress<either.Either<BevragenErrorReason, A>>) => BevragenErrorReason | undefined = p =>
+export const progressFailure: <A>(
+  _: Progress<either.Either<BevragenErrorReason, A>>
+) => BevragenErrorReason | undefined = (p) =>
   progress
     .toOption(p)
-    .chain(e => option.fromEither(e.swap()))
+    .chain((e) => option.fromEither(e.swap()))
     .toUndefined();

@@ -1,6 +1,9 @@
 import { Component, Injector, Input, OnChanges } from "@angular/core";
 
-import { IdentifyOpties, IdentifyUiSelector } from "../../kaart/kaart-bevragen/kaart-identify-opties";
+import {
+  IdentifyOpties,
+  IdentifyUiSelector,
+} from "../../kaart/kaart-bevragen/kaart-identify-opties";
 import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 import * as val from "../webcomponent-support/params";
 
@@ -10,9 +13,11 @@ import * as val from "../webcomponent-support/params";
  */
 @Component({
   selector: "awv-kaart-identify",
-  template: ""
+  template: "",
 })
-export class ClassicKaartIdentifyComponent extends ClassicUIElementSelectorDirective implements OnChanges {
+export class ClassicKaartIdentifyComponent
+  extends ClassicUIElementSelectorDirective
+  implements OnChanges {
   private _identifyOnderdrukt = false;
 
   @Input()
@@ -26,7 +31,7 @@ export class ClassicKaartIdentifyComponent extends ClassicUIElementSelectorDirec
 
   protected opties(): IdentifyOpties {
     return {
-      identifyOnderdrukt: this._identifyOnderdrukt
+      identifyOnderdrukt: this._identifyOnderdrukt,
     };
   }
 }

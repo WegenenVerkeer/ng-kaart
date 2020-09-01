@@ -14,7 +14,7 @@ import { ClassicLegendeItemDirective } from "./classic-legende-item.directive";
  */
 @Component({
   selector: "awv-legende-lijn-item",
-  template: "<ng-content></ng-content>"
+  template: "<ng-content></ng-content>",
 })
 export class ClassicLegendeLijnItemComponent extends ClassicLegendeItemDirective {
   _achtergrondKleur: option.Option<string> = option.none;
@@ -45,7 +45,7 @@ export class ClassicLegendeLijnItemComponent extends ClassicLegendeItemDirective
       type: "Lijn",
       beschrijving: this._beschrijving,
       kleur: this._kleur,
-      achtergrondKleur: this._achtergrondKleur
+      achtergrondKleur: this._achtergrondKleur,
     };
   }
 }

@@ -21,17 +21,17 @@ const components = [TransparantieeditorComponent];
     MatInputModule,
     MatSliderModule,
     MatTooltipModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
   ],
   exports: [components],
   declarations: [components],
-  providers: []
+  providers: [],
 })
 export class TransparantieeditorModule {
   static forRoot(): ModuleWithProviders<TransparantieeditorModule> {
     return {
       ngModule: TransparantieeditorModule,
-      providers: []
+      providers: [],
     };
   }
 }

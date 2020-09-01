@@ -1,4 +1,13 @@
-import { Component, Injector, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation } from "@angular/core";
+import {
+  Component,
+  Injector,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  SimpleChanges,
+  ViewEncapsulation,
+} from "@angular/core";
 import * as rx from "rxjs";
 
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
@@ -14,9 +23,11 @@ import * as val from "../webcomponent-support/params";
 @Component({
   selector: "awv-kaart-standaard-interacties",
   template: "<ng-content></ng-content>",
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
-export class ClassicStandaardInteractiesComponent extends ClassicBaseDirective implements OnDestroy, OnChanges, OnInit {
+export class ClassicStandaardInteractiesComponent
+  extends ClassicBaseDirective
+  implements OnDestroy, OnChanges, OnInit {
   private standaardInteractieToegevoegd = false;
   _focusVoorZoom = false;
   _rotatie = false;
@@ -46,19 +57,38 @@ export class ClassicStandaardInteractiesComponent extends ClassicBaseDirective i
   }
 
   ngOnInit(): void {
-    this.kaart.dispatch(prt.VoegStandaardInteractiesToeCmd(this._focusVoorZoom, this._rotatie, kaartLogOnlyWrapper));
+    this.kaart.dispatch(
+      prt.VoegStandaardInteractiesToeCmd(
+        this._focusVoorZoom,
+        this._rotatie,
+        kaartLogOnlyWrapper
+      )
+    );
   }
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    this.kaart.dispatch(prt.VerwijderStandaardInteractiesCmd(kaartLogOnlyWrapper));
+    this.kaart.dispatch(
+      prt.VerwijderStandaardInteractiesCmd(kaartLogOnlyWrapper)
+    );
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if ((changes["focusVoorZoom"] && !changes["focusVoorZoom"].firstChange) || (changes["rotatie"] && !changes["rotatie"].firstChange)) {
+    if (
+      (changes["focusVoorZoom"] && !changes["focusVoorZoom"].firstChange) ||
+      (changes["rotatie"] && !changes["rotatie"].firstChange)
+    ) {
       // Een PasStandaardInteractiesAanCmd zou beter zijn
-      this.kaart.dispatch(prt.VerwijderStandaardInteractiesCmd(kaartLogOnlyWrapper));
-      this.kaart.dispatch(prt.VoegStandaardInteractiesToeCmd(this._focusVoorZoom, this._rotatie, kaartLogOnlyWrapper));
+      this.kaart.dispatch(
+        prt.VerwijderStandaardInteractiesCmd(kaartLogOnlyWrapper)
+      );
+      this.kaart.dispatch(
+        prt.VoegStandaardInteractiesToeCmd(
+          this._focusVoorZoom,
+          this._rotatie,
+          kaartLogOnlyWrapper
+        )
+      );
     }
   }
 }

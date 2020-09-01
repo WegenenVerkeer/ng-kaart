@@ -19,7 +19,9 @@ export class ZoekerConfigGoogleWdbConfig {
       this.maxAantal = data.maxAantal || this.maxAantal;
       this.kleur = data.kleur || this.kleur;
       this.apiKey = data.apiKey || this.apiKey;
-      this.gebruiktPubliekeLocatieZoeker = data.gebruiktPubliekeLocatieZoeker || this.gebruiktPubliekeLocatieZoeker;
+      this.gebruiktPubliekeLocatieZoeker =
+        data.gebruiktPubliekeLocatieZoeker ||
+        this.gebruiktPubliekeLocatieZoeker;
     }
   }
 }

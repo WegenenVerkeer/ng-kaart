@@ -21,17 +21,17 @@ const components: any[] = [AbbameldaStuurmeldingComponent];
     MatButtonModule,
     MatIconModule,
     MatInputModule,
-    MatFormFieldModule
+    MatFormFieldModule,
   ],
   declarations: [components],
   exports: [components],
-  providers: []
+  providers: [],
 })
 export class AbbameldaModule {
   static forRoot(): ModuleWithProviders<AbbameldaModule> {
     return {
       ngModule: AbbameldaModule,
-      providers: []
+      providers: [],
     };
   }
 }

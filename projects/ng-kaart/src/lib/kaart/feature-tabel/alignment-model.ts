@@ -9,20 +9,31 @@ import { FieldSelection } from "./field-selection-model";
 export type Alignment = "left" | "center" | "right";
 
 export namespace Alignment {
-  const fromVeldinfo: (vi: ke.VeldInfo) => Alignment = ke.VeldInfo.matchWithFallback({
+  const fromVeldinfo: (
+    vi: ke.VeldInfo
+  ) => Alignment = ke.VeldInfo.matchWithFallback({
     integer: () => "right" as "right",
     double: () => "right" as "right",
-    fallback: () => "left" as "left"
+    fallback: () => "left" as "left",
   });
 
-  const fromFieldSelection: (fieldSelection: FieldSelection) => Alignment = flow(
+  const fromFieldSelection: (
+    fieldSelection: FieldSelection
+  ) => Alignment = flow(
     FieldSelection.contributingVeldinfosGetter.get,
     arrays.asSingleton,
-    option.fold(() => "left" as "left", ([head]) => fromVeldinfo(head))
+    option.fold(
+      () => "left" as "left",
+      ([head]) => fromVeldinfo(head)
+    )
   );
 
-  export const createFromFieldSelection: (fieldSelections: FieldSelection[]) => Record<string, Alignment> = array.reduce(
-    {},
-    (rec, fieldSelection) => record.insertAt(fieldSelection.name, fromFieldSelection(fieldSelection))(rec)
+  export const createFromFieldSelection: (
+    fieldSelections: FieldSelection[]
+  ) => Record<string, Alignment> = array.reduce({}, (rec, fieldSelection) =>
+    record.insertAt(
+      fieldSelection.name,
+      fromFieldSelection(fieldSelection)
+    )(rec)
   );
 }

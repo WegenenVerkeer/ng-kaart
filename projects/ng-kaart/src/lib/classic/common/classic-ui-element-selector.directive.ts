@@ -1,11 +1,20 @@
-import { Directive, Injector, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import {
+  Directive,
+  Injector,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  SimpleChanges,
+} from "@angular/core";
 
 import * as prt from "../../kaart/kaart-protocol";
 import { OptiesRecord } from "../../kaart/ui-element-opties";
 import { ClassicBaseDirective } from "../classic-base.directive";
 
 @Directive()
-export abstract class ClassicUIElementSelectorDirective extends ClassicBaseDirective implements OnInit, OnDestroy, OnChanges {
+export abstract class ClassicUIElementSelectorDirective
+  extends ClassicBaseDirective
+  implements OnInit, OnDestroy, OnChanges {
   private alToegevoegd = false;
 
   constructor(readonly uiSelector: string, injector: Injector) {

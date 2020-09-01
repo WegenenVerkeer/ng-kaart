@@ -1,6 +1,18 @@
-import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  NgZone,
+} from "@angular/core";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, mapTo, share, switchMap, tap } from "rxjs/operators";
+import {
+  distinctUntilChanged,
+  map,
+  mapTo,
+  share,
+  switchMap,
+  tap,
+} from "rxjs/operators";
 
 import { collectOption } from "../../util/operators";
 import { KaartChildDirective } from "../kaart-child.directive";
@@ -16,7 +28,7 @@ import { TableModel } from "./table-model";
   selector: "awv-feature-tabel-header",
   templateUrl: "./feature-tabel-header.component.html",
   styleUrls: ["./feature-tabel-header.component.scss"],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeatureTabelHeaderComponent extends KaartChildDirective {
   header$: rx.Observable<TableHeader>;
@@ -24,7 +36,11 @@ export class FeatureTabelHeaderComponent extends KaartChildDirective {
   @Input()
   laagTitel: string;
 
-  constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone) {
+  constructor(
+    kaart: KaartComponent,
+    overzicht: FeatureTabelOverzichtComponent,
+    ngZone: NgZone
+  ) {
     super(kaart, ngZone);
 
     const model$ = overzicht.tableModel$;
@@ -46,11 +62,21 @@ export class FeatureTabelHeaderComponent extends KaartChildDirective {
     );
 
     const toggleActivityCmd$ = this.header$.pipe(
-      switchMap(header =>
-        this.actionFor$("toggleFilterActive").pipe(mapTo(cmd.ActiveerFilter(header.titel, !header.filterIsActive, kaartLogOnlyWrapper)))
+      switchMap((header) =>
+        this.actionFor$("toggleFilterActive").pipe(
+          mapTo(
+            cmd.ActiveerFilter(
+              header.titel,
+              !header.filterIsActive,
+              kaartLogOnlyWrapper
+            )
+          )
+        )
       )
     );
 
-    this.runInViewReady(toggleActivityCmd$.pipe(tap(cmd => this.dispatch(cmd))));
+    this.runInViewReady(
+      toggleActivityCmd$.pipe(tap((cmd) => this.dispatch(cmd)))
+    );
   }
 }

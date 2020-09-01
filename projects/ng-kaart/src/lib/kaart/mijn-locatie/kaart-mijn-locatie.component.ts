@@ -1,5 +1,12 @@
 import { BreakpointObserver, Breakpoints } from "@angular/cdk/layout";
-import { AfterViewInit, Component, NgZone, OnInit, QueryList, ViewChildren } from "@angular/core";
+import {
+  AfterViewInit,
+  Component,
+  NgZone,
+  OnInit,
+  QueryList,
+  ViewChildren,
+} from "@angular/core";
 import { MatButton } from "@angular/material/button";
 import { option } from "fp-ts";
 import { Function1, Predicate } from "fp-ts/lib/function";
@@ -18,7 +25,7 @@ import {
   shareReplay,
   startWith,
   throttle,
-  throttleTime
+  throttleTime,
 } from "rxjs/operators";
 
 import { Transparantie } from "../../transparantieeditor/transparantie";
@@ -40,9 +47,20 @@ const MijnLocatieLaagNaam = "Mijn Locatie";
 
 const TrackingInterval = 500; // aantal milliseconden tussen tracking updates
 
-export type State = "TrackingDisabled" | "NoTracking" | "Tracking" | "TrackingCenter" | "TrackingAutoRotate";
+export type State =
+  | "TrackingDisabled"
+  | "NoTracking"
+  | "Tracking"
+  | "TrackingCenter"
+  | "TrackingAutoRotate";
 
-export type Event = "ActiveerEvent" | "DeactiveerEvent" | "PanEvent" | "ZoomEvent" | "RotateEvent" | "ClickEvent";
+export type Event =
+  | "ActiveerEvent"
+  | "DeactiveerEvent"
+  | "PanEvent"
+  | "ZoomEvent"
+  | "RotateEvent"
+  | "ClickEvent";
 
 interface EventMetVerschil {
   readonly event: Event;
@@ -103,7 +121,7 @@ export const NoOpStateMachine: StateMachine = {
     DeactiveerEvent: "NoTracking",
     PanEvent: "NoTracking",
     ZoomEvent: "NoTracking",
-    RotateEvent: "NoTracking"
+    RotateEvent: "NoTracking",
   },
   TrackingCenter: {
     ClickEvent: "TrackingCenter",
@@ -111,7 +129,7 @@ export const NoOpStateMachine: StateMachine = {
     ActiveerEvent: "TrackingCenter",
     DeactiveerEvent: "NoTracking",
     ZoomEvent: "TrackingCenter",
-    RotateEvent: "TrackingCenter"
+    RotateEvent: "TrackingCenter",
   },
   TrackingDisabled: {
     ClickEvent: "TrackingDisabled",
@@ -119,7 +137,7 @@ export const NoOpStateMachine: StateMachine = {
     DeactiveerEvent: "NoTracking",
     PanEvent: "TrackingDisabled",
     ZoomEvent: "TrackingDisabled",
-    RotateEvent: "TrackingDisabled"
+    RotateEvent: "TrackingDisabled",
   },
   Tracking: {
     ClickEvent: "Tracking",
@@ -127,7 +145,7 @@ export const NoOpStateMachine: StateMachine = {
     DeactiveerEvent: "NoTracking",
     PanEvent: "Tracking",
     ZoomEvent: "Tracking",
-    RotateEvent: "Tracking"
+    RotateEvent: "Tracking",
   },
   TrackingAutoRotate: {
     ClickEvent: "TrackingAutoRotate",
@@ -135,29 +153,38 @@ export const NoOpStateMachine: StateMachine = {
     DeactiveerEvent: "NoTracking",
     PanEvent: "TrackingAutoRotate",
     ZoomEvent: "TrackingAutoRotate",
-    RotateEvent: "TrackingAutoRotate"
-  }
+    RotateEvent: "TrackingAutoRotate",
+  },
 };
 
 const pasLocatieFeatureAan = (info: TrackingInfo): void =>
-  forEach(info.feature, feature => {
+  forEach(info.feature, (feature) => {
     feature.setGeometry(new ol.geom.Point(info.coordinate));
     zetStijl(info);
     feature.changed(); // force redraw meteen
   });
 
-const moetCentreren: Predicate<State> = state => state === "TrackingCenter" || state === "TrackingAutoRotate";
+const moetCentreren: Predicate<State> = (state) =>
+  state === "TrackingCenter" || state === "TrackingAutoRotate";
 
-const moetLocatieTonen: Predicate<State> = state => state === "Tracking" || state === "TrackingCenter" || state === "TrackingAutoRotate";
+const moetLocatieTonen: Predicate<State> = (state) =>
+  state === "Tracking" ||
+  state === "TrackingCenter" ||
+  state === "TrackingAutoRotate";
 
-const moetRoteren: Predicate<State> = state => state === "TrackingAutoRotate";
+const moetRoteren: Predicate<State> = (state) => state === "TrackingAutoRotate";
 
-const moetKijkrichtingTonen: Predicate<State> = state =>
-  state === "Tracking" || state === "TrackingCenter" || state === "TrackingAutoRotate";
+const moetKijkrichtingTonen: Predicate<State> = (state) =>
+  state === "Tracking" ||
+  state === "TrackingCenter" ||
+  state === "TrackingAutoRotate";
 
-const zetStijl: Function1<TrackingInfo, void> = info => info.feature.map(feature => feature.setStyle(locatieStijlFunctie(info)));
+const zetStijl: Function1<TrackingInfo, void> = (info) =>
+  info.feature.map((feature) => feature.setStyle(locatieStijlFunctie(info)));
 
-const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = info => {
+const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = (
+  info
+) => {
   const fillColor = "rgba(65, 105, 225, 0.15)";
   const fillColorDark = "rgba(65, 105, 225, 0.25)";
   const fillColorDarkTransparant = "rgba(65, 105, 225, 0.0)";
@@ -167,14 +194,14 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = inf
       zIndex: 2,
       image: new ol.style.Circle({
         fill: new ol.style.Fill({
-          color: "rgba(66, 133, 244, 1.0)"
+          color: "rgba(66, 133, 244, 1.0)",
         }),
         stroke: new ol.style.Stroke({
           color: "rgba(255, 255, 255, 1.0)",
-          width: 2
+          width: 2,
         }),
-        radius: 6
-      })
+        radius: 6,
+      }),
     });
   }
 
@@ -183,14 +210,17 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = inf
       zIndex: 1,
       image: new ol.style.Circle({
         fill: new ol.style.Fill({
-          color: fillColor
+          color: fillColor,
         }),
-        radius: radius
-      })
+        radius: radius,
+      }),
     });
   }
 
-  function kijkrichtingStyle(info: TrackingInfo, radius: number): option.Option<ol.style.Style> {
+  function kijkrichtingStyle(
+    info: TrackingInfo,
+    radius: number
+  ): option.Option<ol.style.Style> {
     if (moetKijkrichtingTonen(info.state)) {
       const radius2 = 50;
 
@@ -210,7 +240,14 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = inf
         const x2 = centerX + Math.cos(angle2) * centerX;
         const y2 = centerY - Math.sin(angle2) * centerY;
 
-        const grad = context.createRadialGradient(centerX, centerY, radius2 / 2, centerX, centerY, radius2);
+        const grad = context.createRadialGradient(
+          centerX,
+          centerY,
+          radius2 / 2,
+          centerX,
+          centerY,
+          radius2
+        );
         grad.addColorStop(0, fillColorDark);
         grad.addColorStop(1, fillColorDarkTransparant);
 
@@ -226,8 +263,8 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = inf
           image: new ol.style.Icon({
             img: canvas,
             imgSize: [canvas.width, canvas.height],
-            rotation: info.currentRotation - (info.rotatie + Math.PI / 4)
-          })
+            rotation: info.currentRotation - (info.rotatie + Math.PI / 4),
+          }),
         });
         return option.some(buitenArc);
       }
@@ -241,9 +278,14 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = inf
 
     const binnencirkel: ol.style.Style = binnencirkelStyle();
     const buitencirkel: ol.style.Style = buitencirkelStyle(radius);
-    const kijkrichting: option.Option<ol.style.Style> = kijkrichtingStyle(info, radius);
+    const kijkrichting: option.Option<ol.style.Style> = kijkrichtingStyle(
+      info,
+      radius
+    );
 
-    return kijkrichting.map(arc => [binnencirkel, buitencirkel, arc]).getOrElse([binnencirkel, buitencirkel]);
+    return kijkrichting
+      .map((arc) => [binnencirkel, buitencirkel, arc])
+      .getOrElse([binnencirkel, buitencirkel]);
   };
 };
 
@@ -252,15 +294,23 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = inf
 @Component({
   selector: "awv-kaart-mijn-locatie",
   templateUrl: "./kaart-mijn-locatie.component.html",
-  styleUrls: ["./kaart-mijn-locatie.component.scss"]
+  styleUrls: ["./kaart-mijn-locatie.component.scss"],
 })
-export class KaartMijnLocatieComponent extends KaartModusDirective implements OnInit, AfterViewInit {
-  constructor(zone: NgZone, private readonly parent: KaartComponent, breakpointObserver: BreakpointObserver) {
+export class KaartMijnLocatieComponent
+  extends KaartModusDirective
+  implements OnInit, AfterViewInit {
+  constructor(
+    zone: NgZone,
+    private readonly parent: KaartComponent,
+    breakpointObserver: BreakpointObserver
+  ) {
     super(parent, zone);
-    breakpointObserver.observe([Breakpoints.HandsetPortrait]).subscribe(result => {
-      // Gebruik van built-in breakpoints uit de Material Design spec: https://material.angular.io/cdk/layout/overview
-      this.handsetPortrait = result.matches && this.onMobileDevice;
-    });
+    breakpointObserver
+      .observe([Breakpoints.HandsetPortrait])
+      .subscribe((result) => {
+        // Gebruik van built-in breakpoints uit de Material Design spec: https://material.angular.io/cdk/layout/overview
+        this.handsetPortrait = result.matches && this.onMobileDevice;
+      });
   }
 
   private viewinstellingen$: rx.Observable<Viewinstellingen> = rx.EMPTY;
@@ -268,7 +318,9 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
   private locatieSubj: rx.Subject<Position> = new rx.Subject<Position>();
   private rotatieSubj: rx.Subject<number> = new rx.Subject<number>();
 
-  private eventsSubj: rx.Subject<EventMetVerschil> = new rx.Subject<EventMetVerschil>();
+  private eventsSubj: rx.Subject<EventMetVerschil> = new rx.Subject<
+    EventMetVerschil
+  >();
 
   currentState$: rx.Observable<State> = rx.of("TrackingDisabled" as State);
   enabled$: rx.Observable<boolean> = rx.of(true);
@@ -304,25 +356,32 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
       stijlInLagenKiezer: option.none,
       filterinstellingen: option.none,
       laagtabelinstellingen: option.none,
-      wrapper: kaartLogOnlyWrapper
+      wrapper: kaartLogOnlyWrapper,
     });
 
     this.viewinstellingen$ = this.parent.modelChanges.viewinstellingen$;
     this.zoomdoelSetting$ = this.parent.modelChanges.mijnLocatieZoomDoel$;
-    this.enabled$ = this.zoomdoelSetting$.pipe(map(m => m.isSome()));
+    this.enabled$ = this.zoomdoelSetting$.pipe(map((m) => m.isSome()));
   }
 
   ngAfterViewInit() {
     super.ngAfterViewInit();
 
-    const zoomdoel$: rx.Observable<number> = this.zoomdoelSetting$.pipe(catOptions); // Hou enkel de effectieve zoomniveaudoelen over
+    const zoomdoel$: rx.Observable<number> = this.zoomdoelSetting$.pipe(
+      catOptions
+    ); // Hou enkel de effectieve zoomniveaudoelen over
     const zoom$ = this.viewinstellingen$.pipe(
-      distinctUntilChanged((vi1, vi2) => vi1.zoom === vi2.zoom && vi1.minZoom === vi2.minZoom && vi1.maxZoom === vi2.maxZoom),
-      map(vi => vi.zoom)
+      distinctUntilChanged(
+        (vi1, vi2) =>
+          vi1.zoom === vi2.zoom &&
+          vi1.minZoom === vi2.minZoom &&
+          vi1.maxZoom === vi2.maxZoom
+      ),
+      map((vi) => vi.zoom)
     );
     const currentRotation$ = this.viewinstellingen$.pipe(
       distinctUntilChanged((vi1, vi2) => vi1.rotation === vi2.rotation),
-      map(vi => vi.rotation)
+      map((vi) => vi.rotation)
     );
 
     // Event handlers
@@ -345,7 +404,9 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
         filter(() => !this.rotatieIsGevraagd),
         map(([oud, nieuw]) => Math.abs(oud - nieuw))
       )
-    ).subscribe(verschil => this.eventsSubj.next({ event: "RotateEvent", verschil }));
+    ).subscribe((verschil) =>
+      this.eventsSubj.next({ event: "RotateEvent", verschil })
+    );
 
     // We moeten de zoom-events die we zelf triggeren negeren.
     this.bindToLifeCycle(
@@ -362,7 +423,9 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
         filter(() => !this.zoomIsGevraagd),
         map(([oud, nieuw]) => Math.abs(oud - nieuw))
       )
-    ).subscribe(verschil => this.eventsSubj.next({ event: "ZoomEvent", verschil }));
+    ).subscribe((verschil) =>
+      this.eventsSubj.next({ event: "ZoomEvent", verschil })
+    );
 
     // "State machine"
     const stateMachine: StateMachine = this.getStateMachine();
@@ -373,14 +436,14 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
           // Wanneer er op mobile met twee vingers gedragd wordt, krijgen we op korte tijd een zoom-, somes een rotate- en dragevent
           // we willen die hier groeperen en dan de "niet relevante" (kleine verandering) events eruit halen.
           buffer(this.eventsSubj.pipe(debounceTime(500))),
-          map(events => {
+          map((events) => {
             if (events.length === 1) {
               return events;
             } else {
               return events.filter(isEventRelevant);
             }
           }),
-          map(events => events.map(event => event.event)),
+          map((events) => events.map((event) => event.event)),
           mergeAll()
         ), //
         this.wordtActief$.pipe(mapTo("ActiveerEvent")),
@@ -405,55 +468,85 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
           currentRotation$,
           this.rotatieSubj.pipe(throttleTime(TrackingInterval)),
           this.locatieSubj.pipe(throttleTime(TrackingInterval)),
-          this.currentState$.pipe(pairwise())
+          this.currentState$.pipe(pairwise()),
         ])
         .pipe(
           filter(([, , , , , [, state]]) => {
             return this.isTrackingActief(state);
           }),
-          map(([zoom, doel, currentRotation, rotatie, locatie, [prevState, state]]) => {
-            const longLat: ol.Coordinate = [locatie.coords.longitude, locatie.coords.latitude];
-            const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
-            return {
-              feature: option.none,
+          map(
+            ([
               zoom,
-              accuracy: locatie.coords.accuracy,
-              doelzoom: doel,
+              doel,
               currentRotation,
               rotatie,
-              coordinate,
-              state,
-              stateVeranderd: prevState !== state
-            };
-          }),
+              locatie,
+              [prevState, state],
+            ]) => {
+              const longLat: ol.Coordinate = [
+                locatie.coords.longitude,
+                locatie.coords.latitude,
+              ];
+              const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
+              return {
+                feature: option.none,
+                zoom,
+                accuracy: locatie.coords.accuracy,
+                doelzoom: doel,
+                currentRotation,
+                rotatie,
+                coordinate,
+                state,
+                stateVeranderd: prevState !== state,
+              };
+            }
+          ),
           distinctUntilChanged(isTrackingInfoGelijk)
         )
-    ).subscribe(r => this.zetMijnPositie(r));
+    ).subscribe((r) => this.zetMijnPositie(r));
 
     // pas rotatie aan
     this.bindToLifeCycle(
-      rx.combineLatest([this.rotatieSubj.pipe(throttleTime(TrackingInterval)), this.currentState$]).pipe(
-        filter(([, state]) => {
-          return moetRoteren(state);
-        }),
-        map(([rotatie]) => rotatie)
-      )
-    ).subscribe(rotatie => {
+      rx
+        .combineLatest([
+          this.rotatieSubj.pipe(throttleTime(TrackingInterval)),
+          this.currentState$,
+        ])
+        .pipe(
+          filter(([, state]) => {
+            return moetRoteren(state);
+          }),
+          map(([rotatie]) => rotatie)
+        )
+    ).subscribe((rotatie) => {
       this.rotatieIsGevraagd = true;
       this.dispatch(prt.VeranderRotatieCmd(rotatie, option.some(250)));
     });
 
-    this.bindToLifeCycle(this.currentState$).subscribe(state => {
-      if ((moetCentreren(state) || moetLocatieTonen(state)) && this.watchId.isNone()) {
+    this.bindToLifeCycle(this.currentState$).subscribe((state) => {
+      if (
+        (moetCentreren(state) || moetLocatieTonen(state)) &&
+        this.watchId.isNone()
+      ) {
         this.startPositieTracking();
       }
-      if (!(moetCentreren(state) || moetLocatieTonen(state)) && this.watchId.isSome()) {
+      if (
+        !(moetCentreren(state) || moetLocatieTonen(state)) &&
+        this.watchId.isSome()
+      ) {
         this.stopPositieTracking();
       }
-      if ((moetRoteren(state) || moetKijkrichtingTonen(state)) && this.sensor.isNone()) {
+      if (
+        (moetRoteren(state) || moetKijkrichtingTonen(state)) &&
+        this.sensor.isNone()
+      ) {
         this.startRotatieTracking();
       }
-      if (!moetRoteren(state) && !moetKijkrichtingTonen(state) && this.sensor.isSome()) {
+      if (
+        !moetRoteren(state) &&
+        !moetKijkrichtingTonen(state) &&
+        this.sensor.isSome()
+      ) {
         this.stopRotatieTracking();
       }
       this.centreerIndienNodig(state);
@@ -489,8 +582,15 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
   protected getStateMachine(): StateMachine {
     return {
       ...NoOpStateMachine,
-      NoTracking: { ...NoOpStateMachine.NoTracking, ClickEvent: "TrackingCenter" },
-      TrackingCenter: { ...NoOpStateMachine.TrackingCenter, ClickEvent: "NoTracking", PanEvent: "NoTracking" }
+      NoTracking: {
+        ...NoOpStateMachine.NoTracking,
+        ClickEvent: "TrackingCenter",
+      },
+      TrackingCenter: {
+        ...NoOpStateMachine.TrackingCenter,
+        ClickEvent: "NoTracking",
+        PanEvent: "NoTracking",
+      },
     };
   }
 
@@ -501,22 +601,37 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
   private maakNieuwFeature(info: TrackingInfo): option.Option<ol.Feature> {
     const feature = new ol.Feature(new ol.geom.Point(info.coordinate));
     feature.setStyle(locatieStijlFunctie(info)); // Opgelet hier word de nieuwe feature niet gebruikt
-    this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, [feature], kaartLogOnlyWrapper));
+    this.dispatch(
+      prt.VervangFeaturesCmd(
+        MijnLocatieLaagNaam,
+        [feature],
+        kaartLogOnlyWrapper
+      )
+    );
     return option.some(feature);
   }
 
   private meldFout(fout: PositionError | string) {
     kaartLogger.error("error", fout);
     this.dispatch(
-      prt.ToonMeldingCmd(["Zoomen naar huidige locatie niet mogelijk", "De toepassing heeft geen toestemming om locatie te gebruiken"])
+      prt.ToonMeldingCmd([
+        "Zoomen naar huidige locatie niet mogelijk",
+        "De toepassing heeft geen toestemming om locatie te gebruiken",
+      ])
     );
   }
 
   private stopPositieTracking() {
-    this.watchId.map(watchId => navigator.geolocation.clearWatch(watchId));
+    this.watchId.map((watchId) => navigator.geolocation.clearWatch(watchId));
     this.watchId = option.none;
     this.mijnLocatie = option.none;
-    this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, <Array<ol.Feature>>[], kaartLogOnlyWrapper));
+    this.dispatch(
+      prt.VervangFeaturesCmd(
+        MijnLocatieLaagNaam,
+        <Array<ol.Feature>>[],
+        kaartLogOnlyWrapper
+      )
+    );
   }
 
   private startPositieTracking() {
@@ -525,11 +640,11 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
         this.watchId = option.some(
           navigator.geolocation.watchPosition(
             //
-            positie => this.locatieSubj.next(positie),
-            fout => this.meldFout(fout),
+            (positie) => this.locatieSubj.next(positie),
+            (fout) => this.meldFout(fout),
             {
               enableHighAccuracy: true,
-              timeout: 20000 // genoeg tijd geven aan gebruiker om locatie toestemming te geven
+              timeout: 20000, // genoeg tijd geven aan gebruiker om locatie toestemming te geven
             }
           )
         );
@@ -546,16 +661,19 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
     Promise.all([
       nav.permissions.query({ name: "accelerometer" }),
       nav.permissions.query({ name: "magnetometer" }),
-      nav.permissions.query({ name: "gyroscope" })
+      nav.permissions.query({ name: "gyroscope" }),
     ]).then(
-      results => {
-        if (results.every(result => result.state === "granted")) {
+      (results) => {
+        if (results.every((result) => result.state === "granted")) {
           sensor.addEventListener("reading", (e: any) => {
             if (e.target) {
               const sensorEvent = e.target as AbsoluteOrientationSensor;
               const q = sensorEvent.quaternion;
               if (q) {
-                let heading = Math.atan2(2 * q[0] * q[1] + 2 * q[2] * q[3], 1 - 2 * q[1] * q[1] - 2 * q[2] * q[2]);
+                let heading = Math.atan2(
+                  2 * q[0] * q[1] + 2 * q[2] * q[3],
+                  1 - 2 * q[1] * q[1] - 2 * q[2] * q[2]
+                );
                 if (heading < 0) {
                   heading = 2 * Math.PI + heading;
                 }
@@ -566,15 +684,20 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
           sensor.start();
           this.sensor = option.some(sensor);
         } else {
-          this.meldFout("Geen toestemming om AbsoluteOrientationSensor te gebruiken");
+          this.meldFout(
+            "Geen toestemming om AbsoluteOrientationSensor te gebruiken"
+          );
         }
       },
-      () => this.meldFout("Kon geen toestemming krijgen om AbsoluteOrientationSensor te gebruiken")
+      () =>
+        this.meldFout(
+          "Kon geen toestemming krijgen om AbsoluteOrientationSensor te gebruiken"
+        )
     );
   }
 
   private stopRotatieTracking() {
-    this.sensor = this.sensor.chain(sensor => {
+    this.sensor = this.sensor.chain((sensor) => {
       sensor.stop();
       return option.none;
     });
@@ -596,12 +719,18 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
         .orElse(() => {
           return this.maakNieuwFeature(info);
         })
-        .map(feature => {
-          if (info.stateVeranderd && info.zoom < info.doelzoom && moetCentreren(info.state)) {
+        .map((feature) => {
+          if (
+            info.stateVeranderd &&
+            info.zoom < info.doelzoom &&
+            moetCentreren(info.state)
+          ) {
             // We zitten nu op een te laag zoomniveau, dus gaan we eerst inzoomen,
             // maar we doen dit alleen wanneer we van een state veranderd zijn.
             this.zoomIsGevraagd = true;
-            this.dispatch(prt.VeranderZoomCmd(info.doelzoom, kaartLogOnlyWrapper));
+            this.dispatch(
+              prt.VeranderZoomCmd(info.doelzoom, kaartLogOnlyWrapper)
+            );
           }
           return feature;
         });
@@ -613,11 +742,14 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
   private centreerIndienNodig(state: State) {
     if (moetCentreren(state)) {
       // kleine delay om OL tijd te geven eerst de icon te verplaatsen
-      this.mijnLocatie.map(feature =>
+      this.mijnLocatie.map((feature) =>
         setTimeout(
           () =>
             this.dispatch(
-              prt.VeranderMiddelpuntCmd((<ol.geom.Point>feature.getGeometry()).getCoordinates(), option.some(TrackingInterval))
+              prt.VeranderMiddelpuntCmd(
+                (<ol.geom.Point>feature.getGeometry()).getCoordinates(),
+                option.some(TrackingInterval)
+              )
             ),
           50
         )
@@ -643,7 +775,7 @@ export class KaartMijnLocatieComponent extends KaartModusDirective implements On
       offsetveld: option.none,
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false,
-      filter: option.none
+      filter: option.none,
     };
   }
 }

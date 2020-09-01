@@ -11,7 +11,7 @@ import { ClassicVectorLaagLikeDirective } from "./classic-vector-laag-like.direc
 @Component({
   selector: "awv-kaart-vector-laag",
   template: "<ng-content></ng-content>",
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeDirective {
   @Input()
@@ -36,17 +36,24 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeDirective {
       clusterDistance: this._clusterDistance,
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
-      selectieStyleSelector: option.fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
-      hoverStyleSelector: option.fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
+      selectieStyleSelector: option
+        .fromNullable(this.selectieStyle)
+        .chain(ss.asStyleSelector),
+      hoverStyleSelector: option
+        .fromNullable(this.hoverStyle)
+        .chain(ss.asStyleSelector),
       selecteerbaar: this._selecteerbaar,
       hover: this._hover,
       minZoom: this._minZoom,
       maxZoom: this._maxZoom,
       offsetveld: this._offsetveld,
-      velden: this._veldInfos.reduce((m, vi) => m.set(vi.naam, vi), new Map<string, ke.VeldInfo>()),
+      velden: this._veldInfos.reduce(
+        (m, vi) => m.set(vi.naam, vi),
+        new Map<string, ke.VeldInfo>()
+      ),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false,
-      filter: option.none
+      filter: option.none,
     };
   }
 }

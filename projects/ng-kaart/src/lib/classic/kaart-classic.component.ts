@@ -9,18 +9,30 @@ import {
   OnInit,
   Output,
   SimpleChanges,
-  ViewChild
+  ViewChild,
 } from "@angular/core";
 import { apply, option } from "fp-ts";
 import { Function1, pipe } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { debounceTime, map, share, switchMap, tap } from "rxjs/operators";
 
-import { forChangedValue, KaartBaseDirective } from "../kaart/kaart-base.directive";
+import {
+  forChangedValue,
+  KaartBaseDirective,
+} from "../kaart/kaart-base.directive";
 import { BevraagKaartOpties } from "../kaart/kaart-bevragen/kaart-bevragen-opties";
-import { Adres, BevragenErrorReason, KaartLocaties, progressFailure, WegLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
+import {
+  Adres,
+  BevragenErrorReason,
+  KaartLocaties,
+  progressFailure,
+  WegLocaties,
+} from "../kaart/kaart-bevragen/laaginfo.model";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
-import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
+import {
+  KaartCmdDispatcher,
+  ReplaySubjectKaartCmdDispatcher,
+} from "../kaart/kaart-event-dispatcher";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
 import { subscriptionCmdOperator } from "../kaart/subscription-helper";
@@ -54,7 +66,7 @@ import {
   VoorgrondHoogLagenInGroepAangepastMsg,
   VoorgrondLaagLagenInGroepAangepastMsg,
   ZichtbareFeaturesAangepastMsg,
-  ZoomAangepastMsg
+  ZoomAangepastMsg,
 } from "./messages";
 import * as val from "./webcomponent-support/params";
 
@@ -71,7 +83,10 @@ export interface ClassicKlikInfoEnStatus {
   readonly combinedLaagLocatieStatus: progress.ProgressStatus;
 }
 
-const flattenKaartLocaties: Function1<KaartLocaties, ClassicKlikInfoEnStatus> = locaties => ({
+const flattenKaartLocaties: Function1<
+  KaartLocaties,
+  ClassicKlikInfoEnStatus
+> = (locaties) => ({
   timestamp: locaties.timestamp,
   coordinaat: locaties.coordinaat,
   adres: progress
@@ -80,35 +95,45 @@ const flattenKaartLocaties: Function1<KaartLocaties, ClassicKlikInfoEnStatus> = 
     .toUndefined(),
   adresStatus: progress.toProgressStatus(locaties.maybeAdres),
   adresFailure: progressFailure(locaties.maybeAdres),
-  wegLocaties: arrays.fromOption(progress.toOption(locaties.wegLocaties).map(arrays.fromEither)),
+  wegLocaties: arrays.fromOption(
+    progress.toOption(locaties.wegLocaties).map(arrays.fromEither)
+  ),
   wegLocatiesStatus: progress.toProgressStatus(locaties.wegLocaties),
   wegLocatiesFailure: progressFailure(locaties.wegLocaties),
   combinedLaagLocatieStatus: progress.combineStatus(
     progress.toProgressStatus(locaties.maybeAdres),
     progress.toProgressStatus(locaties.wegLocaties)
-  )
+  ),
 });
 
 const nop = () => {};
 
 @Component({
   selector: "awv-kaart-classic",
-  templateUrl: "./kaart-classic.component.html"
+  templateUrl: "./kaart-classic.component.html",
 })
-export class KaartClassicComponent extends KaartBaseDirective implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<TypedRecord> {
+export class KaartClassicComponent
+  extends KaartBaseDirective
+  implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<TypedRecord> {
   /** @ignore */
   private static counter = 1;
 
   /** @ignore */
-  private kaartClassicSubMsgProvider: rx.ReplaySubject<rx.Observable<KaartClassicSubMsg>> = new rx.ReplaySubject(1);
+  private kaartClassicSubMsgProvider: rx.ReplaySubject<
+    rx.Observable<KaartClassicSubMsg>
+  > = new rx.ReplaySubject(1);
   /** @ignore */
-  kaartClassicSubMsg$: rx.Observable<KaartClassicSubMsg> = this.kaartClassicSubMsgProvider.pipe(switchMap(provider => provider));
+  kaartClassicSubMsg$: rx.Observable<
+    KaartClassicSubMsg
+  > = this.kaartClassicSubMsgProvider.pipe(switchMap((provider) => provider));
 
   /** @ignore */
   private hasFocus = false;
 
   /** @ignore */
-  readonly dispatcher: ReplaySubjectKaartCmdDispatcher<TypedRecord> = new ReplaySubjectKaartCmdDispatcher();
+  readonly dispatcher: ReplaySubjectKaartCmdDispatcher<
+    TypedRecord
+  > = new ReplaySubjectKaartCmdDispatcher();
   /** @ignore */
   readonly kaartMsgObservableConsumer: KaartMsgObservableConsumer;
 
@@ -187,7 +212,15 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
   /** De selectiemodus: "single" | "singleQuick" | "multipleKlik" | "multipleShift" | "none" */
   @Input()
   set selectieModus(param: prt.SelectieModus) {
-    this._selectieModus = val.enu(param, this._selectieModus, "single", "singleQuick", "multipleKlik", "multipleShift", "none");
+    this._selectieModus = val.enu(
+      param,
+      this._selectieModus,
+      "single",
+      "singleQuick",
+      "multipleKlik",
+      "multipleShift",
+      "none"
+    );
   } /** De selectiemodus: "single" | "singleQuick" | "multipleKlik" | "multipleShift" | "none" */
 
   /** Info bij hover: "on" | "off" */
@@ -205,14 +238,21 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
   /** Onderdrukken we kaart info boodschappen? */
   @Input()
   set onderdrukKaartBevragenBoodschappen(param: boolean) {
-    this._onderdrukKaartBevragenBoodschappen = val.bool(param, this._onderdrukKaartBevragenBoodschappen);
+    this._onderdrukKaartBevragenBoodschappen = val.bool(
+      param,
+      this._onderdrukKaartBevragenBoodschappen
+    );
   }
 
   /** De geselecteerde features */
   @Output()
-  geselecteerdeFeaturesChange: EventEmitter<Array<ol.Feature>> = new EventEmitter();
+  geselecteerdeFeaturesChange: EventEmitter<
+    Array<ol.Feature>
+  > = new EventEmitter();
   @Output()
-  geselecteerdeFeatureGeoJson: EventEmitter<GeoJsonFeatures[]> = new EventEmitter();
+  geselecteerdeFeatureGeoJson: EventEmitter<
+    GeoJsonFeatures[]
+  > = new EventEmitter();
   @Output()
   middelpuntChange: EventEmitter<ol.Coordinate> = new EventEmitter();
   @Output()
@@ -244,7 +284,9 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
   constructor(
     zone: NgZone,
     private el: ElementRef<Element>,
-    private kaartLocatorService: KaartClassicLocatorService<KaartClassicComponent>
+    private kaartLocatorService: KaartClassicLocatorService<
+      KaartClassicComponent
+    >
   ) {
     super(zone);
     this.kaartLocatorService.registerComponent(this, this.el);
@@ -254,8 +296,8 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
       this.kaartClassicSubMsgProvider.next(
         msg$.pipe(
           ofType<KaartClassicMsg>("KaartClassic"),
-          map(m => m.payload),
-          tap(m => classicLogger.debug("Een classic msg werd ontvangen", m)),
+          map((m) => m.payload),
+          tap((m) => classicLogger.debug("Een classic msg werd ontvangen", m)),
           share() // 1 rx subscription naar boven toe is genoeg
         )
       );
@@ -266,90 +308,41 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
         this.kaartClassicSubMsg$.lift(
           classicMsgSubscriptionCmdOperator(
             this.dispatcher,
-            prt.KaartClickSubscription(
-              pipe(
-                KaartClickMsg,
-                KaartClassicMsg
-              )
-            ),
+            prt.KaartClickSubscription(pipe(KaartClickMsg, KaartClassicMsg)),
             prt.GeselecteerdeFeaturesSubscription(
-              pipe(
-                FeatureSelectieAangepastMsg,
-                KaartClassicMsg
-              )
+              pipe(FeatureSelectieAangepastMsg, KaartClassicMsg)
             ),
             prt.HoverFeaturesSubscription(
-              pipe(
-                FeatureHoverAangepastMsg,
-                KaartClassicMsg
-              )
+              pipe(FeatureHoverAangepastMsg, KaartClassicMsg)
             ),
             prt.ZichtbareFeaturesSubscription(
-              pipe(
-                ZichtbareFeaturesAangepastMsg,
-                KaartClassicMsg
-              )
+              pipe(ZichtbareFeaturesAangepastMsg, KaartClassicMsg)
             ),
-            prt.ZoomSubscription(
-              pipe(
-                ZoomAangepastMsg,
-                KaartClassicMsg
-              )
-            ),
+            prt.ZoomSubscription(pipe(ZoomAangepastMsg, KaartClassicMsg)),
             prt.MiddelpuntSubscription(
-              pipe(
-                MiddelpuntAangepastMsg,
-                KaartClassicMsg
-              )
+              pipe(MiddelpuntAangepastMsg, KaartClassicMsg)
             ),
-            prt.ExtentSubscription(
-              pipe(
-                ExtentAangepastMsg,
-                KaartClassicMsg
-              )
-            ),
+            prt.ExtentSubscription(pipe(ExtentAangepastMsg, KaartClassicMsg)),
             prt.LagenInGroepSubscription(
               "Achtergrond",
-              pipe(
-                AchtergrondLagenInGroepAangepastMsg,
-                KaartClassicMsg
-              )
+              pipe(AchtergrondLagenInGroepAangepastMsg, KaartClassicMsg)
             ),
             prt.LagenInGroepSubscription(
               "Voorgrond.Hoog",
-              pipe(
-                VoorgrondHoogLagenInGroepAangepastMsg,
-                KaartClassicMsg
-              )
+              pipe(VoorgrondHoogLagenInGroepAangepastMsg, KaartClassicMsg)
             ),
             prt.LagenInGroepSubscription(
               "Voorgrond.Laag",
-              pipe(
-                VoorgrondLaagLagenInGroepAangepastMsg,
-                KaartClassicMsg
-              )
+              pipe(VoorgrondLaagLagenInGroepAangepastMsg, KaartClassicMsg)
             ),
             prt.PublishedKaartLocatiesSubscription(
-              pipe(
-                PublishedKaartLocatiesMsg,
-                KaartClassicMsg
-              )
+              pipe(PublishedKaartLocatiesMsg, KaartClassicMsg)
             ),
-            prt.InErrorSubscription(
-              pipe(
-                InErrorMsg,
-                KaartClassicMsg
-              )
-            ),
-            prt.BusySubscription(
-              pipe(
-                BusyMsg,
-                KaartClassicMsg
-              )
-            )
+            prt.InErrorSubscription(pipe(InErrorMsg, KaartClassicMsg)),
+            prt.BusySubscription(pipe(BusyMsg, KaartClassicMsg))
           )
         )
-      ).subscribe(err => classicLogger.error(err));
+      ).subscribe((err) => classicLogger.error(err));
 
       // We willen vermijden dat te vlugge veranderingen naar de client doorgestuurd worden. In het bijzonder is het zo
       // dat bij het programmatorisch zetten van een geselecteerde feature er eerst een clear gebeurt (er is geen
@@ -357,14 +350,16 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
       // erin.
       const selectionBuffer: rx.Subject<ol.Feature[]> = new rx.Subject();
       const debouncedSelectedFeatures = selectionBuffer.pipe(debounceTime(20));
-      this.bindToLifeCycle(debouncedSelectedFeatures).subscribe(e => this.geselecteerdeFeaturesChange.emit(e));
-
-      // Voor de webcomponent willen we de features als GeoJson exposen
-      this.bindToLifeCycle(debouncedSelectedFeatures.pipe(collectOption(clusterFeaturesToGeoJson))).subscribe(e =>
-        this.geselecteerdeFeatureGeoJson.emit(e)
+      this.bindToLifeCycle(debouncedSelectedFeatures).subscribe((e) =>
+        this.geselecteerdeFeaturesChange.emit(e)
       );
 
-      this.bindToLifeCycle(this.kaartClassicSubMsg$).subscribe(msg => {
+      // Voor de webcomponent willen we de features als GeoJson exposen
+      this.bindToLifeCycle(
+        debouncedSelectedFeatures.pipe(collectOption(clusterFeaturesToGeoJson))
+      ).subscribe((e) => this.geselecteerdeFeatureGeoJson.emit(e));
+
+      this.bindToLifeCycle(this.kaartClassicSubMsg$).subscribe((msg) => {
         switch (msg.type) {
           case "FeatureSelectieAangepast":
             // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
@@ -407,11 +402,22 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
   ngOnInit() {
     super.ngOnInit();
     // De volgorde van de dispatching hier is van belang voor wat de overhand heeft
-    this._zoom.foldL(nop, zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
-    this._extent.foldL(nop, extent => this.dispatch(prt.VeranderExtentCmd(extent)));
-    this._middelpunt.foldL(nop, middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, option.none)));
+    this._zoom.foldL(nop, (zoom) =>
+      this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper))
+    );
+    this._extent.foldL(nop, (extent) =>
+      this.dispatch(prt.VeranderExtentCmd(extent))
+    );
+    this._middelpunt.foldL(nop, (middelpunt) =>
+      this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, option.none))
+    );
     if (this._breedte.isSome() || this._hoogte.isSome()) {
-      this.dispatch(prt.VeranderViewportCmd([this._breedte.toUndefined(), this._hoogte.toUndefined()]));
+      this.dispatch(
+        prt.VeranderViewportCmd([
+          this._breedte.toUndefined(),
+          this._hoogte.toUndefined(),
+        ])
+      );
     }
     this.dispatch(prt.ActiveerHoverModusCmd(this._hoverModus));
     this.dispatch(prt.ActiveerSelectieModusCmd(this._selectieModus));
@@ -419,12 +425,16 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
 
   /** @ignore */
   ngOnChanges(changes: SimpleChanges) {
-    const dispatch: (cmd: prt.Command<TypedRecord>) => void = cmd => this.dispatch(cmd);
+    const dispatch: (cmd: prt.Command<TypedRecord>) => void = (cmd) =>
+      this.dispatch(cmd);
     forChangedValue(
       changes,
       "zoom",
       // TODO: Eigenlijk moeten we iets doen als de input leeggemaakt wordt, maar wat?
-      zoomOpt => forEach(zoomOpt, zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper))),
+      (zoomOpt) =>
+        forEach(zoomOpt, (zoom) =>
+          this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper))
+        ),
       val.optNum
     );
     forChangedValue(changes, "minZoom", () => this.zetZoomRange());
@@ -432,72 +442,70 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
     forChangedValue(
       changes,
       "middelpunt",
-      middelpuntOpt => forEach(middelpuntOpt, middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, option.none))),
+      (middelpuntOpt) =>
+        forEach(middelpuntOpt, (middelpunt) =>
+          this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, option.none))
+        ),
       val.optCoord
     );
     forChangedValue(
       changes,
       "extent",
-      extentOpt =>
-        forEach(
-          extentOpt,
-          pipe(
-            prt.VeranderExtentCmd,
-            dispatch
-          )
-        ),
+      (extentOpt) => forEach(extentOpt, pipe(prt.VeranderExtentCmd, dispatch)),
       val.optExtent
     );
     forChangedValue(
       changes,
       "mijnLocatieZoom",
-      zoomOpt =>
+      (zoomOpt) =>
         forEach(
           zoomOpt,
-          pipe(
-            option.fromNullable,
-            prt.ZetMijnLocatieZoomCmd,
-            dispatch
-          )
+          pipe(option.fromNullable, prt.ZetMijnLocatieZoomCmd, dispatch)
         ),
       val.optNum
     );
     forChangedValue(
       changes,
       "geselecteerdeFeatures",
-      pipe(
-        prt.SelecteerFeaturesCmd,
-        dispatch
-      )
+      pipe(prt.SelecteerFeaturesCmd, dispatch)
     );
     forChangedValue(changes, "breedte", () => this.zetKaartGrootte());
     forChangedValue(changes, "hoogte", () => this.zetKaartGrootte());
     forChangedValue(
       changes,
       "onderdrukKaartBevragenBoodschappen",
-      onderdruk => this.dispatch(BevraagKaartOpties.ZetOptiesCmd({ onderdrukInfoBoodschappen: onderdruk })),
-      (value: boolean) => val.bool(value, this._onderdrukKaartBevragenBoodschappen)
+      (onderdruk) =>
+        this.dispatch(
+          BevraagKaartOpties.ZetOptiesCmd({
+            onderdrukInfoBoodschappen: onderdruk,
+          })
+        ),
+      (value: boolean) =>
+        val.bool(value, this._onderdrukKaartBevragenBoodschappen)
     );
 
     forChangedValue(
       changes,
       "selectieModus",
-      pipe(
-        prt.ActiveerSelectieModusCmd,
-        dispatch
-      ),
-      (param: string) => val.enu(param, this._selectieModus, "single", "singleQuick", "multipleKlik", "multipleShift", "none"),
-      value => value !== undefined && value != null
+      pipe(prt.ActiveerSelectieModusCmd, dispatch),
+      (param: string) =>
+        val.enu(
+          param,
+          this._selectieModus,
+          "single",
+          "singleQuick",
+          "multipleKlik",
+          "multipleShift",
+          "none"
+        ),
+      (value) => value !== undefined && value != null
     );
     forChangedValue(
       changes,
       "hovermodus",
-      pipe(
-        prt.ActiveerHoverModusCmd,
-        dispatch
-      ),
+      pipe(prt.ActiveerHoverModusCmd, dispatch),
       (param: string) => val.enu(param, this._hoverModus, "on", "off"),
-      value => value !== undefined && value != null
+      (value) => value !== undefined && value != null
     );
   }
 
@@ -513,10 +521,18 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
 
   /** @ignore */
   private zetKaartGrootte() {
-    const maybeNativeMapElement = option.fromNullable(this.mapElement).chain(elt => option.fromNullable(elt.nativeElement));
+    const maybeNativeMapElement = option
+      .fromNullable(this.mapElement)
+      .chain((elt) => option.fromNullable(elt.nativeElement));
 
-    forEach(apply.sequenceT(option.option)(maybeNativeMapElement, this._breedte), ([elt, breedte]) => (elt.style.width = `${breedte}px`));
-    forEach(apply.sequenceT(option.option)(maybeNativeMapElement, this._hoogte), ([elt, hoogte]) => (elt.style.height = `${hoogte}px`));
+    forEach(
+      apply.sequenceT(option.option)(maybeNativeMapElement, this._breedte),
+      ([elt, breedte]) => (elt.style.width = `${breedte}px`)
+    );
+    forEach(
+      apply.sequenceT(option.option)(maybeNativeMapElement, this._hoogte),
+      ([elt, hoogte]) => (elt.style.height = `${hoogte}px`)
+    );
   }
 
   /** @ignore */
@@ -554,7 +570,8 @@ export class KaartClassicComponent extends KaartBaseDirective implements OnInit,
         bron: option.none,
         sluit: "DOOR_APPLICATIE",
         laag: option.none,
-        verbergMsgGen: () => option.some(KaartClassicMsg(FeatureGedeselecteerdMsg(feature)))
+        verbergMsgGen: () =>
+          option.some(KaartClassicMsg(FeatureGedeselecteerdMsg(feature))),
       })
     );
   }
@@ -572,5 +589,9 @@ export function classicMsgSubscriptionCmdOperator(
   dispatcher: KaartCmdDispatcher<KaartClassicMsg>,
   ...subscriptions: prt.Subscription<KaartClassicMsg>[]
 ): rx.Operator<KaartClassicSubMsg, string[]> {
-  return subscriptionCmdOperator(dispatcher, ref => validation => KaartClassicMsg(SubscribedMsg(validation, ref)), ...subscriptions);
+  return subscriptionCmdOperator(
+    dispatcher,
+    (ref) => (validation) => KaartClassicMsg(SubscribedMsg(validation, ref)),
+    ...subscriptions
+  );
 }

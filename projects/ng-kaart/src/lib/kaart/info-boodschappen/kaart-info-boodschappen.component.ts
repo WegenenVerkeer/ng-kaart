@@ -1,4 +1,10 @@
-import { animate, state, style, transition, trigger } from "@angular/animations";
+import {
+  animate,
+  state,
+  style,
+  transition,
+  trigger,
+} from "@angular/animations";
 import { ChangeDetectionStrategy, Component, NgZone } from "@angular/core";
 import * as rx from "rxjs";
 import { debounceTime, map } from "rxjs/operators";
@@ -6,7 +12,11 @@ import { debounceTime, map } from "rxjs/operators";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
 import { KaartChildDirective } from "../kaart-child.directive";
-import { InfoBoodschappenMsg, infoBoodschappenMsgGen, KaartInternalMsg } from "../kaart-internal-messages";
+import {
+  InfoBoodschappenMsg,
+  infoBoodschappenMsgGen,
+  KaartInternalMsg,
+} from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { InfoBoodschap } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
@@ -19,10 +29,10 @@ import { KaartComponent } from "../kaart.component";
     trigger("fadeIn", [
       state("visible", style({ opacity: 1 })),
       transition(":enter", [style({ opacity: 0 }), animate(200)]),
-      transition(":leave", animate(0, style({ opacity: 0 })))
-    ])
+      transition(":leave", animate(0, style({ opacity: 0 }))),
+    ]),
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KaartInfoBoodschappenComponent extends KaartChildDirective {
   infoBoodschappen$: rx.Observable<Array<InfoBoodschap>> = rx.EMPTY;
@@ -33,7 +43,7 @@ export class KaartInfoBoodschappenComponent extends KaartChildDirective {
     const infoBoodschappen$ = this.internalMessage$.pipe(
       ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
       observeOnAngular(this.zone),
-      map(msg => Array.from(msg.infoBoodschappen.values()).reverse()), // laatste boodschap bovenaan
+      map((msg) => Array.from(msg.infoBoodschappen.values()).reverse()), // laatste boodschap bovenaan
       debounceTime(250) // omdat we requests in parallel afvuren, komen er vaak updates dicht tegen elkaar
     );
 

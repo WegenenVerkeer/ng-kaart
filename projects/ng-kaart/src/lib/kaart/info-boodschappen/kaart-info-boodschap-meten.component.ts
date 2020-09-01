@@ -7,10 +7,14 @@ import { KaartChildDirective } from "../kaart-child.directive";
 import { InfoBoodschapMeten } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
-const formatNumber: Function1<number, string> = n =>
-  n.toLocaleString(["nl-BE"], { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true });
+const formatNumber: Function1<number, string> = (n) =>
+  n.toLocaleString(["nl-BE"], {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+  });
 
-const formatArea: Function1<number, string> = area => {
+const formatArea: Function1<number, string> = (area) => {
   if (area > 1000000) {
     return `${formatNumber(area / 1000000)} km²`;
   } else if (area > 10000) {
@@ -22,7 +26,7 @@ const formatArea: Function1<number, string> = area => {
   }
 };
 
-const formatLength: Function1<number, string> = length => {
+const formatLength: Function1<number, string> = (length) => {
   if (length > 1000) {
     return `${formatNumber(length / 1000)} km`;
   } else {
@@ -32,33 +36,46 @@ const formatLength: Function1<number, string> = length => {
 
 // Coordinaten voor multilines bevatten duplicates voor de eind waarde van de vorige lijn en begin van de volgende. Die zijn niet
 // relevant voor de gebruiker, dus filteren we ze weg.
-const removeDuplicates: Function1<number[], number[]> = coordinates =>
-  coordinates.reduce(
-    (acc, coord, idx, coords) => {
-      // enkel x values als start bekijken
-      if (idx % 2 === 0) {
-        // check of huidige coordinaat dezelfde is als de vorige
-        if (idx > 1 && eqCoordinate.equals([coords[idx - 2], coords[idx - 1]], [coords[idx], coords[idx + 1]])) {
-          return acc;
-        } else {
-          return acc.concat([coords[idx], coords[idx + 1]]);
-        }
-      } else {
+const removeDuplicates: Function1<number[], number[]> = (coordinates) =>
+  coordinates.reduce((acc, coord, idx, coords) => {
+    // enkel x values als start bekijken
+    if (idx % 2 === 0) {
+      // check of huidige coordinaat dezelfde is als de vorige
+      if (
+        idx > 1 &&
+        eqCoordinate.equals(
+          [coords[idx - 2], coords[idx - 1]],
+          [coords[idx], coords[idx + 1]]
+        )
+      ) {
         return acc;
+      } else {
+        return acc.concat([coords[idx], coords[idx + 1]]);
       }
-    },
-    [] as number[]
-  );
+    } else {
+      return acc;
+    }
+  }, [] as number[]);
 
-const formatCoordinates: Function2<number[], boolean, string> = (coords, delimiter) =>
+const formatCoordinates: Function2<number[], boolean, string> = (
+  coords,
+  delimiter
+) =>
   coords //
-    .reduce((acc, coord, idx) => acc + (idx % 2 === 0 ? `${Math.round(coord)}` : `,${Math.round(coord)}${delimiter ? ";" : ""} `), "")
+    .reduce(
+      (acc, coord, idx) =>
+        acc +
+        (idx % 2 === 0
+          ? `${Math.round(coord)}`
+          : `,${Math.round(coord)}${delimiter ? ";" : ""} `),
+      ""
+    )
     .trim();
 
 @Component({
   selector: "awv-kaart-info-boodschap-meten",
   templateUrl: "./kaart-info-boodschap-meten.component.html",
-  styleUrls: ["./kaart-info-boodschap-meten.component.scss"]
+  styleUrls: ["./kaart-info-boodschap-meten.component.scss"],
 })
 export class KaartInfoBoodschapMetenComponent extends KaartChildDirective {
   length?: string;
@@ -71,11 +88,15 @@ export class KaartInfoBoodschapMetenComponent extends KaartChildDirective {
   @Input()
   set boodschap(bsch: InfoBoodschapMeten) {
     this.length = bsch.length.map(formatLength).toUndefined();
-    this.lengthCopyInfo = bsch.length.map(l => "" + l).toUndefined();
+    this.lengthCopyInfo = bsch.length.map((l) => "" + l).toUndefined();
     this.area = bsch.area.map(formatArea).toUndefined();
-    this.areaCopyInfo = bsch.area.map(a => "" + a).toUndefined();
-    this.coordinates = bsch.coordinates.map(c => formatCoordinates(removeDuplicates(c), false)).toUndefined();
-    this.coordinatesCopyInfo = bsch.coordinates.map(c => formatCoordinates(removeDuplicates(c), true)).toUndefined();
+    this.areaCopyInfo = bsch.area.map((a) => "" + a).toUndefined();
+    this.coordinates = bsch.coordinates
+      .map((c) => formatCoordinates(removeDuplicates(c), false))
+      .toUndefined();
+    this.coordinatesCopyInfo = bsch.coordinates
+      .map((c) => formatCoordinates(removeDuplicates(c), true))
+      .toUndefined();
   }
 
   constructor(parent: KaartComponent, zone: NgZone) {

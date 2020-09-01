@@ -13,7 +13,7 @@ import { ClassicLegendeItemDirective } from "./classic-legende-item.directive";
  */
 @Component({
   selector: "awv-legende-bolletje-item",
-  template: "<ng-content></ng-content>"
+  template: "<ng-content></ng-content>",
 })
 export class ClassicLegendeBolletjeItemComponent extends ClassicLegendeItemDirective {
   _kleur: string;
@@ -34,7 +34,7 @@ export class ClassicLegendeBolletjeItemComponent extends ClassicLegendeItemDirec
     return {
       type: "Bolletje",
       beschrijving: this._beschrijving,
-      kleur: this._kleur
+      kleur: this._kleur,
     };
   }
 }

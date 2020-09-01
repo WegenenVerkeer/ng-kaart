@@ -5,7 +5,11 @@ import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatAutocompleteModule } from "@angular/material/autocomplete";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCheckboxModule } from "@angular/material/checkbox";
-import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from "@angular/material/core";
+import {
+  DateAdapter,
+  MAT_DATE_FORMATS,
+  MAT_DATE_LOCALE,
+} from "@angular/material/core";
 import { MatDatepickerModule } from "@angular/material/datepicker";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
@@ -13,7 +17,11 @@ import { MatInputModule } from "@angular/material/input";
 import { MatMenuModule } from "@angular/material/menu";
 import { MatSelectModule } from "@angular/material/select";
 
-import { MAT_MOMENT_DATE_ADAPTER_OPTIONS, MatMomentDateModule, MomentDateAdapter } from "@angular/material-moment-adapter";
+import {
+  MAT_MOMENT_DATE_ADAPTER_OPTIONS,
+  MatMomentDateModule,
+  MomentDateAdapter,
+} from "@angular/material-moment-adapter";
 
 import { FilterDetailComponent } from "./filter-detail.component";
 import { FilterEditorComponent } from "./filter-editor.component";
@@ -32,7 +40,7 @@ const components: any[] = [
   FilterQueryBuilderComponent,
   FilterChipComponent,
   FilterConjunctionComponent,
-  FilterLogicalConnectiveComponent
+  FilterLogicalConnectiveComponent,
 ];
 
 @NgModule({
@@ -51,21 +59,25 @@ const components: any[] = [
     MatFormFieldModule,
     MatMenuModule,
     MatAutocompleteModule,
-    MatSelectModule
+    MatSelectModule,
   ],
   declarations: [components],
   exports: [components],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: "nl-BE" },
-    { provide: DateAdapter, useClass: MomentDateAdapter, deps: [MAT_DATE_LOCALE] },
-    { provide: MAT_MOMENT_DATE_ADAPTER_OPTIONS, useValue: { strict: true } } // Blijkt niet te werken!
-  ]
+    {
+      provide: DateAdapter,
+      useClass: MomentDateAdapter,
+      deps: [MAT_DATE_LOCALE],
+    },
+    { provide: MAT_MOMENT_DATE_ADAPTER_OPTIONS, useValue: { strict: true } }, // Blijkt niet te werken!
+  ],
 })
 export class FilterModule {
   static forRoot(): ModuleWithProviders<FilterModule> {
     return {
       ngModule: FilterModule,
-      providers: []
+      providers: [],
     };
   }
 }

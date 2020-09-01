@@ -3,7 +3,7 @@ import { curry, Function1, pipe } from "fp-ts/lib/function";
 /**
  * Converteert een getal naar een hexadecimale voorstelling met een even aantal digits
  */
-export const paddedHexBytes: Function1<number, string> = c => {
+export const paddedHexBytes: Function1<number, string> = (c) => {
   const hex = c.toString(16);
   return hex.length % 2 === 1 ? "0" + hex : hex;
 };

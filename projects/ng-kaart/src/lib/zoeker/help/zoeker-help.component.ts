@@ -24,7 +24,7 @@ class ZoekerHelpBoomImpl implements ZoekerHelpBoom {
   private root: ZoekHelpNode = {
     titel: "Ik zoek",
     children: new Map(),
-    text: option.none
+    text: option.none,
   };
 
   voegItemToe(text: string, ...titles: string[]) {
@@ -35,7 +35,7 @@ class ZoekerHelpBoomImpl implements ZoekerHelpBoom {
         parent.children.set(title, {
           titel: title,
           children: new Map(),
-          text: index === titles.length - 1 ? option.some(text) : option.none
+          text: index === titles.length - 1 ? option.some(text) : option.none,
         });
       }
       parent = parent.children.get(title)!;
@@ -50,17 +50,32 @@ class ZoekerHelpBoomImpl implements ZoekerHelpBoom {
 const bouwZoekBoom = (zoekers: ZoekerMetWeergaveopties[]) => {
   const visitor = new ZoekerHelpBoomImpl();
   // We laten iedere zoeker de helpBoom verder opbouwen.
-  zoekers.forEach(zoeker => zoeker.zoeker.help(visitor));
+  zoekers.forEach((zoeker) => zoeker.zoeker.help(visitor));
   return visitor.boom();
 };
 
-const zoekHelpNodeToHelpContent = (domSanitizer: DomSanitizer, node: ZoekHelpNode) => {
-  return { titel: node.titel, text: node.text.map(domSanitizer.bypassSecurityTrustHtml).toNullable(), isLeaf: node.children.size === 0 };
+const zoekHelpNodeToHelpContent = (
+  domSanitizer: DomSanitizer,
+  node: ZoekHelpNode
+) => {
+  return {
+    titel: node.titel,
+    text: node.text.map(domSanitizer.bypassSecurityTrustHtml).toNullable(),
+    isLeaf: node.children.size === 0,
+  };
 };
 
-const selecteerUitBoom = (domSanitizer: DomSanitizer, node: ZoekHelpNode, subPath: string[]) => {
+const selecteerUitBoom = (
+  domSanitizer: DomSanitizer,
+  node: ZoekHelpNode,
+  subPath: string[]
+) => {
   if (subPath.length === 0) {
-    return option.some(Array.from(node.children.values()).map(child => zoekHelpNodeToHelpContent(domSanitizer, child)));
+    return option.some(
+      Array.from(node.children.values()).map((child) =>
+        zoekHelpNodeToHelpContent(domSanitizer, child)
+      )
+    );
   } else {
     const childNode = node.children.get(subPath[0]);
     if (childNode) {
@@ -75,20 +90,28 @@ const selecteerUitBoom = (domSanitizer: DomSanitizer, node: ZoekHelpNode, subPat
   selector: "awv-zoeker-help",
   templateUrl: "./zoeker-help.component.html",
   styleUrls: ["./zoeker-help.component.scss"],
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class ZoekerHelpComponent extends KaartChildDirective {
-  private pad: rx.BehaviorSubject<string[]> = new rx.BehaviorSubject(["Ik zoek"]);
+  private pad: rx.BehaviorSubject<string[]> = new rx.BehaviorSubject([
+    "Ik zoek",
+  ]);
   selectie$: rx.Observable<HelpContent[] | undefined>;
 
-  constructor(parent: KaartComponent, zone: NgZone, private domSanitizer: DomSanitizer) {
+  constructor(
+    parent: KaartComponent,
+    zone: NgZone,
+    private domSanitizer: DomSanitizer
+  ) {
     super(parent, zone);
 
     const tree$ = parent.modelChanges.zoekerServices$.pipe(map(bouwZoekBoom));
 
     this.selectie$ = rx.combineLatest(tree$, this.pad$).pipe(
-      map(([root, selectiePad]) => selecteerUitBoom(this.domSanitizer, root, selectiePad.slice(1))),
-      map(optionalSelectie => optionalSelectie.getOrElse(undefined))
+      map(([root, selectiePad]) =>
+        selecteerUitBoom(this.domSanitizer, root, selectiePad.slice(1))
+      ),
+      map((optionalSelectie) => optionalSelectie.getOrElse(undefined))
     );
   }
 
@@ -97,11 +120,6 @@ export class ZoekerHelpComponent extends KaartChildDirective {
   }
 
   selecteer(pad: string, index?: number) {
-    this.pad.next(
-      this.pad
-        .getValue()
-        .slice(0, index)
-        .concat(pad)
-    );
+    this.pad.next(this.pad.getValue().slice(0, index).concat(pad));
   }
 }

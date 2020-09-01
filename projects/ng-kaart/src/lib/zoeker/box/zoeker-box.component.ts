@@ -9,11 +9,17 @@ import {
   OnDestroy,
   OnInit,
   ViewChild,
-  ViewEncapsulation
+  ViewEncapsulation,
 } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { array, eq, map as fpMap, option, ord, strmap, tuple } from "fp-ts";
-import { concat, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
+import {
+  concat,
+  Function1,
+  Function2,
+  identity,
+  Predicate,
+} from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import {
   catchError,
@@ -28,7 +34,7 @@ import {
   startWith,
   switchMap,
   take,
-  tap
+  tap,
 } from "rxjs/operators";
 
 import { KaartChildDirective } from "../../kaart/kaart-child.directive";
@@ -59,7 +65,7 @@ import {
   ZoekKaartResultaat,
   ZoekResultaat,
   zoekResultaatOrdering,
-  Zoektype
+  Zoektype,
 } from "../zoeker";
 
 export const ZoekerUiSelector = "Zoeker";
@@ -73,7 +79,11 @@ export interface HuidigeSelectie {
   zoekResultaat: ZoekKaartResultaat;
 }
 
-export type ZoekerType = typeof BASIS | typeof PERCEEL | typeof CRAB | typeof ALLE_LAGEN;
+export type ZoekerType =
+  | typeof BASIS
+  | typeof PERCEEL
+  | typeof CRAB
+  | typeof ALLE_LAGEN;
 
 export const BASIS = "Basis";
 export const PERCEEL = "Perceel";
@@ -82,46 +92,58 @@ export const ALLE_LAGEN = "AlleLagen";
 
 type WeergaveoptiesOpZoekernaam = Map<string, Weergaveopties>;
 
-const zoekresultatenVanType: Function2<Zoektype, ZoekAntwoord, option.Option<ZoekAntwoord>> = (zoektype, zoekResultaten) =>
-  option.fromPredicate<ZoekAntwoord>(res => res.zoektype === zoektype)(zoekResultaten);
+const zoekresultatenVanType: Function2<
+  Zoektype,
+  ZoekAntwoord,
+  option.Option<ZoekAntwoord>
+> = (zoektype, zoekResultaten) =>
+  option.fromPredicate<ZoekAntwoord>((res) => res.zoektype === zoektype)(
+    zoekResultaten
+  );
 
-const heeftPrioriteit: Function1<WeergaveoptiesOpZoekernaam, Predicate<ZoekAntwoord>> = optiesOpNaam => resultaten =>
+const heeftPrioriteit: Function1<
+  WeergaveoptiesOpZoekernaam,
+  Predicate<ZoekAntwoord>
+> = (optiesOpNaam) => (resultaten) =>
   fpMap
     .lookup(eq.eqString)(resultaten.zoeker, optiesOpNaam)
-    .exists(opties => strmap.lookup(resultaten.zoektype, opties.prioriteiten).isSome());
+    .exists((opties) =>
+      strmap.lookup(resultaten.zoektype, opties.prioriteiten).isSome()
+    );
 
 const prioriteitVoorZoekerNaam: Function1<
   Zoektype,
   Function2<WeergaveoptiesOpZoekernaam, number, Function1<string, number>>
-> = zoektype => (optiesOpNaam, stdPrio) => zoekernaam =>
+> = (zoektype) => (optiesOpNaam, stdPrio) => (zoekernaam) =>
   fpMap
     .lookup(eq.eqString)(zoekernaam, optiesOpNaam)
-    .chain(opties => strmap.lookup(zoektype, opties.prioriteiten))
+    .chain((opties) => strmap.lookup(zoektype, opties.prioriteiten))
     .getOrElse(stdPrio);
 
 const prioriteitVoorZoekAntwoord: Function1<
   Zoektype,
   Function2<WeergaveoptiesOpZoekernaam, number, Function1<ZoekAntwoord, number>>
-> = zoektype => (optiesOpNaam, stdPrio) => antwoord => prioriteitVoorZoekerNaam(zoektype)(optiesOpNaam, stdPrio)(antwoord.zoeker);
+> = (zoektype) => (optiesOpNaam, stdPrio) => (antwoord) =>
+  prioriteitVoorZoekerNaam(zoektype)(optiesOpNaam, stdPrio)(antwoord.zoeker);
 
 const prioriteitVoorZoekresultaat: Function1<
   Zoektype,
-  Function2<WeergaveoptiesOpZoekernaam, number, Function1<ZoekResultaat, number>>
-> = zoektype => (optiesOpNaam, stdPrio) => resultaat => prioriteitVoorZoekerNaam(zoektype)(optiesOpNaam, stdPrio)(resultaat.zoeker);
+  Function2<
+    WeergaveoptiesOpZoekernaam,
+    number,
+    Function1<ZoekResultaat, number>
+  >
+> = (zoektype) => (optiesOpNaam, stdPrio) => (resultaat) =>
+  prioriteitVoorZoekerNaam(zoektype)(optiesOpNaam, stdPrio)(resultaat.zoeker);
 
 export function toTrimmedLowerCasedString(s: string): string {
-  return s
-    ? s
-        .toString()
-        .trim()
-        .toLocaleLowerCase()
-    : "";
+  return s ? s.toString().trim().toLocaleLowerCase() : "";
 }
 
 export function toNonEmptyDistinctLowercaseString(): Pipeable<any, string> {
-  return o =>
+  return (o) =>
     o.pipe(
-      filter(value => value), // filter de lege waardes eruit
+      filter((value) => value), // filter de lege waardes eruit
       // zorg dat we een lowercase waarde hebben zonder leading of trailing spaties.
       map(toTrimmedLowerCasedString),
       distinctUntilChanged()
@@ -130,7 +152,11 @@ export function toNonEmptyDistinctLowercaseString(): Pipeable<any, string> {
 
 @Directive()
 export abstract class GetraptZoekerDirective extends KaartChildDirective {
-  protected constructor(kaartComponent: KaartComponent, private zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
+  protected constructor(
+    kaartComponent: KaartComponent,
+    private zoekerComponent: ZoekerBoxComponent,
+    zone: NgZone
+  ) {
     super(kaartComponent, zone);
   }
 
@@ -140,10 +166,16 @@ export abstract class GetraptZoekerDirective extends KaartChildDirective {
 
   protected meldFout(fout: HttpErrorResponse) {
     kaartLogger.error("error", fout);
-    this.dispatch(prt.ToonMeldingCmd(["Fout bij ophalen perceel gegevens: ", fout.message]));
+    this.dispatch(
+      prt.ToonMeldingCmd(["Fout bij ophalen perceel gegevens: ", fout.message])
+    );
   }
 
-  protected subscribeToDisableWhenEmpty<T>(observable: rx.Observable<T[]>, control: FormControl, maakLeegVanaf: number) {
+  protected subscribeToDisableWhenEmpty<T>(
+    observable: rx.Observable<T[]>,
+    control: FormControl,
+    maakLeegVanaf: number
+  ) {
     // Wanneer de array leeg is, disable de control, enable indien niet leeg of er een filter is opgegeven.
     function disableWanneerLeeg(array: T[]) {
       if (array.length > 0 || (control.value && control.value !== "")) {
@@ -154,11 +186,11 @@ export abstract class GetraptZoekerDirective extends KaartChildDirective {
     }
 
     this.bindToLifeCycle(observable).subscribe(
-      waardes => {
+      (waardes) => {
         disableWanneerLeeg(waardes);
         this.maakVeldenLeeg(maakLeegVanaf);
       },
-      error => this.meldFout(error)
+      (error) => this.meldFout(error)
     );
   }
 
@@ -168,7 +200,11 @@ export abstract class GetraptZoekerDirective extends KaartChildDirective {
     this.zoekerComponent.increaseBusy();
     return observable.pipe(
       take(1),
-      tap(noop, () => this.zoekerComponent.decreaseBusy(), () => this.zoekerComponent.decreaseBusy())
+      tap(
+        noop,
+        () => this.zoekerComponent.decreaseBusy(),
+        () => this.zoekerComponent.decreaseBusy()
+      )
     );
   }
 
@@ -176,7 +212,12 @@ export abstract class GetraptZoekerDirective extends KaartChildDirective {
     this.zoekerComponent.toonResultaat = true;
     this.zoekerComponent.toonSuggesties = false;
     this.zoekerComponent.increaseBusy();
-    this.dispatch(prt.ZoekCmd(VolledigeZoekOpdracht(zoekers, zoekInput), kaartLogOnlyWrapper));
+    this.dispatch(
+      prt.ZoekCmd(
+        VolledigeZoekOpdracht(zoekers, zoekInput),
+        kaartLogOnlyWrapper
+      )
+    );
   }
 
   // Gebruik de waarde van de VORIGE control om een request te doen,
@@ -203,7 +244,7 @@ export abstract class GetraptZoekerDirective extends KaartChildDirective {
             } else if (typeof filterWaarde === "string") {
               const filterWaardeLowerCase = filterWaarde.toLocaleLowerCase();
               return waardes
-                .filter(value =>
+                .filter((value) =>
                   propertyGetter(value)
                     .toLocaleLowerCase()
                     .includes(filterWaardeLowerCase)
@@ -229,7 +270,7 @@ export abstract class GetraptZoekerDirective extends KaartChildDirective {
                   }
                 });
             } else {
-              return waardes.filter(value =>
+              return waardes.filter((value) =>
                 propertyGetter(value)
                   .toLocaleLowerCase()
                   .includes(propertyGetter(filterWaarde).toLocaleLowerCase())
@@ -249,11 +290,13 @@ export abstract class GetraptZoekerDirective extends KaartChildDirective {
 
   // inputWaarde kan een string of een object zijn. Enkel wanneer het een object is, roepen we de provider op,
   // anders geven we een lege array terug.
-  private safeProvider<A, T>(provider: Function1<A, rx.Observable<T[]>>): Pipeable<A, T[]> {
-    return switchMap(inputWaarde => {
+  private safeProvider<A, T>(
+    provider: Function1<A, rx.Observable<T[]>>
+  ): Pipeable<A, T[]> {
+    return switchMap((inputWaarde) => {
       return isNotNullObject(inputWaarde)
         ? this.busy(provider(inputWaarde)).pipe(
-            catchError(error => {
+            catchError((error) => {
               this.meldFout(error);
               return rx.of([]);
             })
@@ -271,34 +314,61 @@ export abstract class GetraptZoekerDirective extends KaartChildDirective {
     trigger("enterAnimation", [
       transition(":enter", [
         style({ opacity: 0, "max-height": 0 }),
-        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 1, "max-height": "400px" }))
+        animate(
+          "0.35s cubic-bezier(.62,.28,.23,.99)",
+          style({ opacity: 1, "max-height": "400px" })
+        ),
       ]),
       transition(":leave", [
         style({ opacity: 1, "max-height": "400px" }),
-        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 0, "max-height": 0 }))
-      ])
-    ])
+        animate(
+          "0.35s cubic-bezier(.62,.28,.23,.99)",
+          style({ opacity: 0, "max-height": 0 })
+        ),
+      ]),
+    ]),
   ],
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
-export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, OnDestroy {
+export class ZoekerBoxComponent
+  extends KaartChildDirective
+  implements OnInit, OnDestroy {
   zoekVeld = new FormControl();
   @ViewChild("zoekVeldElement")
   zoekVeldElement: ElementRef;
 
   @ViewChild("zoekerPerceelGetrapt")
-  set setZoekerPerceelGetraptComponent(zoekerPerceelGetrapt: GetraptZoekerDirective) {
-    this.zoekerComponentSubj.next(new tuple.Tuple<ZoekerType, GetraptZoekerDirective>(PERCEEL, zoekerPerceelGetrapt));
+  set setZoekerPerceelGetraptComponent(
+    zoekerPerceelGetrapt: GetraptZoekerDirective
+  ) {
+    this.zoekerComponentSubj.next(
+      new tuple.Tuple<ZoekerType, GetraptZoekerDirective>(
+        PERCEEL,
+        zoekerPerceelGetrapt
+      )
+    );
   }
 
   @ViewChild("zoekerCrabGetrapt")
   set setZoekerCrabGetraptComponent(zoekerCrabGetrapt: GetraptZoekerDirective) {
-    this.zoekerComponentSubj.next(new tuple.Tuple<ZoekerType, GetraptZoekerDirective>(CRAB, zoekerCrabGetrapt));
+    this.zoekerComponentSubj.next(
+      new tuple.Tuple<ZoekerType, GetraptZoekerDirective>(
+        CRAB,
+        zoekerCrabGetrapt
+      )
+    );
   }
 
   @ViewChild("zoekerAlleLagenGetrapt")
-  set setZoekerAlleLagenGetraptComponent(zoekerAlleLagenGetrapt: GetraptZoekerDirective) {
-    this.zoekerComponentSubj.next(new tuple.Tuple<ZoekerType, GetraptZoekerDirective>(ALLE_LAGEN, zoekerAlleLagenGetrapt));
+  set setZoekerAlleLagenGetraptComponent(
+    zoekerAlleLagenGetrapt: GetraptZoekerDirective
+  ) {
+    this.zoekerComponentSubj.next(
+      new tuple.Tuple<ZoekerType, GetraptZoekerDirective>(
+        ALLE_LAGEN,
+        zoekerAlleLagenGetrapt
+      )
+    );
   }
 
   // Gevaarlijk: de key ZoekResultaat is een record en er wordt op objectreferentie vergeleken. We moeten er dus steeds
@@ -320,9 +390,15 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
   perceelMaakLeegDisabled = true;
   crabMaakLeegDisabled = true;
   zoekerMaakLeegDisabled = new Set<ZoekerType>();
-  private readonly zoekerComponentSubj: rx.Subject<tuple.Tuple<ZoekerType, GetraptZoekerDirective>> = new rx.Subject();
-  private readonly zoekerComponentOpNaam$: rx.Observable<Map<ZoekerType, GetraptZoekerDirective>>;
-  private readonly maakVeldenLeegSubj: rx.Subject<ZoekerType> = new rx.Subject<ZoekerType>();
+  private readonly zoekerComponentSubj: rx.Subject<
+    tuple.Tuple<ZoekerType, GetraptZoekerDirective>
+  > = new rx.Subject();
+  private readonly zoekerComponentOpNaam$: rx.Observable<
+    Map<ZoekerType, GetraptZoekerDirective>
+  >;
+  private readonly maakVeldenLeegSubj: rx.Subject<ZoekerType> = new rx.Subject<
+    ZoekerType
+  >();
   private readonly zoekers$: rx.Observable<ZoekerMetWeergaveopties[]>;
   private readonly zoekerNamen$: rx.Observable<string[]>;
   private readonly zoekInputSubj: rx.Subject<string> = new rx.Subject<string>();
@@ -352,12 +428,17 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
       velden: new Map<string, ke.VeldInfo>(),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false,
-      filter: option.none
+      filter: option.none,
     };
   }
 
-  private static maakNieuwFeature(resultaat: ZoekResultaat, weergaveOpties: option.Option<Weergaveopties>): ol.Feature[] {
-    function multiLineStringMiddlePoint(geometry: ol.geom.MultiLineString): ol.geom.Point {
+  private static maakNieuwFeature(
+    resultaat: ZoekResultaat,
+    weergaveOpties: option.Option<Weergaveopties>
+  ): ol.Feature[] {
+    function multiLineStringMiddlePoint(
+      geometry: ol.geom.MultiLineString
+    ): ol.geom.Point {
       // voeg een puntelement toe ergens op de linestring om een icoon met nummer te tonen
       const lineStrings = geometry.getLineStrings();
       const lineString = lineStrings[Math.floor(lineStrings.length / 2)];
@@ -367,7 +448,10 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
     function polygonMiddlePoint(geometry: ol.geom.Geometry): ol.geom.Point {
       // in midden van gemeente polygon
       const extent = geometry.getExtent();
-      return new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
+      return new ol.geom.Point([
+        (extent[0] + extent[2]) / 2,
+        (extent[1] + extent[3]) / 2,
+      ]);
     }
 
     function circleMiddlePoint(circle: ol.geom.Circle): ol.geom.Point {
@@ -378,18 +462,22 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
       const feature = new ol.Feature({
         data: resultaat,
         geometry: middlePoint,
-        name: resultaat.omschrijving
+        name: resultaat.omschrijving,
       });
-      forEach(resultaat.kaartInfo, kaartInfo => feature.setStyle(kaartInfo.style));
+      forEach(resultaat.kaartInfo, (kaartInfo) =>
+        feature.setStyle(kaartInfo.style)
+      );
       return feature;
     }
 
-    function createMiddlePointFeature(geometry: ol.geom.Geometry): option.Option<ol.Feature> {
+    function createMiddlePointFeature(
+      geometry: ol.geom.Geometry
+    ): option.Option<ol.Feature> {
       return matchGeometryType(geometry, {
         multiLineString: multiLineStringMiddlePoint,
         polygon: polygonMiddlePoint,
         multiPolygon: polygonMiddlePoint,
-        circle: circleMiddlePoint
+        circle: circleMiddlePoint,
       }).map(pointToMiddlePointFeature);
     }
 
@@ -397,36 +485,50 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
       const feature = new ol.Feature({
         data: resultaat,
         geometry: geometry,
-        name: resultaat.omschrijving
+        name: resultaat.omschrijving,
       });
       feature.setId(resultaat.bron + "_" + resultaat.featureIdSuffix);
-      resultaat.kaartInfo.map(kaartInfo => feature.setStyle(kaartInfo.style));
+      resultaat.kaartInfo.map((kaartInfo) => feature.setStyle(kaartInfo.style));
       return feature;
     }
 
-    function createOutlineAndMiddlePointFeatures(geometry: ol.geom.Geometry): ol.Feature[] {
-      const middlepointFeature = weergaveOpties.exists(o => o.toonIcoon) ? createMiddlePointFeature(geometry) : option.none;
-      const outlineFeature = weergaveOpties.exists(o => o.toonOppervlak) ? option.some(createOutlineFeature(geometry)) : option.none;
+    function createOutlineAndMiddlePointFeatures(
+      geometry: ol.geom.Geometry
+    ): ol.Feature[] {
+      const middlepointFeature = weergaveOpties.exists((o) => o.toonIcoon)
+        ? createMiddlePointFeature(geometry)
+        : option.none;
+      const outlineFeature = weergaveOpties.exists((o) => o.toonOppervlak)
+        ? option.some(createOutlineFeature(geometry))
+        : option.none;
 
       return array.catOptions([middlepointFeature, outlineFeature]);
     }
 
-    return resultaat.kaartInfo.fold([], kaartInfo => createOutlineAndMiddlePointFeatures(kaartInfo.geometry));
+    return resultaat.kaartInfo.fold([], (kaartInfo) =>
+      createOutlineAndMiddlePointFeatures(kaartInfo.geometry)
+    );
   }
 
-  constructor(parent: KaartComponent, zone: NgZone, private readonly cd: ChangeDetectorRef) {
+  constructor(
+    parent: KaartComponent,
+    zone: NgZone,
+    private readonly cd: ChangeDetectorRef
+  ) {
     super(parent, zone);
 
     this.zoekers$ = parent.modelChanges.zoekerServices$;
     this.zoekerNamen$ = this.zoekers$.pipe(
-      map(svcs => svcs.map(svc => svc.zoeker.naam())),
+      map((svcs) => svcs.map((svc) => svc.zoeker.naam())),
       debounceTime(250),
       shareReplay(1)
     );
     this.zoekerComponentOpNaam$ = this.zoekerComponentSubj.pipe(
       scan(
-        (zoekerComponentOpNaam: Map<ZoekerType, GetraptZoekerDirective>, nz: tuple.Tuple<ZoekerType, GetraptZoekerDirective>) =>
-          zoekerComponentOpNaam.set(nz.fst, nz.snd),
+        (
+          zoekerComponentOpNaam: Map<ZoekerType, GetraptZoekerDirective>,
+          nz: tuple.Tuple<ZoekerType, GetraptZoekerDirective>
+        ) => zoekerComponentOpNaam.set(nz.fst, nz.snd),
         new Map<ZoekerType, GetraptZoekerDirective>()
       ),
       shareReplay(1)
@@ -434,21 +536,37 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
 
     // Luister naar de "leegmaken" opdracht en voer uit
     this.bindToLifeCycle(
-      this.zoekerComponentOpNaam$.pipe(switchMap(zcon => this.maakVeldenLeegSubj.pipe(collect((naam: ZoekerType) => zcon.get(naam)))))
-    ).subscribe(zoekerGetraptComponent => zoekerGetraptComponent.maakVeldenLeeg(0));
+      this.zoekerComponentOpNaam$.pipe(
+        switchMap((zcon) =>
+          this.maakVeldenLeegSubj.pipe(
+            collect((naam: ZoekerType) => zcon.get(naam))
+          )
+        )
+      )
+    ).subscribe((zoekerGetraptComponent) =>
+      zoekerGetraptComponent.maakVeldenLeeg(0)
+    );
 
     const weergaveoptiesOpZoekernaam$: rx.Observable<WeergaveoptiesOpZoekernaam> = this.zoekers$.pipe(
-      map(zmps => maps.toMapByKey(zmps, zmp => zmp.zoeker.naam()))
+      map((zmps) => maps.toMapByKey(zmps, (zmp) => zmp.zoeker.naam()))
     );
     // Luister op zoekresultaten en doe er iets mee
     this.bindToLifeCycle(
       weergaveoptiesOpZoekernaam$.pipe(
-        tap(weergaveoptiesOpZoekernaam => (this.weergaveoptiesOpZoekernaam = weergaveoptiesOpZoekernaam)),
-        switchMap(weergaveoptiesOpZoekernaam =>
-          parent.modelChanges.zoekresultaten$.pipe(map(zoekresultaten => new tuple.Tuple(zoekresultaten, weergaveoptiesOpZoekernaam)))
+        tap(
+          (weergaveoptiesOpZoekernaam) =>
+            (this.weergaveoptiesOpZoekernaam = weergaveoptiesOpZoekernaam)
+        ),
+        switchMap((weergaveoptiesOpZoekernaam) =>
+          parent.modelChanges.zoekresultaten$.pipe(
+            map(
+              (zoekresultaten) =>
+                new tuple.Tuple(zoekresultaten, weergaveoptiesOpZoekernaam)
+            )
+          )
         )
       )
-    ).subscribe(t => this.processZoekerAntwoord(t.fst, t.snd));
+    ).subscribe((t) => this.processZoekerAntwoord(t.fst, t.snd));
 
     // Klap dicht wanneer tabel opengeklapt wordt
     this.bindToLifeCycle(this.modelChanges.collapseUIRequest$).subscribe(() => {
@@ -471,7 +589,7 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
       stijlInLagenKiezer: option.none,
       filterinstellingen: option.none,
       laagtabelinstellingen: option.none,
-      wrapper: kaartLogOnlyWrapper
+      wrapper: kaartLogOnlyWrapper,
     });
     const minZoektermLength = 2;
     const suggestieDelay = 400;
@@ -480,18 +598,15 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
       .merge(
         rx.of(true), // laat initieel toe
         startZoek$.pipe(mapTo(false)), // laat niet toe direct na een start zoek opdracht (enter)
-        startZoek$.pipe(
-          mapTo(true),
-          delay(suggestieDelay + 100)
-        ) // totdat er wat tijd verlopen is. Moet na emit van recentste zoekterm!
+        startZoek$.pipe(mapTo(true), delay(suggestieDelay + 100)) // totdat er wat tijd verlopen is. Moet na emit van recentste zoekterm!
       )
       .pipe(shareReplay(1)); // zorg ervoor dat subscribers steeds de recentste waarde krijgen
     const zoekterm$ = this.zoekInputSubj.pipe(
       debounceTime(suggestieDelay), // Niet elk karakter als er vlug getypt wordt
-      map(s => s.trimLeft()), // Spaties links boeien ons niet, rechts wel want kunnen woordprefix afsluiten
+      map((s) => s.trimLeft()), // Spaties links boeien ons niet, rechts wel want kunnen woordprefix afsluiten
       distinctUntilChanged() // Evt een karakter + delete, of een control character
     );
-    const zoektermToZoekpatroon: Function1<string, ZoekInput> = zoekterm => {
+    const zoektermToZoekpatroon: Function1<string, ZoekInput> = (zoekterm) => {
       const fixedTerm = zoekterm.trimLeft(); // trim hier dupliceren, want deze functie ook gebruikt op this.zoekInputSubj
       if (fixedTerm.startsWith("http")) {
         return UrlZoekInput(fixedTerm);
@@ -504,11 +619,18 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
       rx.combineLatest(
         this.zoekerNamen$, // In theorie ook zoeken wanneer er nieuwe zoekers geregistreerd worden. In de praktijk gebeurt dat niet
         zoekterm$.pipe(filter(minLength(minZoektermLength))), // Enkel emitten wanneer zoekterm minimale lengte heeft,
-        (zoekernamen, zoekterm) => prt.ZoekCmd(SuggestiesZoekOpdracht(zoekernamen, zoektermToZoekpatroon(zoekterm)), kaartLogOnlyWrapper)
+        (zoekernamen, zoekterm) =>
+          prt.ZoekCmd(
+            SuggestiesZoekOpdracht(
+              zoekernamen,
+              zoektermToZoekpatroon(zoekterm)
+            ),
+            kaartLogOnlyWrapper
+          )
       )
     )
       .pipe(
-        switchMap(cmd =>
+        switchMap((cmd) =>
           laatSuggestiesToe$.pipe(
             take(1),
             filter(identity), // emit cmd max 1x: wanneer toegelaten
@@ -516,7 +638,7 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
           )
         )
       )
-      .subscribe(cmd => {
+      .subscribe((cmd) => {
         this.suggestiesBuffer = [];
         this.dispatch(cmd);
       });
@@ -527,14 +649,21 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
         .combineLatest(
           this.zoekerNamen$,
           this.zoekInputSubj, // ipv zoekTerm$, want anders zoeken op woord dat 250ms onveranderd is gebleven -> probleem bij snelle enter
-          (zoekernamen, zoekterm) => prt.ZoekCmd(VolledigeZoekOpdracht(zoekernamen, zoektermToZoekpatroon(zoekterm)), kaartLogOnlyWrapper)
+          (zoekernamen, zoekterm) =>
+            prt.ZoekCmd(
+              VolledigeZoekOpdracht(
+                zoekernamen,
+                zoektermToZoekpatroon(zoekterm)
+              ),
+              kaartLogOnlyWrapper
+            )
         )
         .pipe(
           switchMap(
-            cmd => this.volledigeZoekSubj.pipe(mapTo(cmd)) // Via switchmap ipv in combineLatest anders wordt bij elke letter gezocht
+            (cmd) => this.volledigeZoekSubj.pipe(mapTo(cmd)) // Via switchmap ipv in combineLatest anders wordt bij elke letter gezocht
           )
         )
-    ).subscribe(cmd => {
+    ).subscribe((cmd) => {
       this.toonResultaat = true;
       this.toonSuggesties = false;
       this.increaseBusy();
@@ -542,8 +671,12 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
     });
 
     // zorg ervoor dat de suggestiebox (on)zichtbaar is naar gelang de lengte van de zoekterm
-    const suggestieBoxZichtbaarheid$ = zoekterm$.pipe(map(minLength(minZoektermLength))); // enkel obv getypte characters
-    this.bindToLifeCycle(suggestieBoxZichtbaarheid$).subscribe(visible => (this.toonSuggesties = visible));
+    const suggestieBoxZichtbaarheid$ = zoekterm$.pipe(
+      map(minLength(minZoektermLength))
+    ); // enkel obv getypte characters
+    this.bindToLifeCycle(suggestieBoxZichtbaarheid$).subscribe(
+      (visible) => (this.toonSuggesties = visible)
+    );
   }
 
   ngOnDestroy(): void {
@@ -588,24 +721,36 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
     this.toonHelp = false;
     this.dispatch(prt.ZoekGekliktCmd(resultaat));
     forEach(
-      resultaat.kaartInfo.filter(info => !ol.extent.isEmpty(info.extent)), //
-      info => {
+      resultaat.kaartInfo.filter((info) => !ol.extent.isEmpty(info.extent)), //
+      (info) => {
         this.dispatch(prt.VeranderExtentCmd(info.geometry.getExtent()));
         if (info.geometry.getType() === "Point") {
-          resultaat.preferredPointZoomLevel.map(zoom => this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper)));
+          resultaat.preferredPointZoomLevel.map((zoom) =>
+            this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper))
+          );
         }
-        const features = option.fromNullable(this.featuresByResultaat.get(resultaat));
-        forEach(features.chain(fs => array.lookup(0, fs)), feat => this.highlight(feat, info));
+        const features = option.fromNullable(
+          this.featuresByResultaat.get(resultaat)
+        );
+        forEach(
+          features.chain((fs) => array.lookup(0, fs)),
+          (feat) => this.highlight(feat, info)
+        );
       }
     );
   }
 
-  private highlight(nieuweFeature: ol.Feature, zoekKaartResultaat: ZoekKaartResultaat) {
-    forEach(this.huidigeSelectie, selectie => selectie.feature.setStyle(selectie.zoekResultaat.style));
+  private highlight(
+    nieuweFeature: ol.Feature,
+    zoekKaartResultaat: ZoekKaartResultaat
+  ) {
+    forEach(this.huidigeSelectie, (selectie) =>
+      selectie.feature.setStyle(selectie.zoekResultaat.style)
+    );
     nieuweFeature.setStyle(zoekKaartResultaat.highlightStyle);
     this.huidigeSelectie = option.some({
       feature: nieuweFeature,
-      zoekResultaat: zoekKaartResultaat
+      zoekResultaat: zoekKaartResultaat,
     });
   }
 
@@ -615,21 +760,37 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
     this.toonHelp = false;
     this.dispatch(prt.ZoekGekliktCmd(resultaat));
     forEach(
-      resultaat.kaartInfo.filter(info => !ol.extent.isEmpty(info.extent)), //
-      info => {
+      resultaat.kaartInfo.filter((info) => !ol.extent.isEmpty(info.extent)), //
+      (info) => {
         this.dispatch(prt.VeranderExtentCmd(info.geometry.getExtent()));
         if (info.geometry.getType() === "Point") {
-          resultaat.preferredPointZoomLevel.map(zoom => this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper)));
+          resultaat.preferredPointZoomLevel.map((zoom) =>
+            this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper))
+          );
         }
         const resultaatFeatures = ZoekerBoxComponent.maakNieuwFeature(
           resultaat,
-          fpMap.lookup(eq.eqString)(resultaat.zoeker, this.weergaveoptiesOpZoekernaam)
+          fpMap.lookup(eq.eqString)(
+            resultaat.zoeker,
+            this.weergaveoptiesOpZoekernaam
+          )
         );
-        this.featuresByResultaat = new Map<ZoekResultaat, ol.Feature[]>().set(resultaat, resultaatFeatures);
+        this.featuresByResultaat = new Map<ZoekResultaat, ol.Feature[]>().set(
+          resultaat,
+          resultaatFeatures
+        );
 
-        this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, resultaatFeatures, kaartLogOnlyWrapper));
+        this.dispatch(
+          prt.VervangFeaturesCmd(
+            ZoekerUiSelector,
+            resultaatFeatures,
+            kaartLogOnlyWrapper
+          )
+        );
 
-        resultaatFeatures.slice(0, 1).forEach(feature => this.highlight(feature, info));
+        resultaatFeatures
+          .slice(0, 1)
+          .forEach((feature) => this.highlight(feature, info));
       }
     );
   }
@@ -752,7 +913,11 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
   }
 
   isInklapbaar(): boolean {
-    return this.heeftFout() || this.alleZoekResultaten.length > 0 || [PERCEEL, CRAB, ALLE_LAGEN].indexOf(this.actieveZoeker) >= 0;
+    return (
+      this.heeftFout() ||
+      this.alleZoekResultaten.length > 0 ||
+      [PERCEEL, CRAB, ALLE_LAGEN].indexOf(this.actieveZoeker) >= 0
+    );
   }
 
   kiesZoeker(zoeker: ZoekerType) {
@@ -775,10 +940,19 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
     this.huidigeSelectie = option.none;
     this.legende.clear();
     this.legendeKeys = [];
-    this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, <ol.Feature[]>[], kaartLogOnlyWrapper));
+    this.dispatch(
+      prt.VervangFeaturesCmd(
+        ZoekerUiSelector,
+        <ol.Feature[]>[],
+        kaartLogOnlyWrapper
+      )
+    );
   }
 
-  private processZoekerAntwoord(nieuweResultaten: ZoekAntwoord, optiesOpNaam: WeergaveoptiesOpZoekernaam): void {
+  private processZoekerAntwoord(
+    nieuweResultaten: ZoekAntwoord,
+    optiesOpNaam: WeergaveoptiesOpZoekernaam
+  ): void {
     kaartLogger.debug("Process " + nieuweResultaten.zoeker, nieuweResultaten);
     switch (nieuweResultaten.zoektype) {
       case "Volledig":
@@ -796,44 +970,85 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
     }
   }
 
-  private processVolledigZoekerAntwoord(nieuweResultaten: ZoekAntwoord, optiesOpNaam: WeergaveoptiesOpZoekernaam): void {
-    this.alleZoekResultaten = this.vervangZoekerResultaten(this.alleZoekResultaten, nieuweResultaten);
-    this.alleZoekResultaten.sort(zoekResultaatOrdering(this.zoekVeld.value, prioriteitVoorZoekresultaat("Volledig")(optiesOpNaam, 99)));
-    nieuweResultaten.legende.forEach((safeHtml, name) => this.legende.set(name!, safeHtml!));
+  private processVolledigZoekerAntwoord(
+    nieuweResultaten: ZoekAntwoord,
+    optiesOpNaam: WeergaveoptiesOpZoekernaam
+  ): void {
+    this.alleZoekResultaten = this.vervangZoekerResultaten(
+      this.alleZoekResultaten,
+      nieuweResultaten
+    );
+    this.alleZoekResultaten.sort(
+      zoekResultaatOrdering(
+        this.zoekVeld.value,
+        prioriteitVoorZoekresultaat("Volledig")(optiesOpNaam, 99)
+      )
+    );
+    nieuweResultaten.legende.forEach((safeHtml, name) =>
+      this.legende.set(name!, safeHtml!)
+    );
     this.alleSuggestiesResultaten = [];
     this.legendeKeys = Array.from(this.legende.keys());
 
     this.alleFouten = this.alleFouten
-      .filter(resultaat => resultaat.zoeker !== nieuweResultaten.zoeker)
-      .concat(nieuweResultaten.fouten.map(fout => new Fout(nieuweResultaten.zoeker, fout)));
+      .filter((resultaat) => resultaat.zoeker !== nieuweResultaten.zoeker)
+      .concat(
+        nieuweResultaten.fouten.map(
+          (fout) => new Fout(nieuweResultaten.zoeker, fout)
+        )
+      );
 
     this.featuresByResultaat = this.alleZoekResultaten.reduce(
       (map, resultaat) =>
-        map.set(resultaat, ZoekerBoxComponent.maakNieuwFeature(resultaat, fpMap.lookup(eq.eqString)(resultaat.zoeker, optiesOpNaam))),
+        map.set(
+          resultaat,
+          ZoekerBoxComponent.maakNieuwFeature(
+            resultaat,
+            fpMap.lookup(eq.eqString)(resultaat.zoeker, optiesOpNaam)
+          )
+        ),
       new Map<ZoekResultaat, ol.Feature[]>()
     );
 
     this.dispatch(
-      prt.VervangFeaturesCmd(ZoekerUiSelector, array.flatten(Array.from(this.featuresByResultaat.values())), kaartLogOnlyWrapper)
+      prt.VervangFeaturesCmd(
+        ZoekerUiSelector,
+        array.flatten(Array.from(this.featuresByResultaat.values())),
+        kaartLogOnlyWrapper
+      )
     );
     this.decreaseBusy();
   }
 
-  private processSuggestiesAntwoord(nieuweResultaten: ZoekAntwoord, optiesOpNaam: WeergaveoptiesOpZoekernaam): void {
+  private processSuggestiesAntwoord(
+    nieuweResultaten: ZoekAntwoord,
+    optiesOpNaam: WeergaveoptiesOpZoekernaam
+  ): void {
     // de resultaten van de zoeker wiens antwoord nu binnen komt, moeten vervangen worden door de nieuwe resultaten
     // We moeten de resultaten in volgorde van prioriteit tonen
 
     // Een hulpfunctie die de lokale optiesOpNaam mee neemt.
-    const prioriteit: Function1<ZoekAntwoord, number> = prioriteitVoorZoekAntwoord("Suggesties")(optiesOpNaam, 99);
+    const prioriteit: Function1<
+      ZoekAntwoord,
+      number
+    > = prioriteitVoorZoekAntwoord("Suggesties")(optiesOpNaam, 99);
 
     // Stap 1 is enkel die resultaten overhouden die van toepassing zijn en een prioriteit hebben
-    const weerhoudenResultaten: option.Option<ZoekAntwoord> = zoekresultatenVanType("Suggesties", nieuweResultaten) //
+    const weerhoudenResultaten: option.Option<ZoekAntwoord> = zoekresultatenVanType(
+      "Suggesties",
+      nieuweResultaten
+    ) //
       .filter(heeftPrioriteit(optiesOpNaam));
 
-    forEach(weerhoudenResultaten, resultaten => {
+    forEach(weerhoudenResultaten, (resultaten) => {
       // Stap 2 is sorteren van de antwoorden van de zoekers op prioriteit
-      const opPrioriteit: ord.Ord<ZoekAntwoord> = ord.contramap(prioriteit, ord.ordNumber);
-      this.suggestiesBuffer = array.sort(opPrioriteit)(array.snoc(this.suggestiesBuffer, resultaten));
+      const opPrioriteit: ord.Ord<ZoekAntwoord> = ord.contramap(
+        prioriteit,
+        ord.ordNumber
+      );
+      this.suggestiesBuffer = array.sort(opPrioriteit)(
+        array.snoc(this.suggestiesBuffer, resultaten)
+      );
 
       // Stap 3 is alle individuele resultaten uit de resultaten halen voor zover de prioriteiten ononderbroken oplopen van 1
       // Het is perfect mogelijk dat er voor een bepaalde prioriteit geen resultaten zijn (lege array). We verwachten dit
@@ -842,18 +1057,27 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
       this.alleSuggestiesResultaten = this.suggestiesBuffer.reduce(
         ({ resultatenVanZoekers, volgendePrio }, suggestieZoekResultaten) => {
           const prioVanResultaten = prioriteit(suggestieZoekResultaten);
-          if (prioVanResultaten === volgendePrio || prioVanResultaten === volgendePrio + 1) {
+          if (
+            prioVanResultaten === volgendePrio ||
+            prioVanResultaten === volgendePrio + 1
+          ) {
             return {
-              resultatenVanZoekers: array.take(5, concat(resultatenVanZoekers, suggestieZoekResultaten.resultaten)),
-              volgendePrio: volgendePrio + 1
+              resultatenVanZoekers: array.take(
+                5,
+                concat(resultatenVanZoekers, suggestieZoekResultaten.resultaten)
+              ),
+              volgendePrio: volgendePrio + 1,
             };
           } else {
-            return { resultatenVanZoekers: resultatenVanZoekers, volgendePrio: 0 };
+            return {
+              resultatenVanZoekers: resultatenVanZoekers,
+              volgendePrio: 0,
+            };
           }
         },
         {
           resultatenVanZoekers: new Array<ZoekResultaat>(),
-          volgendePrio: 0
+          volgendePrio: 0,
         }
       ).resultatenVanZoekers;
 
@@ -861,8 +1085,13 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
     });
   }
 
-  private vervangZoekerResultaten(resultaten: ZoekResultaat[], vervangResultaten: ZoekAntwoord) {
-    return resultaten.filter(resultaat => resultaat.zoeker !== vervangResultaten.zoeker).concat(vervangResultaten.resultaten);
+  private vervangZoekerResultaten(
+    resultaten: ZoekResultaat[],
+    vervangResultaten: ZoekAntwoord
+  ) {
+    return resultaten
+      .filter((resultaat) => resultaat.zoeker !== vervangResultaten.zoeker)
+      .concat(vervangResultaten.resultaten);
   }
 
   increaseBusy() {
@@ -897,14 +1126,19 @@ export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, O
     });
   }
 
-  onMaakLeegDisabledChange(zoekerNaam: ZoekerType, maakLeegDisabled: boolean): void {
+  onMaakLeegDisabledChange(
+    zoekerNaam: ZoekerType,
+    maakLeegDisabled: boolean
+  ): void {
     this.zoekerMaakLeegDisabled = maakLeegDisabled
       ? this.zoekerMaakLeegDisabled.add(zoekerNaam)
       : sets.removeSimple(this.zoekerMaakLeegDisabled)(zoekerNaam);
   }
 
   availability$(zoekerNaam: ZoekerType): rx.Observable<boolean> {
-    return this.zoekerNamen$.pipe(map(nmn => array.elem(eq.eqString)(zoekerNaam, nmn)));
+    return this.zoekerNamen$.pipe(
+      map((nmn) => array.elem(eq.eqString)(zoekerNaam, nmn))
+    );
   }
 
   maakVeldenLeeg(zoekerNaam: ZoekerType): void {

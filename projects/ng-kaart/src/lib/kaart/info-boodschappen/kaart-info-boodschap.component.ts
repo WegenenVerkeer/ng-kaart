@@ -1,5 +1,17 @@
-import { animate, state, style, transition, trigger } from "@angular/animations";
-import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit } from "@angular/core";
+import {
+  animate,
+  state,
+  style,
+  transition,
+  trigger,
+} from "@angular/animations";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  NgZone,
+  OnInit,
+} from "@angular/core";
 import { option } from "fp-ts";
 import scrollIntoView from "scroll-into-view-if-needed";
 
@@ -17,12 +29,14 @@ import { KaartComponent } from "../kaart.component";
     trigger("fadeIn", [
       state("visible", style({ opacity: 1 })),
       transition(":enter", [style({ opacity: 0 }), animate(200)]),
-      transition(":leave", animate(0, style({ opacity: 0 })))
-    ])
+      transition(":leave", animate(0, style({ opacity: 0 }))),
+    ]),
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class KaartInfoBoodschapComponent extends KaartChildDirective implements OnInit {
+export class KaartInfoBoodschapComponent
+  extends KaartChildDirective
+  implements OnInit {
   private infoBoodschap: InfoBoodschap;
   titel: string;
   kind: string;
@@ -34,7 +48,7 @@ export class KaartInfoBoodschapComponent extends KaartChildDirective implements 
     this.titel = bsch.titel;
     this.kind = bsch.type;
     this.icon = foldInfoBoodschap(this.boodschap)(
-      alert => alert.iconName.getOrElse("priority_high"), //
+      (alert) => alert.iconName.getOrElse("priority_high"), //
       () => "description",
       () => "location_on",
       () => "straighten"
@@ -56,21 +70,34 @@ export class KaartInfoBoodschapComponent extends KaartChildDirective implements 
   scrollIntoView() {
     setTimeout(
       () =>
-        forEach(option.fromNullable(document.getElementById("kaart-info-boodschap-" + this.boodschap.id)), el =>
-          scrollIntoView(el, {
-            behavior: "smooth",
-            scrollMode: "if-needed"
-          })
+        forEach(
+          option.fromNullable(
+            document.getElementById("kaart-info-boodschap-" + this.boodschap.id)
+          ),
+          (el) =>
+            scrollIntoView(el, {
+              behavior: "smooth",
+              scrollMode: "if-needed",
+            })
         ),
       200
     );
   }
 
   sluit(): void {
-    this.dispatch(SluitInfoBoodschapCmd(this.boodschap.id, this.boodschap.sluit === "VANZELF", this.boodschap.verbergMsgGen));
+    this.dispatch(
+      SluitInfoBoodschapCmd(
+        this.boodschap.id,
+        this.boodschap.sluit === "VANZELF",
+        this.boodschap.verbergMsgGen
+      )
+    );
   }
 
   isSluitbaar(): boolean {
-    return this.boodschap.sluit === "DOOR_APPLICATIE" || this.boodschap.sluit === "VANZELF";
+    return (
+      this.boodschap.sluit === "DOOR_APPLICATIE" ||
+      this.boodschap.sluit === "VANZELF"
+    );
   }
 }

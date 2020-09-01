@@ -5,11 +5,19 @@ import * as ol from "../util/openlayers-compat";
 import { Progress } from "../util/progress";
 import { TypedRecord } from "../util/typed-record";
 
-import { Adres, LaagLocationInfoResult, WegLocaties } from "./kaart-bevragen/laaginfo.model";
+import {
+  Adres,
+  LaagLocationInfoResult,
+  WegLocaties,
+} from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { VectorLaag } from "./kaart-elementen";
 
-export type InfoBoodschap = InfoBoodschapAlert | InfoBoodschapMeten | InfoBoodschapIdentify | InfoBoodschapKaartBevragenProgress;
+export type InfoBoodschap =
+  | InfoBoodschapAlert
+  | InfoBoodschapMeten
+  | InfoBoodschapIdentify
+  | InfoBoodschapKaartBevragenProgress;
 
 export interface InfoBoodschapBase {
   readonly id: string;
@@ -43,7 +51,10 @@ export interface InfoBoodschapKaartBevragenProgress extends InfoBoodschapBase {
   readonly coordinaat: ol.Coordinate;
   readonly adres: option.Option<Adres>; // Zou ook Progress<Adres> kunnen zijn
   readonly weglocaties: WegLocaties; // Zou ook Progress<<WegLocaties> kunnen zijn
-  readonly laagLocatieInfoOpTitel: Map<string, Progress<LaagLocationInfoResult>>;
+  readonly laagLocatieInfoOpTitel: Map<
+    string,
+    Progress<LaagLocationInfoResult>
+  >;
 }
 
 export const foldInfoBoodschap = (boodschap: InfoBoodschap) => <A>(

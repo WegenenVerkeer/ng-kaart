@@ -25,19 +25,31 @@ export function offsetStyleFunction(
   positie: number,
   rijrichtingIsDigitalisatieZin: boolean
 ): ol.style.StyleFunction {
-  function offsetStyleFunc(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
-    const style: ol.style.Style | ol.style.Style[] = styleFunction(feature, resolution);
+  function offsetStyleFunc(
+    feature: ol.Feature,
+    resolution: number
+  ): ol.style.Style | ol.style.Style[] {
+    const style: ol.style.Style | ol.style.Style[] = styleFunction(
+      feature,
+      resolution
+    );
 
     // indien er geen stijl gedefinieerd is of we geen rijrichting kunnen afleiden
     // (als er geen ident8 is en de rijrichting is niet de digitalisatie zin),
     // dan sturen we gewoon de style terug zonder offset toegepast
-    if (!style || (!rijrichtingIsDigitalisatieZin && getValue(feature, ident8Veld).isNone())) {
+    if (
+      !style ||
+      (!rijrichtingIsDigitalisatieZin && getValue(feature, ident8Veld).isNone())
+    ) {
       return style;
     }
 
     const direction: Direction = rijrichtingIsDigitalisatieZin
       ? Up
-      : getValue(feature, ident8Veld).foldL(() => Up, ident8 => getDirection(ident8));
+      : getValue(feature, ident8Veld).foldL(
+          () => Up,
+          (ident8) => getDirection(ident8)
+        );
 
     function setGeometryOnStyle(s: ol.style.Style) {
       const offsetGeometryFunc = offsetGeometryFunction(
@@ -66,7 +78,9 @@ export function offsetStyleFunction(
 }
 
 function getValue(feature: ol.Feature, field: string): option.Option<string> {
-  return option.fromNullable(feature.get("properties")).chain(properties => option.fromNullable(properties[field]));
+  return option
+    .fromNullable(feature.get("properties"))
+    .chain((properties) => option.fromNullable(properties[field]));
 }
 
 /**
@@ -96,15 +110,27 @@ function offsetGeometryFunction(
     }
     try {
       if (geometry instanceof ol.geom.LineString) {
-        return getOffsetLinestring(<ol.geom.LineString>geometry, offsetPixels, resolution, zijdeSpiegeling);
+        return getOffsetLinestring(
+          <ol.geom.LineString>geometry,
+          offsetPixels,
+          resolution,
+          zijdeSpiegeling
+        );
       } else if (geometry instanceof ol.geom.MultiLineString) {
         const multilinestring = <ol.geom.MultiLineString>geometry;
         const offsetMultiLinestring = new ol.geom.MultiLineString([]);
 
         multilinestring
           .getLineStrings()
-          .forEach(linestring =>
-            offsetMultiLinestring.appendLineString(getOffsetLinestring(linestring, offsetPixels, resolution, zijdeSpiegeling))
+          .forEach((linestring) =>
+            offsetMultiLinestring.appendLineString(
+              getOffsetLinestring(
+                linestring,
+                offsetPixels,
+                resolution,
+                zijdeSpiegeling
+              )
+            )
           );
 
         return offsetMultiLinestring;
@@ -128,7 +154,12 @@ const QUARTER_PI = Math.PI / 4;
 
 type ZijdeSpiegeling = 1 | -1;
 
-function getOffsetLinestring(linestring: ol.geom.LineString, offsetPixels: number, resolution: number, zijdeSpiegeling: ZijdeSpiegeling) {
+function getOffsetLinestring(
+  linestring: ol.geom.LineString,
+  offsetPixels: number,
+  resolution: number,
+  zijdeSpiegeling: ZijdeSpiegeling
+) {
   const offsetPoints: Array<ol.Coordinate> = []; // get the point objects from the geometry
   const oPoints = linestring.getCoordinates(); // get the original point objects from the geometry
   const offset = zijdeSpiegeling * Math.abs(offsetPixels * resolution); // offset in map units (e.g. 'm': meter)
@@ -182,23 +213,53 @@ function getOffsetLinestring(linestring: ol.geom.LineString, offsetPixels: numbe
       // at the last point, and ends in the intersection of the two offset lines.
       let iRadius = offset / Math.cos(halfOffsetAngle);
 
-      if ((offset > 0 && closeTo(halfOffsetAngle, HALF_PI)) || (offset < 0 && closeTo(halfOffsetAngle, -HALF_PI))) {
+      if (
+        (offset > 0 && closeTo(halfOffsetAngle, HALF_PI)) ||
+        (offset < 0 && closeTo(halfOffsetAngle, -HALF_PI))
+      ) {
         // corner case offset rendering
         // do nothing, the calculated iRadius will be extremely large since their offset vectors are
         // almost parallel
-      } else if ((offset > 0 && halfOffsetAngle < -QUARTER_PI) || (offset < 0 && halfOffsetAngle > QUARTER_PI)) {
+      } else if (
+        (offset > 0 && halfOffsetAngle < -QUARTER_PI) ||
+        (offset < 0 && halfOffsetAngle > QUARTER_PI)
+      ) {
         // In these cases the offset-lines intersect too far beyond the last point
         // correct iRadius
         iRadius = offset / Math.cos(QUARTER_PI);
-        let iloX = lastX + iRadius * Math.cos(segmentAngle + HALF_PI - 2 * halfOffsetAngle - Math.sign(offset) * QUARTER_PI);
-        let iloY = lastY + iRadius * Math.sin(segmentAngle + HALF_PI - 2 * halfOffsetAngle - Math.sign(offset) * QUARTER_PI);
+        let iloX =
+          lastX +
+          iRadius *
+            Math.cos(
+              segmentAngle +
+                HALF_PI -
+                2 * halfOffsetAngle -
+                Math.sign(offset) * QUARTER_PI
+            );
+        let iloY =
+          lastY +
+          iRadius *
+            Math.sin(
+              segmentAngle +
+                HALF_PI -
+                2 * halfOffsetAngle -
+                Math.sign(offset) * QUARTER_PI
+            );
         offsetPoints.push([iloX, iloY]);
-        iloX = lastX + iRadius * Math.cos(segmentAngle + HALF_PI + Math.sign(offset) * QUARTER_PI);
-        iloY = lastY + iRadius * Math.sin(segmentAngle + HALF_PI + Math.sign(offset) * QUARTER_PI);
+        iloX =
+          lastX +
+          iRadius *
+            Math.cos(segmentAngle + HALF_PI + Math.sign(offset) * QUARTER_PI);
+        iloY =
+          lastY +
+          iRadius *
+            Math.sin(segmentAngle + HALF_PI + Math.sign(offset) * QUARTER_PI);
         offsetPoints.push([iloX, iloY]);
       } else {
-        const iloX = lastX + iRadius * Math.cos(segmentAngle + HALF_PI - halfOffsetAngle);
-        const iloY = lastY + iRadius * Math.sin(segmentAngle + HALF_PI - halfOffsetAngle);
+        const iloX =
+          lastX + iRadius * Math.cos(segmentAngle + HALF_PI - halfOffsetAngle);
+        const iloY =
+          lastY + iRadius * Math.sin(segmentAngle + HALF_PI - halfOffsetAngle);
         offsetPoints.push([iloX, iloY]);
       }
     }
@@ -230,6 +291,11 @@ function getDirection(ident8: string): Direction {
   }
 }
 
-function getZijdeSpiegeling(zijderijweg: string, direction: Direction): ZijdeSpiegeling {
-  return (zijderijweg === "l" || zijderijweg === "L") === (direction === "up") ? 1 : -1;
+function getZijdeSpiegeling(
+  zijderijweg: string,
+  direction: Direction
+): ZijdeSpiegeling {
+  return (zijderijweg === "l" || zijderijweg === "L") === (direction === "up")
+    ? 1
+    : -1;
 }

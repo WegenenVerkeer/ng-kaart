@@ -14,13 +14,19 @@ import {
   share,
   shareReplay,
   startWith,
-  switchMap
+  switchMap,
 } from "rxjs/operators";
 
 import { roundCoordinate } from "../coordinaten";
-import { FilterAanpassingState as FilteraanpassingState, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
+import {
+  FilterAanpassingState as FilteraanpassingState,
+  GeenFilterAanpassingBezig,
+} from "../filter/filter-aanpassing-state";
 import { NosqlFsSource } from "../source/nosql-fs-source";
-import { GeenTransparantieaanpassingBezig, TransparantieaanpassingState } from "../transparantieeditor/state";
+import {
+  GeenTransparantieaanpassingBezig,
+  TransparantieaanpassingState,
+} from "../transparantieeditor/state";
 import { Feature, FeatureWithIdAndLaagnaam } from "../util/feature";
 import * as tilecacheMetadataDb from "../util/indexeddb-tilecache-metadata";
 import { observeAsapOnAngular } from "../util/observe-asap-on-angular";
@@ -28,17 +34,28 @@ import { observableFromOlEvents } from "../util/ol-observable";
 import * as ol from "../util/openlayers-compat";
 import { collectOption, scan2 } from "../util/operators";
 import { updateBehaviorSubject } from "../util/subject-update";
-import { ZoekAntwoord, ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
+import {
+  ZoekAntwoord,
+  ZoekerMetWeergaveopties,
+  Zoekopdracht,
+  ZoekResultaat,
+} from "../zoeker/zoeker";
 
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { GeselecteerdeFeatures, Viewinstellingen } from "./kaart-protocol-subscriptions";
+import {
+  GeselecteerdeFeatures,
+  Viewinstellingen,
+} from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { HoverFeature } from "./kaart-with-info-model";
 import * as loc from "./mijn-locatie/kaart-mijn-locatie.component";
-import { GeenLaagstijlaanpassing, LaagstijlaanpassingState } from "./stijleditor/state";
+import {
+  GeenLaagstijlaanpassing,
+  LaagstijlaanpassingState,
+} from "./stijleditor/state";
 import * as TabelState from "./tabel-state";
 import { DrawOps } from "./tekenen/tekenen-model";
 import { OptiesOpUiElement } from "./ui-element-opties";
@@ -83,7 +100,9 @@ export interface ModelChanger {
   readonly uiElementSelectieSubj: rx.Subject<UiElementSelectie>;
   readonly optiesOpUiElementSubj: rx.BehaviorSubject<OptiesOpUiElement>;
   readonly viewPortSizeSubj: rx.Subject<null>;
-  readonly lagenOpGroepSubj: ke.OpLaagGroep<rx.BehaviorSubject<ke.ToegevoegdeLaag[]>>;
+  readonly lagenOpGroepSubj: ke.OpLaagGroep<
+    rx.BehaviorSubject<ke.ToegevoegdeLaag[]>
+  >;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
   readonly mijnLocatieZoomDoelSubj: rx.Subject<option.Option<number>>;
   readonly laagTabelExtraKnopKlikkenSubj: rx.Subject<prt.LaagTabelKnopKlik>;
@@ -91,12 +110,16 @@ export interface ModelChanger {
   readonly zoekerServicesSubj: rx.Subject<ZoekerMetWeergaveopties[]>;
   readonly zoekopdrachtSubj: rx.Subject<Zoekopdracht>;
   readonly zoekresultaatselectieSubj: rx.Subject<ZoekResultaat>;
-  readonly laagLocationInfoServicesOpTitelSubj: rx.BehaviorSubject<Map<string, LaagLocationInfoService>>;
+  readonly laagLocationInfoServicesOpTitelSubj: rx.BehaviorSubject<
+    Map<string, LaagLocationInfoService>
+  >;
   readonly laagstijlaanpassingStateSubj: rx.Subject<LaagstijlaanpassingState>;
   readonly laagfilterGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
   readonly laagstijlGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
   readonly laagfilteraanpassingStateSubj: rx.Subject<FilteraanpassingState>;
-  readonly transparantieAanpassingStateSubj: rx.Subject<TransparantieaanpassingState>;
+  readonly transparantieAanpassingStateSubj: rx.Subject<
+    TransparantieaanpassingState
+  >;
   readonly dragInfoSubj: rx.Subject<DragInfo>;
   readonly tekenenOpsSubj: rx.Subject<DrawOps>;
   readonly getekendeGeometrySubj: rx.Subject<ol.geom.Geometry>;
@@ -115,16 +138,20 @@ export interface ModelChanger {
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
 export const ModelChanger: () => ModelChanger = () => ({
   uiElementSelectieSubj: new rx.Subject<UiElementSelectie>(),
-  optiesOpUiElementSubj: new rx.BehaviorSubject<OptiesOpUiElement>(OptiesOpUiElement.create()),
+  optiesOpUiElementSubj: new rx.BehaviorSubject<OptiesOpUiElement>(
+    OptiesOpUiElement.create()
+  ),
   viewPortSizeSubj: new rx.Subject<null>(),
   lagenOpGroepSubj: {
     Achtergrond: new rx.BehaviorSubject<ke.ToegevoegdeLaag[]>([]),
     "Voorgrond.Hoog": new rx.BehaviorSubject<ke.ToegevoegdeLaag[]>([]),
     "Voorgrond.Laag": new rx.BehaviorSubject<ke.ToegevoegdeLaag[]>([]),
-    Tools: new rx.BehaviorSubject<ke.ToegevoegdeLaag[]>([])
+    Tools: new rx.BehaviorSubject<ke.ToegevoegdeLaag[]>([]),
   },
   laagVerwijderdSubj: new rx.Subject<ke.ToegevoegdeLaag>(),
-  mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<option.Option<number>>(option.none),
+  mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<option.Option<number>>(
+    option.none
+  ),
   laagTabelExtraKnopKlikkenSubj: new rx.Subject<prt.LaagTabelKnopKlik>(),
   actieveModusSubj: new rx.BehaviorSubject(option.none),
   zoekerServicesSubj: new rx.BehaviorSubject([]),
@@ -134,8 +161,12 @@ export const ModelChanger: () => ModelChanger = () => ({
   laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing),
   laagfilterGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
   laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
-  laagfilteraanpassingStateSubj: new rx.BehaviorSubject(GeenFilterAanpassingBezig),
-  transparantieAanpassingStateSubj: new rx.BehaviorSubject(GeenTransparantieaanpassingBezig),
+  laagfilteraanpassingStateSubj: new rx.BehaviorSubject(
+    GeenFilterAanpassingBezig
+  ),
+  transparantieAanpassingStateSubj: new rx.BehaviorSubject(
+    GeenTransparantieaanpassingBezig
+  ),
   dragInfoSubj: new rx.Subject<DragInfo>(),
   tekenenOpsSubj: new rx.Subject<DrawOps>(),
   getekendeGeometrySubj: new rx.Subject<ol.geom.Geometry>(),
@@ -143,12 +174,14 @@ export const ModelChanger: () => ModelChanger = () => ({
   laatsteCacheRefreshSubj: new rx.BehaviorSubject({}),
   mijnLocatieStateChangeSubj: new rx.Subject<MijnLocatieStateChange>(),
   zoombereikChangeSubj: new rx.Subject<null>(),
-  tabelActiviteitSubj: new rx.BehaviorSubject<TabelState.TabelActiviteit>(TabelState.Onbeschikbaar),
+  tabelActiviteitSubj: new rx.BehaviorSubject<TabelState.TabelActiviteit>(
+    TabelState.Onbeschikbaar
+  ),
   dataloadBusySubj: new rx.BehaviorSubject<boolean>(false),
   forceProgressBarSubj: new rx.BehaviorSubject<boolean>(false),
   collapseUIRequestSubj: new rx.Subject<null>(),
   inErrorSubj: new rx.BehaviorSubject<boolean>(false),
-  tabelLaagInstellingenSubj: new rx.Subject<prt.Laagtabelinstellingen>()
+  tabelLaagInstellingenSubj: new rx.Subject<prt.Laagtabelinstellingen>(),
 });
 
 export interface ModelChanges {
@@ -162,18 +195,24 @@ export interface ModelChanges {
   readonly geselecteerdeFeatures$: rx.Observable<GeselecteerdeFeatures>;
   readonly hoverFeatures$: rx.Observable<HoverFeature>;
   readonly zichtbareFeatures$: rx.Observable<ol.Feature[]>;
-  readonly zichtbareFeaturesPerLaag$: rx.Observable<ReadonlyMap<string, ol.Feature[]>>;
+  readonly zichtbareFeaturesPerLaag$: rx.Observable<
+    ReadonlyMap<string, ol.Feature[]>
+  >;
   readonly kaartKlikLocatie$: rx.Observable<KlikInfo>;
   readonly mijnLocatieZoomDoel$: rx.Observable<option.Option<number>>;
   readonly actieveModus$: rx.Observable<option.Option<string>>;
   readonly zoekerServices$: rx.Observable<ZoekerMetWeergaveopties[]>;
   readonly zoekresultaten$: rx.Observable<ZoekAntwoord>;
   readonly zoekresultaatselectie$: rx.Observable<ZoekResultaat>;
-  readonly laagLocationInfoServicesOpTitel$: rx.Observable<Map<string, LaagLocationInfoService>>;
+  readonly laagLocationInfoServicesOpTitel$: rx.Observable<
+    Map<string, LaagLocationInfoService>
+  >;
   readonly laagstijlaanpassingState$: rx.Observable<LaagstijlaanpassingState>;
   readonly laagstijlGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
   readonly laagfilteraanpassingState$: rx.Observable<FilteraanpassingState>;
-  readonly transparantieaanpassingState$: rx.Observable<TransparantieaanpassingState>;
+  readonly transparantieaanpassingState$: rx.Observable<
+    TransparantieaanpassingState
+  >;
   readonly laagfilterGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
   readonly dragInfo$: rx.Observable<DragInfo>;
   readonly rotatie$: rx.Observable<number>; // een niet gedebouncede variant van "viewinstellingen$.rotatie" voor live rotatie
@@ -189,30 +228,40 @@ export interface ModelChanges {
   readonly collapseUIRequest$: rx.Observable<null>;
 }
 
-const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
+const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = (olmap) => ({
   zoom: olmap.getView().getZoom()!,
   minZoom: olmap.getView().getMinZoom(),
   maxZoom: olmap.getView().getMaxZoom(),
   resolution: olmap.getView().getResolution()!,
   extent: olmap.getView().calculateExtent(olmap.getSize()),
   center: olmap.getView().getCenter()!,
-  rotation: olmap.getView().getRotation()
+  rotation: olmap.getView().getRotation(),
 });
 
-export const featuresOpIdToArray = (perLaag: prt.KaartFeaturesOpId): ol.Feature[] =>
+export const featuresOpIdToArray = (
+  perLaag: prt.KaartFeaturesOpId
+): ol.Feature[] =>
   array.map((f: FeatureWithIdAndLaagnaam) => f.feature)([...perLaag.values()]);
 
-export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: NgZone): ModelChanges => {
+export const modelChanges = (
+  model: KaartWithInfo,
+  changer: ModelChanger,
+  zone: NgZone
+): ModelChanges => {
   // We updaten de features niet constant. We doen dat omdat we naar de buitenwereld de illusie willen wekken dat
   // features als een groep geselecteerd worden. Openlayers daarentegen genereert afzonderlijke events per feature dat
   // toegevoegd of verwijderd wordt. Daarom nemen wij een tweetrapsaanpak waarbij we eerst een collectie opbouwen met
   // adds en deletes.
   const featureSelectionUpdateInterval = 2;
   // Features zonder laagnaam en id negeren we gewoon
-  const selectionEventToFeature = (evt: ol.collection.Event<ol.Feature>) => Feature.featureWithIdAndLaagnaam(evt.element);
+  const selectionEventToFeature = (evt: ol.collection.Event<ol.Feature>) =>
+    Feature.featureWithIdAndLaagnaam(evt.element);
 
   const collectFeaturesFromOl$ = (operation: string) =>
-    observableFromOlEvents<ol.collection.Event<ol.Feature>>(model.geselecteerdeFeatures, operation) //
+    observableFromOlEvents<ol.collection.Event<ol.Feature>>(
+      model.geselecteerdeFeatures,
+      operation
+    ) //
       .pipe(collectOption(selectionEventToFeature));
   const addedFeature$ = collectFeaturesFromOl$("add");
   const removedFeature$ = collectFeaturesFromOl$("remove");
@@ -221,11 +270,14 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
     array.chain(featuresOpIdToArray)([...featuresPerLaag.values()]);
 
   // Berekent de features die wel in map1 zitten, maar niet in map2
-  const difference = (map1: prt.KaartFeaturesOpId, map2: prt.KaartFeaturesOpId): ol.Feature[] =>
+  const difference = (
+    map1: prt.KaartFeaturesOpId,
+    map2: prt.KaartFeaturesOpId
+  ): ol.Feature[] =>
     pipe(
       [...map1.values()],
-      array.filter(f => !map2.has(f.id)),
-      array.map(f => f.feature)
+      array.filter((f) => !map2.has(f.id)),
+      array.map((f) => f.feature)
     );
 
   // We gaan hier wat valsspelen in de zin dat we een mutable Map gebruiken als
@@ -261,16 +313,16 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
     {
       featuresPerLaag: new Map<string, Map<string, FeatureWithIdAndLaagnaam>>(),
       added: new Map<string, FeatureWithIdAndLaagnaam>(),
-      removed: new Map<string, FeatureWithIdAndLaagnaam>()
+      removed: new Map<string, FeatureWithIdAndLaagnaam>(),
     }
   ).pipe(
     debounceTime(featureSelectionUpdateInterval),
     startWith({
       featuresPerLaag: new Map<string, Map<string, FeatureWithIdAndLaagnaam>>(),
       added: new Map<string, FeatureWithIdAndLaagnaam>(), // toegevoegd en nog steeds aanwezig
-      removed: new Map<string, FeatureWithIdAndLaagnaam>() // verwijderd en niet meer toegevoegd
+      removed: new Map<string, FeatureWithIdAndLaagnaam>(), // verwijderd en niet meer toegevoegd
     }),
-    map(state => ({
+    map((state) => ({
       // We hebben tot nu tot met mutable structuren gewerkt, maar om de
       // toegevoegde en verwijderde features te berekenen in pairwise, moeten we
       // vergelijken en daarvoor kunnen we niet dezelfde instantie gebruiken. Er
@@ -283,65 +335,104 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
       // ook een orde trager.
       featuresPerLaag: state.featuresPerLaag,
       added: new Map<string, FeatureWithIdAndLaagnaam>(state.added.entries()),
-      removed: new Map<string, FeatureWithIdAndLaagnaam>(state.removed.entries())
+      removed: new Map<string, FeatureWithIdAndLaagnaam>(
+        state.removed.entries()
+      ),
     })),
     pairwise(),
     map(([prev, current]) => ({
       geselecteerd: featuresOpLaagToArray(current.featuresPerLaag),
       featuresPerLaag: current.featuresPerLaag, // we laten een mutable map los in de wereld :-(
       toegevoegd: difference(current.added, prev.added),
-      verwijderd: difference(current.removed, prev.removed)
+      verwijderd: difference(current.removed, prev.removed),
     })),
     share()
   );
 
-  const hoverFeatures$ = observableFromOlEvents<ol.collection.Event<ol.Feature>>(model.hoverFeatures, "add", "remove").pipe(
-    map(event => ({
-      hover: event.type === "add" ? either.right<ol.Feature, ol.Feature>(event.element) : either.left<ol.Feature, ol.Feature>(event.element)
+  const hoverFeatures$ = observableFromOlEvents<
+    ol.collection.Event<ol.Feature>
+  >(model.hoverFeatures, "add", "remove").pipe(
+    map((event) => ({
+      hover:
+        event.type === "add"
+          ? either.right<ol.Feature, ol.Feature>(event.element)
+          : either.left<ol.Feature, ol.Feature>(event.element),
     }))
   );
 
   // Met window resize hebben we niet alle bronnen van herschaling, maar toch al een grote
   const resize$ = rx.fromEvent(window, "resize").pipe(debounceTime(100));
 
-  const center$ = observableFromOlEvents(model.map.getView(), "change:center").pipe(debounceTime(100));
-  const numlayers$ = observableFromOlEvents(model.map.getLayers(), "change:length").pipe(debounceTime(100));
-  const zoom$ = observableFromOlEvents(model.map.getView(), "change:resolution").pipe(
+  const center$ = observableFromOlEvents(
+    model.map.getView(),
+    "change:center"
+  ).pipe(debounceTime(100));
+  const numlayers$ = observableFromOlEvents(
+    model.map.getLayers(),
+    "change:length"
+  ).pipe(debounceTime(100));
+  const zoom$ = observableFromOlEvents(
+    model.map.getView(),
+    "change:resolution"
+  ).pipe(
     map(() => model.map.getView().getZoom()),
     distinctUntilChanged()
     // geen debounce, OL genereert wel enkele tussenliggende zooms tijden het pinch/zoomen, maar ze komen ver genoeg uiteen.
   );
 
-  const rotation$ = observableFromOlEvents<ol.ObjectEvent>(model.map.getView(), "change:rotation").pipe(
-    map(event => event.target.get(event.key) as number)
-  );
+  const rotation$ = observableFromOlEvents<ol.ObjectEvent>(
+    model.map.getView(),
+    "change:rotation"
+  ).pipe(map((event) => event.target.get(event.key) as number));
 
   const viewportSize$ = changer.viewPortSizeSubj.pipe(debounceTime(100));
 
   const zoombereik$ = changer.zoombereikChangeSubj;
 
-  const viewinstellingen$ = rx.merge(viewportSize$, resize$, center$, numlayers$, zoom$, rotation$, zoombereik$).pipe(
-    debounceTime(50), // Deze is om de map hierna niet te veel werk te geven
-    map(() => viewinstellingen(model.map)),
-    shareReplay(1)
-  );
+  const viewinstellingen$ = rx
+    .merge(
+      viewportSize$,
+      resize$,
+      center$,
+      numlayers$,
+      zoom$,
+      rotation$,
+      zoombereik$
+    )
+    .pipe(
+      debounceTime(50), // Deze is om de map hierna niet te veel werk te geven
+      map(() => viewinstellingen(model.map)),
+      shareReplay(1)
+    );
 
-  const dragInfo$ = observableFromOlEvents<ol.MapBrowserEvent>(model.map, "pointerdrag").pipe(
+  const dragInfo$ = observableFromOlEvents<ol.MapBrowserEvent>(
+    model.map,
+    "pointerdrag"
+  ).pipe(
     debounceTime(100),
-    map(event => ({
+    map((event) => ({
       pixel: event.pixel,
-      coordinate: event.coordinate
+      coordinate: event.coordinate,
     }))
   );
 
   const lagenOpGroep$ = {
-    Achtergrond: changer.lagenOpGroepSubj.Achtergrond.pipe(observeOn(rx.asapScheduler)),
-    "Voorgrond.Hoog": changer.lagenOpGroepSubj["Voorgrond.Hoog"].pipe(observeOn(rx.asapScheduler)),
-    "Voorgrond.Laag": changer.lagenOpGroepSubj["Voorgrond.Laag"].pipe(observeOn(rx.asapScheduler)),
-    Tools: changer.lagenOpGroepSubj.Tools.pipe(observeOn(rx.asapScheduler))
+    Achtergrond: changer.lagenOpGroepSubj.Achtergrond.pipe(
+      observeOn(rx.asapScheduler)
+    ),
+    "Voorgrond.Hoog": changer.lagenOpGroepSubj["Voorgrond.Hoog"].pipe(
+      observeOn(rx.asapScheduler)
+    ),
+    "Voorgrond.Laag": changer.lagenOpGroepSubj["Voorgrond.Laag"].pipe(
+      observeOn(rx.asapScheduler)
+    ),
+    Tools: changer.lagenOpGroepSubj.Tools.pipe(observeOn(rx.asapScheduler)),
   };
-  const filterVectorLagen = (tlgn: ke.ToegevoegdeLaag[]) => tlgn.filter(ke.isToegevoegdeVectorLaag);
-  const vectorlagen$ = lagenOpGroep$["Voorgrond.Hoog"].pipe(map(filterVectorLagen));
+  const filterVectorLagen = (tlgn: ke.ToegevoegdeLaag[]) =>
+    tlgn.filter(ke.isToegevoegdeVectorLaag);
+  const vectorlagen$ = lagenOpGroep$["Voorgrond.Hoog"].pipe(
+    map(filterVectorLagen)
+  );
 
   // Om te weten welke features er zichtbaar zijn op een pagina zou het voldoende moeten zijn om te weten welke lagen er zijn, welke van
   // die lagen zichtbaar zijn en welke features er op de lagen in de huidige extent staan. Op zich is dat ook zo, maar het probleem is
@@ -353,33 +444,53 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
   // Implementatienota: doordat alles via observables gaat (en de switchMap), worden de unsubscribes naar OL doorgespeeld.
   const featuresChanged$: rx.Observable<void> = vectorlagen$.pipe(
     debounceTime(100), // vlugge verandering van het aantal vectorlagen willen we niet zien
-    switchMap(vlgn => rx.merge(...vlgn.map(ke.ToegevoegdeVectorLaag.featuresChanged$))),
+    switchMap((vlgn) =>
+      rx.merge(...vlgn.map(ke.ToegevoegdeVectorLaag.featuresChanged$))
+    ),
     // Vlugge veranderingen van de features willen we ook niet zien.
     // Best om dit groter te houden dan de tijd voorzien om cleanup te doen. Anders overbodige events.
     debounceTime(150),
     mapTo(void 0)
   );
 
-  const collectFeaturesPerLaag = (vw: prt.Viewinstellingen, tvlgn: ke.ToegevoegdeVectorLaag[]): ReadonlyMap<string, ol.Feature[]> =>
+  const collectFeaturesPerLaag = (
+    vw: prt.Viewinstellingen,
+    tvlgn: ke.ToegevoegdeVectorLaag[]
+  ): ReadonlyMap<string, ol.Feature[]> =>
     new Map(
       pipe(
         tvlgn,
         array.filter(ke.isZichtbaar(vw.resolution)),
         array.map(
-          (tvlg: ke.ToegevoegdeVectorLaag) => [tvlg.titel, tvlg.layer.getSource().getFeaturesInExtent(vw.extent)] as [string, ol.Feature[]]
+          (tvlg: ke.ToegevoegdeVectorLaag) =>
+            [
+              tvlg.titel,
+              tvlg.layer.getSource().getFeaturesInExtent(vw.extent),
+            ] as [string, ol.Feature[]]
         )
       )
     );
 
-  const zichtbareFeaturesPerLaag$: rx.Observable<ReadonlyMap<string, ol.Feature[]>> = rx
-    .combineLatest(viewinstellingen$, vectorlagen$, featuresChanged$, collectFeaturesPerLaag)
+  const zichtbareFeaturesPerLaag$: rx.Observable<ReadonlyMap<
+    string,
+    ol.Feature[]
+  >> = rx
+    .combineLatest(
+      viewinstellingen$,
+      vectorlagen$,
+      featuresChanged$,
+      collectFeaturesPerLaag
+    )
     .pipe(share());
 
-  const zichtbareFeatures$: rx.Observable<ol.Feature[]> = zichtbareFeaturesPerLaag$.pipe(
-    map(flow(
-      m => [...m.values()],
-      array.flatten
-    ) as ((value: ReadonlyMap<string, ol.Feature[]>) => ol.Feature[]))
+  const zichtbareFeatures$: rx.Observable<
+    ol.Feature[]
+  > = zichtbareFeaturesPerLaag$.pipe(
+    map(
+      flow((m) => [...m.values()], array.flatten) as (
+        value: ReadonlyMap<string, ol.Feature[]>
+      ) => ol.Feature[]
+    )
   );
 
   const kaartKlikLocatie$ = observableFromOlEvents(model.map, "click").pipe(
@@ -388,31 +499,48 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
       coversFeature: model.map.hasFeatureAtPixel(event.pixel, {
         hitTolerance: envParams(model.config).clickHitTolerance,
         // enkel json data features die een identify hebben beschouwen we. Zoekresultaten bvb niet
-        layerFilter: layer => ke.underlyingSource(layer) instanceof NosqlFsSource
-      })
+        layerFilter: (layer) =>
+          ke.underlyingSource(layer) instanceof NosqlFsSource,
+      }),
     })),
     share()
   );
 
-  const gevraagdeZoekers: Function2<Zoekopdracht, ZoekerMetWeergaveopties[], ZoekerMetWeergaveopties[]> = (opdracht, geregistreerd) =>
-    geregistreerd.filter(zmp => array.elem(eq.eqString)(zmp.zoeker.naam(), opdracht.zoekernamen));
+  const gevraagdeZoekers: Function2<
+    Zoekopdracht,
+    ZoekerMetWeergaveopties[],
+    ZoekerMetWeergaveopties[]
+  > = (opdracht, geregistreerd) =>
+    geregistreerd.filter((zmp) =>
+      array.elem(eq.eqString)(zmp.zoeker.naam(), opdracht.zoekernamen)
+    );
 
   const zoekresultaten$: rx.Observable<ZoekAntwoord> = changer.zoekerServicesSubj.pipe(
-    switchMap(zoekerSvcs =>
+    switchMap((zoekerSvcs) =>
       changer.zoekopdrachtSubj.pipe(
-        switchMap(zoekopdracht =>
+        switchMap((zoekopdracht) =>
           rx
-            .from(gevraagdeZoekers(zoekopdracht, zoekerSvcs).map(zmp => zmp.zoeker.zoekresultaten$(zoekopdracht))) //
+            .from(
+              gevraagdeZoekers(zoekopdracht, zoekerSvcs).map((zmp) =>
+                zmp.zoeker.zoekresultaten$(zoekopdracht)
+              )
+            ) //
             .pipe(mergeAll())
         )
       )
     )
   );
 
-  tilecacheMetadataDb.readAll().subscribe(metadata => {
-    updateBehaviorSubject(changer.laatsteCacheRefreshSubj, laatsteCacheRefresh => {
-      return { ...laatsteCacheRefresh, [metadata.laagnaam]: new Date(metadata.datum) };
-    });
+  tilecacheMetadataDb.readAll().subscribe((metadata) => {
+    updateBehaviorSubject(
+      changer.laatsteCacheRefreshSubj,
+      (laatsteCacheRefresh) => {
+        return {
+          ...laatsteCacheRefresh,
+          [metadata.laagnaam]: new Date(metadata.datum),
+        };
+      }
+    );
   });
 
   // De reden van de asapScheduler is dat we willen dat events die naar de subjects gestuurd worden pas gezien worden
@@ -421,40 +549,86 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
   // echter steeds het model dat door de KaartReducer gegenereerd is. We moeten dus wachten tot het nieuwe model
   // geobserveerd is (of beter, kan geobserveerd zijn). Dit is verwant met het async posten op het model subject.
   return {
-    uiElementSelectie$: changer.uiElementSelectieSubj.pipe(observeAsapOnAngular(zone)),
-    optiesOpUiElement$: changer.optiesOpUiElementSubj.pipe(observeAsapOnAngular(zone)),
-    laagVerwijderd$: changer.laagVerwijderdSubj.pipe(observeAsapOnAngular(zone)),
+    uiElementSelectie$: changer.uiElementSelectieSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
+    optiesOpUiElement$: changer.optiesOpUiElementSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
+    laagVerwijderd$: changer.laagVerwijderdSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
     viewinstellingen$: viewinstellingen$.pipe(observeAsapOnAngular(zone)),
-    laagTabelExtraKnopKlikken$: changer.laagTabelExtraKnopKlikkenSubj.pipe(observeAsapOnAngular(zone)),
+    laagTabelExtraKnopKlikken$: changer.laagTabelExtraKnopKlikkenSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
     lagenOpGroep: lagenOpGroep$,
-    geselecteerdeFeatures$: geselecteerdeFeatures$.pipe(observeAsapOnAngular(zone)),
+    geselecteerdeFeatures$: geselecteerdeFeatures$.pipe(
+      observeAsapOnAngular(zone)
+    ),
     hoverFeatures$: hoverFeatures$.pipe(observeAsapOnAngular(zone)),
     zichtbareFeatures$: zichtbareFeatures$.pipe(observeAsapOnAngular(zone)),
-    zichtbareFeaturesPerLaag$: zichtbareFeaturesPerLaag$.pipe(observeAsapOnAngular(zone)),
+    zichtbareFeaturesPerLaag$: zichtbareFeaturesPerLaag$.pipe(
+      observeAsapOnAngular(zone)
+    ),
     kaartKlikLocatie$: kaartKlikLocatie$.pipe(observeAsapOnAngular(zone)),
-    mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.pipe(observeAsapOnAngular(zone)),
+    mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
     actieveModus$: changer.actieveModusSubj.pipe(observeAsapOnAngular(zone)),
-    zoekerServices$: changer.zoekerServicesSubj.pipe(observeAsapOnAngular(zone)),
+    zoekerServices$: changer.zoekerServicesSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
     zoekresultaten$: zoekresultaten$.pipe(observeAsapOnAngular(zone)),
-    zoekresultaatselectie$: changer.zoekresultaatselectieSubj.pipe(observeAsapOnAngular(zone)),
-    laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.pipe(observeAsapOnAngular(zone)),
-    laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.pipe(observeAsapOnAngular(zone)),
-    laagstijlGezet$: changer.laagstijlGezetSubj.pipe(observeAsapOnAngular(zone)),
-    laagfilteraanpassingState$: changer.laagfilteraanpassingStateSubj.pipe(observeAsapOnAngular(zone)),
-    transparantieaanpassingState$: changer.transparantieAanpassingStateSubj.pipe(observeAsapOnAngular(zone)),
-    laagfilterGezet$: changer.laagfilterGezetSubj.pipe(observeAsapOnAngular(zone)),
+    zoekresultaatselectie$: changer.zoekresultaatselectieSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
+    laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
+    laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
+    laagstijlGezet$: changer.laagstijlGezetSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
+    laagfilteraanpassingState$: changer.laagfilteraanpassingStateSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
+    transparantieaanpassingState$: changer.transparantieAanpassingStateSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
+    laagfilterGezet$: changer.laagfilterGezetSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
     dragInfo$: dragInfo$.pipe(observeAsapOnAngular(zone)),
     rotatie$: rotation$.pipe(observeAsapOnAngular(zone)),
     tekenenOps$: changer.tekenenOpsSubj.pipe(observeAsapOnAngular(zone)),
-    getekendeGeometry$: changer.getekendeGeometrySubj.pipe(observeAsapOnAngular(zone)),
-    precacheProgress$: changer.precacheProgressSubj.pipe(observeAsapOnAngular(zone)),
-    laatsteCacheRefresh$: changer.laatsteCacheRefreshSubj.pipe(observeAsapOnAngular(zone)),
-    tabelActiviteit$: changer.tabelActiviteitSubj.pipe(observeAsapOnAngular(zone)),
-    tabelLaagInstellingen$: changer.tabelLaagInstellingenSubj.pipe(observeAsapOnAngular(zone)),
-    mijnLocatieStateChange$: changer.mijnLocatieStateChangeSubj.pipe(observeAsapOnAngular(zone)),
+    getekendeGeometry$: changer.getekendeGeometrySubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
+    precacheProgress$: changer.precacheProgressSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
+    laatsteCacheRefresh$: changer.laatsteCacheRefreshSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
+    tabelActiviteit$: changer.tabelActiviteitSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
+    tabelLaagInstellingen$: changer.tabelLaagInstellingenSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
+    mijnLocatieStateChange$: changer.mijnLocatieStateChangeSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
     dataloadBusy$: changer.dataloadBusySubj.pipe(observeAsapOnAngular(zone)),
-    forceProgressBar$: changer.forceProgressBarSubj.pipe(observeAsapOnAngular(zone)),
+    forceProgressBar$: changer.forceProgressBarSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
     inError$: changer.inErrorSubj.pipe(observeAsapOnAngular(zone)),
-    collapseUIRequest$: changer.collapseUIRequestSubj.pipe(observeAsapOnAngular(zone))
+    collapseUIRequest$: changer.collapseUIRequestSubj.pipe(
+      observeAsapOnAngular(zone)
+    ),
   };
 };

@@ -1,8 +1,24 @@
-import { Component, Injector, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import {
+  Component,
+  Injector,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  SimpleChanges,
+} from "@angular/core";
 import { Predicate } from "fp-ts/lib/function";
 
-import { VerwijderUiElement, VoegUiElementToe, ZetUiElementOpties } from "../../kaart/kaart-protocol-commands";
-import { defaultOpties, LagenUiOpties, LagenUiSelector } from "../../lagenkiezer/lagenkiezer.component";
+import {
+  VerwijderUiElement,
+  VoegUiElementToe,
+  ZetUiElementOpties,
+} from "../../kaart/kaart-protocol-commands";
+import {
+  defaultOpties,
+  LagenUiOpties,
+  LagenUiSelector,
+} from "../../lagenkiezer/lagenkiezer.component";
 import { asap } from "../../util/asap";
 import { ClassicBaseDirective } from "../classic-base.directive";
 import * as val from "../webcomponent-support/params";
@@ -14,9 +30,11 @@ import * as val from "../webcomponent-support/params";
  */
 @Component({
   selector: "awv-kaart-lagenkiezer",
-  template: ""
+  template: "",
 })
-export class ClassicLagenkiezerComponent extends ClassicBaseDirective implements OnInit, OnDestroy, OnChanges {
+export class ClassicLagenkiezerComponent
+  extends ClassicBaseDirective
+  implements OnInit, OnDestroy, OnChanges {
   constructor(injector: Injector) {
     super(injector);
   }
@@ -27,9 +45,11 @@ export class ClassicLagenkiezerComponent extends ClassicBaseDirective implements
   private _toonFilters: boolean = defaultOpties.toonFilters;
   private _verwijderbareLagen: boolean = defaultOpties.verwijderbareLagen;
   private _verplaatsbareLagen: boolean = defaultOpties.verplaatsbareLagen;
-  private _stijlbareVectorlagen: Predicate<string> = defaultOpties.stijlbareVectorlagen;
+  private _stijlbareVectorlagen: Predicate<string> =
+    defaultOpties.stijlbareVectorlagen;
   private _filterbareLagen: boolean = defaultOpties.filterbareLagen;
-  private _transparantieaanpasbareLagen: Predicate<string> = defaultOpties.transparantieaanpasbareLagen;
+  private _transparantieaanpasbareLagen: Predicate<string> =
+    defaultOpties.transparantieaanpasbareLagen;
 
   public get headerTitel(): string {
     return this._headerTitel;
@@ -167,7 +187,7 @@ export class ClassicLagenkiezerComponent extends ClassicBaseDirective implements
       verplaatsbareLagen: this.verplaatsbareLagen,
       stijlbareVectorlagen: this.stijlbareVectorlagen,
       filterbareLagen: this.filterbareLagen,
-      transparantieaanpasbareLagen: this.transparantieaanpasbareLagen
+      transparantieaanpasbareLagen: this.transparantieaanpasbareLagen,
     };
   }
 }

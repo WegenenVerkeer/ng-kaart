@@ -8,7 +8,7 @@ import { Filter as fltr } from "./filter-model";
 @Component({
   selector: "awv-filter-expression",
   templateUrl: "./filter-expression.component.html",
-  styleUrls: ["./filter-expression.component.scss"]
+  styleUrls: ["./filter-expression.component.scss"],
 })
 export class FilterExpressionComponent extends KaartChildDirective {
   left?: fltr.Expression;

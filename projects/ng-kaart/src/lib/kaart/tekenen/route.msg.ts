@@ -43,17 +43,25 @@ export interface RouteRemoved {
   readonly startWaypointId: WaypointId;
 }
 
-export function createRoute(begin: Waypoint, end: Waypoint, versions: Versions): ProtoRoute {
+export function createRoute(
+  begin: Waypoint,
+  end: Waypoint,
+  versions: Versions
+): ProtoRoute {
   const id = `${begin.id}_${end.id}`;
   return {
     id: id,
-    version: strmap.lookup(id, versions).fold(0, n => n + 1),
+    version: strmap.lookup(id, versions).fold(0, (n) => n + 1),
     begin: begin,
-    end: end
+    end: end,
   };
 }
 
-export function routeAdded(geometryRoute: GeometryRoute, beginSnap: option.Option<Waypoint>, endSnap: option.Option<Waypoint>): RouteAdded {
+export function routeAdded(
+  geometryRoute: GeometryRoute,
+  beginSnap: option.Option<Waypoint>,
+  endSnap: option.Option<Waypoint>
+): RouteAdded {
   return {
     type: "RouteAdded",
     id: geometryRoute.id,
@@ -61,7 +69,7 @@ export function routeAdded(geometryRoute: GeometryRoute, beginSnap: option.Optio
     startWaypointId: geometryRoute.begin.id,
     geometry: geometryRoute.geometry,
     beginSnap: beginSnap,
-    endSnap: endSnap
+    endSnap: endSnap,
   };
 }
 
@@ -70,6 +78,6 @@ export function routeRemoved(protoRoute: ProtoRoute): RouteRemoved {
     type: "RouteRemoved",
     id: protoRoute.id,
     version: protoRoute.version,
-    startWaypointId: protoRoute.begin.id
+    startWaypointId: protoRoute.begin.id,
   };
 }

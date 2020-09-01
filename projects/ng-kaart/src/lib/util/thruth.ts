@@ -3,7 +3,7 @@ import { BinaryOperation, Endomorphism } from "fp-ts/lib/function";
 /**
  * Een function die zijn input inverteert.
  */
-export const negate: Endomorphism<boolean> = b => !b;
+export const negate: Endomorphism<boolean> = (b) => !b;
 
 /**
  * functievorm van and

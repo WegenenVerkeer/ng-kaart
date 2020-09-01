@@ -26,11 +26,11 @@ class MislukteTiles {
   }
 
   verwijder(tile: ol.Tile) {
-    this.mislukteTiles = this.mislukteTiles.filter(t => tile !== t);
+    this.mislukteTiles = this.mislukteTiles.filter((t) => tile !== t);
   }
 
   herlaad() {
-    this.mislukteTiles.forEach(tile => tile!.load());
+    this.mislukteTiles.forEach((tile) => tile!.load());
   }
 }
 
@@ -42,13 +42,15 @@ export class TileLoader {
 
   private inTeLadenImages: Array<HTMLImageElement> = [];
 
-  private mislukteTiles: MislukteTiles = new MislukteTiles(this.maxMislukteTiles);
+  private mislukteTiles: MislukteTiles = new MislukteTiles(
+    this.maxMislukteTiles
+  );
 
   private laatsteResultaat = "";
 
   public abort(): void {
-    this.inTeLadenImages.map(htmlImage => {
-      option.fromNullable(htmlImage).map(img => {
+    this.inTeLadenImages.map((htmlImage) => {
+      option.fromNullable(htmlImage).map((img) => {
         img.src = "";
       });
     });
@@ -75,12 +77,17 @@ export class TileLoader {
   get tileLoadFunction(): (tile: ol.Tile, url: string) => void {
     const that = this;
 
-    return function(tile, url) {
+    return function (tile, url) {
       const imageTile = tile as ol.ImageTile;
       const htmlImage = imageTile.getImage() as HTMLImageElement;
 
-      const onHtmlImageEvent: (this: HTMLImageElement, ev: Event) => any = function(evt) {
-        that.inTeLadenImages = that.inTeLadenImages.filter(img => img !== this);
+      const onHtmlImageEvent: (
+        this: HTMLImageElement,
+        ev: Event
+      ) => any = function (evt) {
+        that.inTeLadenImages = that.inTeLadenImages.filter(
+          (img) => img !== this
+        );
         that.checkMislukteTiles(evt.type, tile);
       };
 

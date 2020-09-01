@@ -8,10 +8,14 @@ import { parseDefaultDate } from "../util/date-time";
 import { Filter as fltr } from "./filter-model";
 
 export namespace AwvV0FilterInterpreters {
-  const byKind: <A>(interpretersByKind: { [k: string]: oi.Interpreter<A> }) => oi.Interpreter<A> = interpretersByKind =>
+  const byKind: <A>(interpretersByKind: {
+    [k: string]: oi.Interpreter<A>;
+  }) => oi.Interpreter<A> = (interpretersByKind) =>
     oi.byTypeDiscriminator("kind", interpretersByKind);
 
-  const emptyFilter: oi.Interpreter<fltr.EmptyFilter> = oi.pure(fltr.EmptyFilter);
+  const emptyFilter: oi.Interpreter<fltr.EmptyFilter> = oi.pure(
+    fltr.EmptyFilter
+  );
 
   const typeType: oi.Interpreter<fltr.TypeType> = oi.enu<fltr.TypeType>(
     "boolean",
@@ -28,12 +32,12 @@ export namespace AwvV0FilterInterpreters {
     type: oi.field("type", typeType),
     ref: oi.field("ref", oi.str),
     label: oi.field("label", oi.str),
-    sqlFormat: oi.optField("sqlFormat", oi.str)
+    sqlFormat: oi.optField("sqlFormat", oi.str),
   });
 
   const range: oi.Interpreter<fltr.Range> = oi.interpretRecord({
     unit: oi.field("unit", oi.str), // de controle van de specifieke units gebeurt later (propertyAndValueCompatible)
-    magnitude: oi.field("magnitude", oi.num)
+    magnitude: oi.field("magnitude", oi.num),
   });
 
   const value: oi.Interpreter<fltr.ValueType> = oi.mapFailureTo(
@@ -42,33 +46,35 @@ export namespace AwvV0FilterInterpreters {
   );
 
   // In JSON kunnen we enkel boolean, number en string kwijt. De rest moeten we op basis daarvan interpreteren.
-  const checkRawLiteral: (rawLiteral: fltr.Literal) => oi.Interpreter<fltr.Literal> = fltr.matchLiteral({
-    boolean: lit => oi.succeed({ ...lit, value: lit.value !== "false" }),
-    date: lit =>
+  const checkRawLiteral: (
+    rawLiteral: fltr.Literal
+  ) => oi.Interpreter<fltr.Literal> = fltr.matchLiteral({
+    boolean: (lit) => oi.succeed({ ...lit, value: lit.value !== "false" }),
+    date: (lit) =>
       pipe(
         lit.value,
         asString,
         option.chain(parseDefaultDate),
         option.fold(
           () => oi.failed<fltr.Literal>(`Ongeldige datum ${lit.value}`),
-          date =>
+          (date) =>
             oi.succeed({
               ...lit,
-              value: date
+              value: date,
             })
         )
       ),
-    double: lit => oi.succeed(lit),
-    integer: lit => oi.succeed(lit),
-    string: lit => oi.succeed(lit),
-    range: lit => oi.succeed(lit)
+    double: (lit) => oi.succeed(lit),
+    integer: (lit) => oi.succeed(lit),
+    string: (lit) => oi.succeed(lit),
+    range: (lit) => oi.succeed(lit),
   });
 
   const literal: oi.Interpreter<fltr.Literal> = oi.chain(
     oi.interpretRecord({
       kind: oi.field("kind", oi.value("Literal")),
       type: oi.field("type", typeType),
-      value: oi.field("value", value)
+      value: oi.field("value", value),
     }),
     checkRawLiteral
   );
@@ -88,7 +94,10 @@ export namespace AwvV0FilterInterpreters {
     "within"
   );
 
-  const unaryComparisonOperator: oi.Interpreter<fltr.UnaryComparisonOperator> = oi.enu("isEmpty", "isNotEmpty");
+  const unaryComparisonOperator: oi.Interpreter<fltr.UnaryComparisonOperator> = oi.enu(
+    "isEmpty",
+    "isNotEmpty"
+  );
 
   const binaryComparison: oi.Interpreter<fltr.BinaryComparison> = oi.suchThat(
     oi.suchThat(
@@ -97,7 +106,7 @@ export namespace AwvV0FilterInterpreters {
         operator: oi.field("operator", binaryComparisonOperator),
         property: oi.field("property", property),
         value: oi.field("value", literal),
-        caseSensitive: oi.field("caseSensitive", oi.bool)
+        caseSensitive: oi.field("caseSensitive", oi.bool),
       }),
       fltr.propertyAndValueCompatible,
       `Het type van de property komt niet overeen met dat van de waarde`
@@ -106,15 +115,17 @@ export namespace AwvV0FilterInterpreters {
     "De operator, property en de waarde komen niet overeen"
   );
 
-  const unaryComparison: oi.Interpreter<fltr.UnaryComparison> = oi.interpretRecord({
-    kind: oi.field("kind", oi.value("UnaryComparison")),
-    operator: oi.field("operator", unaryComparisonOperator),
-    property: oi.field("property", property)
-  });
+  const unaryComparison: oi.Interpreter<fltr.UnaryComparison> = oi.interpretRecord(
+    {
+      kind: oi.field("kind", oi.value("UnaryComparison")),
+      operator: oi.field("operator", unaryComparisonOperator),
+      property: oi.field("property", property),
+    }
+  );
 
   const comparison: oi.Interpreter<fltr.Comparison> = byKind<fltr.Comparison>({
     BinaryComparison: binaryComparison,
-    UnaryComparison: unaryComparison
+    UnaryComparison: unaryComparison,
   });
 
   const conjunctionExpression: oi.Interpreter<fltr.ConjunctionExpression> = oi.mapFailureTo(
@@ -128,31 +139,36 @@ export namespace AwvV0FilterInterpreters {
     return oi.interpretRecord<fltr.Conjunction>({
       kind: oi.field("kind", oi.value("And")),
       left: oi.field("left", conjunctionExpression),
-      right: oi.field("right", comparison)
+      right: oi.field("right", comparison),
     })(json);
   }
 
   const disjunction: oi.Interpreter<fltr.Disjunction> = oi.interpretRecord({
     kind: oi.field("kind", oi.value("Or")),
     left: oi.field("left", expression),
-    right: oi.field("right", expression)
+    right: oi.field("right", expression),
   });
 
   // functie omwille van recursie
   function expression(json: Object): oi.Validation<fltr.Expression> {
-    return oi.mapFailure(oi.firstOf<fltr.Expression>(conjunction, disjunction, comparison), fls =>
-      array.snoc(fls, "We verwachten een 'and', 'or' of vergelijking")
+    return oi.mapFailure(
+      oi.firstOf<fltr.Expression>(conjunction, disjunction, comparison),
+      (fls) => array.snoc(fls, "We verwachten een 'and', 'or' of vergelijking")
     )(json);
   }
 
-  const expressionFilter: oi.Interpreter<fltr.ExpressionFilter> = oi.interpretRecord({
-    kind: oi.pure("ExpressionFilter" as "ExpressionFilter"), // volgt op byKind
-    name: oi.optional(oi.field("name", oi.str)),
-    expression: oi.field("expression", expression)
-  });
+  const expressionFilter: oi.Interpreter<fltr.ExpressionFilter> = oi.interpretRecord(
+    {
+      kind: oi.pure("ExpressionFilter" as "ExpressionFilter"), // volgt op byKind
+      name: oi.optional(oi.field("name", oi.str)),
+      expression: oi.field("expression", expression),
+    }
+  );
 
-  export const jsonAwv0Definition: oi.Interpreter<fltr.Filter> = byKind<fltr.Filter>({
+  export const jsonAwv0Definition: oi.Interpreter<fltr.Filter> = byKind<
+    fltr.Filter
+  >({
     ExpressionFilter: expressionFilter,
-    EmptyFilter: emptyFilter
+    EmptyFilter: emptyFilter,
   });
 }

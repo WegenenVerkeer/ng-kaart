@@ -5,7 +5,7 @@ import * as ol from "projects/ng-kaart/src/lib/util/openlayers-compat";
 @Component({
   selector: "awv-protractor",
   templateUrl: "./protractor.component.html",
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class ProtractorComponent {
   pinIcon = new ol.style.Style({
@@ -15,7 +15,7 @@ export class ProtractorComponent {
       anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
       scale: 1,
       opacity: 1,
-      src: "ic_place_48px.svg"
+      src: "ic_place_48px.svg",
     }),
     text: new ol.style.Text({
       font: "12px 'Helvetica Neue', sans-serif",
@@ -23,10 +23,10 @@ export class ProtractorComponent {
       offsetY: -60,
       stroke: new ol.style.Stroke({
         color: "#fff",
-        width: 2
+        width: 2,
       }),
-      text: "Zis is a pin"
-    })
+      text: "Zis is a pin",
+    }),
   });
 
   pinIcon2 = new ol.style.Style({
@@ -37,7 +37,7 @@ export class ProtractorComponent {
       scale: 1,
       opacity: 1,
       color: "#FA1",
-      src: "ic_local_airport_48px.svg"
+      src: "ic_local_airport_48px.svg",
     }),
     text: new ol.style.Text({
       font: "12px 'Helvetica Neue', sans-serif",
@@ -45,10 +45,10 @@ export class ProtractorComponent {
       offsetY: -60,
       stroke: new ol.style.Stroke({
         color: "#fff",
-        width: 2
+        width: 2,
       }),
-      text: "Feature 2"
-    })
+      text: "Feature 2",
+    }),
   });
 
   installatieCoordinaat: ol.Coordinate = [169500, 190500];
@@ -58,10 +58,10 @@ export class ProtractorComponent {
       laagnaam: "Fietspaden",
       properties: {
         ident8: "R0010001",
-        typefietspad: "Vrijliggend"
+        typefietspad: "Vrijliggend",
       },
-      geometry: new ol.geom.Point(this.installatieCoordinaat)
-    })
+      geometry: new ol.geom.Point(this.installatieCoordinaat),
+    }),
   ];
 
   constructor() {
