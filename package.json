@@ -28,6 +28,23 @@
     "generate-docs": "compodoc projects/ng-kaart/src/lib/classic -c projects/ng-kaart/.compodocrc.json -d ./dist/webcomponent/documentation -p projects/ng-kaart/tsconfig.lib.json",
     "serve-docs": "compodoc -s projects/ng-kaart/tsconfig.lib.json"
   },
+  "lint-staged": {
+    "linters": {
+      "src/**/*.ts": [
+        "eslint -c .eslintrc.js --fix \"src/**/*.ts\"",
+        "awk /apps-(dev|tei).mow.vlaanderen.be/{exit(1)}",
+        "git add"
+      ],
+      "projects/ng-kaart/**/*.ts": [
+        "eslint -c .eslintrc.js --fix \"projects/ng-kaart/src/**/*.ts\"",
+        "awk /apps-(dev|tei).mow.vlaanderen.be/{exit(1)}",
+        "git add"
+      ]
+    },
+    "ignore": [
+      "**/test.ts"
+    ]
+  },
   "private": true,
   "dependencies": {
     "@angular/animations": "10.0.8",
@@ -115,6 +132,7 @@
     "karma-junit-reporter": "1.2.0",
     "karma-mocha-reporter": "2.2.4",
     "karma-phantomjs-launcher": "1.0.4",
+    "lint-staged": "8.2.1",
     "mkdirp": "^0.5.5",
     "ng-packagr": "^10.1.0",
     "prettier": "^2.1.1",
@@ -133,5 +151,10 @@
     "typescript-formatter": "^7.2.2",
     "webdriver-manager": "^12.1.7",
     "webpack-dev-server": "^3.11.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }
