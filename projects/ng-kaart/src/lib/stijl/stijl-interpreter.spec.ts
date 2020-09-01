@@ -14,9 +14,9 @@ describe("De stijl interpreter", () => {
             definition: {
               stroke: {
                 color: "#FF0",
-                width: 5
-              }
-            }
+                width: 5,
+              },
+            },
           })
         );
         expect(result).toEqual(
@@ -24,8 +24,8 @@ describe("De stijl interpreter", () => {
             new ol.style.Style({
               stroke: new ol.style.Stroke({
                 color: "#FF0",
-                width: 5
-              })
+                width: 5,
+              }),
             })
           )
         );
@@ -38,17 +38,17 @@ describe("De stijl interpreter", () => {
             version: "awv-v0",
             definition: {
               fill: {
-                color: "green"
-              }
-            }
+                color: "green",
+              },
+            },
           })
         );
         expect(result).toEqual(
           ok(
             new ol.style.Style({
               fill: new ol.style.Fill({
-                color: "green"
-              })
+                color: "green",
+              }),
             })
           )
         );
@@ -63,14 +63,14 @@ describe("De stijl interpreter", () => {
               circle: {
                 stroke: {
                   color: "yellow",
-                  width: 2
+                  width: 2,
                 },
                 fill: {
-                  color: "maroon"
+                  color: "maroon",
                 },
-                radius: 4
-              }
-            }
+                radius: 4,
+              },
+            },
           })
         );
         expect(result).toEqual(
@@ -78,18 +78,20 @@ describe("De stijl interpreter", () => {
             new ol.style.Style({
               image: new ol.style.Circle({
                 fill: new ol.style.Fill({
-                  color: "maroon"
+                  color: "maroon",
                 }),
                 stroke: new ol.style.Stroke({
                   color: "yellow",
-                  width: 2
+                  width: 2,
                 }),
-                radius: 4
-              })
+                radius: 4,
+              }),
             })
           )
         );
-        pending("Jasmine struikelt over het 'canvas' element dat openlayers aanmaakt.");
+        pending(
+          "Jasmine struikelt over het 'canvas' element dat openlayers aanmaakt."
+        );
       });
     });
   });
@@ -103,12 +105,12 @@ describe("De stijl interpreter", () => {
           definition: {
             stroke: {
               color: "red",
-              width: 1
+              width: 1,
             },
             fill: {
-              color: "green"
-            }
-          }
+              color: "green",
+            },
+          },
         })
       );
       expect(result).toEqual(
@@ -116,11 +118,11 @@ describe("De stijl interpreter", () => {
           new ol.style.Style({
             stroke: new ol.style.Stroke({
               color: "red",
-              width: 1
+              width: 1,
             }),
             fill: new ol.style.Fill({
-              color: "green"
-            })
+              color: "green",
+            }),
           })
         )
       );
@@ -142,7 +144,7 @@ describe("De stijl interpreter", () => {
           "json",
           JSON.stringify({
             version: "awv-v0",
-            diefnty: {}
+            diefnty: {},
           })
         );
         expect(result.isFailure()).toBe(true);

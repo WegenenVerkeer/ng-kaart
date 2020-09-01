@@ -4,45 +4,64 @@ import { map, switchMap, timeoutWith } from "rxjs/operators";
 
 import { Pipeable } from "./operators";
 
-const byteToText: Pipeable<Uint8Array, string> = obs => {
+const byteToText: Pipeable<Uint8Array, string> = (obs) => {
   const decoder = new TextDecoder();
-  return obs.pipe(map(arr => decoder.decode(arr)));
+  return obs.pipe(map((arr) => decoder.decode(arr)));
 };
 
-const responseToReader: Pipeable<Response, ReadableStreamReader> = obs =>
+const responseToReader: Pipeable<Response, ReadableStreamReader> = (obs) =>
   obs.pipe(
-    map(response => {
+    map((response) => {
       if (!response.ok) {
-        throw Error(`Probleem bij ontvangen nosql data: status ${response.status} ${response.statusText}`);
+        throw Error(
+          `Probleem bij ontvangen nosql data: status ${response.status} ${response.statusText}`
+        );
       }
       if (!response.body) {
         throw Error(`Probleem bij ontvangen nosql data: response.body is leeg`);
       }
       if (response.status !== 200) {
-        throw Error(`Probleem bij ontvangen nosql data: response status code ${response.status}`);
+        throw Error(
+          `Probleem bij ontvangen nosql data: response status code ${response.status}`
+        );
       }
 
       return response.body.getReader();
     })
   );
 
-export const fetchObs$: Function2<string, RequestInit, rx.Observable<string>> = (url, options) =>
-  rx.from(fetch(url, options)).pipe(
-    responseToReader,
-    switchMap(readerToObservable),
-    byteToText
-  );
+export const fetchObs$: Function2<
+  string,
+  RequestInit,
+  rx.Observable<string>
+> = (url, options) =>
+  rx
+    .from(fetch(url, options))
+    .pipe(responseToReader, switchMap(readerToObservable), byteToText);
 
-export const fetchWithTimeoutObs$: Function3<string, RequestInit, number, rx.Observable<string>> = (url, options, timeout) =>
-  rx.from(fetch(url, options)).pipe(
-    responseToReader,
-    switchMap(readerToObservable),
-    byteToText,
-    timeoutWith(timeout, rx.throwError(new Error(`Geen antwoord binnen ${timeout} ms`)))
-  );
+export const fetchWithTimeoutObs$: Function3<
+  string,
+  RequestInit,
+  number,
+  rx.Observable<string>
+> = (url, options, timeout) =>
+  rx
+    .from(fetch(url, options))
+    .pipe(
+      responseToReader,
+      switchMap(readerToObservable),
+      byteToText,
+      timeoutWith(
+        timeout,
+        rx.throwError(new Error(`Geen antwoord binnen ${timeout} ms`))
+      )
+    );
 
-const readerToObservable: Function1<ReadableStreamReader, rx.Observable<Uint8Array>> = reader =>
-  new rx.Observable(observable => {
+const readerToObservable: Function1<
+  ReadableStreamReader,
+  rx.Observable<Uint8Array>
+> = (reader) =>
+  new rx.Observable((observable) => {
     const push = () =>
       reader
         .read()
@@ -55,6 +74,6 @@ const readerToObservable: Function1<ReadableStreamReader, rx.Observable<Uint8Arr
             observable.complete();
           }
         })
-        .catch(err => observable.error(err));
+        .catch((err) => observable.error(err));
     push();
   });

@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone } from "@angular/core";
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  NgZone,
+} from "@angular/core";
 import { option } from "fp-ts";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
@@ -25,7 +30,7 @@ export interface PagerData {
   selector: "awv-feature-tabel-pager",
   templateUrl: "./feature-tabel-pager.component.html",
   styleUrls: ["./feature-tabel-pager.component.scss"],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeatureTabelPagerComponent extends KaartChildDirective {
   public readonly pageData$: rx.Observable<PagerData | undefined>;
@@ -42,18 +47,21 @@ export class FeatureTabelPagerComponent extends KaartChildDirective {
     const laag$ = laagData.laag$;
 
     this.pageData$ = laag$.pipe(
-      map(laag =>
+      map((laag) =>
         pipe(
           LaagModel.pageNumberFold.headOption(laag),
-          option.chain(currentPageNumber =>
+          option.chain((currentPageNumber) =>
             pipe(
               LaagModel.lastPageNumberFold.headOption(laag),
-              option.map(lastPageNumber => ({
+              option.map((lastPageNumber) => ({
                 currentPageNumber: Page.getterPageNumber.get(currentPageNumber),
                 lastPageNumber: Page.getterPageNumber.get(lastPageNumber),
                 isFirstPage: Page.isFirst(currentPageNumber),
                 isLastPage: Page.isTop(lastPageNumber)(currentPageNumber),
-                doesNotHaveMultiplePages: Page.ordPageNumber.equals(Page.first, lastPageNumber)
+                doesNotHaveMultiplePages: Page.ordPageNumber.equals(
+                  Page.first,
+                  lastPageNumber
+                ),
               }))
             )
           ),
@@ -67,10 +75,18 @@ export class FeatureTabelPagerComponent extends KaartChildDirective {
     const actions$ = rx.merge(
       this.actionFor$("previous").pipe(mapTo(LaagModel.previousPageUpdate)),
       this.actionFor$("next").pipe(mapTo(LaagModel.nextPageUpdate)),
-      this.actionDataFor$("setPageNumber", isNumber).pipe(map(LaagModel.setPageNumberUpdate))
+      this.actionDataFor$("setPageNumber", isNumber).pipe(
+        map(LaagModel.setPageNumberUpdate)
+      )
     );
 
-    this.runInViewReady(laag$.pipe(switchMap(laag => actions$.pipe(tap(overzicht.laagUpdater(laag.titel))))));
+    this.runInViewReady(
+      laag$.pipe(
+        switchMap((laag) =>
+          actions$.pipe(tap(overzicht.laagUpdater(laag.titel)))
+        )
+      )
+    );
   }
 
   public pageLabel(value: number): string {

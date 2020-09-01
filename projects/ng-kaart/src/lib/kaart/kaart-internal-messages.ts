@@ -96,10 +96,12 @@ export interface IdentifyInfoBoodschapGeslotenMsg {
   readonly feature: ol.Feature;
 }
 
-function KaartInternalMsg(payload: option.Option<KaartInternalSubMsg>): KaartInternalMsg {
+function KaartInternalMsg(
+  payload: option.Option<KaartInternalSubMsg>
+): KaartInternalMsg {
   return {
     type: "KaartInternal",
-    payload: payload
+    payload: payload,
   };
 }
 
@@ -107,89 +109,140 @@ function KaartInternalMsg(payload: option.Option<KaartInternalSubMsg>): KaartInt
  * Dit is echt "fire and forget". Geen enkele informatie komt terug ook al zou dat kunnen.
  * Enkel de fouten worden gelogd.
  */
-export const kaartLogOnlyWrapper: prt.ValidationWrapper<any, KaartInternalMsg> = (v: prt.KaartCmdValidation<any>) => {
+export const kaartLogOnlyWrapper: prt.ValidationWrapper<
+  any,
+  KaartInternalMsg
+> = (v: prt.KaartCmdValidation<any>) => {
   if (v.isFailure()) {
     kaartLogger.error("Een intern command gaf een fout", v.value);
   }
   return {
     type: "KaartInternal",
-    payload: option.none
+    payload: option.none,
   };
 };
 
-export const infoBoodschappenMsgGen = (infoBoodschappen: Map<string, InfoBoodschap>) =>
-  KaartInternalMsg(option.some(InfoBoodschappenMsg(infoBoodschappen)));
+export const infoBoodschappenMsgGen = (
+  infoBoodschappen: Map<string, InfoBoodschap>
+) => KaartInternalMsg(option.some(InfoBoodschappenMsg(infoBoodschappen)));
 
-function InfoBoodschappenMsg(infoBoodschappen: Map<string, InfoBoodschap>): InfoBoodschappenMsg {
+function InfoBoodschappenMsg(
+  infoBoodschappen: Map<string, InfoBoodschap>
+): InfoBoodschappenMsg {
   return { type: "InfoBoodschappen", infoBoodschappen: infoBoodschappen };
 }
 
-export const tabelLaagInstellingenMsgGen = (instellingen: Laagtabelinstellingen): KaartInternalMsg =>
+export const tabelLaagInstellingenMsgGen = (
+  instellingen: Laagtabelinstellingen
+): KaartInternalMsg =>
   KaartInternalMsg(option.some(LaagtabelinstellingenMsg(instellingen)));
 
-function LaagtabelinstellingenMsg(instellingen: Laagtabelinstellingen): LaagtabelinstellingenMsg {
+function LaagtabelinstellingenMsg(
+  instellingen: Laagtabelinstellingen
+): LaagtabelinstellingenMsg {
   return { type: "Laagtabelinstellingen", instellingen };
 }
 
-export const kaartClickWrapper = (clickCoordinaat: ol.Coordinate) => KaartInternalMsg(option.some(KaartClickMsg(clickCoordinaat)));
+export const kaartClickWrapper = (clickCoordinaat: ol.Coordinate) =>
+  KaartInternalMsg(option.some(KaartClickMsg(clickCoordinaat)));
 
 function KaartClickMsg(clickCoordinaat: ol.Coordinate): KaartClickMsg {
   return { type: "KaartClick", clickCoordinaat: clickCoordinaat };
 }
 
-function ViewinstellingenGezetMsg(instellingen: prt.Viewinstellingen): ViewinstellingenGezetMsg {
+function ViewinstellingenGezetMsg(
+  instellingen: prt.Viewinstellingen
+): ViewinstellingenGezetMsg {
   return { type: "ViewinstellingenGezet", viewinstellingen: instellingen };
 }
 
-export const viewinstellingenGezetWrapper = (instellingen: prt.Viewinstellingen) =>
-  KaartInternalMsg(option.some(ViewinstellingenGezetMsg(instellingen)));
+export const viewinstellingenGezetWrapper = (
+  instellingen: prt.Viewinstellingen
+) => KaartInternalMsg(option.some(ViewinstellingenGezetMsg(instellingen)));
 
 function AchtergrondtitelGezetMsg(titel: string): AchtergrondtitelGezetMsg {
   return { type: "AchtergrondtitelGezet", titel: titel };
 }
 
-export const achtergrondtitelGezetWrapper = (titel: string) => KaartInternalMsg(option.some(AchtergrondtitelGezetMsg(titel)));
+export const achtergrondtitelGezetWrapper = (titel: string) =>
+  KaartInternalMsg(option.some(AchtergrondtitelGezetMsg(titel)));
 
-function GeometryChangedMsg(geometry: ol.geom.Geometry, volgnummer: number, featureId: string | number): GeometryChangedMsg {
-  return { type: "GeometryChanged", geometry: geometry, volgnummer: volgnummer, featureId: featureId };
+function GeometryChangedMsg(
+  geometry: ol.geom.Geometry,
+  volgnummer: number,
+  featureId: string | number
+): GeometryChangedMsg {
+  return {
+    type: "GeometryChanged",
+    geometry: geometry,
+    volgnummer: volgnummer,
+    featureId: featureId,
+  };
 }
 
 export const tekenResultaatWrapper = (resultaat: Tekenresultaat) =>
-  KaartInternalMsg(option.some(GeometryChangedMsg(resultaat.geometry, resultaat.volgnummer, resultaat.featureId)));
+  KaartInternalMsg(
+    option.some(
+      GeometryChangedMsg(
+        resultaat.geometry,
+        resultaat.volgnummer,
+        resultaat.featureId
+      )
+    )
+  );
 
 function TekenMsg(settings: option.Option<TekenSettings>): TekenMsg {
   return {
     type: "Teken",
-    settings: settings
+    settings: settings,
   };
 }
 
-export const tekenWrapper = (settings: option.Option<TekenSettings>) => KaartInternalMsg(option.some(TekenMsg(settings)));
+export const tekenWrapper = (settings: option.Option<TekenSettings>) =>
+  KaartInternalMsg(option.some(TekenMsg(settings)));
 
-function SubscribedMsg(subscription: prt.KaartCmdValidation<prt.SubscriptionResult>, reference: any): SubscribedMsg {
-  return { type: "Subscribed", reference: reference, subscription: subscription };
+function SubscribedMsg(
+  subscription: prt.KaartCmdValidation<prt.SubscriptionResult>,
+  reference: any
+): SubscribedMsg {
+  return {
+    type: "Subscribed",
+    reference: reference,
+    subscription: subscription,
+  };
 }
 
-export const subscribedWrapper: (ref: any) => (v: prt.KaartCmdValidation<prt.SubscriptionResult>) => KaartInternalMsg = (
+export const subscribedWrapper: (
+  ref: any
+) => (v: prt.KaartCmdValidation<prt.SubscriptionResult>) => KaartInternalMsg = (
   reference: any
-) => (v: prt.KaartCmdValidation<prt.SubscriptionResult>) => KaartInternalMsg(option.some(SubscribedMsg(v, reference)));
+) => (v: prt.KaartCmdValidation<prt.SubscriptionResult>) =>
+  KaartInternalMsg(option.some(SubscribedMsg(v, reference)));
 
-function MijnLocatieZoomdoelGezetMsg(d: option.Option<number>): MijnLocatieZoomdoelGezetMsg {
+function MijnLocatieZoomdoelGezetMsg(
+  d: option.Option<number>
+): MijnLocatieZoomdoelGezetMsg {
   return { type: "MijnLocatieZoomdoelGezet", mijnLocatieZoomdoel: d };
 }
 
-export const mijnLocatieZoomdoelGezetWrapper = (d: option.Option<number>) => KaartInternalMsg(option.some(MijnLocatieZoomdoelGezetMsg(d)));
+export const mijnLocatieZoomdoelGezetWrapper = (d: option.Option<number>) =>
+  KaartInternalMsg(option.some(MijnLocatieZoomdoelGezetMsg(d)));
 
-function ActieveModusGezet(modus: option.Option<string>): ActieveModusAangepastMsg {
+function ActieveModusGezet(
+  modus: option.Option<string>
+): ActieveModusAangepastMsg {
   return { type: "ActieveModus", modus: modus };
 }
 
-export const actieveModusGezetWrapper = (modus: option.Option<string>) => KaartInternalMsg(option.some(ActieveModusGezet(modus)));
+export const actieveModusGezetWrapper = (modus: option.Option<string>) =>
+  KaartInternalMsg(option.some(ActieveModusGezet(modus)));
 
-export function VerwijderTekenFeatureMsg(featureId: string | number): VerwijderTekenFeatureMsg {
+export function VerwijderTekenFeatureMsg(
+  featureId: string | number
+): VerwijderTekenFeatureMsg {
   return {
     type: "VerwijderTekenFeature",
-    featureId: featureId
+    featureId: featureId,
   };
 }
 
@@ -198,15 +251,18 @@ export const verwijderTekenFeatureWrapper = (featureId: string | number) =>
 
 export function TekenInfoboodschapGeslotenMsg(): TekenInfoboodschapGeslotenMsg {
   return {
-    type: "TekenInfoboodschapGesloten"
+    type: "TekenInfoboodschapGesloten",
   };
 }
 
-export const tekenInfoboodschapGeslotenMsgWrapper = () => KaartInternalMsg(option.some(TekenInfoboodschapGeslotenMsg()));
+export const tekenInfoboodschapGeslotenMsgWrapper = () =>
+  KaartInternalMsg(option.some(TekenInfoboodschapGeslotenMsg()));
 
-const IdentifyInfoBoodschapGeslotenMsg = (feature: ol.Feature): IdentifyInfoBoodschapGeslotenMsg => ({
+const IdentifyInfoBoodschapGeslotenMsg = (
+  feature: ol.Feature
+): IdentifyInfoBoodschapGeslotenMsg => ({
   type: "IdentifyInfoBoodschapGesloten",
-  feature
+  feature,
 });
 
 export const identifyInfoBoodschapGeslotenMsgGen = (feature: ol.Feature) =>

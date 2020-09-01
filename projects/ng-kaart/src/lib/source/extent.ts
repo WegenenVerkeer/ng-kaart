@@ -15,7 +15,10 @@ export namespace Extent {
    * @param extent1 De rechthoek die afgesneden wordt.
    * @param extent2 De rechthoek waarmee gesneden wordt.
    */
-  export const difference: BinaryOperation<Extent, Extent[]> = (extent1, extent2) => {
+  export const difference: BinaryOperation<Extent, Extent[]> = (
+    extent1,
+    extent2
+  ) => {
     // Het idee is dat eerst gesneden wordt met 2 rechten die overlappen met de linker- en rechterzijden van de
     // snijdende rechthoek. Dat levert 4 zijden op (volgorde hangt af van soort overlapping):
     // 1. de linkerkant van de gesneden rechthoek
@@ -35,28 +38,40 @@ export namespace Extent {
     } else {
       // We kijken of [lft1, lft2, rght2, rght1] mooi oplopen. Enkel wanneer een paar punten mooi oploopt mogen ze
       // weerhouden worden.
-      const [h1, h2] = lft1 <= lft2 ? [lft1, lft2] : [Number.POSITIVE_INFINITY, lft1];
-      const [h3, h4] = rght2 <= rght1 ? [rght2, rght1] : [rght1, Number.NEGATIVE_INFINITY];
+      const [h1, h2] =
+        lft1 <= lft2 ? [lft1, lft2] : [Number.POSITIVE_INFINITY, lft1];
+      const [h3, h4] =
+        rght2 <= rght1 ? [rght2, rght1] : [rght1, Number.NEGATIVE_INFINITY];
 
-      const isValidLeftRight: PartialFunction1<Extent, Extent> = option.fromPredicate(([l, _, r, __]) => l < r);
-      const isValidTopBottom: PartialFunction1<Extent, Extent> = option.fromPredicate(([_, t, __, b]) => t < b);
+      const isValidLeftRight: PartialFunction1<
+        Extent,
+        Extent
+      > = option.fromPredicate(([l, _, r, __]) => l < r);
+      const isValidTopBottom: PartialFunction1<
+        Extent,
+        Extent
+      > = option.fromPredicate(([_, t, __, b]) => t < b);
 
       // Als er overlap is, dan kijken we of de drie mogelijke rechthoeken begrensd door [lft1, lft2, rght2, lft2] geldig zijn.
       const [left, middle, right] = [
         isValidLeftRight([h1, top1, h2, btm1]),
         isValidLeftRight([h2, top1, h3, btm1]),
-        isValidLeftRight([h3, top1, h4, btm1])
+        isValidLeftRight([h3, top1, h4, btm1]),
       ];
       const [middleTop, middleBottom] = middle
         .map(([lftm, topm, rghtm, botmm]) => {
           return top2 >= botmm || btm2 <= topm // Is er enige verticale overlap? We zijn al zeker van horizontale.
             ? [option.none, option.none]
-            : [isValidTopBottom([lftm, topm, rghtm, top2]), isValidTopBottom([lftm, btm2, rghtm, botmm])];
+            : [
+                isValidTopBottom([lftm, topm, rghtm, top2]),
+                isValidTopBottom([lftm, btm2, rghtm, botmm]),
+              ];
         })
         .getOrElse([option.none, option.none]);
       return array.catOptions([left, right, middleTop, middleBottom]);
     }
   };
 
-  export const toQueryValue: Function1<Extent, string> = extent => extent.join(",");
+  export const toQueryValue: Function1<Extent, string> = (extent) =>
+    extent.join(",");
 }

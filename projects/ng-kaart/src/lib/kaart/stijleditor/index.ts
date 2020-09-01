@@ -25,17 +25,17 @@ const components = [LaagstijleditorComponent];
     MatSelectModule,
     MatTabsModule,
     MatTooltipModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
   ],
   exports: [components],
   declarations: [components],
-  providers: []
+  providers: [],
 })
 export class StijleditorModule {
   static forRoot(): ModuleWithProviders<StijleditorModule> {
     return {
       ngModule: StijleditorModule,
-      providers: []
+      providers: [],
     };
   }
 }

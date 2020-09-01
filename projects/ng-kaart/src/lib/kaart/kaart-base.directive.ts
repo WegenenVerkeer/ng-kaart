@@ -1,4 +1,11 @@
-import { AfterViewInit, Directive, NgZone, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import {
+  AfterViewInit,
+  Directive,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  SimpleChanges,
+} from "@angular/core";
 import { Lazy } from "fp-ts/es6/function";
 import { Function1, identity, Refinement } from "fp-ts/lib/function";
 import * as rx from "rxjs";
@@ -16,11 +23,20 @@ interface ClickAction {
  * Algemene basisklasse die gebruikt kan worden voor zowel child components van de kaartcomponent als voor kaart classic helper components.
  */
 @Directive()
-export abstract class KaartBaseDirective implements AfterViewInit, OnInit, OnDestroy {
-  private readonly destroyingSubj: rx.Subject<void> = new rx.ReplaySubject<void>(1); // ReplaySubject => laatkomers krijgen toch nog event
-  private readonly initialisingSubj: rx.Subject<void> = new rx.ReplaySubject<void>(1);
-  private readonly viewReadySubj: rx.Subject<void> = new rx.ReplaySubject<void>(1);
-  private readonly clickActionSubj: rx.Subject<ClickAction> = new rx.Subject<ClickAction>();
+export abstract class KaartBaseDirective
+  implements AfterViewInit, OnInit, OnDestroy {
+  private readonly destroyingSubj: rx.Subject<void> = new rx.ReplaySubject<
+    void
+  >(1); // ReplaySubject => laatkomers krijgen toch nog event
+  private readonly initialisingSubj: rx.Subject<void> = new rx.ReplaySubject<
+    void
+  >(1);
+  private readonly viewReadySubj: rx.Subject<void> = new rx.ReplaySubject<void>(
+    1
+  );
+  private readonly clickActionSubj: rx.Subject<ClickAction> = new rx.Subject<
+    ClickAction
+  >();
 
   constructor(readonly zone: NgZone) {}
 
@@ -75,22 +91,30 @@ export abstract class KaartBaseDirective implements AfterViewInit, OnInit, OnDes
 
   protected actionFor$(action: string): rx.Observable<void> {
     return this.clickActionSubj.pipe(
-      filter(a => a.name === action),
+      filter((a) => a.name === action),
       mapTo(undefined)
     );
   }
 
   protected rawActionDataFor$(actionName: string): rx.Observable<any> {
     return this.clickActionSubj.pipe(
-      filter(a => a.name === actionName && a.data !== undefined),
-      map(a => a.data)
+      filter((a) => a.name === actionName && a.data !== undefined),
+      map((a) => a.data)
     );
   }
 
-  protected actionDataFor$<T>(actionName: string, refinement: Refinement<any, T>): rx.Observable<T> {
+  protected actionDataFor$<T>(
+    actionName: string,
+    refinement: Refinement<any, T>
+  ): rx.Observable<T> {
     return this.clickActionSubj.pipe(
-      filter(a => a.name === actionName && isNotNullOrUndefined(a.data) && refinement(a.data)),
-      map(a => a.data)
+      filter(
+        (a) =>
+          a.name === actionName &&
+          isNotNullOrUndefined(a.data) &&
+          refinement(a.data)
+      ),
+      map((a) => a.data)
     );
   }
 
@@ -127,7 +151,11 @@ export function forChangedValue<A, B>(
   conv: Function1<A, B> = identity as Function1<A, B>,
   pred: (cur: B, prev: B) => boolean = () => true
 ): void {
-  if (prop in changes && (!changes[prop].previousValue || pred(conv(changes[prop].currentValue), conv(changes[prop].previousValue)))) {
+  if (
+    prop in changes &&
+    (!changes[prop].previousValue ||
+      pred(conv(changes[prop].currentValue), conv(changes[prop].previousValue)))
+  ) {
     action(conv(changes[prop].currentValue), conv(changes[prop].previousValue));
   }
 }

@@ -1,5 +1,11 @@
 import { HttpClient } from "@angular/common/http";
-import { Component, Injector, Input, OnInit, ViewEncapsulation } from "@angular/core";
+import {
+  Component,
+  Injector,
+  Input,
+  OnInit,
+  ViewEncapsulation,
+} from "@angular/core";
 import { option } from "fp-ts";
 
 import * as ke from "../../kaart/kaart-elementen";
@@ -18,9 +24,11 @@ const WmtsParser = new ol.format.WMTSCapabilities();
 @Component({
   selector: "awv-kaart-wmts-laag",
   template: "<ng-content></ng-content>",
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
-export class ClassicWmtsLaagComponent extends ClassicLaagDirective implements OnInit {
+export class ClassicWmtsLaagComponent
+  extends ClassicLaagDirective
+  implements OnInit {
   private _laagNaam: string;
   private _type: string;
   private _matrixSet: string;
@@ -99,13 +107,24 @@ export class ClassicWmtsLaagComponent extends ClassicLaagDirective implements On
   }
 
   ngOnInit() {
-    if (["Voorgrond.Laag", "Voorgrond.Hoog", "Achtergrond"].indexOf(this.gekozenLaagGroep()) < 0) {
-      throw new Error("groep moet 'Voorgrond.Laag', 'Voorgrond.Hoog' of 'Achtergrond' zijn");
+    if (
+      ["Voorgrond.Laag", "Voorgrond.Hoog", "Achtergrond"].indexOf(
+        this.gekozenLaagGroep()
+      ) < 0
+    ) {
+      throw new Error(
+        "groep moet 'Voorgrond.Laag', 'Voorgrond.Hoog' of 'Achtergrond' zijn"
+      );
     }
     if (!this._matrixSet) {
       throw new Error("matrixSet moet opgegeven zijn");
     }
-    if (!(this._capUrl.isSome() || (arrays.isNonEmpty(this._urls) && arrays.isNonEmpty(this._matrixIds)))) {
+    if (
+      !(
+        this._capUrl.isSome() ||
+        (arrays.isNonEmpty(this._urls) && arrays.isNonEmpty(this._matrixIds))
+      )
+    ) {
       throw new Error("capurl of urls en matrixIds moet opgegeven zijn");
     }
     super.ngOnInit();
@@ -120,11 +139,11 @@ export class ClassicWmtsLaagComponent extends ClassicLaagDirective implements On
           matrixIds: this._matrixIds,
           style: this._style,
           origin: this._origin,
-          extent: this._extent
+          extent: this._extent,
         };
         return this.createLayerFromConfig(config) as ke.Laag;
       },
-      capUrl => {
+      (capUrl) => {
         this.vervangLaagWithCapabilitiesAsync(capUrl);
         return {
           type: ke.BlancoType,
@@ -132,13 +151,15 @@ export class ClassicWmtsLaagComponent extends ClassicLaagDirective implements On
           backgroundUrl: blancoLaag,
           minZoom: this._minZoom,
           maxZoom: this._maxZoom,
-          verwijderd: false
+          verwijderd: false,
         } as ke.Laag;
       }
     );
   }
 
-  private createLayerFromConfig(config: ke.WmtsCapaConfig | ke.WmtsManualConfig): ke.WmtsLaag {
+  private createLayerFromConfig(
+    config: ke.WmtsCapaConfig | ke.WmtsManualConfig
+  ): ke.WmtsLaag {
     return {
       type: ke.WmtsType,
       titel: this._titel,
@@ -150,7 +171,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagDirective implements On
       backgroundUrl: this.backgroundUrl(config),
       minZoom: this._minZoom,
       maxZoom: this._maxZoom,
-      verwijderd: false
+      verwijderd: false,
     };
   }
 
@@ -172,7 +193,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagDirective implements On
         Format: this._format,
         TileMatrix: 9,
         TileCol: 185,
-        TileRow: 273
+        TileRow: 273,
       });
     } else {
       // TODO: bepalen op basis van de echte parameters. Rekening houden met config.
@@ -186,7 +207,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagDirective implements On
         Format: "image/png",
         TileMatrix: this._matrixSet + ":9",
         TileCol: 169,
-        TileRow: 108
+        TileRow: 108,
       });
     }
   }
@@ -195,29 +216,38 @@ export class ClassicWmtsLaagComponent extends ClassicLaagDirective implements On
     this.http
       .get(capUrl + "?request=getCapabilities", { responseType: "text" }) //
       .subscribe(
-        cap => this.vervangLaagWithCapabilities(capUrl, cap), //
-        err => classicLogger.error("Kon capabilities niet ophalen", err, this._titel, capUrl)
+        (cap) => this.vervangLaagWithCapabilities(capUrl, cap), //
+        (err) =>
+          classicLogger.error(
+            "Kon capabilities niet ophalen",
+            err,
+            this._titel,
+            capUrl
+          )
       );
   }
 
-  private vervangLaagWithCapabilities(capUrl: string, capabilitiesText: string) {
+  private vervangLaagWithCapabilities(
+    capUrl: string,
+    capabilitiesText: string
+  ) {
     const capabilities = WmtsParser.read(capabilitiesText);
     const wmtsOptions = ol.source.wmts.optionsFromCapabilities(capabilities, {
       layer: this._laagNaam,
       matrixSet: this._matrixSet,
-      projection: this._projection
+      projection: this._projection,
     });
     const config: ke.WmtsCapaConfig = {
       type: "Capa",
       url: capUrl,
-      wmtsOptions: wmtsOptions
+      wmtsOptions: wmtsOptions,
     };
     const lg = this.createLayerFromConfig(config);
     this.laag = option.some(lg);
     this.dispatch({
       type: "VervangLaagCmd",
       laag: lg,
-      wrapper: logOnlyWrapper
+      wrapper: logOnlyWrapper,
     });
   }
 }

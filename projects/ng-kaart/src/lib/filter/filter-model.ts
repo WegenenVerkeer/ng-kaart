@@ -1,5 +1,15 @@
 import { eq, option } from "fp-ts";
-import { constant, Function1, Function2, Function4, identity, Lazy, not, Predicate, Refinement } from "fp-ts/lib/function";
+import {
+  constant,
+  Function1,
+  Function2,
+  Function4,
+  identity,
+  Lazy,
+  not,
+  Predicate,
+  Refinement,
+} from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import { DateTime, Duration } from "luxon";
 import { Getter, Lens } from "monocle-ts";
@@ -47,15 +57,24 @@ export namespace Filter {
     readonly right: Expression;
   }
 
-  export const Conjunction: Function2<ConjunctionExpression, Comparison, Conjunction> = (left, right) => ({ kind: "And", left, right });
+  export const Conjunction: Function2<
+    ConjunctionExpression,
+    Comparison,
+    Conjunction
+  > = (left, right) => ({ kind: "And", left, right });
 
-  export const Disjunction: Function2<Expression, Expression, Disjunction> = (left, right) => ({ kind: "Or", left, right });
+  export const Disjunction: Function2<Expression, Expression, Disjunction> = (
+    left,
+    right
+  ) => ({ kind: "Or", left, right });
 
   export type LogicalConnective = Conjunction | Disjunction;
 
   export type Comparison = BinaryComparison | UnaryComparison;
 
-  export type ComparisonOperator = BinaryComparisonOperator | UnaryComparisonOperator;
+  export type ComparisonOperator =
+    | BinaryComparisonOperator
+    | UnaryComparisonOperator;
 
   export type BinaryComparisonOperator =
     | "equality"
@@ -91,22 +110,41 @@ export namespace Filter {
   }
 
   // De ondersteunde propertytypes. Dit is niet helemaal gelijk aan de types in VeldInfo (+ range, - json, etc.)
-  export type TypeType = "string" | "integer" | "double" | "date" | "boolean" | "range";
+  export type TypeType =
+    | "string"
+    | "integer"
+    | "double"
+    | "date"
+    | "boolean"
+    | "range";
 
-  const propertyAndValueTypeEqual: Predicate<PropertyValueOperator> = pvo => pvo.property.type === pvo.value.type;
-  const propertyAndValueNumericCompatible: Predicate<PropertyValueOperator> = pvo =>
-    pvo.property.type === "double" && pvo.value.type === "integer"; // wel gevaarlijk wegens afrondingsfouten
-  const propertyAndValueDateCompatible: Predicate<PropertyValueOperator> = pvo =>
-    pvo.property.type === "date" && pvo.value.type === "range"; // test komt na equal, dus niet nodig te herhalen
+  const propertyAndValueTypeEqual: Predicate<PropertyValueOperator> = (pvo) =>
+    pvo.property.type === pvo.value.type;
+  const propertyAndValueNumericCompatible: Predicate<PropertyValueOperator> = (
+    pvo
+  ) => pvo.property.type === "double" && pvo.value.type === "integer"; // wel gevaarlijk wegens afrondingsfouten
+  const propertyAndValueDateCompatible: Predicate<PropertyValueOperator> = (
+    pvo
+  ) => pvo.property.type === "date" && pvo.value.type === "range"; // test komt na equal, dus niet nodig te herhalen
 
-  export function propertyAndValueCompatible<A extends BinaryComparison>(pvo: PropertyValueOperator): pvo is A {
-    return propertyAndValueTypeEqual(pvo) || propertyAndValueNumericCompatible(pvo) || propertyAndValueDateCompatible(pvo);
+  export function propertyAndValueCompatible<A extends BinaryComparison>(
+    pvo: PropertyValueOperator
+  ): pvo is A {
+    return (
+      propertyAndValueTypeEqual(pvo) ||
+      propertyAndValueNumericCompatible(pvo) ||
+      propertyAndValueDateCompatible(pvo)
+    );
   }
 
-  export const operatorPropertyAndValueCompatible = <A extends BinaryComparison>(binop: BinaryComparison): binop is A =>
+  export const operatorPropertyAndValueCompatible = <
+    A extends BinaryComparison
+  >(
+    binop: BinaryComparison
+  ): binop is A =>
     binop.operator !== "within" ||
     (binop.property.type === "date" && // within is enkel ondersteund voor date
-    binop.value.type === "range" && // within vereist een range type
+      binop.value.type === "range" && // within vereist een range type
       Range.isRelativeDateRange(binop.value.value)); // RelativeDateRange is het enige wat we toelaten voor within
 
   export interface Range {
@@ -119,24 +157,48 @@ export namespace Filter {
   }
 
   export namespace Range {
-    export const create = (unit: string, magnitude: number): Range => ({ unit, magnitude });
-
-    export const isRange: Refinement<ValueType, Range> = (range): range is Range =>
-      isObject(range) && typeof range["magnitude"] === "number" && typeof range["unit"] === "string";
-
-    export const isRelativeDateRange: Refinement<ValueType, Range> = (range): range is Range =>
-      isRange(range) && arrays.isOneOf("year", "month", "day")(range.unit) && range.magnitude > 0;
-
-    const durationFallBackMatcher = matchers.matchWithFallback<RelativeDateRange, option.Option<DateTime>>({
-      day: (q: RelativeDateRange) => option.some(DateTime.local().minus(Duration.fromObject({ days: q.magnitude }))),
-      month: (q: RelativeDateRange) => option.some(DateTime.local().minus(Duration.fromObject({ months: q.magnitude }))),
-      year: (q: RelativeDateRange) => option.some(DateTime.local().minus(Duration.fromObject({ years: q.magnitude }))),
-      fallback: () => option.none
+    export const create = (unit: string, magnitude: number): Range => ({
+      unit,
+      magnitude,
     });
 
-    export const withinValueToDuration: Function1<RelativeDateRange, option.Option<DateTime>> = durationFallBackMatcher(
-      (q: Range) => q.unit
-    );
+    export const isRange: Refinement<ValueType, Range> = (
+      range
+    ): range is Range =>
+      isObject(range) &&
+      typeof range["magnitude"] === "number" &&
+      typeof range["unit"] === "string";
+
+    export const isRelativeDateRange: Refinement<ValueType, Range> = (
+      range
+    ): range is Range =>
+      isRange(range) &&
+      arrays.isOneOf("year", "month", "day")(range.unit) &&
+      range.magnitude > 0;
+
+    const durationFallBackMatcher = matchers.matchWithFallback<
+      RelativeDateRange,
+      option.Option<DateTime>
+    >({
+      day: (q: RelativeDateRange) =>
+        option.some(
+          DateTime.local().minus(Duration.fromObject({ days: q.magnitude }))
+        ),
+      month: (q: RelativeDateRange) =>
+        option.some(
+          DateTime.local().minus(Duration.fromObject({ months: q.magnitude }))
+        ),
+      year: (q: RelativeDateRange) =>
+        option.some(
+          DateTime.local().minus(Duration.fromObject({ years: q.magnitude }))
+        ),
+      fallback: () => option.none,
+    });
+
+    export const withinValueToDuration: Function1<
+      RelativeDateRange,
+      option.Option<DateTime>
+    > = durationFallBackMatcher((q: Range) => q.unit);
   }
 
   // Dit zijn alle types die we ondersteunen in het geheugen, maar denk eraan dat alles als string of number
@@ -149,7 +211,9 @@ export namespace Filter {
     readonly value: ValueType;
   }
 
-  export const literalValueGetter: Getter<Literal, ValueType> = Lens.fromProp<Literal>()("value").asGetter();
+  export const literalValueGetter: Getter<Literal, ValueType> = Lens.fromProp<
+    Literal
+  >()("value").asGetter();
 
   export interface Property {
     readonly kind: "Property";
@@ -159,17 +223,28 @@ export namespace Filter {
     readonly sqlFormat: option.Option<string>;
   }
 
-  export const BinaryComparison: Function4<BinaryComparisonOperator, Property, Literal, boolean, BinaryComparison> = (
+  export const BinaryComparison: Function4<
+    BinaryComparisonOperator,
+    Property,
+    Literal,
+    boolean,
+    BinaryComparison
+  > = (operator, property, value, caseSensitive) => ({
+    kind: "BinaryComparison",
     operator,
     property,
     value,
-    caseSensitive
-  ) => ({ kind: "BinaryComparison", operator, property, value, caseSensitive });
+    caseSensitive,
+  });
 
-  export const UnaryComparison: Function2<UnaryComparisonOperator, Property, UnaryComparison> = (operator, property) => ({
+  export const UnaryComparison: Function2<
+    UnaryComparisonOperator,
+    Property,
+    UnaryComparison
+  > = (operator, property) => ({
     kind: "UnaryComparison",
     operator,
-    property
+    property,
   });
 
   export interface Conjunction {
@@ -204,40 +279,69 @@ export namespace Filter {
   export const EmptyFilter: EmptyFilter = { kind: "EmptyFilter" };
   export const empty: Lazy<Filter> = constant(EmptyFilter);
 
-  export const ExpressionFilter: Function2<option.Option<string>, Expression, ExpressionFilter> = (name, expression) => ({
+  export const ExpressionFilter: Function2<
+    option.Option<string>,
+    Expression,
+    ExpressionFilter
+  > = (name, expression) => ({
     kind: "ExpressionFilter",
     name: name,
-    expression: expression
+    expression: expression,
   });
 
-  export const Property: Function4<TypeType, string, string, string, Property> = (typetype, name, label, sqlFormat) => ({
+  export const Property: Function4<
+    TypeType,
+    string,
+    string,
+    string,
+    Property
+  > = (typetype, name, label, sqlFormat) => ({
     kind: "Property",
     type: typetype,
     ref: name,
     sqlFormat: option.fromNullable(sqlFormat),
-    label
+    label,
   });
 
-  export const Literal: Function2<TypeType, ValueType, Literal> = (typetype, value) => ({
+  export const Literal: Function2<TypeType, ValueType, Literal> = (
+    typetype,
+    value
+  ) => ({
     kind: "Literal",
     type: typetype,
-    value
+    value,
   });
 
-  export const stringValue: PartialFunction1<ValueType, string> = option.fromPredicate(isString);
-  export const boolValue: PartialFunction1<ValueType, boolean> = option.fromPredicate(isBoolean);
-  export const numberValue: PartialFunction1<ValueType, number> = option.fromPredicate(isNumber);
-  export const dateValue: PartialFunction1<ValueType, DateTime> = option.fromPredicate(DateTime.isDateTime);
+  export const stringValue: PartialFunction1<
+    ValueType,
+    string
+  > = option.fromPredicate(isString);
+  export const boolValue: PartialFunction1<
+    ValueType,
+    boolean
+  > = option.fromPredicate(isBoolean);
+  export const numberValue: PartialFunction1<
+    ValueType,
+    number
+  > = option.fromPredicate(isNumber);
+  export const dateValue: PartialFunction1<
+    ValueType,
+    DateTime
+  > = option.fromPredicate(DateTime.isDateTime);
   export interface FilterMatcher<A> {
     readonly EmptyFilter: Lazy<A>;
     readonly ExpressionFilter: Function1<ExpressionFilter, A>;
   }
 
-  export const matchFilter: <A>(_: FilterMatcher<A>) => Function1<Filter, A> = matchers.matchKind;
+  export const matchFilter: <A>(_: FilterMatcher<A>) => Function1<Filter, A> =
+    matchers.matchKind;
 
-  export const asExpressionFilter: Function1<Filter, option.Option<ExpressionFilter>> = matchFilter({
+  export const asExpressionFilter: Function1<
+    Filter,
+    option.Option<ExpressionFilter>
+  > = matchFilter({
     EmptyFilter: constant(option.none),
-    ExpressionFilter: option.some
+    ExpressionFilter: option.some,
   });
 
   export interface ExpressionMatcher<A> {
@@ -247,12 +351,18 @@ export namespace Filter {
     readonly UnaryComparison: Function1<UnaryComparison, A>;
   }
 
-  export const matchExpression: <A>(_: ExpressionMatcher<A>) => Function1<Expression, A> = matchers.matchKind;
+  export const matchExpression: <A>(
+    _: ExpressionMatcher<A>
+  ) => Function1<Expression, A> = matchers.matchKind;
 
-  export const matchLiteral: <A>(_: matchers.FullMatcher<Literal, A, TypeType>) => Function1<Literal, A> = matcher =>
-    matchers.match(matcher)(l => l.type);
+  export const matchLiteral: <A>(
+    _: matchers.FullMatcher<Literal, A, TypeType>
+  ) => Function1<Literal, A> = (matcher) =>
+    matchers.match(matcher)((l) => l.type);
 
-  export const matchTypeTypeWithFallback: <A>(_: matchers.FallbackMatcher<TypeType, A, TypeType>) => (_: TypeType) => A = switcher =>
+  export const matchTypeTypeWithFallback: <A>(
+    _: matchers.FallbackMatcher<TypeType, A, TypeType>
+  ) => (_: TypeType) => A = (switcher) =>
     matchers.matchWithFallback(switcher)(identity);
 
   export interface ComparisonMatcher<A> {
@@ -260,31 +370,42 @@ export namespace Filter {
     readonly UnaryComparison: Function1<UnaryComparison, A>;
   }
 
-  export const matchComparison: <A>(_: ComparisonMatcher<A>) => Function1<Comparison, A> = matchers.matchKind;
+  export const matchComparison: <A>(
+    _: ComparisonMatcher<A>
+  ) => Function1<Comparison, A> = matchers.matchKind;
 
   export const matchBinaryComparisonOperatorWithFallback: <A>(
-    _: matchers.FallbackMatcher<BinaryComparisonOperator, A, BinaryComparisonOperator>
-  ) => Function1<BinaryComparisonOperator, A> = matcher => matchers.matchWithFallback(matcher)(identity);
+    _: matchers.FallbackMatcher<
+      BinaryComparisonOperator,
+      A,
+      BinaryComparisonOperator
+    >
+  ) => Function1<BinaryComparisonOperator, A> = (matcher) =>
+    matchers.matchWithFallback(matcher)(identity);
 
   export const matchUnaryComparisonOperator: <A>(
     _: matchers.FullMatcher<UnaryComparisonOperator, A, UnaryComparisonOperator>
-  ) => Function1<UnaryComparisonOperator, A> = matcher => matchers.match(matcher)(identity);
+  ) => Function1<UnaryComparisonOperator, A> = (matcher) =>
+    matchers.match(matcher)(identity);
 
   export const matchConjunctionExpression: <A>(
     _: matchers.FullKindMatcher<ConjunctionExpression, A>
-  ) => Function1<ConjunctionExpression, A> = matcher => matchers.matchKind(matcher);
+  ) => Function1<ConjunctionExpression, A> = (matcher) =>
+    matchers.matchKind(matcher);
 
   export const isEmpty: Predicate<Filter> = matchFilter({
     ExpressionFilter: constant(false),
-    EmptyFilter: constant(true)
+    EmptyFilter: constant(true),
   });
 
   export const isDefined: Predicate<Filter> = not(isEmpty);
 
   export const setoidPropertyByRef: eq.Eq<Property> = pipe(
     eq.eqString,
-    eq.contramap(p => p.ref)
+    eq.contramap((p) => p.ref)
   );
-  export const setoidBinaryComparisonOperator: eq.Eq<BinaryComparisonOperator> = eq.eqString;
-  export const setoidUnaryComparisonOperator: eq.Eq<UnaryComparisonOperator> = eq.eqString;
+  export const setoidBinaryComparisonOperator: eq.Eq<BinaryComparisonOperator> =
+    eq.eqString;
+  export const setoidUnaryComparisonOperator: eq.Eq<UnaryComparisonOperator> =
+    eq.eqString;
 }

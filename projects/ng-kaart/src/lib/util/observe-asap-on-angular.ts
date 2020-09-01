@@ -6,8 +6,5 @@ import { ZoneLike } from "./zone-like";
 
 export function observeAsapOnAngular<T>(zone: ZoneLike) {
   return (source: rx.Observable<T>) =>
-    source.pipe(
-      observeOn(rx.asapScheduler),
-      observeOnAngular(zone)
-    );
+    source.pipe(observeOn(rx.asapScheduler), observeOnAngular(zone));
 }

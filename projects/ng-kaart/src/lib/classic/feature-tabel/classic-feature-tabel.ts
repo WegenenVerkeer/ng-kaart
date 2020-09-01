@@ -9,7 +9,7 @@ import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-
  */
 @Component({
   selector: "awv-feature-tabel",
-  template: ""
+  template: "",
 })
 export class ClassicFeatureTabelComponent extends ClassicUIElementSelectorDirective {
   constructor(injector: Injector) {
@@ -22,9 +22,9 @@ export class ClassicFeatureTabelComponent extends ClassicUIElementSelectorDirect
         {
           matIcon: "file_download",
           tooltip: "Exporteer data",
-          actie: "export"
-        }
-      ]
+          actie: "export",
+        },
+      ],
     };
   }
 }

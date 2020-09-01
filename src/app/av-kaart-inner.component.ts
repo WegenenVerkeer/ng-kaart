@@ -1,4 +1,10 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation } from "@angular/core";
+import {
+  Component,
+  Input,
+  OnChanges,
+  SimpleChanges,
+  ViewEncapsulation,
+} from "@angular/core";
 
 import { animate, style, transition, trigger } from "@angular/animations";
 import * as ol from "projects/ng-kaart/src/lib/util/openlayers-compat";
@@ -15,15 +21,21 @@ const withId = (feature: ol.Feature) => {
     trigger("enterAnimation", [
       transition(":enter", [
         style({ opacity: 0, "max-height": 0 }),
-        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 1, "max-height": "1000px" }))
+        animate(
+          "0.35s cubic-bezier(.62,.28,.23,.99)",
+          style({ opacity: 1, "max-height": "1000px" })
+        ),
       ]),
       transition(":leave", [
         style({ opacity: 1, "max-height": "1000px" }),
-        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 0, "max-height": 0 }))
-      ])
-    ])
+        animate(
+          "0.35s cubic-bezier(.62,.28,.23,.99)",
+          style({ opacity: 0, "max-height": 0 })
+        ),
+      ]),
+    ]),
   ],
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class AvKaartInnerComponent implements OnChanges {
   @Input()
@@ -62,47 +74,56 @@ export class AvKaartInnerComponent implements OnChanges {
       this.adresFeatures = [];
       if (this.adressen) {
         this.adressen
-          .filter(adres => adres.geometrie)
-          .map(adres => {
-            const adresFeature = withId(this.wktFormat.readFeature(adres.geometrie));
+          .filter((adres) => adres.geometrie)
+          .map((adres) => {
+            const adresFeature = withId(
+              this.wktFormat.readFeature(adres.geometrie)
+            );
             adresFeature.setStyle(this.adresStyle);
             return adresFeature;
           })
-          .forEach(feature => this.adresFeatures.push(feature));
+          .forEach((feature) => this.adresFeatures.push(feature));
       }
 
       this.percelenFeatures = [];
       if (this.percelen) {
         this.percelen
-          .filter(perceel => perceel.geometrie)
-          .map(perceel => {
-            const perceelFeature = withId(this.wktFormat.readFeature(perceel.geometrie));
+          .filter((perceel) => perceel.geometrie)
+          .map((perceel) => {
+            const perceelFeature = withId(
+              this.wktFormat.readFeature(perceel.geometrie)
+            );
             perceelFeature.setStyle(this.perceelStyle);
             return perceelFeature;
           })
-          .forEach(feature => this.percelenFeatures.push(feature));
+          .forEach((feature) => this.percelenFeatures.push(feature));
       }
 
       this.weglocatieFeatures = [];
       if (this.weglocaties) {
         this.weglocaties
-          .filter(weglocatie => weglocatie.geometrie)
-          .map(weglocatie => {
-            const weglocatieFeature = withId(this.wktFormat.readFeature(weglocatie.geometrie));
+          .filter((weglocatie) => weglocatie.geometrie)
+          .map((weglocatie) => {
+            const weglocatieFeature = withId(
+              this.wktFormat.readFeature(weglocatie.geometrie)
+            );
             weglocatieFeature.setStyle(this.weglocatieStyle);
             return weglocatieFeature;
           })
-          .forEach(feature => this.weglocatieFeatures.push(feature));
+          .forEach((feature) => this.weglocatieFeatures.push(feature));
       }
 
       this.features = this.features
         .concat(this.adresFeatures)
         .concat(this.percelenFeatures)
         .concat(this.weglocatieFeatures);
-      const extents = this.features.map(feature => feature.getGeometry()!.getExtent());
+      const extents = this.features.map((feature) =>
+        feature.getGeometry()!.getExtent()
+      );
 
       this.extent = extents.reduceRight(
-        (previousValue, currentValue) => ol.extent.extend(previousValue, currentValue),
+        (previousValue, currentValue) =>
+          ol.extent.extend(previousValue, currentValue),
         ol.extent.createEmpty()
       );
     }
@@ -110,11 +131,11 @@ export class AvKaartInnerComponent implements OnChanges {
 
   maakLayerStijl(kleur: string): ol.style.Style {
     const fill = new ol.style.Fill({
-      color: this.zetOpacity(ol.color.asArray(kleur), 0.2)
+      color: this.zetOpacity(ol.color.asArray(kleur), 0.2),
     });
     const stroke = new ol.style.Stroke({
       color: this.zetOpacity(ol.color.asArray(kleur), 1),
-      width: 2
+      width: 2,
     });
     return new ol.style.Style({
       fill: fill,
@@ -125,8 +146,8 @@ export class AvKaartInnerComponent implements OnChanges {
         points: 5,
         radius: 10,
         radius2: 4,
-        angle: 0
-      })
+        angle: 0,
+      }),
       // image: new ol.style.Icon({
       //   anchor: [0.5, 1],
       //   anchorXUnits: "fraction",

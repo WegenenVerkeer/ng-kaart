@@ -5,7 +5,12 @@ import { FilterAwv0Json } from "./filter-awv0-export";
 import { Filter as fltr } from "./filter-model";
 
 describe("De filter exporter", () => {
-  const property: fltr.Property = fltr.Property("string", "prop", "Property", "DD/MM/YYYY");
+  const property: fltr.Property = fltr.Property(
+    "string",
+    "prop",
+    "Property",
+    "DD/MM/YYYY"
+  );
   const encodedProperty: object = { ...property, sqlFormat: "DD/MM/YYYY" };
   const literal: fltr.Literal = fltr.Literal("string", "value");
   describe("bij het exporteren van een expression filter", () => {
@@ -18,8 +23,8 @@ describe("De filter exporter", () => {
           operator: "equality",
           property: property,
           value: literal,
-          caseSensitive: false
-        }
+          caseSensitive: false,
+        },
       };
       const encoded = FilterAwv0Json.encode(filter);
       const resurrected = JSON.parse(encoded);
@@ -34,8 +39,8 @@ describe("De filter exporter", () => {
           operator: "equality",
           property: property,
           value: literal,
-          caseSensitive: false
-        }
+          caseSensitive: false,
+        },
       };
       const encoded = FilterAwv0Json.encode(filter);
       const resurrected = JSON.parse(encoded);
@@ -51,8 +56,8 @@ describe("De filter exporter", () => {
             operator: "larger",
             property: property,
             value: literal,
-            caseSensitive: false
-          }
+            caseSensitive: false,
+          },
         };
         const encoded = FilterAwv0Json.encode(filter);
         const resurrected = JSON.parse(encoded);
@@ -63,8 +68,8 @@ describe("De filter exporter", () => {
             operator: "larger",
             property: encodedProperty,
             value: literal,
-            caseSensitive: false
-          }
+            caseSensitive: false,
+          },
         });
       });
     });
@@ -76,8 +81,8 @@ describe("De filter exporter", () => {
           expression: {
             kind: "UnaryComparison",
             operator: "isNotEmpty",
-            property: property
-          }
+            property: property,
+          },
         };
         const encoded = FilterAwv0Json.encode(filter);
         const resurrected = JSON.parse(encoded);
@@ -86,8 +91,8 @@ describe("De filter exporter", () => {
           expression: {
             kind: "UnaryComparison",
             operator: "isNotEmpty",
-            property: encodedProperty
-          }
+            property: encodedProperty,
+          },
         });
       });
       it("moet een 'heeft geen waarde' kunnen exporteren", () => {
@@ -97,8 +102,8 @@ describe("De filter exporter", () => {
           expression: {
             kind: "UnaryComparison",
             operator: "isEmpty",
-            property: property
-          }
+            property: property,
+          },
         };
         const encoded = FilterAwv0Json.encode(filter);
         const resurrected = JSON.parse(encoded);
@@ -107,8 +112,8 @@ describe("De filter exporter", () => {
           expression: {
             kind: "UnaryComparison",
             operator: "isEmpty",
-            property: encodedProperty
-          }
+            property: encodedProperty,
+          },
         });
       });
     });
@@ -120,8 +125,8 @@ describe("De filter exporter", () => {
           expression: {
             kind: "UnaryComparison",
             operator: "isNotEmpty",
-            property: fltr.Property("string", "prop", "Property", undefined)
-          }
+            property: fltr.Property("string", "prop", "Property", undefined),
+          },
         };
         const encoded = FilterAwv0Json.encode(filter);
         const resurrected = JSON.parse(encoded);
@@ -134,9 +139,9 @@ describe("De filter exporter", () => {
               kind: "Property",
               type: "string",
               ref: "prop",
-              label: "Property"
-            }
-          }
+              label: "Property",
+            },
+          },
         });
       });
     });
@@ -151,8 +156,8 @@ describe("De filter exporter", () => {
             operator: "equality",
             property: fltr.Property("date", "prop", "Property", undefined),
             caseSensitive: false,
-            value: fltr.Literal("date", date)
-          }
+            value: fltr.Literal("date", date),
+          },
         };
         const encoded = FilterAwv0Json.encode(filter);
         const resurrected = JSON.parse(encoded);
@@ -165,15 +170,15 @@ describe("De filter exporter", () => {
               kind: "Property",
               type: "date",
               ref: "prop",
-              label: "Property"
+              label: "Property",
             },
             caseSensitive: false,
             value: {
               kind: "Literal",
               type: "date",
-              value: "01/11/2019"
-            }
-          }
+              value: "01/11/2019",
+            },
+          },
         });
       });
     });

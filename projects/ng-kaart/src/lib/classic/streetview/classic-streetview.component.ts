@@ -8,7 +8,7 @@ import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-
  */
 @Component({
   selector: "awv-kaart-streetview",
-  template: ""
+  template: "",
 })
 export class ClassicStreetviewComponent extends ClassicUIElementSelectorDirective {
   constructor(injector: Injector) {

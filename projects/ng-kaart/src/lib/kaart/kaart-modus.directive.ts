@@ -2,7 +2,18 @@ import { Directive, NgZone } from "@angular/core";
 import { option } from "fp-ts";
 import { identity } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, mapTo, sample, share, shareReplay, skipUntil, tap } from "rxjs/operators";
+import {
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  map,
+  mapTo,
+  sample,
+  share,
+  shareReplay,
+  skipUntil,
+  tap,
+} from "rxjs/operators";
 
 import { scan2 } from "../util";
 
@@ -12,7 +23,9 @@ import { KaartComponent } from "./kaart.component";
 
 @Directive()
 export abstract class KaartModusDirective extends KaartChildDirective {
-  private readonly zetActiefSubj: rx.Subject<boolean> = new rx.Subject<boolean>();
+  private readonly zetActiefSubj: rx.Subject<boolean> = new rx.Subject<
+    boolean
+  >();
   private readonly toggleActiefSubj: rx.Subject<null> = new rx.Subject<null>();
   readonly isActief$: rx.Observable<boolean>;
   protected readonly wordtActief$: rx.Observable<null>;
@@ -22,14 +35,19 @@ export abstract class KaartModusDirective extends KaartChildDirective {
     super(kaartComponent, zone);
 
     const externIsActief$ = this.modelChanges.actieveModus$.pipe(
-      map(maybeModus => maybeModus.foldL(() => this.isDefaultModus(), modus => modus === this.modus()))
+      map((maybeModus) =>
+        maybeModus.foldL(
+          () => this.isDefaultModus(),
+          (modus) => modus === this.modus()
+        )
+      )
     );
 
     this.isActief$ = scan2(
       rx.merge(externIsActief$, this.zetActiefSubj),
       this.toggleActiefSubj,
       (_, actief) => actief,
-      activiteit => !activiteit,
+      (activiteit) => !activiteit,
       false
     ).pipe(
       distinctUntilChanged(),
@@ -42,7 +60,7 @@ export abstract class KaartModusDirective extends KaartChildDirective {
       share()
     );
     this.wordtInactief$ = this.isActief$.pipe(
-      filter(actief => actief === false),
+      filter((actief) => actief === false),
       mapTo(null),
       skipUntil(this.wordtActief$), // kan maar inactief worden indien ooit actief
       share()
@@ -55,7 +73,11 @@ export abstract class KaartModusDirective extends KaartChildDirective {
 
     this.runInViewReady(
       // Laat de buitenwereld weten dat we (in)actief worden
-      internIsActief$.pipe(tap(isActief => (isActief ? this.publiceerActivatie() : this.publiceerDeactivatie())))
+      internIsActief$.pipe(
+        tap((isActief) =>
+          isActief ? this.publiceerActivatie() : this.publiceerDeactivatie()
+        )
+      )
     );
   }
 

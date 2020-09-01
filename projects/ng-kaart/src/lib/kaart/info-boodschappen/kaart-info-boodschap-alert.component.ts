@@ -7,7 +7,7 @@ import { KaartComponent } from "../kaart.component";
 @Component({
   selector: "awv-kaart-info-boodschap-alert",
   templateUrl: "./kaart-info-boodschap-alert.component.html",
-  styleUrls: ["./kaart-info-boodschap-alert.component.scss"]
+  styleUrls: ["./kaart-info-boodschap-alert.component.scss"],
 })
 export class KaartInfoBoodschapAlertComponent extends KaartChildDirective {
   message: string;

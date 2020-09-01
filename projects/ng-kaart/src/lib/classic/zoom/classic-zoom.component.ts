@@ -8,7 +8,7 @@ import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-
  */
 @Component({
   selector: "awv-kaart-zoomknoppen",
-  template: ""
+  template: "",
 })
 export class ClassicZoomComponent extends ClassicUIElementSelectorDirective {
   constructor(injector: Injector) {

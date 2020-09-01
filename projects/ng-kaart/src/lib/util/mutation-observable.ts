@@ -11,8 +11,10 @@ export function observableFromDomMutations<A extends ol.events.Event>(
   return rx.Observable.create((subscriber: rx.Subscriber<MutationRecord[]>) => {
     let mutObserver: MutationObserver;
     try {
-      mutObserver = new MutationObserver(mutations => subscriber.next(mutations));
-      targets.forEach(target => mutObserver.observe(target, cfg));
+      mutObserver = new MutationObserver((mutations) =>
+        subscriber.next(mutations)
+      );
+      targets.forEach((target) => mutObserver.observe(target, cfg));
     } catch (err) {
       subscriber.error(err);
     }

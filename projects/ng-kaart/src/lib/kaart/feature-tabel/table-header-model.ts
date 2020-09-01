@@ -12,19 +12,24 @@ export interface TableHeader {
 }
 
 export namespace TableHeader {
-  export const filterIsActiveLens: Lens<TableHeader, boolean> = Lens.fromProp<TableHeader>()("filterIsActive");
+  export const filterIsActiveLens: Lens<TableHeader, boolean> = Lens.fromProp<
+    TableHeader
+  >()("filterIsActive");
 
-  export const toHeader: Function1<LaagModel, TableHeader> = laag => ({
+  export const toHeader: Function1<LaagModel, TableHeader> = (laag) => ({
     titel: laag.titel,
     filterIsActive: laag.filterIsActive,
     hasFilter: laag.hasFilter,
-    count: laag.featureCount.kind === "FeatureCountFetched" ? laag.featureCount.count : undefined
+    count:
+      laag.featureCount.kind === "FeatureCountFetched"
+        ? laag.featureCount.count
+        : undefined,
   });
 
   export const setoidTableHeader: eq.Eq<TableHeader> = eq.getStructEq({
     titel: eq.eqString,
     filterIsActive: eq.eqBoolean,
     hasFilter: eq.eqBoolean,
-    count: eq.eqNumber
+    count: eq.eqNumber,
   });
 }

@@ -17,14 +17,20 @@ interface AbbameldaResultaat {
     trigger("enterAnimation", [
       transition(":enter", [
         style({ opacity: 0, "max-height": 0 }),
-        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 1, "max-height": "400px" }))
+        animate(
+          "0.35s cubic-bezier(.62,.28,.23,.99)",
+          style({ opacity: 1, "max-height": "400px" })
+        ),
       ]),
       transition(":leave", [
         style({ opacity: 1, "max-height": "400px" }),
-        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 0, "max-height": 0 }))
-      ])
-    ])
-  ]
+        animate(
+          "0.35s cubic-bezier(.62,.28,.23,.99)",
+          style({ opacity: 0, "max-height": 0 })
+        ),
+      ]),
+    ]),
+  ],
 })
 export class AbbameldaStuurmeldingComponent {
   @Input()
@@ -52,15 +58,15 @@ export class AbbameldaStuurmeldingComponent {
       .post<AbbameldaResultaat>("/geoloket/rest/abbamelda/melding", {
         melding: boodschap,
         onderdeel: this.abbamelda_onderdeel,
-        pad: this.abbamelda_pad
+        pad: this.abbamelda_pad,
       })
       .subscribe(
-        res => {
+        (res) => {
           this.abbameldaSuccesBoodschap = res.resultaat;
           this.abbameldaFoutBoodschap = "";
           this.toggleVerstuurAbbameldaMelding();
         }, //
-        err => {
+        (err) => {
           const errorboodschap = `Kon Abbamelda melding niet versturen: ${err.error.resultaat}`;
           this.abbameldaSuccesBoodschap = "";
           this.abbameldaFoutBoodschap = errorboodschap;

@@ -11,8 +11,14 @@ export class ClassicBaseDirective extends KaartBaseDirective {
 
   constructor(injector: Injector) {
     super(injector.get(NgZone));
-    const locatorService = injector.get(KaartClassicLocatorService) as KaartClassicLocatorService<KaartClassicComponent>;
+    const locatorService = injector.get(
+      KaartClassicLocatorService
+    ) as KaartClassicLocatorService<KaartClassicComponent>;
     const el: ElementRef<Element> = injector.get(ElementRef);
-    this.kaart = locatorService.getComponent(injector, KaartClassicComponent, el);
+    this.kaart = locatorService.getComponent(
+      injector,
+      KaartClassicComponent,
+      el
+    );
   }
 }

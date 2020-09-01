@@ -6,7 +6,10 @@ import { Zoeker } from "../zoeker";
 
 // Gegeven een bronnaam, geef een Observable van categorieën. Gewrapt in Option voor het geval dat er geen categorieën
 // zijn.
-export type CategorieObsProvider = Function1<string, option.Option<rx.Observable<string[]>>>;
+export type CategorieObsProvider = Function1<
+  string,
+  option.Option<rx.Observable<string[]>>
+>;
 
 export interface AlleLagenZoekerService extends Zoeker {
   bronnen$: rx.Observable<string[]>;

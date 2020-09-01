@@ -1,16 +1,36 @@
-import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
+import {
+  Component,
+  EventEmitter,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  Output,
+} from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { option } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, share, shareReplay, switchMap } from "rxjs/operators";
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  share,
+  shareReplay,
+  switchMap,
+} from "rxjs/operators";
 
 import { KaartComponent } from "../../kaart/kaart.component";
 import { collectOption } from "../../util";
-import { GetraptZoekerDirective, ZoekerBoxComponent } from "../box/zoeker-box.component";
+import {
+  GetraptZoekerDirective,
+  ZoekerBoxComponent,
+} from "../box/zoeker-box.component";
 import { zoekerMetNaam } from "../zoeker";
 
-import { AlleLagenZoekerService, CategorieObsProvider } from "./zoeker-alle-lagen.service";
+import {
+  AlleLagenZoekerService,
+  CategorieObsProvider,
+} from "./zoeker-alle-lagen.service";
 
 const NIVEAU_ALLES = 0;
 const NIVEAU_VANAF_BRON = 1;
@@ -23,9 +43,11 @@ const NIVEAU_VANAF_CATEGORIE = 2;
 @Component({
   selector: "awv-zoeker-alle-lagen-getrapt",
   templateUrl: "./zoeker-alle-lagen-getrapt.component.html",
-  styleUrls: ["./zoeker-alle-lagen-getrapt.component.scss"]
+  styleUrls: ["./zoeker-alle-lagen-getrapt.component.scss"],
 })
-export class ZoekerAlleLagenGetraptComponent extends GetraptZoekerDirective implements OnInit, OnDestroy {
+export class ZoekerAlleLagenGetraptComponent
+  extends GetraptZoekerDirective
+  implements OnInit, OnDestroy {
   readonly bronnen$: rx.Observable<string[]>;
   readonly hasCategorieen$: rx.Observable<boolean>;
   readonly categorieen$: rx.Observable<string[]>;
@@ -36,59 +58,81 @@ export class ZoekerAlleLagenGetraptComponent extends GetraptZoekerDirective impl
   @Output()
   leegMakenDisabledChange: EventEmitter<Boolean> = new EventEmitter(true);
 
-  constructor(kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
+  constructor(
+    kaartComponent: KaartComponent,
+    zoekerComponent: ZoekerBoxComponent,
+    zone: NgZone
+  ) {
     super(kaartComponent, zoekerComponent, zone);
 
-    const services$: rx.Observable<option.Option<AlleLagenZoekerService>> = this.modelChanges.zoekerServices$.pipe(
+    const services$: rx.Observable<option.Option<
+      AlleLagenZoekerService
+    >> = this.modelChanges.zoekerServices$.pipe(
       map(zoekerMetNaam("AlleLagen")),
-      map(maybeZoeker => maybeZoeker as option.Option<AlleLagenZoekerService>)
+      map((maybeZoeker) => maybeZoeker as option.Option<AlleLagenZoekerService>)
     );
 
     this.bronnen$ = services$.pipe(
-      switchMap(svcs =>
+      switchMap((svcs) =>
         svcs.foldL(
           () => rx.of([]), // Geen service betekent geen bronnen
-          svc => svc.bronnen$
+          (svc) => svc.bronnen$
         )
       )
     );
 
     const gekozenBron$: rx.Observable<string> = this.bronControl.valueChanges.pipe(
       distinctUntilChanged(),
-      filter(v => v !== null),
+      filter((v) => v !== null),
       share()
     );
 
-    const svcsToCategorieenProvider: Function1<AlleLagenZoekerService, CategorieObsProvider> = svcs => svcs.categorie$Provider;
+    const svcsToCategorieenProvider: Function1<
+      AlleLagenZoekerService,
+      CategorieObsProvider
+    > = (svcs) => svcs.categorie$Provider;
 
-    const bronEnProvider$: rx.Observable<[string, CategorieObsProvider]> = services$.pipe(
-      collectOption(s => s.map(svcsToCategorieenProvider)),
-      switchMap(catProv => gekozenBron$.pipe(map(bron => [bron, catProv] as [string, CategorieObsProvider]))),
+    const bronEnProvider$: rx.Observable<[
+      string,
+      CategorieObsProvider
+    ]> = services$.pipe(
+      collectOption((s) => s.map(svcsToCategorieenProvider)),
+      switchMap((catProv) =>
+        gekozenBron$.pipe(
+          map((bron) => [bron, catProv] as [string, CategorieObsProvider])
+        )
+      ),
       shareReplay(1) // this.categorieen$ zit in een *ngIf
     );
 
     this.categorieen$ = bronEnProvider$.pipe(
-      switchMap(([bron, subCatProv]) => subCatProv(bron).getOrElseL(() => rx.EMPTY)),
+      switchMap(([bron, subCatProv]) =>
+        subCatProv(bron).getOrElseL(() => rx.EMPTY)
+      ),
       share()
     );
 
     this.hasCategorieen$ = rx.combineLatest(
-      bronEnProvider$.pipe(map(([bron, subCatProv]) => subCatProv(bron).isSome())),
+      bronEnProvider$.pipe(
+        map(([bron, subCatProv]) => subCatProv(bron).isSome())
+      ),
       this.bronControl.valueChanges.pipe(
         distinctUntilChanged(),
-        map(v => v !== null)
+        map((v) => v !== null)
       ),
       (bronMetCategorie, nietLegeBron) => bronMetCategorie && nietLegeBron
     );
 
     const gekozenCategorie$: rx.Observable<string> = this.categorieControl.valueChanges.pipe(
       distinctUntilChanged(),
-      filter(v => v !== null),
+      filter((v) => v !== null),
       share()
     );
 
     // Zorg ervoor dat de dropdown en resultaten leeggemaakt worden wanneer hogerop een nieuwe selectie gemaakt wordt
-    this.bindToLifeCycle(gekozenBron$).subscribe(() => this.maakVeldenLeeg(NIVEAU_VANAF_CATEGORIE));
+    this.bindToLifeCycle(gekozenBron$).subscribe(() =>
+      this.maakVeldenLeeg(NIVEAU_VANAF_CATEGORIE)
+    );
 
     // Afhankelijk of er categorieën zijn of niet, stop de selectie bij de bronControl of de categorieControl. Het
     // returntype is pure magie. De getrapte zoeker moet een object maken dat er net zo uit ziet als wat de zoekservice
@@ -96,13 +140,21 @@ export class ZoekerAlleLagenGetraptComponent extends GetraptZoekerDirective impl
     const selectie$ = bronEnProvider$.pipe(
       switchMap(([bron, subCatProv]) =>
         subCatProv(bron).foldL(
-          () => rx.of({ type: "AlleLagen", bron: bron, categorie: option.none }), //
-          () => gekozenCategorie$.pipe(map(categorie => ({ type: "AlleLagen", bron: bron, categorie: option.some(categorie) })))
+          () =>
+            rx.of({ type: "AlleLagen", bron: bron, categorie: option.none }), //
+          () =>
+            gekozenCategorie$.pipe(
+              map((categorie) => ({
+                type: "AlleLagen",
+                bron: bron,
+                categorie: option.some(categorie),
+              }))
+            )
         )
       )
     );
 
-    this.bindToLifeCycle(selectie$).subscribe(selectie => {
+    this.bindToLifeCycle(selectie$).subscribe((selectie) => {
       this.leegMakenDisabledChange.emit(false);
       this.zoek(selectie, ["AlleLagen"]);
     });

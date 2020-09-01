@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
   backend: {
-    baseUrl: "/"
-  }
+    baseUrl: "/",
+  },
 };

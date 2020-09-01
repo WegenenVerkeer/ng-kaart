@@ -22,7 +22,10 @@ import { ZoekerHelpComponent } from "./help/zoeker-help.component";
 import { ZoekerPerceelGetraptComponent } from "./perceel/zoeker-perceel-getrapt.component";
 import { ZoekerPerceelService } from "./perceel/zoeker-perceel.service";
 import { ZoekerHighlightPipe } from "./zoeker-highlight.pipe";
-import { DefaultRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
+import {
+  DefaultRepresentatieService,
+  ZOEKER_REPRESENTATIE,
+} from "./zoeker-representatie.service";
 
 const components: any[] = [
   ZoekerBoxComponent,
@@ -30,7 +33,7 @@ const components: any[] = [
   ZoekerAlleLagenGetraptComponent,
   ZoekerHelpComponent,
   ZoekerHighlightPipe,
-  ZoekerPerceelGetraptComponent
+  ZoekerPerceelGetraptComponent,
 ];
 
 @NgModule({
@@ -46,17 +49,23 @@ const components: any[] = [
     MatButtonModule,
     MatProgressSpinnerModule,
     MatSelectModule,
-    MatTooltipModule
+    MatTooltipModule,
   ],
   declarations: [components],
   exports: [components],
-  providers: [ZoekerGoogleWdbService, ZoekerCrabService, ZoekerPerceelService]
+  providers: [ZoekerGoogleWdbService, ZoekerCrabService, ZoekerPerceelService],
 })
 export class ZoekerModule {
   static forRoot(config: ZoekerConfigData): ModuleWithProviders<ZoekerModule> {
     return {
       ngModule: ZoekerModule,
-      providers: [{ provide: ZOEKER_CFG, useValue: config }, { provide: ZOEKER_REPRESENTATIE, useClass: DefaultRepresentatieService }]
+      providers: [
+        { provide: ZOEKER_CFG, useValue: config },
+        {
+          provide: ZOEKER_REPRESENTATIE,
+          useClass: DefaultRepresentatieService,
+        },
+      ],
     };
   }
 }

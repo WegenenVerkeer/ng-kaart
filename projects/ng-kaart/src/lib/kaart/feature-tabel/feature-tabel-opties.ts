@@ -17,12 +17,20 @@ export interface FeatureTabelOpties {
 }
 
 export namespace FeatureTabelOpties {
-  export const ZetOptiesCmd = (opties: Partial<FeatureTabelOpties>): prt.ZetUiElementOpties =>
+  export const ZetOptiesCmd = (
+    opties: Partial<FeatureTabelOpties>
+  ): prt.ZetUiElementOpties =>
     prt.ZetUiElementOpties(FeatureTabelUiSelector, opties);
 
-  export const set = (opties: Partial<FeatureTabelOpties>): Endomorphism<OptiesOpUiElement> =>
+  export const set = (
+    opties: Partial<FeatureTabelOpties>
+  ): Endomorphism<OptiesOpUiElement> =>
     OptiesOpUiElement.extend(opties)(FeatureTabelUiSelector);
 
-  export const getOption = (optiesOpSelector: OptiesOpUiElement): option.Option<FeatureTabelOpties> =>
-    OptiesOpUiElement.getOption<FeatureTabelOpties>(FeatureTabelUiSelector)(optiesOpSelector);
+  export const getOption = (
+    optiesOpSelector: OptiesOpUiElement
+  ): option.Option<FeatureTabelOpties> =>
+    OptiesOpUiElement.getOption<FeatureTabelOpties>(FeatureTabelUiSelector)(
+      optiesOpSelector
+    );
 }

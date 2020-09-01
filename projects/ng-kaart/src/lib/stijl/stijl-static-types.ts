@@ -26,7 +26,13 @@ export interface StrokeStyle {
 
 export type TextAlignType = "left" | "right" | "center" | "end" | "start";
 export type TextPlacementType = "point" | "line";
-export type TextBaselineType = "bottom" | "top" | "middle" | "alphabetic" | "hanging" | "ideographic";
+export type TextBaselineType =
+  | "bottom"
+  | "top"
+  | "middle"
+  | "alphabetic"
+  | "hanging"
+  | "ideographic";
 
 export interface TextStyle {
   font?: string;
@@ -51,7 +57,11 @@ export interface CircleStyle {
   stroke?: StrokeStyle;
 }
 
-export type IconOriginType = "bottom-left" | "bottom-right" | "top-left" | "top-right";
+export type IconOriginType =
+  | "bottom-left"
+  | "bottom-right"
+  | "top-left"
+  | "top-right";
 export type IconAnchorUnitsType = "fraction" | "pixels";
 export type SizeType = [number, number];
 
@@ -92,13 +102,18 @@ export interface FullStyle {
   regularShape?: RegularShapeStyle;
 }
 
-///////////////////////////
+/// ////////////////////////
 // Acessors & constructors
 //
 
-const isCircle: Refinement<ImageStyle, CircleStyle> = (img): img is CircleStyle => img.hasOwnProperty("radius");
-const isIcon: Refinement<ImageStyle, IconStyle> = (icn): icn is IconStyle => !icn.hasOwnProperty("radius") && !icn.hasOwnProperty("points");
-const isRegularShape: Refinement<ImageStyle, RegularShapeStyle> = (shp): shp is RegularShapeStyle => shp.hasOwnProperty("points");
+const isCircle: Refinement<ImageStyle, CircleStyle> = (
+  img
+): img is CircleStyle => img.hasOwnProperty("radius");
+const isIcon: Refinement<ImageStyle, IconStyle> = (icn): icn is IconStyle =>
+  !icn.hasOwnProperty("radius") && !icn.hasOwnProperty("points");
+const isRegularShape: Refinement<ImageStyle, RegularShapeStyle> = (
+  shp
+): shp is RegularShapeStyle => shp.hasOwnProperty("points");
 
 export function matchImageStyle<A>(
   image: ImageStyle,
@@ -106,14 +121,23 @@ export function matchImageStyle<A>(
   fi: Function1<IconStyle, A>,
   frs: Function1<RegularShapeStyle, A>
 ): A {
-  return isCircle(image) ? fc(image) : isRegularShape(image) ? frs(image) : fi(image);
+  return isCircle(image)
+    ? fc(image)
+    : isRegularShape(image)
+    ? frs(image)
+    : fi(image);
 }
 
-export function FullStyle(rec: { fill?: FillStyle; stroke?: StrokeStyle; text?: TextStyle; image?: ImageStyle }): FullStyle {
+export function FullStyle(rec: {
+  fill?: FillStyle;
+  stroke?: StrokeStyle;
+  text?: TextStyle;
+  image?: ImageStyle;
+}): FullStyle {
   const base = {
     fill: rec.fill,
     stroke: rec.stroke,
-    text: rec.text
+    text: rec.text,
   };
   if (rec.image) {
     if (isCircle(rec.image)) {
@@ -129,27 +153,56 @@ export function FullStyle(rec: { fill?: FillStyle; stroke?: StrokeStyle; text?: 
   return base;
 }
 
-/////////////////////////////////////////
+/// //////////////////////////////////////
 // Manipulatie en inspectie van het model
 //
-const isFullStyle: Refinement<AwvV0StaticStyle, FullStyle> = (ass): ass is FullStyle => !ass.hasOwnProperty("fullLine");
-export const fullStylePrism: Prism<AwvV0StaticStyle, FullStyle> = new Prism(option.fromPredicate(isFullStyle), identity);
+const isFullStyle: Refinement<AwvV0StaticStyle, FullStyle> = (
+  ass
+): ass is FullStyle => !ass.hasOwnProperty("fullLine");
+export const fullStylePrism: Prism<AwvV0StaticStyle, FullStyle> = new Prism(
+  option.fromPredicate(isFullStyle),
+  identity
+);
 
 export namespace Image {
-  export const circlePrism: Prism<ImageStyle, CircleStyle> = Prism.fromRefinement(isCircle);
-  export const iconPrism: Prism<ImageStyle, IconStyle> = Prism.fromRefinement(isIcon);
-  export const regularShapePrism: Prism<ImageStyle, RegularShapeStyle> = Prism.fromRefinement(isRegularShape);
+  export const circlePrism: Prism<
+    ImageStyle,
+    CircleStyle
+  > = Prism.fromRefinement(isCircle);
+  export const iconPrism: Prism<ImageStyle, IconStyle> = Prism.fromRefinement(
+    isIcon
+  );
+  export const regularShapePrism: Prism<
+    ImageStyle,
+    RegularShapeStyle
+  > = Prism.fromRefinement(isRegularShape);
 }
 
+// eslint-disable-next-line no-redeclare
 export namespace FullStyle {
-  export const strokeOptional: Optional<FullStyle, StrokeStyle> = Optional.fromNullableProp("stroke");
-  export const circleOptional: Optional<FullStyle, CircleStyle> = Optional.fromNullableProp("circle");
-  export const iconOptional: Optional<FullStyle, IconStyle> = Optional.fromNullableProp("icon");
-  export const regularShapeOptional: Optional<FullStyle, RegularShapeStyle> = Optional.fromNullableProp("regularShape");
+  export const strokeOptional: Optional<
+    FullStyle,
+    StrokeStyle
+  > = Optional.fromNullableProp("stroke");
+  export const circleOptional: Optional<
+    FullStyle,
+    CircleStyle
+  > = Optional.fromNullableProp("circle");
+  export const iconOptional: Optional<
+    FullStyle,
+    IconStyle
+  > = Optional.fromNullableProp("icon");
+  export const regularShapeOptional: Optional<
+    FullStyle,
+    RegularShapeStyle
+  > = Optional.fromNullableProp("regularShape");
 }
 
 export namespace Circle {
-  export const fillOptional: Optional<CircleStyle, FillStyle> = Optional.fromNullableProp("fill");
+  export const fillOptional: Optional<
+    CircleStyle,
+    FillStyle
+  > = Optional.fromNullableProp("fill");
 }
 
 export namespace Fill {
@@ -157,12 +210,18 @@ export namespace Fill {
 }
 
 export namespace Stroke {
-  export const colorOptional: Optional<StrokeStyle, ColorType> = Optional.fromNullableProp("color");
+  export const colorOptional: Optional<
+    StrokeStyle,
+    ColorType
+  > = Optional.fromNullableProp("color");
 }
 
 export namespace Color {
   // Merk op dat deze effectief de opgeslagen string omzet naar een Kleur. Dat faalt wanneer de kleur niet een van de bekende kleuren is,
   // maar dat is geen probleem voor onze huidige use cases. Evt. kan er een kleurLens gemaakt worden die nooit faalt (door meer te
   // aanvaarden en/of een fallback te gebruiken).
-  export const kleurOptional: Optional<ColorType, Kleur> = new Optional(stringToKleur, kleur => () => kleurcodeValue(kleur));
+  export const kleurOptional: Optional<
+    ColorType,
+    Kleur
+  > = new Optional(stringToKleur, (kleur) => () => kleurcodeValue(kleur));
 }

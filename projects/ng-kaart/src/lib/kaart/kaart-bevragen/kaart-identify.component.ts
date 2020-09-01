@@ -7,7 +7,10 @@ import { map, switchMap } from "rxjs/operators";
 import { ofType } from "../../util";
 import { Feature } from "../../util/feature";
 import { KaartChildDirective } from "../kaart-child.directive";
-import { IdentifyInfoBoodschapGeslotenMsg, identifyInfoBoodschapGeslotenMsgGen } from "../kaart-internal-messages";
+import {
+  IdentifyInfoBoodschapGeslotenMsg,
+  identifyInfoBoodschapGeslotenMsgGen,
+} from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 
@@ -17,36 +20,42 @@ import { IdentifyOpties, IdentifyUiSelector } from "./kaart-identify-opties";
 // geselecteerde features.
 @Component({
   selector: "awv-identify",
-  template: ""
+  template: "",
 })
-export class KaartIdentifyComponent extends KaartChildDirective implements OnInit, OnDestroy {
+export class KaartIdentifyComponent
+  extends KaartChildDirective
+  implements OnInit, OnDestroy {
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
 
-    this.dispatch(prt.InitUiElementOpties(IdentifyUiSelector, { identifyOnderdrukt: false }));
-    const options$ = this.accumulatedOpties$<IdentifyOpties>(IdentifyUiSelector);
+    this.dispatch(
+      prt.InitUiElementOpties(IdentifyUiSelector, { identifyOnderdrukt: false })
+    );
+    const options$ = this.accumulatedOpties$<IdentifyOpties>(
+      IdentifyUiSelector
+    );
     const geselecteerdeFeatures$ = this.modelChanges.geselecteerdeFeatures$;
 
     const verwijderdMsgs$ = geselecteerdeFeatures$.pipe(
       map(
         flow(
-          gf => gf.verwijderd,
+          (gf) => gf.verwijderd,
           array.filterMap(Feature.featureWithIdAndLaagnaam), // OK voor alle features uit geselecteerdeFeatures$
-          array.map(feature => prt.VerbergInfoBoodschapCmd(feature.id))
+          array.map((feature) => prt.VerbergInfoBoodschapCmd(feature.id))
         )
       ),
-      switchMap(msgs => rx.scheduled(msgs, rx.asapScheduler)) // convert Obs<array> to Array<obs>
+      switchMap((msgs) => rx.scheduled(msgs, rx.asapScheduler)) // convert Obs<array> to Array<obs>
     );
     const toegevoegdMsgs$ = options$.pipe(
-      switchMap(options =>
+      switchMap((options) =>
         options.identifyOnderdrukt
           ? rx.EMPTY
           : geselecteerdeFeatures$.pipe(
               map(
                 flow(
-                  gf => gf.toegevoegd,
+                  (gf) => gf.toegevoegd,
                   array.filterMap(Feature.featureWithIdAndLaagnaam), // OK voor alle features uit geselecteerdeFeatures$
-                  array.map(feature =>
+                  array.map((feature) =>
                     prt.ToonInfoBoodschapCmd({
                       id: feature.id,
                       type: "InfoBoodschapIdentify" as "InfoBoodschapIdentify",
@@ -55,21 +64,28 @@ export class KaartIdentifyComponent extends KaartChildDirective implements OnIni
                       bron: option.none,
                       laag: option.none,
                       sluit: "DOOR_APPLICATIE",
-                      verbergMsgGen: () => option.some(identifyInfoBoodschapGeslotenMsgGen(feature.feature))
+                      verbergMsgGen: () =>
+                        option.some(
+                          identifyInfoBoodschapGeslotenMsgGen(feature.feature)
+                        ),
                     })
                   )
                 )
               ),
-              switchMap(msgs => rx.scheduled(msgs, rx.asapScheduler)) // convert Obs<array> to Array<obs>
+              switchMap((msgs) => rx.scheduled(msgs, rx.asapScheduler)) // convert Obs<array> to Array<obs>
             )
       )
     );
 
     const deselecteerCmd$ = this.internalMessage$.pipe(
       ofType<IdentifyInfoBoodschapGeslotenMsg>("IdentifyInfoBoodschapGesloten"),
-      map(msg => prt.DeselecteerFeatureCmd([msg.feature]))
+      map((msg) => prt.DeselecteerFeatureCmd([msg.feature]))
     );
 
-    this.dispatchCmdsInViewReady(verwijderdMsgs$, toegevoegdMsgs$, deselecteerCmd$);
+    this.dispatchCmdsInViewReady(
+      verwijderdMsgs$,
+      toegevoegdMsgs$,
+      deselecteerCmd$
+    );
   }
 }

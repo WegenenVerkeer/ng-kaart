@@ -1,4 +1,10 @@
-import { Component, Injector, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import {
+  Component,
+  Injector,
+  OnDestroy,
+  OnInit,
+  ViewEncapsulation,
+} from "@angular/core";
 
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
@@ -22,9 +28,11 @@ import { ClassicBaseDirective } from "../classic-base.directive";
 @Component({
   selector: "awv-kaart-knop-achtergrondlaag-kiezer",
   template: "",
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
-export class ClassicAchtergrondSelectorComponent extends ClassicBaseDirective implements OnInit, OnDestroy {
+export class ClassicAchtergrondSelectorComponent
+  extends ClassicBaseDirective
+  implements OnInit, OnDestroy {
   constructor(injector: Injector) {
     super(injector);
   }

@@ -2,7 +2,14 @@ import { HttpClient, HttpParams } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
 import { option } from "fp-ts";
 import * as rx from "rxjs";
-import { catchError, map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
+import {
+  catchError,
+  map,
+  mergeAll,
+  mergeMap,
+  reduce,
+  shareReplay,
+} from "rxjs/operators";
 
 import * as ol from "../../util/openlayers-compat";
 import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
@@ -18,9 +25,12 @@ import {
   ZoekKaartResultaat,
   Zoekopdracht,
   ZoekResultaat,
-  Zoektype
+  Zoektype,
 } from "../zoeker";
-import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
+import {
+  AbstractRepresentatieService,
+  ZOEKER_REPRESENTATIE,
+} from "../zoeker-representatie.service";
 
 import * as help from "./zoeker-crab-help";
 
@@ -145,7 +155,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
       style: style,
       highlightStyle: highlightStyle,
       geometry: geometry,
-      extent: extent ? extent : geometry.getExtent()
+      extent: extent ? extent : geometry.getExtent(),
     });
   }
 }
@@ -158,10 +168,15 @@ export class ZoekerCrabService implements Zoeker {
   constructor(
     private readonly http: HttpClient,
     @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
-    @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
+    @Inject(ZOEKER_REPRESENTATIE)
+    private zoekerRepresentatie: AbstractRepresentatieService
   ) {
-    this.locatorServicesConfig = new ZoekerConfigLocatorServicesConfig(zoekerConfigData.locatorServices);
-    this.legende = new Map([[this.naam(), this.zoekerRepresentatie.getSvgIcon("Crab")]]);
+    this.locatorServicesConfig = new ZoekerConfigLocatorServicesConfig(
+      zoekerConfigData.locatorServices
+    );
+    this.legende = new Map([
+      [this.naam(), this.zoekerRepresentatie.getSvgIcon("Crab")],
+    ]);
   }
 
   naam(): string {
@@ -169,10 +184,18 @@ export class ZoekerCrabService implements Zoeker {
   }
 
   help(helpBoom: ZoekerHelpBoom) {
-    helpBoom.voegItemToe(help.getrapt, "een locatie", "een adres", "Getrapt zoeken naar een adres");
+    helpBoom.voegItemToe(
+      help.getrapt,
+      "een locatie",
+      "een adres",
+      "Getrapt zoeken naar een adres"
+    );
   }
 
-  private voegCrabResultatenToe(result: ZoekAntwoord, crabResultaten: LocatorServiceResults): ZoekAntwoord {
+  private voegCrabResultatenToe(
+    result: ZoekAntwoord,
+    crabResultaten: LocatorServiceResults
+  ): ZoekAntwoord {
     const startIndex = result.resultaten.length;
     const resultaten = result.resultaten.concat(
       crabResultaten.LocationResult
@@ -195,17 +218,40 @@ export class ZoekerCrabService implements Zoeker {
             )
         )
     );
-    return new ZoekAntwoord(result.zoeker, result.zoektype, result.fouten, resultaten, result.legende);
+    return new ZoekAntwoord(
+      result.zoeker,
+      result.zoektype,
+      result.fouten,
+      resultaten,
+      result.legende
+    );
   }
 
   getAlleGemeenten$(): rx.Observable<CrabGemeente[]> {
     return this.http
-      .get<CrabGemeenteData[]>(this.locatorServicesConfig.url + "/rest/crab/gemeenten")
-      .pipe(map(gemeentes => gemeentes.map(gemeente => new CrabGemeente(gemeente)), shareReplay(1)));
+      .get<CrabGemeenteData[]>(
+        this.locatorServicesConfig.url + "/rest/crab/gemeenten"
+      )
+      .pipe(
+        map(
+          (gemeentes) =>
+            gemeentes.map((gemeente) => new CrabGemeente(gemeente)),
+          shareReplay(1)
+        )
+      );
   }
 
-  private bboxNaarZoekResultaat(naam: string, bron: string, bbox: CrabBBoxData): CrabZoekResultaat {
-    const extent: ol.Extent = [bbox.minimumX, bbox.minimumY, bbox.maximumX, bbox.maximumY];
+  private bboxNaarZoekResultaat(
+    naam: string,
+    bron: string,
+    bbox: CrabBBoxData
+  ): CrabZoekResultaat {
+    const extent: ol.Extent = [
+      bbox.minimumX,
+      bbox.minimumY,
+      bbox.maximumX,
+      bbox.maximumY,
+    ];
     const middlePoint = ol.extent.getCenter(extent);
     return new CrabZoekResultaat(
       middlePoint[0],
@@ -221,7 +267,11 @@ export class ZoekerCrabService implements Zoeker {
     );
   }
 
-  private positieNaarZoekResultaat(naam: string, bron: string, pos: CrabPositieData): CrabZoekResultaat {
+  private positieNaarZoekResultaat(
+    naam: string,
+    bron: string,
+    pos: CrabPositieData
+  ): CrabZoekResultaat {
     return new CrabZoekResultaat(
       pos.x,
       pos.y,
@@ -235,52 +285,100 @@ export class ZoekerCrabService implements Zoeker {
     );
   }
 
-  private getGemeenteBBox$(gemeente: CrabGemeente): rx.Observable<ZoekAntwoord> {
-    return this.http.get<CrabBBoxData>(this.locatorServicesConfig.url + "/rest/crab/gemeente/" + gemeente.niscode).pipe(
-      map(
-        bbox =>
-          new ZoekAntwoord(this.naam(), "Volledig", [], [this.bboxNaarZoekResultaat(gemeente.naam, "CrabGemeente", bbox)], this.legende)
-      ),
-      shareReplay(1)
-    );
+  private getGemeenteBBox$(
+    gemeente: CrabGemeente
+  ): rx.Observable<ZoekAntwoord> {
+    return this.http
+      .get<CrabBBoxData>(
+        this.locatorServicesConfig.url +
+          "/rest/crab/gemeente/" +
+          gemeente.niscode
+      )
+      .pipe(
+        map(
+          (bbox) =>
+            new ZoekAntwoord(
+              this.naam(),
+              "Volledig",
+              [],
+              [this.bboxNaarZoekResultaat(gemeente.naam, "CrabGemeente", bbox)],
+              this.legende
+            )
+        ),
+        shareReplay(1)
+      );
   }
 
   getStraten$(gemeente: CrabGemeente): rx.Observable<CrabStraat[]> {
-    return this.http.get<CrabStraatData[]>(this.locatorServicesConfig.url + "/rest/crab/straten/" + gemeente.niscode).pipe(
-      map(straten => straten.map(straat => new CrabStraat(gemeente, straat))),
-      shareReplay(1)
-    );
+    return this.http
+      .get<CrabStraatData[]>(
+        this.locatorServicesConfig.url +
+          "/rest/crab/straten/" +
+          gemeente.niscode
+      )
+      .pipe(
+        map((straten) =>
+          straten.map((straat) => new CrabStraat(gemeente, straat))
+        ),
+        shareReplay(1)
+      );
   }
 
   private getStraatBBox$(straat: CrabStraat): rx.Observable<ZoekAntwoord> {
-    return this.http.get<CrabBBoxData>(this.locatorServicesConfig.url + "/rest/crab/straat/" + straat.id).pipe(
-      map(
-        bbox =>
-          new ZoekAntwoord(
-            this.naam(),
-            "Volledig",
-            [],
-            [this.bboxNaarZoekResultaat(`${straat.naam}, ${straat.gemeente.naam}`, "CrabStraat", bbox)],
-            this.legende
-          )
-      ),
-      shareReplay(1)
-    );
+    return this.http
+      .get<CrabBBoxData>(
+        this.locatorServicesConfig.url + "/rest/crab/straat/" + straat.id
+      )
+      .pipe(
+        map(
+          (bbox) =>
+            new ZoekAntwoord(
+              this.naam(),
+              "Volledig",
+              [],
+              [
+                this.bboxNaarZoekResultaat(
+                  `${straat.naam}, ${straat.gemeente.naam}`,
+                  "CrabStraat",
+                  bbox
+                ),
+              ],
+              this.legende
+            )
+        ),
+        shareReplay(1)
+      );
   }
 
   getHuisnummers$(straat: CrabStraat): rx.Observable<CrabHuisnummer[]> {
-    return this.http.get<CrabHuisnummerData[]>(this.locatorServicesConfig.url + "/rest/crab/huisnummers/" + straat.id).pipe(
-      map(huisnummers => huisnummers.map(huisnummer => new CrabHuisnummer(straat, huisnummer))),
-      shareReplay(1)
-    );
+    return this.http
+      .get<CrabHuisnummerData[]>(
+        this.locatorServicesConfig.url + "/rest/crab/huisnummers/" + straat.id
+      )
+      .pipe(
+        map((huisnummers) =>
+          huisnummers.map(
+            (huisnummer) => new CrabHuisnummer(straat, huisnummer)
+          )
+        ),
+        shareReplay(1)
+      );
   }
 
-  private getHuisnummerPositie$(huisnummer: CrabHuisnummer): rx.Observable<ZoekAntwoord> {
+  private getHuisnummerPositie$(
+    huisnummer: CrabHuisnummer
+  ): rx.Observable<ZoekAntwoord> {
     return this.http
-      .get<CrabPositieData>(this.locatorServicesConfig.url + "/rest/crab/huisnummer/" + huisnummer.straat.id + "/" + huisnummer.huisnummer)
+      .get<CrabPositieData>(
+        this.locatorServicesConfig.url +
+          "/rest/crab/huisnummer/" +
+          huisnummer.straat.id +
+          "/" +
+          huisnummer.huisnummer
+      )
       .pipe(
         map(
-          positie =>
+          (positie) =>
             new ZoekAntwoord(
               this.naam(),
               "Volledig",
@@ -290,7 +388,7 @@ export class ZoekerCrabService implements Zoeker {
                   `${huisnummer.straat.naam} ${huisnummer.huisnummer}, ${huisnummer.straat.gemeente.naam}`,
                   "CrabHuis",
                   positie
-                )
+                ),
               ],
               this.legende
             )
@@ -311,7 +409,11 @@ export class ZoekerCrabService implements Zoeker {
   private zoek$(zoekinput: ZoekInput): rx.Observable<ZoekAntwoord> {
     switch (zoekinput.type) {
       case "string":
-        return this.tekstzoekResultaten(zoekinput.value, "Volledig", this.locatorServicesConfig.maxAantal);
+        return this.tekstzoekResultaten(
+          zoekinput.value,
+          "Volledig",
+          this.locatorServicesConfig.maxAantal
+        );
       case "CrabGemeente":
         return this.getGemeenteBBox$(zoekinput as CrabGemeente);
       case "CrabStraat":
@@ -332,30 +434,53 @@ export class ZoekerCrabService implements Zoeker {
     }
   }
 
-  private tekstzoekResultaten(zoekterm: string, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekAntwoord> {
-    const options = waarde => ({ params: new HttpParams().set("query", waarde) });
+  private tekstzoekResultaten(
+    zoekterm: string,
+    zoektype: Zoektype,
+    maxResultaten: number
+  ): rx.Observable<ZoekAntwoord> {
+    const options = (waarde) => ({
+      params: new HttpParams().set("query", waarde),
+    });
 
-    const zoekDetail$ = detail =>
-      this.http.get<LocatorServiceResults>(this.locatorServicesConfig.url + "/rest/geolocation/location", options(detail));
+    const zoekDetail$ = (detail) =>
+      this.http.get<LocatorServiceResults>(
+        this.locatorServicesConfig.url + "/rest/geolocation/location",
+        options(detail)
+      );
 
-    const zoekSuggesties$ = suggestie =>
-      this.http.get<SuggestionServiceResults>(this.locatorServicesConfig.url + "/rest/geolocation/suggestion", options(suggestie));
+    const zoekSuggesties$ = (suggestie) =>
+      this.http.get<SuggestionServiceResults>(
+        this.locatorServicesConfig.url + "/rest/geolocation/suggestion",
+        options(suggestie)
+      );
 
     return zoekSuggesties$(zoekterm).pipe(
-      map(
-        suggestieResultaten =>
-          rx
-            .from(suggestieResultaten.SuggestionResult.slice(0, maxResultaten)) // niet meer details opvragen dan we nodig hebben
-            .pipe(mergeMap(suggestie => zoekDetail$(suggestie))) // mergeMap omdat from individueel emit (kan beter met .of en map op array)
+      map((suggestieResultaten) =>
+        rx
+          // niet meer details opvragen dan we nodig hebben
+          .from(suggestieResultaten.SuggestionResult.slice(0, maxResultaten))
+          // mergeMap omdat from individueel emit (kan beter met .of en map op array)
+          .pipe(mergeMap((suggestie) => zoekDetail$(suggestie)))
       ),
       // mergall moet gecast worden omdat de standaard definitie fout is: https://github.com/ReactiveX/rxjs/issues/3290
       mergeAll(5),
       reduce<LocatorServiceResults, ZoekAntwoord>(
-        (zoekResultaten, crabResultaten) => this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
+        (zoekResultaten, crabResultaten) =>
+          this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
         new ZoekAntwoord(this.naam(), zoektype, [], [], this.legende)
       ),
-      map(resultaten => resultaten.limiteerAantalResultaten(maxResultaten)),
-      catchError(e => rx.of(new ZoekAntwoord(this.naam(), zoektype, ["Kon locator services niet aanroepen "], [])))
+      map((resultaten) => resultaten.limiteerAantalResultaten(maxResultaten)),
+      catchError((e) =>
+        rx.of(
+          new ZoekAntwoord(
+            this.naam(),
+            zoektype,
+            ["Kon locator services niet aanroepen "],
+            []
+          )
+        )
+      )
     );
   }
 }

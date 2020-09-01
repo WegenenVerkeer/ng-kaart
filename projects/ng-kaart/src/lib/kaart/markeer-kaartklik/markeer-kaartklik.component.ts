@@ -2,7 +2,14 @@ import { Component, NgZone } from "@angular/core";
 import { eq, map as maps, option } from "fp-ts";
 import { Function1, Function2 } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, mapTo, pairwise, switchMap } from "rxjs/operators";
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  mapTo,
+  pairwise,
+  switchMap,
+} from "rxjs/operators";
 
 import * as ss from "../../kaart/stijl-selector";
 import { Transparantie } from "../../transparantieeditor/transparantie";
@@ -10,7 +17,11 @@ import { ofType } from "../../util";
 import * as ol from "../../util/openlayers-compat";
 import { KaartChildDirective } from "../kaart-child.directive";
 import * as ke from "../kaart-elementen";
-import { InfoBoodschappenMsg, KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
+import {
+  InfoBoodschappenMsg,
+  KaartInternalMsg,
+  kaartLogOnlyWrapper,
+} from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { OptiesRecord } from "../ui-element-opties";
@@ -24,9 +35,12 @@ export interface MarkeerKaartklikOpties extends OptiesRecord {
   readonly id: string;
 }
 
-const featureGen: Function2<ol.Coordinate, ss.Stylish, ol.Feature> = (location, style) => {
+const featureGen: Function2<ol.Coordinate, ss.Stylish, ol.Feature> = (
+  location,
+  style
+) => {
   const feature = new ol.Feature({
-    geometry: new ol.geom.Point(location)
+    geometry: new ol.geom.Point(location),
   });
   feature.setStyle(style);
   return feature;
@@ -40,16 +54,16 @@ export const defaultMarkerStyle = new ol.style.Style({
     scale: 0.5,
     opacity: 1,
     src:
-      // tslint:disable-next-line: max-line-length
-      "data:image/svg+xml;utf8;charset=utf-8;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjxzdmcgdmVyc2lvbj0iMS4xIiB3aWR0aD0iNzEiIGhlaWdodD0iNzEiIHZpZXdCb3g9IjAgMCAzMCAzMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48ZmlsdGVyIGlkPSJmaWx0ZXI0NzExIiB4PSItLjA3MiIgeT0iLS4wNzIiIHdpZHRoPSIxLjE0NCIgaGVpZ2h0PSIxLjE0NCIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIj48ZmVHYXVzc2lhbkJsdXIgc3RkRGV2aWF0aW9uPSIwLjE4MzA2MDAxIi8+PC9maWx0ZXI+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0uMTgyNSA5LjA3NykiPjxnIHRyYW5zZm9ybT0ibWF0cml4KDQuOTE5IDAgMCA0LjkxOSAtMzcuMzggLTQyLjE5KSIgZmlsbC1vcGFjaXR5PSIuMjUxIj48Y2lyY2xlIGN4PSIxMC42OSIgY3k9IjkuNzgiIHI9IjMuMDUxIiBmaWxsLW9wYWNpdHk9Ii4yNTEiLz48L2c+PC9nPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0uMTgyNSA5LjA3NykiPjxnIHRyYW5zZm9ybT0ibWF0cml4KDEuNzE0IDAgMCAxLjcxNCAtMy4xMTQgLTEwLjg1KSIgZmlsdGVyPSJ1cmwoI2ZpbHRlcjQ3MTEpIj48Y2lyY2xlIGN4PSIxMC42OSIgY3k9IjkuNzgiIHI9IjMuMDUxIi8+PC9nPjxnIHRyYW5zZm9ybT0ibWF0cml4KDEuNTU5IDAgMCAxLjU1OSAtMS40NTYgLTkuMzMxKSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9Ii4zMDkiPjxjaXJjbGUgY3g9IjEwLjY5IiBjeT0iOS43OCIgcj0iMy4wNTEiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIuMzA5Ii8+PC9nPjxnIHRyYW5zZm9ybT0ibWF0cml4KDEuODQyIDAgMCAxLjAxNSAyMC42MyAtMzIuNDkpIj48cGF0aCBkPSJtMTAuNSAxOC4xNnYtNy42NTciIGZpbGw9Im5vbmUiLz48L2c+PGcgdHJhbnNmb3JtPSJtYXRyaXgoLjU1MjcgMCAwIC41NTI3IDkuMyAtLjk5NzUpIiBmaWxsPSIjZmZmIj48Y2lyY2xlIGN4PSIxMC42OSIgY3k9IjkuNzgiIHI9IjMuMDUxIiBmaWxsPSIjZmZmIi8+PC9nPjxnIHRyYW5zZm9ybT0ibWF0cml4KC42ODU1IDAgMCAuMzc3NiA4LjAwOSAyLjI1NikiIGZpbGw9IiNmZmYiPjxwYXRoIGQ9Im0xMS4yIDE4LjAxcy0wLjcyNDIgMC43MDA5LTEuNDA2IDB2LTcuNjU3YzAuNjAwOCAwLjU1OTcgMS40MDYgMCAxLjQwNiAweiIgZmlsbD0iI2ZmZiIvPjwvZz48L2c+PC9zdmc+"
-  })
+      // eslint-disable-next-line max-len
+      "data:image/svg+xml;utf8;charset=utf-8;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjxzdmcgdmVyc2lvbj0iMS4xIiB3aWR0aD0iNzEiIGhlaWdodD0iNzEiIHZpZXdCb3g9IjAgMCAzMCAzMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48ZmlsdGVyIGlkPSJmaWx0ZXI0NzExIiB4PSItLjA3MiIgeT0iLS4wNzIiIHdpZHRoPSIxLjE0NCIgaGVpZ2h0PSIxLjE0NCIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIj48ZmVHYXVzc2lhbkJsdXIgc3RkRGV2aWF0aW9uPSIwLjE4MzA2MDAxIi8+PC9maWx0ZXI+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0uMTgyNSA5LjA3NykiPjxnIHRyYW5zZm9ybT0ibWF0cml4KDQuOTE5IDAgMCA0LjkxOSAtMzcuMzggLTQyLjE5KSIgZmlsbC1vcGFjaXR5PSIuMjUxIj48Y2lyY2xlIGN4PSIxMC42OSIgY3k9IjkuNzgiIHI9IjMuMDUxIiBmaWxsLW9wYWNpdHk9Ii4yNTEiLz48L2c+PC9nPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0uMTgyNSA5LjA3NykiPjxnIHRyYW5zZm9ybT0ibWF0cml4KDEuNzE0IDAgMCAxLjcxNCAtMy4xMTQgLTEwLjg1KSIgZmlsdGVyPSJ1cmwoI2ZpbHRlcjQ3MTEpIj48Y2lyY2xlIGN4PSIxMC42OSIgY3k9IjkuNzgiIHI9IjMuMDUxIi8+PC9nPjxnIHRyYW5zZm9ybT0ibWF0cml4KDEuNTU5IDAgMCAxLjU1OSAtMS40NTYgLTkuMzMxKSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9Ii4zMDkiPjxjaXJjbGUgY3g9IjEwLjY5IiBjeT0iOS43OCIgcj0iMy4wNTEiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIuMzA5Ii8+PC9nPjxnIHRyYW5zZm9ybT0ibWF0cml4KDEuODQyIDAgMCAxLjAxNSAyMC42MyAtMzIuNDkpIj48cGF0aCBkPSJtMTAuNSAxOC4xNnYtNy42NTciIGZpbGw9Im5vbmUiLz48L2c+PGcgdHJhbnNmb3JtPSJtYXRyaXgoLjU1MjcgMCAwIC41NTI3IDkuMyAtLjk5NzUpIiBmaWxsPSIjZmZmIj48Y2lyY2xlIGN4PSIxMC42OSIgY3k9IjkuNzgiIHI9IjMuMDUxIiBmaWxsPSIjZmZmIi8+PC9nPjxnIHRyYW5zZm9ybT0ibWF0cml4KC42ODU1IDAgMCAuMzc3NiA4LjAwOSAyLjI1NikiIGZpbGw9IiNmZmYiPjxwYXRoIGQ9Im0xMS4yIDE4LjAxcy0wLjcyNDIgMC43MDA5LTEuNDA2IDB2LTcuNjU3YzAuNjAwOCAwLjU1OTcgMS40MDYgMCAxLjQwNiAweiIgZmlsbD0iI2ZmZiIvPjwvZz48L2c+PC9zdmc+",
+  }),
 });
 
 const defaultOpties: MarkeerKaartklikOpties = {
   markerStyle: defaultMarkerStyle,
   disabled: false,
   includeFeatureClick: false,
-  id: "default"
+  id: "default",
 };
 
 const markerLayerTitle = "markeerkaartkliklayer";
@@ -71,22 +85,27 @@ const markerLayer: ke.VectorLaag = {
   offsetveld: option.none,
   verwijderd: false,
   rijrichtingIsDigitalisatieZin: false,
-  filter: option.none
+  filter: option.none,
 };
 
-const vervangFeatures: Function1<ol.Feature[], prt.VervangFeaturesCmd<KaartInternalMsg>> = features => ({
+const vervangFeatures: Function1<
+  ol.Feature[],
+  prt.VervangFeaturesCmd<KaartInternalMsg>
+> = (features) => ({
   type: "VervangFeatures",
   titel: markerLayer.titel,
   features: features,
-  wrapper: kaartLogOnlyWrapper
+  wrapper: kaartLogOnlyWrapper,
 });
 
-export const ZetMaarkeerKaartklikOptiesCmd = (opties: Partial<MarkeerKaartklikOpties>): prt.ZetUiElementOpties =>
+export const ZetMaarkeerKaartklikOptiesCmd = (
+  opties: Partial<MarkeerKaartklikOpties>
+): prt.ZetUiElementOpties =>
   prt.ZetUiElementOpties(MarkeerKaartklikUiSelector, opties);
 
 @Component({
   selector: "awv-markeer-kaartklik",
-  template: ""
+  template: "",
 })
 export class MarkeerKaartklikComponent extends KaartChildDirective {
   constructor(parent: KaartComponent, zone: NgZone) {
@@ -104,26 +123,32 @@ export class MarkeerKaartklikComponent extends KaartChildDirective {
         stijlInLagenKiezer: option.none,
         filterinstellingen: option.none,
         laagtabelinstellingen: option.none,
-        wrapper: kaartLogOnlyWrapper
+        wrapper: kaartLogOnlyWrapper,
       })
     );
     this.destroying$.subscribe(() =>
       this.dispatch({
         type: "VerwijderLaag",
         titel: markerLayer.titel,
-        wrapper: kaartLogOnlyWrapper
+        wrapper: kaartLogOnlyWrapper,
       })
     );
 
-    this.dispatch(prt.InitUiElementOpties(MarkeerKaartklikUiSelector, defaultOpties));
-    const opties$ = this.accumulatedOpties$<MarkeerKaartklikOpties>(MarkeerKaartklikUiSelector);
+    this.dispatch(
+      prt.InitUiElementOpties(MarkeerKaartklikUiSelector, defaultOpties)
+    );
+    const opties$ = this.accumulatedOpties$<MarkeerKaartklikOpties>(
+      MarkeerKaartklikUiSelector
+    );
     const kaartKlik$ = this.modelChanges.kaartKlikLocatie$;
-    const otherActive$ = this.modelChanges.actieveModus$.pipe(map(maybeModus => maybeModus.isSome()));
+    const otherActive$ = this.modelChanges.actieveModus$.pipe(
+      map((maybeModus) => maybeModus.isSome())
+    );
 
     const identifyBoodschapGesloten$ = this.internalMessage$.pipe(
       ofType<InfoBoodschappenMsg>("InfoBoodschappen"), // enkel de lijst van boodschappen intereseert ons
       map(
-        msg =>
+        (msg) =>
           maps
             .lookup(eq.eqString)("kaart_bevragen", msg.infoBoodschappen)
             .isSome() // was er een kaart bevragen boodschap bij?
@@ -134,7 +159,10 @@ export class MarkeerKaartklikComponent extends KaartChildDirective {
     );
 
     const wis$ = rx
-      .merge(rx.combineLatest(opties$, otherActive$, (o, a) => o.disabled || a), identifyBoodschapGesloten$)
+      .merge(
+        rx.combineLatest(opties$, otherActive$, (o, a) => o.disabled || a),
+        identifyBoodschapGesloten$
+      )
       .pipe(distinctUntilChanged());
 
     const markerFeature$ = rx.combineLatest(opties$, otherActive$).pipe(
@@ -142,14 +170,16 @@ export class MarkeerKaartklikComponent extends KaartChildDirective {
         opties.disabled || otherActive
           ? rx.EMPTY
           : kaartKlik$.pipe(
-              filter(klik => !klik.coversFeature || opties.includeFeatureClick),
-              map(klik => featureGen(klik.coordinate, opties.markerStyle))
+              filter(
+                (klik) => !klik.coversFeature || opties.includeFeatureClick
+              ),
+              map((klik) => featureGen(klik.coordinate, opties.markerStyle))
             )
       )
     );
 
     this.dispatchCmdsInViewReady(
-      markerFeature$.pipe(map(feature => vervangFeatures([feature]))), //
+      markerFeature$.pipe(map((feature) => vervangFeatures([feature]))), //
       wis$.pipe(mapTo(vervangFeatures([])))
     );
   }

@@ -1,5 +1,13 @@
 import { BreakpointObserver, Breakpoints } from "@angular/cdk/layout";
-import { Component, ElementRef, Inject, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
+import {
+  Component,
+  ElementRef,
+  Inject,
+  Input,
+  NgZone,
+  ViewChild,
+  ViewEncapsulation,
+} from "@angular/core";
 import * as rx from "rxjs";
 import {
   debounceTime,
@@ -14,7 +22,7 @@ import {
   switchMap,
   take,
   takeUntil,
-  tap
+  tap,
 } from "rxjs/operators";
 
 import { isNonEmpty } from "../util/arrays";
@@ -31,15 +39,26 @@ import * as sets from "../util/sets";
 import { KaartBaseDirective } from "./kaart-base.directive";
 import { envParams, KAART_CFG, KaartConfig, mobile } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
-import { InfoBoodschappenMsg, KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
+import {
+  InfoBoodschappenMsg,
+  KaartInternalMsg,
+  KaartInternalSubMsg,
+} from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
 import { cleanup, KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
-import { ModelChanger, ModelChanges, modelChanges, UiElementSelectie } from "./model-changes";
+import {
+  ModelChanger,
+  ModelChanges,
+  modelChanges,
+  UiElementSelectie,
+} from "./model-changes";
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
-export type KaartMsgObservableConsumer = (msg$: rx.Observable<prt.KaartMsg>) => void;
+export type KaartMsgObservableConsumer = (
+  msg$: rx.Observable<prt.KaartMsg>
+) => void;
 export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = () => ({});
 
 export const KaartMobileFriendlyUISelector = "KaartMobileFriendlyUISelector";
@@ -48,7 +67,7 @@ export const KaartMobileFriendlyUISelector = "KaartMobileFriendlyUISelector";
   selector: "awv-kaart",
   templateUrl: "./kaart.component.html",
   styleUrls: ["./kaart.component.scss"],
-  encapsulation: ViewEncapsulation.Emulated // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
+  encapsulation: ViewEncapsulation.Emulated, // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
 })
 export class KaartComponent extends KaartBaseDirective {
   kaartLinksZichtbaar = true;
@@ -97,7 +116,9 @@ export class KaartComponent extends KaartBaseDirective {
    * (directe) invloed op de globale toestand van de kaartcomponent terwijl dat wel zo is voor de kaart messages (die
    * door de kaart reducer afgehandeld worden).
    */
-  readonly internalCmdDispatcher: ReplaySubjectKaartCmdDispatcher<KaartInternalMsg | prt.KaartMsg> = new ReplaySubjectKaartCmdDispatcher();
+  readonly internalCmdDispatcher: ReplaySubjectKaartCmdDispatcher<
+    KaartInternalMsg | prt.KaartMsg
+  > = new ReplaySubjectKaartCmdDispatcher();
 
   private readonly msgSubj = new rx.ReplaySubject<prt.KaartMsg>(1000, 500);
 
@@ -113,13 +134,17 @@ export class KaartComponent extends KaartBaseDirective {
   // Dit dient om messages naar toe te sturen
   internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.EMPTY;
 
-  constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone, breakpointObserver: BreakpointObserver) {
+  constructor(
+    @Inject(KAART_CFG) readonly config: KaartConfig,
+    zone: NgZone,
+    breakpointObserver: BreakpointObserver
+  ) {
     super(zone);
     this.internalMessage$ = this.msgSubj.pipe(
-      filter(m => m.type === "KaartInternal"), //
-      map(m => (m as KaartInternalMsg).payload),
+      filter((m) => m.type === "KaartInternal"), //
+      map((m) => (m as KaartInternalMsg).payload),
       catOptions,
-      tap(m => kaartLogger.debug("Een interne message werd ontvangen:", m)),
+      tap((m) => kaartLogger.debug("Een interne message werd ontvangen:", m)),
       shareReplay(1) // Waarom hebben we eigenlijk het vorige commando nog nodig?
     );
 
@@ -127,34 +152,43 @@ export class KaartComponent extends KaartBaseDirective {
       observeOutsideAngular(zone),
       tap(() => this.messageObsConsumer(this.msgSubj)), // Wie de messageObsConsumer @Input gezet heeft, krijgt een observable van messages
       map(() => this.initieelModel()),
-      tap(model => {
-        this.innerModelChanges = modelChanges(model, this.modelChanger, this.zone);
-        this.tabelGeopend$ = this.modelChanges.tabelActiviteit$.pipe(map(state => state === "Opengeklapt"));
+      tap((model) => {
+        this.innerModelChanges = modelChanges(
+          model,
+          this.modelChanger,
+          this.zone
+        );
+        this.tabelGeopend$ = this.modelChanges.tabelActiviteit$.pipe(
+          map((state) => state === "Opengeklapt")
+        );
         this.innerAanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
           scan(
-            (st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : sets.removeSimple(st)(selectie.naam)),
+            (st: Set<string>, selectie: UiElementSelectie) =>
+              selectie.aan
+                ? st.add(selectie.naam)
+                : sets.removeSimple(st)(selectie.naam),
             new Set<string>([])
           ),
           startWith(new Set<string>())
         );
       }),
-      switchMap(model => this.createMapModelForCommands(model)),
+      switchMap((model) => this.createMapModelForCommands(model)),
       takeUntil(this.destroying$),
       shareReplay(1)
     );
 
     this.kaartModel$.subscribe(
-      model => {
+      (model) => {
         kaartLogger.debug("reduced to", model);
         // TODO dubbels opvangen. Als we een versienummer ophogen telkens we effectief het model aanpassen, dan kunnen we
         // de modelConsumer werk besparen in die gevallen dat de reducer geen nieuwe toestand heeft gegenereerd.
       },
-      e => kaartLogger.error("error", e),
+      (e) => kaartLogger.error("error", e),
       () => kaartLogger.info("kaart & cmd terminated")
     );
 
     // Het laatste model is dit dat net voor de stream van model unsubscribed is, dus bij ngOnDestroy
-    this.kaartModel$.pipe(last()).subscribe(model => {
+    this.kaartModel$.pipe(last()).subscribe((model) => {
       kaartLogger.info(`kaart '${this.naam}' opkuisen`);
       cleanup(model);
     });
@@ -165,7 +199,7 @@ export class KaartComponent extends KaartBaseDirective {
         ofType<InfoBoodschappenMsg>("InfoBoodschappen"),
         observeOnAngular(this.zone)
       )
-      .subscribe(msg => {
+      .subscribe((msg) => {
         if (maps.isNonEmpty(msg.infoBoodschappen)) {
           this.kaartLinksZichtbaar = true;
         }
@@ -175,12 +209,19 @@ export class KaartComponent extends KaartBaseDirective {
     this.bindToLifeCycle(
       this.viewReady$.pipe(
         observeOutsideAngular(this.zone),
-        switchMap(() => resizeObservable(this.kaartLinksElement.nativeElement, this.kaartFixedLinksBovenElement.nativeElement)),
+        switchMap(() =>
+          resizeObservable(
+            this.kaartLinksElement.nativeElement,
+            this.kaartFixedLinksBovenElement.nativeElement
+          )
+        ),
         debounceTime(150), // het is voldoende om weten dat er onlangs iets aangepast is
         observeOnAngular(this.zone)
       )
     ).subscribe(() => this.pasKaartLinksWeergaveAan());
-    this.viewReady$.pipe(delay(10)).subscribe(() => this.bepaalKaartLinksInitieelZichtbaar()); // waarom is delay nodig?
+    this.viewReady$
+      .pipe(delay(10))
+      .subscribe(() => this.bepaalKaartLinksInitieelZichtbaar()); // waarom is delay nodig?
 
     // Angular heeft niet altijd door dat een van variabelen die we gebruiken voor het bepalen van de zichtbaarheid van
     // de scrollbar en inklapknop aangepast zijn.
@@ -188,7 +229,11 @@ export class KaartComponent extends KaartBaseDirective {
       .pipe(
         observeOutsideAngular(this.zone),
         switchMap(() => rx.timer(100, 100)),
-        map(() => this.kaartLinksElement.nativeElement.scrollHeight > this.kaartLinksElement.nativeElement.clientHeight),
+        map(
+          () =>
+            this.kaartLinksElement.nativeElement.scrollHeight >
+            this.kaartLinksElement.nativeElement.clientHeight
+        ),
         distinctUntilChanged(),
         debounceTime(200), // Blijkbaar is direct na de verandering nog wat te vroeg
         take(2)
@@ -201,7 +246,13 @@ export class KaartComponent extends KaartBaseDirective {
       switchMap(() => resizeObservable(this.mapElement.nativeElement)),
       debounceTime(200), // resize events komen heel vlug
       filter(isNonEmpty),
-      map(entries => [entries[0].contentRect.width, entries[0].contentRect.height] as ol.Size)
+      map(
+        (entries) =>
+          [
+            entries[0].contentRect.width,
+            entries[0].contentRect.height,
+          ] as ol.Size
+      )
     );
 
     // Luister altijd op de opties, zo zijn we zeker dat ook componenten die laat geïnstantieerd worden toegang hebben
@@ -211,37 +262,56 @@ export class KaartComponent extends KaartBaseDirective {
         take(1),
         switchMap(() => this.modelChanges.optiesOpUiElement$)
       )
-    ).subscribe(optiesOpUiElement => kaartLogger.debug("Nieuwe configuratie", optiesOpUiElement));
+    ).subscribe((optiesOpUiElement) =>
+      kaartLogger.debug("Nieuwe configuratie", optiesOpUiElement)
+    );
 
     // Het kan gebeuren dat de container waar wij ons in bevinden een andere grootte krijgt. In dat geval moeten we dat laten weten aan OL.
     // We hebben geen subject waar we commands kunnen naar toe sturen (en dat willen we ook niet), dus gebruiken we een observable die we
     // mergen met de externe en interne componentcommandos.
-    this.resizeCommand$ = this.containerResize$.pipe(map(prt.VeranderViewportCmd));
+    this.resizeCommand$ = this.containerResize$.pipe(
+      map(prt.VeranderViewportCmd)
+    );
 
-    breakpointObserver.observe([Breakpoints.HandsetPortrait]).subscribe(result => {
-      // Gebruik van built-in breakpoints uit de Material Design spec: https://material.angular.io/cdk/layout/overview
-      this.handsetPortrait = result.matches && this.onMobileDevice;
-    });
+    breakpointObserver
+      .observe([Breakpoints.HandsetPortrait])
+      .subscribe((result) => {
+        // Gebruik van built-in breakpoints uit de Material Design spec: https://material.angular.io/cdk/layout/overview
+        this.handsetPortrait = result.matches && this.onMobileDevice;
+      });
   }
 
-  private createMapModelForCommands(initieelModel: KaartWithInfo): rx.Observable<KaartWithInfo> {
+  private createMapModelForCommands(
+    initieelModel: KaartWithInfo
+  ): rx.Observable<KaartWithInfo> {
     kaartLogger.info(`Kaart '${this.naam}' aangemaakt`);
 
     const messageConsumer = (msg: prt.KaartMsg) => {
       asap(() => this.msgSubj.next(msg));
     };
 
-    return rx.merge(this.kaartCmd$, this.internalCmdDispatcher.commands$, this.resizeCommand$).pipe(
-      tap(c => kaartLogger.debug("kaart command", c)),
-      takeUntil(this.destroying$.pipe(delay(100))), // Een klein beetje extra tijd voor de cleanup commands
-      observeOutsideAngular(this.zone),
-      scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
-        const { model: newModel, message } = red.kaartCmdReducer(cmd)(model, this.modelChanger, this.modelChanges, messageConsumer);
-        kaartLogger.debug("produceert", message);
-        forEach(message, messageConsumer); // stuur het resultaat terug naar de eigenaar van de kaartcomponent
-        return newModel; // en laat het nieuwe model terugvloeien
-      }, initieelModel)
-    );
+    return rx
+      .merge(
+        this.kaartCmd$,
+        this.internalCmdDispatcher.commands$,
+        this.resizeCommand$
+      )
+      .pipe(
+        tap((c) => kaartLogger.debug("kaart command", c)),
+        takeUntil(this.destroying$.pipe(delay(100))), // Een klein beetje extra tijd voor de cleanup commands
+        observeOutsideAngular(this.zone),
+        scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
+          const { model: newModel, message } = red.kaartCmdReducer(cmd)(
+            model,
+            this.modelChanger,
+            this.modelChanges,
+            messageConsumer
+          );
+          kaartLogger.debug("produceert", message);
+          forEach(message, messageConsumer); // stuur het resultaat terug naar de eigenaar van de kaartcomponent
+          return newModel; // en laat het nieuwe model terugvloeien
+        }, initieelModel)
+      );
   }
 
   private initieelModel(): KaartWithInfo {
@@ -262,11 +332,17 @@ export class KaartComponent extends KaartBaseDirective {
         center: this.config.defaults.middelpunt,
         minZoom: this.minZoom,
         maxZoom: this.maxZoom,
-        zoom: this.config.defaults.zoom
-      })
+        zoom: this.config.defaults.zoom,
+      }),
     });
 
-    return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart, this.modelChanger);
+    return new KaartWithInfo(
+      this.config,
+      this.naam,
+      this.mapElement.nativeElement.parentElement,
+      kaart,
+      this.modelChanger
+    );
   }
 
   get modelChanges(): ModelChanges {
@@ -279,17 +355,22 @@ export class KaartComponent extends KaartBaseDirective {
 
   bepaalKaartLinksMarginTopEnMaxHeight() {
     // MarginTop correctie als de scrollbar verschijnt/verdwijnt
-    this.kaartLinksElement.nativeElement.style.marginTop = this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px";
+    this.kaartLinksElement.nativeElement.style.marginTop =
+      this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px";
     // Als er een fixed header is bovenaan links moet de max-height van kaart-links daar ook rekening mee houden.
     this.kaartLinksElement.nativeElement.style.maxHeight =
-      "calc(100% - " + this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px - 8px)"; // -8px is van padding-top.
+      "calc(100% - " +
+      this.kaartFixedLinksBovenElement.nativeElement.clientHeight +
+      "px - 8px)"; // -8px is van padding-top.
   }
 
   bepaalKaartLinksToggleZichtbaar() {
     // Toggle pas tonen vanaf 40px hoogte.
     const nuZichtbaar = this.kaartLinksToggleZichtbaar;
     this.kaartLinksToggleZichtbaar =
-      this.kaartFixedLinksBovenElement.nativeElement.clientHeight + this.kaartLinksElement.nativeElement.clientHeight >= 40;
+      this.kaartFixedLinksBovenElement.nativeElement.clientHeight +
+        this.kaartLinksElement.nativeElement.clientHeight >=
+      40;
     if (nuZichtbaar !== this.kaartLinksToggleZichtbaar) {
       this.bepaalKaartLinksBreedte(); // Als de toggle eerder niet zichtbaar was kan de breedte fout staan
     }
@@ -301,7 +382,10 @@ export class KaartComponent extends KaartBaseDirective {
   }
 
   bepaalKaartLinksBreedte() {
-    if (!this.kaartLinksBreedte && this.mapElement.nativeElement.clientWidth <= 1240) {
+    if (
+      !this.kaartLinksBreedte &&
+      this.mapElement.nativeElement.clientWidth <= 1240
+    ) {
       this.kaartLinksBreedte = 360;
     }
     if (this.kaartLinksBreedte) {
@@ -309,11 +393,15 @@ export class KaartComponent extends KaartBaseDirective {
         const kaartLinksWidth = this.kaartLinksBreedte + "px";
         this.kaartFixedLinksBovenElement.nativeElement.style.width = kaartLinksWidth;
         this.kaartLinksElement.nativeElement.style.width = kaartLinksWidth;
-        if (this.kaartLinksToggleZichtbaar && this.kaartLinksZichtbaarToggleKnopElement) {
+        if (
+          this.kaartLinksToggleZichtbaar &&
+          this.kaartLinksZichtbaarToggleKnopElement
+        ) {
           if (this.kaartLinksZichtbaar) {
             this.kaartLinksZichtbaarToggleKnopElement.nativeElement.style.left = kaartLinksWidth;
           } else {
-            this.kaartLinksZichtbaarToggleKnopElement.nativeElement.style.left = "0";
+            this.kaartLinksZichtbaarToggleKnopElement.nativeElement.style.left =
+              "0";
           }
         }
       }, 10);
@@ -327,7 +415,10 @@ export class KaartComponent extends KaartBaseDirective {
   }
 
   isKaartLinksScrollbarNodig(): boolean {
-    return this.kaartLinksElement.nativeElement.scrollHeight > this.kaartLinksElement.nativeElement.clientHeight;
+    return (
+      this.kaartLinksElement.nativeElement.scrollHeight >
+      this.kaartLinksElement.nativeElement.clientHeight
+    );
   }
 
   toggleKaartLinks() {

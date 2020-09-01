@@ -1,6 +1,17 @@
-import { AfterViewInit, Component, EventEmitter, Injector, Input, Output } from "@angular/core";
+import {
+  AfterViewInit,
+  Component,
+  EventEmitter,
+  Injector,
+  Input,
+  Output,
+} from "@angular/core";
 import * as rx from "rxjs";
-import { distinctUntilChanged, distinctUntilKeyChanged, tap } from "rxjs/operators";
+import {
+  distinctUntilChanged,
+  distinctUntilKeyChanged,
+  tap,
+} from "rxjs/operators";
 
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartLoadingUISelector } from "../../kaart/loading/kaart-loading.component";
@@ -10,7 +21,7 @@ import { BusyMsg } from "../messages";
 
 @Component({
   selector: "awv-kaart-laden",
-  template: ""
+  template: "",
 })
 export class ClassicKaartLadenComponent extends ClassicUIElementSelectorDirective {
   /**
@@ -32,7 +43,11 @@ export class ClassicKaartLadenComponent extends ClassicUIElementSelectorDirectiv
    */
   @Input()
   set defaultProgressbarEnabled(param: boolean) {
-    this.kaart.dispatch(prt.ZetUiElementOpties(KaartLoadingUISelector, { defaultProgressBar: param }));
+    this.kaart.dispatch(
+      prt.ZetUiElementOpties(KaartLoadingUISelector, {
+        defaultProgressBar: param,
+      })
+    );
   }
 
   constructor(injector: Injector) {
@@ -42,7 +57,7 @@ export class ClassicKaartLadenComponent extends ClassicUIElementSelectorDirectiv
         this.kaart.kaartClassicSubMsg$.pipe(
           ofType<BusyMsg>("Busy"),
           distinctUntilKeyChanged("busy"),
-          tap(value => {
+          tap((value) => {
             this.busy.emit(value.busy);
           })
         )

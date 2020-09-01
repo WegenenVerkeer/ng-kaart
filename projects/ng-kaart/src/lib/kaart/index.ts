@@ -9,7 +9,11 @@ import { MatExpansionModule } from "@angular/material/expansion";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
-import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltipDefaultOptions, MatTooltipModule } from "@angular/material/tooltip";
+import {
+  MAT_TOOLTIP_DEFAULT_OPTIONS,
+  MatTooltipDefaultOptions,
+  MatTooltipModule,
+} from "@angular/material/tooltip";
 import { ClickOutsideModule } from "ng4-click-outside";
 
 import { AbbameldaModule } from "../abbamelda/index";
@@ -80,49 +84,68 @@ const components: any[] = [
   KaartTekenComponent,
   KaartTekenLaagComponent,
   KaartVoorwaardenComponent,
-  KaartZoomComponent
+  KaartZoomComponent,
 ];
 
 // Weersta de drang om deze variabele in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.
 export const defaultKaartConfig: KaartConfig = {
   geoserver: {
-    urls: ["/geoserver/wms"]
+    urls: ["/geoserver/wms"],
   },
   tilecache: {
-    urls: ["/geowebcache/service/wms"]
+    urls: ["/geowebcache/service/wms"],
   },
   orthofotomozaiek: {
     naam: "Ortho",
-    urls: ["https://geoservices.informatievlaanderen.be/raadpleegdiensten/omwrgbmrvl/wms"]
+    urls: [
+      "https://geoservices.informatievlaanderen.be/raadpleegdiensten/omwrgbmrvl/wms",
+    ],
   },
   srs: "EPSG:31370",
   defaults: {
     zoom: 2,
     middelpunt: [130000, 193000],
     grootte: [undefined, 500],
-    resolutions: [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125],
+    resolutions: [
+      1024.0,
+      512.0,
+      256.0,
+      128.0,
+      64.0,
+      32.0,
+      16.0,
+      8.0,
+      4.0,
+      2.0,
+      1.0,
+      0.5,
+      0.25,
+      0.125,
+      0.0625,
+      0.03125,
+    ],
     extent: [18000.0, 152999.75, 280144.0, 415143.75],
-    style: (null as any) as ol.style.Style
+    style: (null as any) as ol.style.Style,
   },
   envParams: {
     mobile: {
       clickHitTolerance: 15, // px
       moveTolerance: 10, // px
-      initialLayoutMode: 2 // comfortable
+      initialLayoutMode: 2, // comfortable
     },
     desktop: {
       clickHitTolerance: 5, // px
       moveTolerance: 1, // px
-      initialLayoutMode: 1 // compact
-    }
-  }
+      initialLayoutMode: 1, // compact
+    },
+  },
 };
 
 /** Custom options the configure the tooltip's default show/hide delays. */
 export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 750,
   hideDelay: 0,
-  touchendHideDelay: 0
+  touchendHideDelay: 0,
 };
 
 @NgModule({
@@ -146,11 +169,14 @@ export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
     StijleditorModule,
     FilterModule,
     TransparantieeditorModule,
-    FeatureTabelModule
+    FeatureTabelModule,
   ],
   declarations: [components],
   exports: [components],
-  providers: [ReplaySubjectKaartCmdDispatcher, { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: myCustomTooltipDefaults }]
+  providers: [
+    ReplaySubjectKaartCmdDispatcher,
+    { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: myCustomTooltipDefaults },
+  ],
 })
 export class KaartModule {
   static defaultConfig = defaultKaartConfig;
@@ -158,7 +184,10 @@ export class KaartModule {
   static forRoot(config: KaartConfig): ModuleWithProviders<KaartModule> {
     return {
       ngModule: KaartModule,
-      providers: [{ provide: KAART_CFG, useValue: config }, ReplaySubjectKaartCmdDispatcher]
+      providers: [
+        { provide: KAART_CFG, useValue: config },
+        ReplaySubjectKaartCmdDispatcher,
+      ],
     };
   }
 

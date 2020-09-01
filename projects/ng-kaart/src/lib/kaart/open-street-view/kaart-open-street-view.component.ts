@@ -13,7 +13,7 @@ export const StreetviewUiSelector = "Streetview";
 @Component({
   selector: "awv-kaart-open-street-view",
   templateUrl: "./kaart-open-street-view.component.html",
-  styleUrls: ["./kaart-open-street-view.component.scss"]
+  styleUrls: ["./kaart-open-street-view.component.scss"],
 })
 export class KaartOpenStreetViewComponent extends KaartModusDirective {
   private clickSubscription: rx.Subscription = new rx.Subscription();
@@ -38,9 +38,9 @@ export class KaartOpenStreetViewComponent extends KaartModusDirective {
 
     this.clickSubscription.unsubscribe();
     this.dispatch(prt.DeactiveerSelectieModusCmd());
-    this.clickSubscription = this.bindToLifeCycle(this.modelChanges.kaartKlikLocatie$).subscribe(locatie =>
-      this.openGoogleStreetView(locatie.coordinate)
-    );
+    this.clickSubscription = this.bindToLifeCycle(
+      this.modelChanges.kaartKlikLocatie$
+    ).subscribe((locatie) => this.openGoogleStreetView(locatie.coordinate));
   }
 
   private stopLuisterenOpClickEvents(): void {

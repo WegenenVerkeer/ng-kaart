@@ -15,9 +15,13 @@ export interface KaartEventSource {
 }
 
 @Injectable()
-export class ReplaySubjectKaartCmdDispatcher<Msg extends TypedRecord> implements KaartCmdDispatcher<Msg>, KaartEventSource {
+export class ReplaySubjectKaartCmdDispatcher<Msg extends TypedRecord>
+  implements KaartCmdDispatcher<Msg>, KaartEventSource {
   // Er worden al events gegenereerd voordat de kaartcomponent actief is. Daarom tot 1000 events onthouden 500ms lang.
-  private readonly eventSubj = new rx.ReplaySubject<prt.Command<Msg>>(1000, 500);
+  private readonly eventSubj = new rx.ReplaySubject<prt.Command<Msg>>(
+    1000,
+    500
+  );
 
   dispatch(cmd: prt.Command<Msg>) {
     // We willen dat events pas uitgevoerd worden nadat de huidige processing gedaan is,
@@ -33,5 +37,5 @@ export class ReplaySubjectKaartCmdDispatcher<Msg extends TypedRecord> implements
 
 // noinspection JSUnusedLocalSymbols
 export const VacuousDispatcher: KaartCmdDispatcher<any> = {
-  dispatch() {}
+  dispatch() {},
 };

@@ -28,11 +28,20 @@ export const VectorType = "LaagType.Vector";
 export type VectorType = typeof VectorType;
 export const BlancoType = "LaagType.Blanco";
 export type BlancoType = typeof BlancoType;
-export type LaagType = SingleTileWmsType | TiledWmsType | WmtsType | VectorType | BlancoType;
+export type LaagType =
+  | SingleTileWmsType
+  | TiledWmsType
+  | WmtsType
+  | VectorType
+  | BlancoType;
 
 export type AchtergrondLaag = WmsLaag | WmtsLaag | BlancoLaag;
 
-export type Laaggroep = "Achtergrond" | "Voorgrond.Hoog" | "Voorgrond.Laag" | "Tools";
+export type Laaggroep =
+  | "Achtergrond"
+  | "Voorgrond.Hoog"
+  | "Voorgrond.Laag"
+  | "Tools";
 
 export type Laag = WmsLaag | WmtsLaag | VectorLaag | BlancoLaag;
 
@@ -81,7 +90,15 @@ export interface WmtsLaag {
   readonly verwijderd: boolean;
 }
 
-export type VeldType = "string" | "integer" | "double" | "geometry" | "date" | "boolean" | "json" | "url";
+export type VeldType =
+  | "string"
+  | "integer"
+  | "double"
+  | "geometry"
+  | "date"
+  | "boolean"
+  | "json"
+  | "url";
 
 export interface VeldInfo {
   readonly naam: string; // naam zoals gekend in de feature
@@ -203,29 +220,56 @@ export function underlyingSource(layer: ol.layer.Layer): ol.source.Source {
 
 export const isWmsLaag: Refinement<Laag, WmsLaag> = (laag): laag is WmsLaag =>
   laag.type === SingleTileWmsType || laag.type === TiledWmsType;
-export const isTiledWmsLaag: Refinement<Laag, WmsLaag> = (laag): laag is WmsLaag => laag.type === TiledWmsType;
-export const isBlancoLaag: Refinement<Laag, BlancoLaag> = (laag): laag is BlancoLaag => laag.type === BlancoType;
-export const isVectorLaag: Refinement<Laag, VectorLaag> = (laag): laag is VectorLaag => laag.type === VectorType;
-// tslint:disable-next-line:max-line-length
-export const isNoSqlFsLaag: Refinement<Laag, VectorLaag> = (laag): laag is VectorLaag =>
+export const isTiledWmsLaag: Refinement<Laag, WmsLaag> = (
+  laag
+): laag is WmsLaag => laag.type === TiledWmsType;
+export const isBlancoLaag: Refinement<Laag, BlancoLaag> = (
+  laag
+): laag is BlancoLaag => laag.type === BlancoType;
+export const isVectorLaag: Refinement<Laag, VectorLaag> = (
+  laag
+): laag is VectorLaag => laag.type === VectorType;
+export const isNoSqlFsLaag: Refinement<Laag, VectorLaag> = (
+  laag
+): laag is VectorLaag =>
   laag.type === VectorType && isNoSqlFsSource(laag.source);
-export const asVectorLaag: (laag: Laag) => option.Option<VectorLaag> = option.fromPredicate(isVectorLaag) as (
+export const asVectorLaag: (
+  laag: Laag
+) => option.Option<VectorLaag> = option.fromPredicate(isVectorLaag) as (
   _: Laag
 ) => option.Option<VectorLaag>;
-export const asTiledWmsLaag: (laag: Laag) => option.Option<WmsLaag> = option.fromRefinement(isTiledWmsLaag);
-export const isToegevoegdeVectorLaag: Refinement<ToegevoegdeLaag, ToegevoegdeVectorLaag> = (laag): laag is ToegevoegdeVectorLaag =>
-  isVectorLaag(laag.bron);
-export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => option.Option<ToegevoegdeVectorLaag> = laag =>
-  option.fromPredicate<ToegevoegdeLaag>(lg => isVectorLaag(lg.bron))(laag) as option.Option<ToegevoegdeVectorLaag>;
-export const isZichtbaar: (_: number) => (_: ToegevoegdeLaag) => boolean = currentRes => laag =>
-  laag.layer.getMinResolution() <= currentRes && laag.layer.getMaxResolution() > currentRes && laag.layer.getVisible();
-export const asToegevoegdeNosqlVectorLaag: (laag: ToegevoegdeLaag) => option.Option<ToegevoegdeVectorLaag> = laag =>
-  option.fromPredicate<ToegevoegdeLaag>(lg => isNoSqlFsLaag(lg.bron))(laag) as option.Option<ToegevoegdeVectorLaag>;
-export const asNosqlSource: (source: ol.source.Vector) => option.Option<NosqlFsSource> = option.fromPredicate(isNoSqlFsSource) as (
+export const asTiledWmsLaag: (
+  laag: Laag
+) => option.Option<WmsLaag> = option.fromRefinement(isTiledWmsLaag);
+export const isToegevoegdeVectorLaag: Refinement<
+  ToegevoegdeLaag,
+  ToegevoegdeVectorLaag
+> = (laag): laag is ToegevoegdeVectorLaag => isVectorLaag(laag.bron);
+export const asToegevoegdeVectorLaag: (
+  laag: ToegevoegdeLaag
+) => option.Option<ToegevoegdeVectorLaag> = (laag) =>
+  option.fromPredicate<ToegevoegdeLaag>((lg) => isVectorLaag(lg.bron))(
+    laag
+  ) as option.Option<ToegevoegdeVectorLaag>;
+export const isZichtbaar: (_: number) => (_: ToegevoegdeLaag) => boolean = (
+  currentRes
+) => (laag) =>
+  laag.layer.getMinResolution() <= currentRes &&
+  laag.layer.getMaxResolution() > currentRes &&
+  laag.layer.getVisible();
+export const asToegevoegdeNosqlVectorLaag: (
+  laag: ToegevoegdeLaag
+) => option.Option<ToegevoegdeVectorLaag> = (laag) =>
+  option.fromPredicate<ToegevoegdeLaag>((lg) => isNoSqlFsLaag(lg.bron))(
+    laag
+  ) as option.Option<ToegevoegdeVectorLaag>;
+export const asNosqlSource: (
+  source: ol.source.Vector
+) => option.Option<NosqlFsSource> = option.fromPredicate(isNoSqlFsSource) as (
   _: ol.source.Vector
 ) => option.Option<NosqlFsSource>;
 
-///////////////
+/// ////////////
 // Constructors
 //
 
@@ -241,102 +285,159 @@ export function TekenSettings(
     geometry: geometry,
     laagStyle: laagStyle,
     drawStyle: drawStyle,
-    meerdereGeometrieen: meerdereGeometrieen
+    meerdereGeometrieen: meerdereGeometrieen,
   };
 }
 
 export function StartTekenen(settings: TekenSettings): StartTekenen {
   return {
     type: "start",
-    settings: settings
+    settings: settings,
   };
 }
 
 export function StopTekenen(): StopTekenen {
   return {
-    type: "stop"
+    type: "stop",
   };
 }
 
-export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, featureId: number | string): Tekenresultaat {
+export function TekenResultaat(
+  geometry: ol.geom.Geometry,
+  volgnummer: number,
+  featureId: number | string
+): Tekenresultaat {
   return {
     volgnummer: volgnummer,
     featureId: featureId,
-    geometry: geometry
+    geometry: geometry,
   };
 }
 
-export function Laagfilterinstellingen(spec: fltr.Filter, actief: boolean, totaal: FilterTotaal): Laagfilterinstellingen {
+export function Laagfilterinstellingen(
+  spec: fltr.Filter,
+  actief: boolean,
+  totaal: FilterTotaal
+): Laagfilterinstellingen {
   return {
     spec: spec,
     actief: actief,
-    totaal: totaal
+    totaal: totaal,
   };
 }
 
-export const stdLaagfilterinstellingen = Laagfilterinstellingen(fltr.empty(), true, totaalOpTeHalen());
+export const stdLaagfilterinstellingen = Laagfilterinstellingen(
+  fltr.empty(),
+  true,
+  totaalOpTeHalen()
+);
 
-////////////////////////////
+/// /////////////////////////
 // Manipulatie en inspectie
 //
 
 export namespace ToegevoegdeLaag {
-  export const setoidToegevoegdeLaagByTitel: eq.Eq<ToegevoegdeLaag> = eq.contramap<string, ToegevoegdeLaag>(tl => tl.titel)(eq.eqString);
+  export const setoidToegevoegdeLaagByTitel: eq.Eq<ToegevoegdeLaag> = eq.contramap<
+    string,
+    ToegevoegdeLaag
+  >((tl) => tl.titel)(eq.eqString);
 }
 
 export namespace ToegevoegdeVectorLaag {
-  export const titelGetter = Lens.fromProp<ToegevoegdeVectorLaag>()("titel").asGetter();
+  export const titelGetter = Lens.fromProp<ToegevoegdeVectorLaag>()(
+    "titel"
+  ).asGetter();
 
-  export const stijlSelBronLens: Optional<ToegevoegdeVectorLaag, AwvV0StyleSpec> = Optional.fromOptionProp<ToegevoegdeVectorLaag>()(
-    "stijlSelBron"
-  );
-
-  export const veldInfosMapLens: Lens<ToegevoegdeVectorLaag, Map<string, VeldInfo>> = Lens.fromPath<
+  export const stijlSelBronLens: Optional<
     ToegevoegdeVectorLaag,
-    "bron",
-    "velden"
-  >(["bron", "velden"]);
+    AwvV0StyleSpec
+  > = Optional.fromOptionProp<ToegevoegdeVectorLaag>()("stijlSelBron");
 
-  export const veldInfosLens: Lens<ToegevoegdeVectorLaag, VeldInfo[]> = veldInfosMapLens.composeIso(
+  export const veldInfosMapLens: Lens<
+    ToegevoegdeVectorLaag,
+    Map<string, VeldInfo>
+  > = Lens.fromPath<ToegevoegdeVectorLaag, "bron", "velden">([
+    "bron",
+    "velden",
+  ]);
+
+  export const veldInfosLens: Lens<
+    ToegevoegdeVectorLaag,
+    VeldInfo[]
+  > = veldInfosMapLens.composeIso(
     new Iso(
-      map => Array.from(map.values()), //
-      infos => maps.toMapByKey(infos, info => info.naam)
+      (map) => Array.from(map.values()), //
+      (infos) => maps.toMapByKey(infos, (info) => info.naam)
     )
   );
 
-  export const veldInfoOpNaamOptional: Function1<string, Optional<ToegevoegdeVectorLaag, VeldInfo>> = veldnaam =>
-    Lens.fromPath<ToegevoegdeVectorLaag, "bron", "velden">(["bron", "velden"]).composeOptional(mapToOptionalByKey(veldnaam));
+  export const veldInfoOpNaamOptional: Function1<
+    string,
+    Optional<ToegevoegdeVectorLaag, VeldInfo>
+  > = (veldnaam) =>
+    Lens.fromPath<ToegevoegdeVectorLaag, "bron", "velden">([
+      "bron",
+      "velden",
+    ]).composeOptional(mapToOptionalByKey(veldnaam));
 
-  export const noSqlFsSourceFold: Fold<ToegevoegdeVectorLaag, NosqlFsSource> = Lens.fromPath<ToegevoegdeVectorLaag, "bron", "source">([
-    "bron",
-    "source"
-  ])
+  export const noSqlFsSourceFold: Fold<
+    ToegevoegdeVectorLaag,
+    NosqlFsSource
+  > = Lens.fromPath<ToegevoegdeVectorLaag, "bron", "source">(["bron", "source"])
     .asGetter()
     .composePrism(Prism.fromRefinement(isNoSqlFsSource));
 
-  export const opTitelSetoid: eq.Eq<ToegevoegdeVectorLaag> = eq.contramap<string, ToegevoegdeVectorLaag>(laag => laag.titel)(eq.eqString);
+  export const opTitelSetoid: eq.Eq<ToegevoegdeVectorLaag> = eq.contramap<
+    string,
+    ToegevoegdeVectorLaag
+  >((laag) => laag.titel)(eq.eqString);
 
-  export const featuresChanged$: Function1<ToegevoegdeVectorLaag, rx.Observable<null>> = vlg =>
-    observableFromOlEvents(vlg.layer.getSource(), "addfeature", "removefeature", "clear").pipe(
-      debounceTime(100),
-      mapTo(null)
-    );
+  export const featuresChanged$: Function1<
+    ToegevoegdeVectorLaag,
+    rx.Observable<null>
+  > = (vlg) =>
+    observableFromOlEvents(
+      vlg.layer.getSource(),
+      "addfeature",
+      "removefeature",
+      "clear"
+    ).pipe(debounceTime(100), mapTo(null));
 }
 
 export namespace VeldInfo {
-  export const setoidVeldOpNaam: eq.Eq<VeldInfo> = eq.contramap<string, VeldInfo>(vi => vi.naam)(eq.eqString);
-  export const ordVeldOpBasisVeld: ord.Ord<VeldInfo> = ord.contramap<boolean, VeldInfo>(vi => vi.isBasisVeld, ord.ordBoolean);
-  export const veldnaamLens: Lens<VeldInfo, string> = Lens.fromProp<VeldInfo>()("naam");
-  export const veldlabelLens: Lens<VeldInfo, string | undefined> = Lens.fromProp<VeldInfo>()("label");
-  export const isBasisveldLens: Lens<VeldInfo, boolean> = Lens.fromProp<VeldInfo>()("isBasisVeld");
+  export const setoidVeldOpNaam: eq.Eq<VeldInfo> = eq.contramap<
+    string,
+    VeldInfo
+  >((vi) => vi.naam)(eq.eqString);
+  export const ordVeldOpBasisVeld: ord.Ord<VeldInfo> = ord.contramap<
+    boolean,
+    VeldInfo
+  >((vi) => vi.isBasisVeld, ord.ordBoolean);
+  export const veldnaamLens: Lens<VeldInfo, string> = Lens.fromProp<VeldInfo>()(
+    "naam"
+  );
+  export const veldlabelLens: Lens<
+    VeldInfo,
+    string | undefined
+  > = Lens.fromProp<VeldInfo>()("label");
+  export const isBasisveldLens: Lens<VeldInfo, boolean> = Lens.fromProp<
+    VeldInfo
+  >()("isBasisVeld");
   // Als er geen of een leeg label is, gebruiken we de naam
-  export const veldGuaranteedLabelGetter: Getter<VeldInfo, string> = new Getter(vi => vi.label || vi.naam);
+  export const veldGuaranteedLabelGetter: Getter<VeldInfo, string> = new Getter(
+    (vi) => vi.label || vi.naam
+  );
 
-  export const veldInfoOpNaam: Function2<string, Map<string, VeldInfo>, option.Option<VeldInfo>> = (naam, veldinfos) =>
-    maps.findFirst(veldinfos, vi => vi.naam === naam);
+  export const veldInfoOpNaam: Function2<
+    string,
+    Map<string, VeldInfo>,
+    option.Option<VeldInfo>
+  > = (naam, veldinfos) => maps.findFirst(veldinfos, (vi) => vi.naam === naam);
 
-  export const matchWithFallback: <A>(_: matchers.FallbackMatcher<VeldInfo, A, VeldType>) => Function1<VeldInfo, A> = m =>
-    matchers.matchWithFallback(m)(veldinfo => veldinfo.type);
+  export const matchWithFallback: <A>(
+    _: matchers.FallbackMatcher<VeldInfo, A, VeldType>
+  ) => Function1<VeldInfo, A> = (m) =>
+    matchers.matchWithFallback(m)((veldinfo) => veldinfo.type);
 }
 
 export namespace LayerProperties {

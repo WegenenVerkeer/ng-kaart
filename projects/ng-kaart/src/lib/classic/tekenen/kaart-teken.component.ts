@@ -1,10 +1,27 @@
-import { Component, EventEmitter, Injector, Input, OnInit, Output } from "@angular/core";
+import {
+  Component,
+  EventEmitter,
+  Injector,
+  Input,
+  OnInit,
+  Output,
+} from "@angular/core";
 import { option } from "fp-ts";
 import * as rx from "rxjs";
 import { identity, merge } from "rxjs";
-import { distinctUntilChanged, map, switchMap, takeUntil } from "rxjs/operators";
+import {
+  distinctUntilChanged,
+  map,
+  switchMap,
+  takeUntil,
+} from "rxjs/operators";
 
-import { StartTekenen, StopTekenen, TekenenCommand, TekenSettings } from "../../kaart/kaart-elementen";
+import {
+  StartTekenen,
+  StopTekenen,
+  TekenenCommand,
+  TekenSettings,
+} from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
 import { TekenenUiSelector } from "../../kaart/tekenen/kaart-teken-laag.component";
@@ -17,9 +34,11 @@ import * as val from "../webcomponent-support/params";
 
 @Component({
   selector: "awv-kaart-teken",
-  template: "<ng-content></ng-content>"
+  template: "<ng-content></ng-content>",
 })
-export class KaartTekenComponent extends ClassicBaseDirective implements OnInit {
+export class KaartTekenComponent
+  extends ClassicBaseDirective
+  implements OnInit {
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
   private tekenenCommandSubj = new rx.Subject<TekenenCommand>();
 
@@ -48,7 +67,8 @@ export class KaartTekenComponent extends ClassicBaseDirective implements OnInit 
     this.tekenenCommandSubj.next(command);
   }
 
-  private geometryTypeValue: ol.geom.GeometryType = ol.geom.GeometryType.LINE_STRING;
+  private geometryTypeValue: ol.geom.GeometryType =
+    ol.geom.GeometryType.LINE_STRING;
 
   @Input()
   set geometryType(geomType: string) {
@@ -101,8 +121,12 @@ export class KaartTekenComponent extends ClassicBaseDirective implements OnInit 
   constructor(injector: Injector) {
     super(injector);
 
-    this.initialising$.subscribe(() => this.kaart.dispatch(prt.VoegUiElementToe(TekenenUiSelector)));
-    this.destroying$.subscribe(() => this.kaart.dispatch(prt.VerwijderUiElement(TekenenUiSelector)));
+    this.initialising$.subscribe(() =>
+      this.kaart.dispatch(prt.VoegUiElementToe(TekenenUiSelector))
+    );
+    this.destroying$.subscribe(() =>
+      this.kaart.dispatch(prt.VerwijderUiElement(TekenenUiSelector))
+    );
   }
 
   ngOnInit() {
@@ -119,8 +143,12 @@ export class KaartTekenComponent extends ClassicBaseDirective implements OnInit 
                   .lift(
                     classicMsgSubscriptionCmdOperator(
                       this.kaart.dispatcher,
-                      prt.GeometryChangedSubscription(command.settings, resultaat =>
-                        KaartClassicMsg(TekenGeomAangepastMsg(resultaat.geometry))
+                      prt.GeometryChangedSubscription(
+                        command.settings,
+                        (resultaat) =>
+                          KaartClassicMsg(
+                            TekenGeomAangepastMsg(resultaat.geometry)
+                          )
                       )
                     )
                   )
@@ -129,7 +157,7 @@ export class KaartTekenComponent extends ClassicBaseDirective implements OnInit 
                   ),
                 this.kaart.kaartClassicSubMsg$.pipe(
                   ofType<TekenGeomAangepastMsg>("TekenGeomAangepast"), //
-                  map(m => this.getekendeGeom.emit(m.geom)),
+                  map((m) => this.getekendeGeom.emit(m.geom)),
                   takeUntil(this.stopTekenenSubj)
                 )
               );

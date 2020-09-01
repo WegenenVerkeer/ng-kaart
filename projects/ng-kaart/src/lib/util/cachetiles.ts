@@ -19,41 +19,54 @@ const AANTAL_PARALLELE_REQUESTS = 4;
  * deze parallel af te lopen.
  * Elke chunk gaat sequentieel 1 voor 1 elke URL ophalen.
  */
-const fetchUrlsGrouped: Function1<string[], rx.Observable<Progress>> = urls => {
-  return new rx.Observable<Progress>(subscriber => {
+const fetchUrlsGrouped: Function1<string[], rx.Observable<Progress>> = (
+  urls
+) => {
+  return new rx.Observable<Progress>((subscriber) => {
     let fetched = 0;
     const progress = {
       started: new Date(),
-      percentage: 0
+      percentage: 0,
     };
 
     const fetchUrls = (chunk: string[]) => {
-      const fetches = chunk.map(url => () => {
+      const fetches = chunk.map((url) => () => {
         fetched++;
         subscriber.next({
           ...progress,
-          percentage: Math.floor((fetched / urls.length) * 100)
+          percentage: Math.floor((fetched / urls.length) * 100),
         });
-        return fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err));
+        return fetch(new Request(url, { credentials: "include" }), {
+          keepalive: true,
+          mode: "cors",
+        }).catch((err) => kaartLogger.error(err));
       });
-      fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
+      fetches.reduce(
+        (vorige, huidige) => vorige.then(huidige),
+        Promise.resolve()
+      );
     };
 
-    splitInChunks(urls, AANTAL_PARALLELE_REQUESTS).forEach(chunk => fetchUrls(chunk));
+    splitInChunks(urls, AANTAL_PARALLELE_REQUESTS).forEach((chunk) =>
+      fetchUrls(chunk)
+    );
   });
 };
 
-const deleteTiles: Function2<string, boolean, rx.Observable<boolean>> = (laagnaam, startMetLegeCache) =>
-  startMetLegeCache ? rx.from(caches.delete(laagnaam)) : rx.of(false);
-
-export const refreshTiles: Function6<string, ol.source.UrlTile, number, number, string, boolean, rx.Observable<Progress>> = (
+const deleteTiles: Function2<string, boolean, rx.Observable<boolean>> = (
   laagnaam,
-  source,
-  startZoom,
-  stopZoom,
-  wkt,
   startMetLegeCache
-) => {
+) => (startMetLegeCache ? rx.from(caches.delete(laagnaam)) : rx.of(false));
+
+export const refreshTiles: Function6<
+  string,
+  ol.source.UrlTile,
+  number,
+  number,
+  string,
+  boolean,
+  rx.Observable<Progress>
+> = (laagnaam, source, startZoom, stopZoom, wkt, startMetLegeCache) => {
   if (isNaN(startZoom)) {
     throw new Error("Start zoom is geen getal");
   }
@@ -66,9 +79,15 @@ export const refreshTiles: Function6<string, ol.source.UrlTile, number, number, 
   const tileUrlFunction = source.getTileUrlFunction();
   const tileGrid = source.getTileGrid();
 
-  const calculateTileRange = function(extent: ol.Extent, zoom: number) {
-    const minTileCoord = tileGrid.getTileCoordForCoordAndZ([extent[0], extent[1]], zoom);
-    const maxTileCoord = tileGrid.getTileCoordForCoordAndZ([extent[2], extent[3]], zoom);
+  const calculateTileRange = function (extent: ol.Extent, zoom: number) {
+    const minTileCoord = tileGrid.getTileCoordForCoordAndZ(
+      [extent[0], extent[1]],
+      zoom
+    );
+    const maxTileCoord = tileGrid.getTileCoordForCoordAndZ(
+      [extent[2], extent[3]],
+      zoom
+    );
 
     // we switchen hier minY en maxY vanwege verandering in OL6:
     // https://github.com/openlayers/openlayers/releases/tag/v6.0.0
@@ -88,7 +107,7 @@ export const refreshTiles: Function6<string, ol.source.UrlTile, number, number, 
   const geometry: ol.geom.Geometry | undefined = new ol.format.WKT()
     .readFeature(wkt, {
       dataProjection: sourceProjection,
-      featureProjection: sourceProjection
+      featureProjection: sourceProjection,
     })
     .getGeometry();
 
@@ -98,8 +117,13 @@ export const refreshTiles: Function6<string, ol.source.UrlTile, number, number, 
     // Tilecoord: [z, x, y]
 
     const ignoreTileCoords = {};
-    ignoreExtents.forEach(extent => {
-      const { tileRangeMinX, tileRangeMinY, tileRangeMaxX, tileRangeMaxY } = calculateTileRange(extent, z);
+    ignoreExtents.forEach((extent) => {
+      const {
+        tileRangeMinX,
+        tileRangeMinY,
+        tileRangeMaxX,
+        tileRangeMaxY,
+      } = calculateTileRange(extent, z);
       for (let x = tileRangeMinX; x <= tileRangeMaxX; x++) {
         for (let y = tileRangeMinY; y <= tileRangeMaxY; y++) {
           if (ignoreTileCoords[x] === undefined) {
@@ -114,7 +138,12 @@ export const refreshTiles: Function6<string, ol.source.UrlTile, number, number, 
     if (geometry) {
       const geometryExtent = geometry.getExtent();
 
-      const { tileRangeMinX, tileRangeMinY, tileRangeMaxX, tileRangeMaxY } = calculateTileRange(geometryExtent, z);
+      const {
+        tileRangeMinX,
+        tileRangeMinY,
+        tileRangeMaxX,
+        tileRangeMaxY,
+      } = calculateTileRange(geometryExtent, z);
       for (let x = tileRangeMinX; x <= tileRangeMaxX; x++) {
         for (let y = tileRangeMinY; y <= tileRangeMaxY; y++) {
           if (ignoreTileCoords[x] && ignoreTileCoords[x][y]) {
@@ -133,11 +162,26 @@ export const refreshTiles: Function6<string, ol.source.UrlTile, number, number, 
             const lbCoord: [number, number] = [left, bottom];
             const rtCoord: [number, number] = [right, top];
             const rbCoord: [number, number] = [right, bottom];
-            const middenCoord: [number, number] = [left + (right - left) / 2, bottom + (top - bottom) / 2];
-            const middenBottom: [number, number] = [left + (right - left) / 2, bottom];
-            const middenTop: [number, number] = [left + (right - left) / 2, top];
-            const middenLeft: [number, number] = [left, bottom + (top - bottom) / 2];
-            const middenRight: [number, number] = [right, bottom + (top - bottom) / 2];
+            const middenCoord: [number, number] = [
+              left + (right - left) / 2,
+              bottom + (top - bottom) / 2,
+            ];
+            const middenBottom: [number, number] = [
+              left + (right - left) / 2,
+              bottom,
+            ];
+            const middenTop: [number, number] = [
+              left + (right - left) / 2,
+              top,
+            ];
+            const middenLeft: [number, number] = [
+              left,
+              bottom + (top - bottom) / 2,
+            ];
+            const middenRight: [number, number] = [
+              right,
+              bottom + (top - bottom) / 2,
+            ];
 
             // snelle check of de geometrie overlapt met een aantal punten van de extent
             // geeft false negative als de geometrie overlapt met de tile, maar met geen van de getestte punten
@@ -159,7 +203,11 @@ export const refreshTiles: Function6<string, ol.source.UrlTile, number, number, 
             }
 
             if (intersects) {
-              const tileUrl = tileUrlFunction(tileCoord, ol.has.DEVICE_PIXEL_RATIO, source.getProjection());
+              const tileUrl = tileUrlFunction(
+                tileCoord,
+                ol.has.DEVICE_PIXEL_RATIO,
+                source.getProjection()
+              );
               if (tileUrl) {
                 queueByZ.push(tileUrl);
               }
@@ -171,15 +219,19 @@ export const refreshTiles: Function6<string, ol.source.UrlTile, number, number, 
       }
     }
 
-    kaartLogger.info(`Aantal tiles ${laagnaam} voor zoomniveau ${z}: ${queueByZ.length}`);
+    kaartLogger.info(
+      `Aantal tiles ${laagnaam} voor zoomniveau ${z}: ${queueByZ.length}`
+    );
     queue = queue.concat(queueByZ);
   }
 
   return deleteTiles(laagnaam, startMetLegeCache).pipe(
-    tap(cacheLeeggemaakt =>
+    tap((cacheLeeggemaakt) =>
       cacheLeeggemaakt
         ? kaartLogger.info(`Cache ${laagnaam} leeggemaakt`)
-        : kaartLogger.info(`Cache ${laagnaam} niet leeggemaakt, wordt verder gevuld`)
+        : kaartLogger.info(
+            `Cache ${laagnaam} niet leeggemaakt, wordt verder gevuld`
+          )
     ),
     mergeMap(() => fetchUrlsGrouped(queue))
   );

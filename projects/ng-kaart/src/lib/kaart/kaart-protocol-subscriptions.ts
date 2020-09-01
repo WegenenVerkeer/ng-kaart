@@ -4,13 +4,21 @@ import { Lens } from "monocle-ts";
 
 import { FeatureWithIdAndLaagnaam } from "../util/feature";
 import * as ol from "../util/openlayers-compat";
-import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
+import {
+  ZoekAntwoord,
+  ZoekerMetWeergaveopties,
+  ZoekResultaat,
+} from "../zoeker/zoeker";
 
 import { LaagModel } from "./feature-tabel/laag-model";
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
-import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress } from "./model-changes";
+import {
+  LaatsteCacheRefresh,
+  MijnLocatieStateChange,
+  PrecacheLaagProgress,
+} from "./model-changes";
 
 export type Subscription<Msg> =
   | AchtergrondTitelSubscription<Msg>
@@ -60,9 +68,15 @@ export interface Veldsortering {
 }
 
 export namespace Veldsortering {
-  export const create = (veldnaam: string, sort: "ASCENDING" | "DESCENDING"): Veldsortering => ({ veldnaam, sort });
+  export const create = (
+    veldnaam: string,
+    sort: "ASCENDING" | "DESCENDING"
+  ): Veldsortering => ({ veldnaam, sort });
 
-  export const eqVeldsortering: eq.Eq<Veldsortering> = eq.getStructEq({ veldnaam: eq.eqString, sort: eq.eqString });
+  export const eqVeldsortering: eq.Eq<Veldsortering> = eq.getStructEq({
+    veldnaam: eq.eqString,
+    sort: eq.eqString,
+  });
 }
 
 export interface Laagtabelinstellingen {
@@ -77,15 +91,23 @@ export interface LaagTabelKnopKlik {
 }
 
 export namespace Laagtabelinstellingen {
-  export const zichtbareVeldenLens: Lens<Laagtabelinstellingen, Set<string>> = Lens.fromProp<Laagtabelinstellingen>()("zichtbareVelden");
-  export const veldsorteringenLens: Lens<Laagtabelinstellingen, Veldsortering[]> = Lens.fromProp<Laagtabelinstellingen>()(
-    "veldsorteringen"
-  );
+  export const zichtbareVeldenLens: Lens<
+    Laagtabelinstellingen,
+    Set<string>
+  > = Lens.fromProp<Laagtabelinstellingen>()("zichtbareVelden");
+  export const veldsorteringenLens: Lens<
+    Laagtabelinstellingen,
+    Veldsortering[]
+  > = Lens.fromProp<Laagtabelinstellingen>()("veldsorteringen");
 
-  export const create = (laagnaam: string, zichtbareVelden: Set<string>, veldSorteringen: Veldsortering[]): Laagtabelinstellingen => ({
+  export const create = (
+    laagnaam: string,
+    zichtbareVelden: Set<string>,
+    veldSorteringen: Veldsortering[]
+  ): Laagtabelinstellingen => ({
     laagnaam,
     zichtbareVelden,
-    veldsorteringen: veldSorteringen
+    veldsorteringen: veldSorteringen,
   });
 }
 
@@ -255,18 +277,21 @@ export interface InErrorSubscription<Msg> {
   readonly wrapper: MsgGen<boolean, Msg>;
 }
 
-//////////
+/// ///////
 // Helpers
 
 export namespace Viewinstellingen {
-  export const visible: Predicate<Viewinstellingen> = vi => vi.zoom >= vi.minZoom && vi.zoom <= vi.maxZoom;
+  export const visible: Predicate<Viewinstellingen> = (vi) =>
+    vi.zoom >= vi.minZoom && vi.zoom <= vi.maxZoom;
 }
 
-///////////////
+/// ////////////
 // Constructors
 //
 
-export function ViewinstellingenSubscription<Msg>(wrapper: MsgGen<Viewinstellingen, Msg>): ViewinstellingenSubscription<Msg> {
+export function ViewinstellingenSubscription<Msg>(
+  wrapper: MsgGen<Viewinstellingen, Msg>
+): ViewinstellingenSubscription<Msg> {
   return { type: "Viewinstellingen", wrapper: wrapper };
 }
 
@@ -277,23 +302,41 @@ export function GeselecteerdeFeaturesSubscription<Msg>(
 }
 
 export namespace FeatureSelection {
-  export const isSelected: Curried2<GeselecteerdeFeatures, FeatureWithIdAndLaagnaam, boolean> = featureSelection => feature => {
+  export const isSelected: Curried2<
+    GeselecteerdeFeatures,
+    FeatureWithIdAndLaagnaam,
+    boolean
+  > = (featureSelection) => (feature) => {
     const idsInLaag = featureSelection.featuresPerLaag.get(feature.laagnaam);
     return idsInLaag !== undefined && idsInLaag.has(feature.id);
   };
 
-  export const selectedFeaturesInLaagSize: Curried2<string, GeselecteerdeFeatures, number> = laagnaam => featureSelection => {
+  export const selectedFeaturesInLaagSize: Curried2<
+    string,
+    GeselecteerdeFeatures,
+    number
+  > = (laagnaam) => (featureSelection) => {
     const selectedInLaag = featureSelection.featuresPerLaag.get(laagnaam);
     return selectedInLaag ? selectedInLaag.size : 0;
   };
 
-  export const getGeselecteerdeFeaturesInLaag: Curried2<string, GeselecteerdeFeatures, ol.Feature[]> = laagnaam => featureSelection => {
+  export const getGeselecteerdeFeaturesInLaag: Curried2<
+    string,
+    GeselecteerdeFeatures,
+    ol.Feature[]
+  > = (laagnaam) => (featureSelection) => {
     const featuresInLaag = featureSelection.featuresPerLaag.get(laagnaam);
-    return (featuresInLaag && [...featuresInLaag.values()].map(fil => fil.feature)) || [];
+    return (
+      (featuresInLaag &&
+        [...featuresInLaag.values()].map((fil) => fil.feature)) ||
+      []
+    );
   };
 }
 
-export function HoverFeaturesSubscription<Msg>(wrapper: MsgGen<HoverFeature, Msg>): HoverFeaturesSubscription<Msg> {
+export function HoverFeaturesSubscription<Msg>(
+  wrapper: MsgGen<HoverFeature, Msg>
+): HoverFeaturesSubscription<Msg> {
   return { type: "HoverFeatures", wrapper: wrapper };
 }
 
@@ -303,15 +346,21 @@ export function ZichtbareFeaturesSubscription<Msg>(
   return { type: "ZichtbareFeatures", wrapper: msgGen };
 }
 
-export function ZoomSubscription<Msg>(wrapper: MsgGen<number, Msg>): ZoomSubscription<Msg> {
+export function ZoomSubscription<Msg>(
+  wrapper: MsgGen<number, Msg>
+): ZoomSubscription<Msg> {
   return { type: "Zoom", wrapper: wrapper };
 }
 
-export function MiddelpuntSubscription<Msg>(wrapper: (center: ol.Coordinate) => Msg): MiddelpuntSubscription<Msg> {
+export function MiddelpuntSubscription<Msg>(
+  wrapper: (center: ol.Coordinate) => Msg
+): MiddelpuntSubscription<Msg> {
   return { type: "Middelpunt", wrapper: wrapper };
 }
 
-export function ExtentSubscription<Msg>(wrapper: (extent: ol.Extent) => Msg): ExtentSubscription<Msg> {
+export function ExtentSubscription<Msg>(
+  wrapper: (extent: ol.Extent) => Msg
+): ExtentSubscription<Msg> {
   return { type: "Extent", wrapper: wrapper };
 }
 
@@ -321,7 +370,9 @@ export function PublishedKaartLocatiesSubscription<Msg>(
   return { type: "PublishedKaartLocaties", wrapper: wrapper };
 }
 
-export function AchtergrondTitelSubscription<Msg>(wrapper: MsgGen<string, Msg>): AchtergrondTitelSubscription<Msg> {
+export function AchtergrondTitelSubscription<Msg>(
+  wrapper: MsgGen<string, Msg>
+): AchtergrondTitelSubscription<Msg> {
   return { type: "Achtergrond", wrapper: wrapper };
 }
 
@@ -332,27 +383,39 @@ export function LagenInGroepSubscription<Msg>(
   return { type: "LagenInGroep", groep: groep, wrapper: msgGen };
 }
 
-export function LaagVerwijderdSubscription<Msg>(msgGen: (laag: ke.ToegevoegdeLaag) => Msg): LaagVerwijderdSubscription<Msg> {
+export function LaagVerwijderdSubscription<Msg>(
+  msgGen: (laag: ke.ToegevoegdeLaag) => Msg
+): LaagVerwijderdSubscription<Msg> {
   return { type: "LaagVerwijderd", wrapper: msgGen };
 }
 
-export function ZoekResultatenSubscription<Msg>(wrapper: MsgGen<ZoekAntwoord, Msg>): ZoekResultatenSubscription<Msg> {
+export function ZoekResultatenSubscription<Msg>(
+  wrapper: MsgGen<ZoekAntwoord, Msg>
+): ZoekResultatenSubscription<Msg> {
   return { type: "ZoekAntwoord", wrapper: wrapper };
 }
 
-export function ZoekersSubscription<Msg>(wrapper: MsgGen<ZoekerMetWeergaveopties[], Msg>): ZoekersSubscription<Msg> {
+export function ZoekersSubscription<Msg>(
+  wrapper: MsgGen<ZoekerMetWeergaveopties[], Msg>
+): ZoekersSubscription<Msg> {
   return { type: "Zoekers", wrapper: wrapper };
 }
 
-export function ZoekResultaatSelectieSubscription<Msg>(wrapper: MsgGen<ZoekResultaat, Msg>): ZoekResultaatSelectieSubscription<Msg> {
+export function ZoekResultaatSelectieSubscription<Msg>(
+  wrapper: MsgGen<ZoekResultaat, Msg>
+): ZoekResultaatSelectieSubscription<Msg> {
   return { type: "ZoekResultaatSelectie", wrapper: wrapper };
 }
 
-export function KaartClickSubscription<Msg>(wrapper: (coordinaat: ol.Coordinate) => Msg): Subscription<Msg> {
+export function KaartClickSubscription<Msg>(
+  wrapper: (coordinaat: ol.Coordinate) => Msg
+): Subscription<Msg> {
   return { type: "KaartClick", wrapper: wrapper };
 }
 
-export function InfoBoodschappenSubscription<Msg>(wrapper: (boodschappen: Map<string, InfoBoodschap>) => Msg): Subscription<Msg> {
+export function InfoBoodschappenSubscription<Msg>(
+  wrapper: (boodschappen: Map<string, InfoBoodschap>) => Msg
+): Subscription<Msg> {
   return { type: "InfoBoodschap", wrapper: wrapper };
 }
 
@@ -363,42 +426,58 @@ export function GeometryChangedSubscription<Msg>(
   return {
     type: "GeometryChanged",
     tekenSettings: tekenSettings,
-    wrapper: wrapper
+    wrapper: wrapper,
   };
 }
 
-export function TekenenSubscription<Msg>(wrapper: (settings: option.Option<ke.TekenSettings>) => Msg): TekenenSubscription<Msg> {
+export function TekenenSubscription<Msg>(
+  wrapper: (settings: option.Option<ke.TekenSettings>) => Msg
+): TekenenSubscription<Msg> {
   return { type: "Tekenen", wrapper: wrapper };
 }
 
-export function ActieveModusSubscription<Msg>(wrapper: (modus: option.Option<string>) => Msg): ActieveModusSubscription<Msg> {
+export function ActieveModusSubscription<Msg>(
+  wrapper: (modus: option.Option<string>) => Msg
+): ActieveModusSubscription<Msg> {
   return { type: "ActieveModus", wrapper: wrapper };
 }
 
-export function MeldingenSubscription<Msg>(wrapper: (fouten: Array<string>) => Msg): MeldingenSubscription<Msg> {
+export function MeldingenSubscription<Msg>(
+  wrapper: (fouten: Array<string>) => Msg
+): MeldingenSubscription<Msg> {
   return {
     type: "Meldingen",
-    wrapper: wrapper
+    wrapper: wrapper,
   };
 }
 
-export function LaagfilterGezetSubscription<Msg>(wrapper: MsgGen<ke.ToegevoegdeVectorLaag, Msg>): LaagfilterGezetSubscription<Msg> {
+export function LaagfilterGezetSubscription<Msg>(
+  wrapper: MsgGen<ke.ToegevoegdeVectorLaag, Msg>
+): LaagfilterGezetSubscription<Msg> {
   return { type: "LaagfilterGezet", wrapper: wrapper };
 }
 
-export function LaagstijlGezetSubscription<Msg>(wrapper: MsgGen<ke.ToegevoegdeVectorLaag, Msg>): LaagstijlGezetSubscription<Msg> {
+export function LaagstijlGezetSubscription<Msg>(
+  wrapper: MsgGen<ke.ToegevoegdeVectorLaag, Msg>
+): LaagstijlGezetSubscription<Msg> {
   return { type: "LaagstijlGezet", wrapper: wrapper };
 }
 
-export function PrecacheProgressSubscription<Msg>(wrapper: (progress: PrecacheLaagProgress) => Msg): PrecacheProgressSubscription<Msg> {
+export function PrecacheProgressSubscription<Msg>(
+  wrapper: (progress: PrecacheLaagProgress) => Msg
+): PrecacheProgressSubscription<Msg> {
   return { type: "PrecacheProgress", wrapper };
 }
 
-export function BusySubscription<Msg>(wrapper: (busy: boolean) => Msg): BusySubscription<Msg> {
+export function BusySubscription<Msg>(
+  wrapper: (busy: boolean) => Msg
+): BusySubscription<Msg> {
   return { type: "Busy", wrapper };
 }
 
-export function InErrorSubscription<Msg>(wrapper: (inError: boolean) => Msg): InErrorSubscription<Msg> {
+export function InErrorSubscription<Msg>(
+  wrapper: (inError: boolean) => Msg
+): InErrorSubscription<Msg> {
   return { type: "InError", wrapper };
 }
 

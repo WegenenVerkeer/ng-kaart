@@ -14,16 +14,18 @@ export interface CopyrightOpties extends OptiesRecord {
   readonly copyright: string;
 }
 
-export const CopyrightOpties = (copyright: string) => ({ copyright: copyright });
+export const CopyrightOpties = (copyright: string) => ({
+  copyright: copyright,
+});
 
 const defaultOpties: CopyrightOpties = {
-  copyright: "\u00A9 Agentschap Wegen en Verkeer"
+  copyright: "\u00A9 Agentschap Wegen en Verkeer",
 };
 
 @Component({
   selector: "awv-copyright",
   templateUrl: "./kaart-copyright.component.html",
-  styleUrls: ["./kaart-copyright.component.scss"]
+  styleUrls: ["./kaart-copyright.component.scss"],
 })
 export class KaartCopyrightComponent extends KaartChildDirective {
   copyright$: rx.Observable<string>;
@@ -32,6 +34,8 @@ export class KaartCopyrightComponent extends KaartChildDirective {
     super(parent, zone);
     this.dispatch(prt.InitUiElementOpties(CopyrightUISelector, defaultOpties));
 
-    this.copyright$ = this.accumulatedOpties$<CopyrightOpties>(CopyrightUISelector).pipe(map(o => o.copyright));
+    this.copyright$ = this.accumulatedOpties$<CopyrightOpties>(
+      CopyrightUISelector
+    ).pipe(map((o) => o.copyright));
   }
 }

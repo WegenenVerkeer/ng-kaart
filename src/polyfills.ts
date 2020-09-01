@@ -14,7 +14,7 @@
  * Learn more in https://angular.io/docs/ts/latest/guide/browser-support.html
  */
 
-/***************************************************************************************************
+/** *************************************************************************************************
  * BROWSER POLYFILLS
  */
 
@@ -65,12 +65,12 @@
  */
 // (window as any).__Zone_enable_cross_context_check = true;
 
-/***************************************************************************************************
+/** *************************************************************************************************
  * Zone JS is required by default for Angular itself.
  */
 import "zone.js/dist/zone"; // Included with Angular CLI.
 
-/***************************************************************************************************
+/** *************************************************************************************************
  * APPLICATION IMPORTS
  */
 import "drag-drop-touch/DragDropTouch"; // translates touch events into standard HTML5 drag drop events

@@ -9,7 +9,11 @@ import { ZoekerUiSelector } from "../../zoeker/box/zoeker-box.component";
 import { ZoekerCrabService } from "../../zoeker/crab/zoeker-crab.service";
 import { ZoekerGoogleWdbService } from "../../zoeker/google-wdb/zoeker-google-wdb.service";
 import { ZoekerPerceelService } from "../../zoeker/perceel/zoeker-perceel.service";
-import { Zoeker, zoekerMetPrioriteiten, ZoekerMetWeergaveopties } from "../../zoeker/zoeker";
+import {
+  Zoeker,
+  zoekerMetPrioriteiten,
+  ZoekerMetWeergaveopties,
+} from "../../zoeker/zoeker";
 import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 
@@ -33,7 +37,7 @@ import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
  */
 @Component({
   selector: "awv-kaart-zoeker",
-  template: "<ng-content></ng-content>"
+  template: "<ng-content></ng-content>",
 })
 export class ClassicZoekerComponent extends ClassicUIElementSelectorDirective {
   /**
@@ -64,7 +68,9 @@ export class ClassicZoekerComponent extends ClassicUIElementSelectorDirective {
   ) {
     super(ZoekerUiSelector, injector);
 
-    const locatorService = injector.get(KaartClassicLocatorService) as KaartClassicLocatorService<ClassicZoekerComponent>;
+    const locatorService = injector.get(
+      KaartClassicLocatorService
+    ) as KaartClassicLocatorService<ClassicZoekerComponent>;
     const el: ElementRef<Element> = injector.get(ElementRef);
     locatorService.registerComponent(this, el);
 
@@ -73,17 +79,22 @@ export class ClassicZoekerComponent extends ClassicUIElementSelectorDirective {
     this.initialising$.pipe(delay(100)).subscribe(() => {
       // Een beetje een ingewikkelde constructie, maar we willen dat we zowel met deze tag alleen kunnen werken (backwards compatibility)
       // als met deze tag + child tags
-      const inputZoekers = concat(toArray(option.fromNullable(this.zoeker)), this.zoekers);
+      const inputZoekers = concat(
+        toArray(option.fromNullable(this.zoeker)),
+        this.zoekers
+      );
       const stdZoekers: ZoekerMetWeergaveopties[] = [
         zoekerMetPrioriteiten(googleZoeker, 1, 1, true, true),
         zoekerMetPrioriteiten(crabZoeker, 2, 2, true, true),
-        zoekerMetPrioriteiten(perceelZoeker, 3, -1, true, true)
+        zoekerMetPrioriteiten(perceelZoeker, 3, -1, true, true),
       ];
       this.registered = array.isEmpty(inputZoekers) ? stdZoekers : inputZoekers;
-      this.registered.forEach(zoeker => this.registerZoeker(zoeker));
+      this.registered.forEach((zoeker) => this.registerZoeker(zoeker));
       this.isInitialised = true;
     });
-    this.destroying$.subscribe(() => this.registered.forEach(zmp => this.deregisterZoeker(zmp)));
+    this.destroying$.subscribe(() =>
+      this.registered.forEach((zmp) => this.deregisterZoeker(zmp))
+    );
   }
 
   addZoeker(zoekerOpties: ZoekerMetWeergaveopties): void {
@@ -96,17 +107,20 @@ export class ClassicZoekerComponent extends ClassicUIElementSelectorDirective {
   }
 
   removeZoeker(zoeker: Zoeker): void {
-    forEach(array.findFirst(this.registered, zmw => zmw.zoeker === zoeker), toDelete => {
-      this.registered = this.registered.filter(zmw => zmw !== toDelete);
-      this.deregisterZoeker(toDelete);
-    });
+    forEach(
+      array.findFirst(this.registered, (zmw) => zmw.zoeker === zoeker),
+      (toDelete) => {
+        this.registered = this.registered.filter((zmw) => zmw !== toDelete);
+        this.deregisterZoeker(toDelete);
+      }
+    );
   }
 
   private registerZoeker(zoekerOpties: ZoekerMetWeergaveopties) {
     this.kaart.dispatch({
       type: "VoegZoekerToe",
       zoekerPrioriteit: zoekerOpties,
-      wrapper: kaartLogOnlyWrapper
+      wrapper: kaartLogOnlyWrapper,
     });
   }
 
@@ -114,7 +128,7 @@ export class ClassicZoekerComponent extends ClassicUIElementSelectorDirective {
     this.kaart.dispatch({
       type: "VerwijderZoeker",
       zoekerNaam: zoekerOpties.zoeker.naam(),
-      wrapper: kaartLogOnlyWrapper
+      wrapper: kaartLogOnlyWrapper,
     });
   }
 }

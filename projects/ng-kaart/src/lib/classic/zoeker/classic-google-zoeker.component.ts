@@ -11,7 +11,7 @@ import { ClassicSingleZoekerDirective } from "./classic-single-zoeker.directive"
  */
 @Component({
   selector: "awv-kaart-google-zoeker",
-  template: ""
+  template: "",
 })
 export class ClassicGoogleZoekerComponent extends ClassicSingleZoekerDirective {
   constructor(injector: Injector, googleZoeker: ZoekerGoogleWdbService) {

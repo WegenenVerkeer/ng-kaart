@@ -2,7 +2,10 @@ import { Component, Injector, Input } from "@angular/core";
 
 import * as clr from "../../stijl/colour";
 
-import { MultiMetenOpties, MultiMetenUiSelector } from "../../kaart/meten/kaart-multi-meten.component";
+import {
+  MultiMetenOpties,
+  MultiMetenUiSelector,
+} from "../../kaart/meten/kaart-multi-meten.component";
 import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 
 import * as val from "../webcomponent-support/params";
@@ -12,7 +15,7 @@ import * as val from "../webcomponent-support/params";
  */
 @Component({
   selector: "awv-multi-meet-knop",
-  template: ""
+  template: "",
 })
 export class ClassicMultiMetenComponent extends ClassicUIElementSelectorDirective {
   _tekenKleurCode = clr.kleurcodeValue(clr.zwartig);
@@ -41,7 +44,10 @@ export class ClassicMultiMetenComponent extends ClassicUIElementSelectorDirectiv
   /** moet de gebruiker kunnen kiezen tussen  rechte lijnen en via de weg? */
   @Input()
   set keuzemogelijkheidTonen(param: boolean) {
-    this._keuzemogelijkheidTonen = val.bool(param, this._keuzemogelijkheidTonen);
+    this._keuzemogelijkheidTonen = val.bool(
+      param,
+      this._keuzemogelijkheidTonen
+    );
   }
 
   constructor(injector: Injector) {
@@ -50,10 +56,12 @@ export class ClassicMultiMetenComponent extends ClassicUIElementSelectorDirectiv
 
   protected opties(): MultiMetenOpties {
     return {
-      markColour: clr.toKleur("naam", this._tekenKleurCode).getOrElse(clr.zwartig),
+      markColour: clr
+        .toKleur("naam", this._tekenKleurCode)
+        .getOrElse(clr.zwartig),
       useRouting: this._metRouting,
       showInfoMessage: this._toonInfoBoodschap,
-      connectionSelectable: this._keuzemogelijkheidTonen
+      connectionSelectable: this._keuzemogelijkheidTonen,
     };
   }
 }

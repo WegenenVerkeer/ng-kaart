@@ -4,7 +4,7 @@ import { option } from "fp-ts";
 import { classicLogger } from "./log";
 
 @Injectable({
-  providedIn: "root"
+  providedIn: "root",
 })
 export class KaartClassicLocatorService<T extends object = any> {
   private registry: Map<Element, T> = new Map();
@@ -12,16 +12,24 @@ export class KaartClassicLocatorService<T extends object = any> {
 
   public registerComponent(component: T, el: ElementRef<Element>) {
     if (el) {
-      classicLogger.debug(`Registreer component ${el.nativeElement.tagName} onder tag ${component.constructor.name}`);
+      classicLogger.debug(
+        `Registreer component ${el.nativeElement.tagName} onder tag ${component.constructor.name}`
+      );
       this.registry.set(el.nativeElement, component);
     }
   }
 
-  public getComponent(injector: Injector, component: any, el: ElementRef<Element>): T {
+  public getComponent(
+    injector: Injector,
+    component: any,
+    el: ElementRef<Element>
+  ): T {
     const parentEl = this.findContainerElement(el.nativeElement, component);
-    if (parentEl.map(el => this.registry.has(el)).getOrElse(false)) {
+    if (parentEl.map((el) => this.registry.has(el)).getOrElse(false)) {
       const foundComponent = this.registry.get(parentEl.toNullable()!)!;
-      classicLogger.debug(`Component ${foundComponent.constructor.name} gevonden voor tag ${el.nativeElement.tagName}`);
+      classicLogger.debug(
+        `Component ${foundComponent.constructor.name} gevonden voor tag ${el.nativeElement.tagName}`
+      );
       return foundComponent;
     } else {
       classicLogger.debug(
@@ -31,7 +39,10 @@ export class KaartClassicLocatorService<T extends object = any> {
     }
   }
 
-  private findContainerElement(el: Element, component: any): option.Option<Element> {
+  private findContainerElement(
+    el: Element,
+    component: any
+  ): option.Option<Element> {
     if (this.registry.has(el) && this.registry.get(el) instanceof component) {
       return option.some(el);
     } else if (el.parentElement) {

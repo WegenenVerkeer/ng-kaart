@@ -17,11 +17,13 @@ platformBrowserDynamic()
   .bootstrapModule(AppModule)
   .then(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("ng-kaart/ng-kaart-service-worker.js").catch(err => {
-        console.log("Kon ng-kaart-service-worker.js niet registreren", err);
-      });
+      navigator.serviceWorker
+        .register("ng-kaart/ng-kaart-service-worker.js")
+        .catch((err) => {
+          console.log("Kon ng-kaart-service-worker.js niet registreren", err);
+        });
     } else {
       console.log("Geen service worker ondersteuning beschikbaar");
     }
   })
-  .catch(err => console.error(err));
+  .catch((err) => console.error(err));

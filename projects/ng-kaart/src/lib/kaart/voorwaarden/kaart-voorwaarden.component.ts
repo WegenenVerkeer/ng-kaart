@@ -14,17 +14,20 @@ export interface VoorwaardenOpties extends OptiesRecord {
   href: string;
 }
 
-export const VoorwaardenOpties = (titel: string, href: string) => ({ titel: titel, href: href });
+export const VoorwaardenOpties = (titel: string, href: string) => ({
+  titel: titel,
+  href: href,
+});
 
 const defaultOpties: VoorwaardenOpties = {
   titel: "Voorwaarden",
-  href: "https://www.vlaanderen.be/nl/disclaimer"
+  href: "https://www.vlaanderen.be/nl/disclaimer",
 };
 
 @Component({
   selector: "awv-voorwaarden",
   templateUrl: "./kaart-voorwaarden.component.html",
-  styleUrls: ["./kaart-voorwaarden.component.scss"]
+  styleUrls: ["./kaart-voorwaarden.component.scss"],
 })
 export class KaartVoorwaardenComponent extends KaartChildDirective {
   voorwaardenOpties$: rx.Observable<VoorwaardenOpties>;

@@ -9,8 +9,14 @@ import { formateerDate } from "../util/date-time";
 
 import { formatRelativeDateRange } from "./date-range-helper";
 
-type BinaryComparisonOperatorMapping = Record<fltr.BinaryComparisonOperator, string>;
-type UnaryComparisonOperatorMapping = Record<fltr.UnaryComparisonOperator, string>;
+type BinaryComparisonOperatorMapping = Record<
+  fltr.BinaryComparisonOperator,
+  string
+>;
+type UnaryComparisonOperatorMapping = Record<
+  fltr.UnaryComparisonOperator,
+  string
+>;
 
 const binaryComparisonOperatorMapping: BinaryComparisonOperatorMapping = {
   equality: "is",
@@ -22,7 +28,7 @@ const binaryComparisonOperatorMapping: BinaryComparisonOperatorMapping = {
   smallerOrEqual: "kleiner of gelijk aan",
   larger: "groter dan",
   largerOrEqual: "groter dan of gelijk aan",
-  within: "laatste"
+  within: "laatste",
 };
 
 const binaryDateComparisonOperatorMapping: BinaryComparisonOperatorMapping = {
@@ -35,23 +41,23 @@ const binaryDateComparisonOperatorMapping: BinaryComparisonOperatorMapping = {
   smallerOrEqual: "tot en met",
   larger: "na",
   largerOrEqual: "vanaf",
-  within: "laatste"
+  within: "laatste",
 };
 
 const unaryComparisonOperatorMapping: UnaryComparisonOperatorMapping = {
   isEmpty: "heeft geen waarde",
-  isNotEmpty: "heeft een waarde"
+  isNotEmpty: "heeft een waarde",
 };
 
 const booleanComparisonOperatorMapping = {
   equality: "is waar",
-  inequality: "is niet waar"
+  inequality: "is niet waar",
 };
 
 @Component({
   selector: "awv-filter-term",
   templateUrl: "./filter-term.component.html",
-  styleUrls: ["./filter-term.component.scss"]
+  styleUrls: ["./filter-term.component.scss"],
 })
 export class FilterTermComponent extends KaartChildDirective {
   property: string;
@@ -69,19 +75,25 @@ export class FilterTermComponent extends KaartChildDirective {
       case "BinaryComparison":
         if (term.property.type === "boolean") {
           this.value = "";
-          this.operator = booleanComparisonOperatorMapping[term.operator] || "???";
+          this.operator =
+            booleanComparisonOperatorMapping[term.operator] || "???";
         } else {
-          this.operator = binaryComparisonOperatorMapping[term.operator] || "???";
+          this.operator =
+            binaryComparisonOperatorMapping[term.operator] || "???";
           this.value = fltr.matchLiteral({
-            boolean: literal => (literal.value ? "Waar" : "Niet waar"),
-            integer: literal => literal.value.toString(),
-            double: literal => literal.value.toString(),
-            string: literal => literal.value.toString(),
-            date: literal => {
-              this.operator = binaryDateComparisonOperatorMapping[term.operator];
-              return formateerDate(option.some("dd/MM/yyyy"))(literal.value as DateTime);
+            boolean: (literal) => (literal.value ? "Waar" : "Niet waar"),
+            integer: (literal) => literal.value.toString(),
+            double: (literal) => literal.value.toString(),
+            string: (literal) => literal.value.toString(),
+            date: (literal) => {
+              this.operator =
+                binaryDateComparisonOperatorMapping[term.operator];
+              return formateerDate(option.some("dd/MM/yyyy"))(
+                literal.value as DateTime
+              );
             },
-            range: literal => formatRelativeDateRange(literal.value as fltr.RelativeDateRange)
+            range: (literal) =>
+              formatRelativeDateRange(literal.value as fltr.RelativeDateRange),
           })(term.value);
         }
     }

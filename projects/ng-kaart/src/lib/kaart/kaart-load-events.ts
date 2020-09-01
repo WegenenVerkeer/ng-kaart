@@ -20,4 +20,7 @@ export interface LoadError {
 export const LoadStart: LoadStart = { type: "LoadStart" };
 export const PartReceived: PartReceived = { type: "PartReceived" };
 export const LoadComplete: LoadComplete = { type: "LoadComplete" };
-export const LoadError: (_: string) => LoadError = msg => ({ type: "LoadError", error: msg });
+export const LoadError: (_: string) => LoadError = (msg) => ({
+  type: "LoadError",
+  error: msg,
+});

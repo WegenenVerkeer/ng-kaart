@@ -14,9 +14,9 @@ describe("de stijl functie", () => {
         undefinedProp: undefined,
         nestedProp: {
           numProp: 3.1415,
-          boolProp: false
-        }
-      }
+          boolProp: false,
+        },
+      },
     });
     const resolution = 32;
     it("moet een stijl selecteren adhv een enkele regel obv een Literal", () => {
@@ -29,18 +29,20 @@ describe("de stijl functie", () => {
               {
                 condition: {
                   kind: "Literal",
-                  value: true
+                  value: true,
                 },
                 style: {
-                  definition: {}
-                }
-              }
-            ]
-          }
+                  definition: {},
+                },
+              },
+            ],
+          },
         })
       );
       expect(result.isSuccess()).toBe(true);
-      expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style());
+      expect(
+        result.map((f) => f(feature, resolution)).getOrElse(undefined)
+      ).toEqual(new ol.style.Style());
     });
     it("moet een stijl selecteren adhv een regel zonder conditie", () => {
       const result = definitieToStyleFunction(
@@ -51,15 +53,17 @@ describe("de stijl functie", () => {
             rules: [
               {
                 style: {
-                  definition: {}
-                }
-              }
-            ]
-          }
+                  definition: {},
+                },
+              },
+            ],
+          },
         })
       );
       expect(result.isSuccess()).toBe(true);
-      expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style());
+      expect(
+        result.map((f) => f(feature, resolution)).getOrElse(undefined)
+      ).toEqual(new ol.style.Style());
     });
 
     it("moet een stijl selecteren adhv een complexe expressie", () => {
@@ -74,32 +78,44 @@ describe("de stijl functie", () => {
                   kind: "&&",
                   left: {
                     kind: "==",
-                    left: { kind: "Property", type: "string", ref: "offsetZijde" },
-                    right: { kind: "Literal", value: "R" }
+                    left: {
+                      kind: "Property",
+                      type: "string",
+                      ref: "offsetZijde",
+                    },
+                    right: { kind: "Literal", value: "R" },
                   },
                   right: {
                     kind: "<=>",
-                    value: { kind: "Environment", type: "number", ref: "resolution" },
+                    value: {
+                      kind: "Environment",
+                      type: "number",
+                      ref: "resolution",
+                    },
                     lower: { kind: "Literal", value: 0 },
-                    upper: { kind: "Literal", value: 2048 }
-                  }
+                    upper: { kind: "Literal", value: 2048 },
+                  },
                 },
                 style: {
                   definition: {
                     stroke: {
                       width: 5,
-                      color: "#FFFF00"
-                    }
-                  }
-                }
-              }
-            ]
-          }
+                      color: "#FFFF00",
+                    },
+                  },
+                },
+              },
+            ],
+          },
         })
       );
       expect(result.isSuccess()).toBe(true);
-      expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(
-        new ol.style.Style({ stroke: new ol.style.Stroke({ width: 5, color: "#FFFF00" }) })
+      expect(
+        result.map((f) => f(feature, resolution)).getOrElse(undefined)
+      ).toEqual(
+        new ol.style.Style({
+          stroke: new ol.style.Stroke({ width: 5, color: "#FFFF00" }),
+        })
       );
     });
 
@@ -112,18 +128,20 @@ describe("de stijl functie", () => {
             rules: [
               {
                 condition: { kind: "Literal", value: false },
-                style: { definition: {} }
+                style: { definition: {} },
               },
               {
                 condition: { kind: "Literal", value: true },
-                style: { definition: { stroke: { color: "green" } } }
-              }
-            ]
-          }
+                style: { definition: { stroke: { color: "green" } } },
+              },
+            ],
+          },
         })
       );
       expect(result.isSuccess()).toBe(true);
-      expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(
+      expect(
+        result.map((f) => f(feature, resolution)).getOrElse(undefined)
+      ).toEqual(
         new ol.style.Style({ stroke: new ol.style.Stroke({ color: "green" }) })
       );
     });
@@ -139,27 +157,42 @@ describe("de stijl functie", () => {
                   kind: "<=>",
                   value: { kind: "Literal", value: value },
                   lower: { kind: "Literal", value: lower },
-                  upper: { kind: "Literal", value: upper }
+                  upper: { kind: "Literal", value: upper },
                 },
                 style: {
-                  definition: {}
-                }
-              }
-            ]
-          }
+                  definition: {},
+                },
+              },
+            ],
+          },
         });
 
-      const resultInside = definitieToStyleFunction("json", inBetweenStanza(1, 0, 10));
+      const resultInside = definitieToStyleFunction(
+        "json",
+        inBetweenStanza(1, 0, 10)
+      );
       expect(resultInside.isSuccess()).toBe(true);
-      expect(resultInside.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style());
+      expect(
+        resultInside.map((f) => f(feature, resolution)).getOrElse(undefined)
+      ).toEqual(new ol.style.Style());
 
-      const resultBelow = definitieToStyleFunction("json", inBetweenStanza(-1, 0, 10));
+      const resultBelow = definitieToStyleFunction(
+        "json",
+        inBetweenStanza(-1, 0, 10)
+      );
       expect(resultBelow.isSuccess()).toBe(true);
-      expect(resultBelow.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
+      expect(
+        resultBelow.map((f) => f(feature, resolution)).getOrElse(undefined)
+      ).toEqual(undefined);
 
-      const resultAbove = definitieToStyleFunction("json", inBetweenStanza(11, 0, 10));
+      const resultAbove = definitieToStyleFunction(
+        "json",
+        inBetweenStanza(11, 0, 10)
+      );
       expect(resultAbove.isSuccess()).toBe(true);
-      expect(resultAbove.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
+      expect(
+        resultAbove.map((f) => f(feature, resolution)).getOrElse(undefined)
+      ).toEqual(undefined);
     });
 
     it("moet de L== operator interpreteren als 'left lowercase equals'", () => {
@@ -172,27 +205,42 @@ describe("de stijl functie", () => {
                 condition: {
                   kind: "L==",
                   left: { kind: "Literal", value: left },
-                  right: { kind: "Literal", value: right }
+                  right: { kind: "Literal", value: right },
                 },
                 style: {
-                  definition: {}
-                }
-              }
-            ]
-          }
+                  definition: {},
+                },
+              },
+            ],
+          },
         });
 
-      const resultLeftUpper = definitieToStyleFunction("json", lowercaseStanza("Abc", "abc"));
+      const resultLeftUpper = definitieToStyleFunction(
+        "json",
+        lowercaseStanza("Abc", "abc")
+      );
       expect(resultLeftUpper.isSuccess()).toBe(true);
-      expect(resultLeftUpper.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style());
+      expect(
+        resultLeftUpper.map((f) => f(feature, resolution)).getOrElse(undefined)
+      ).toEqual(new ol.style.Style());
 
-      const resultRightUpper = definitieToStyleFunction("json", lowercaseStanza("abc", "Abc")); // enkel lowercase van left
+      const resultRightUpper = definitieToStyleFunction(
+        "json",
+        lowercaseStanza("abc", "Abc")
+      ); // enkel lowercase van left
       expect(resultRightUpper.isSuccess()).toBe(true);
-      expect(resultRightUpper.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
+      expect(
+        resultRightUpper.map((f) => f(feature, resolution)).getOrElse(undefined)
+      ).toEqual(undefined);
 
-      const resultBothUpper = definitieToStyleFunction("json", lowercaseStanza("Abc", "Abc")); // right moet lowercase zijn
+      const resultBothUpper = definitieToStyleFunction(
+        "json",
+        lowercaseStanza("Abc", "Abc")
+      ); // right moet lowercase zijn
       expect(resultBothUpper.isSuccess()).toBe(true);
-      expect(resultBothUpper.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
+      expect(
+        resultBothUpper.map((f) => f(feature, resolution)).getOrElse(undefined)
+      ).toEqual(undefined);
     });
 
     describe("bij het refereren aan feature properties", () => {
@@ -206,20 +254,26 @@ describe("de stijl functie", () => {
                 {
                   condition: {
                     kind: "==",
-                    left: { kind: "Property", type: "string", ref: "offsetZijde" },
-                    right: { kind: "Literal", value: "R" }
+                    left: {
+                      kind: "Property",
+                      type: "string",
+                      ref: "offsetZijde",
+                    },
+                    right: { kind: "Literal", value: "R" },
                   },
                   style: {
-                    definition: {}
-                  }
-                }
-              ]
-            }
+                    definition: {},
+                  },
+                },
+              ],
+            },
           })
         );
 
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style({}));
+        expect(
+          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+        ).toEqual(new ol.style.Style({}));
       });
 
       it("moet de waarde van de geneste property gebruiken", () => {
@@ -232,20 +286,26 @@ describe("de stijl functie", () => {
                 {
                   condition: {
                     kind: "==",
-                    left: { kind: "Property", type: "number", ref: "nestedProp.numProp" },
-                    right: { kind: "Literal", value: 3.1415 }
+                    left: {
+                      kind: "Property",
+                      type: "number",
+                      ref: "nestedProp.numProp",
+                    },
+                    right: { kind: "Literal", value: 3.1415 },
                   },
                   style: {
-                    definition: {}
-                  }
-                }
-              ]
-            }
+                    definition: {},
+                  },
+                },
+              ],
+            },
           })
         );
 
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style({}));
+        expect(
+          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+        ).toEqual(new ol.style.Style({}));
       });
 
       it("moet de conditie falen als de property niet bestaat", () => {
@@ -258,20 +318,26 @@ describe("de stijl functie", () => {
                 {
                   condition: {
                     kind: "==",
-                    left: { kind: "Property", type: "string", ref: "onbestaand" },
-                    right: { kind: "Literal", value: "R" }
+                    left: {
+                      kind: "Property",
+                      type: "string",
+                      ref: "onbestaand",
+                    },
+                    right: { kind: "Literal", value: "R" },
                   },
                   style: {
-                    definition: {}
-                  }
-                }
-              ]
-            }
+                    definition: {},
+                  },
+                },
+              ],
+            },
           })
         );
 
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
+        expect(
+          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+        ).toEqual(undefined);
       });
 
       it("moet de conditie falen als de geneste property niet bestaat", () => {
@@ -284,20 +350,26 @@ describe("de stijl functie", () => {
                 {
                   condition: {
                     kind: "==",
-                    left: { kind: "Property", type: "string", ref: "nestedProp.onbestaand" },
-                    right: { kind: "Literal", value: "R" }
+                    left: {
+                      kind: "Property",
+                      type: "string",
+                      ref: "nestedProp.onbestaand",
+                    },
+                    right: { kind: "Literal", value: "R" },
                   },
                   style: {
-                    definition: {}
-                  }
-                }
-              ]
-            }
+                    definition: {},
+                  },
+                },
+              ],
+            },
           })
         );
 
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
+        expect(
+          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+        ).toEqual(undefined);
       });
 
       it("moet de conditie falen als de property een null waarde heeft", () => {
@@ -311,19 +383,21 @@ describe("de stijl functie", () => {
                   condition: {
                     kind: "==",
                     left: { kind: "Property", type: "string", ref: "nullProp" },
-                    right: { kind: "Literal", value: "R" }
+                    right: { kind: "Literal", value: "R" },
                   },
                   style: {
-                    definition: {}
-                  }
-                }
-              ]
-            }
+                    definition: {},
+                  },
+                },
+              ],
+            },
           })
         );
 
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
+        expect(
+          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+        ).toEqual(undefined);
       });
 
       it("moet de conditie falen als de property een undefined waarde heeft", () => {
@@ -336,20 +410,26 @@ describe("de stijl functie", () => {
                 {
                   condition: {
                     kind: "==",
-                    left: { kind: "Property", type: "string", ref: "undefinedProp" },
-                    right: { kind: "Literal", value: "R" }
+                    left: {
+                      kind: "Property",
+                      type: "string",
+                      ref: "undefinedProp",
+                    },
+                    right: { kind: "Literal", value: "R" },
                   },
                   style: {
-                    definition: {}
-                  }
-                }
-              ]
-            }
+                    definition: {},
+                  },
+                },
+              ],
+            },
           })
         );
 
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
+        expect(
+          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+        ).toEqual(undefined);
       });
 
       it("moet de conditie niet noodzakelijk falen als de property een false waarde heeft", () => {
@@ -362,19 +442,25 @@ describe("de stijl functie", () => {
                 {
                   condition: {
                     kind: "==",
-                    left: { kind: "Property", type: "boolean", ref: "boolProp" },
-                    right: { kind: "Literal", value: false }
+                    left: {
+                      kind: "Property",
+                      type: "boolean",
+                      ref: "boolProp",
+                    },
+                    right: { kind: "Literal", value: false },
                   },
                   style: {
-                    definition: {}
-                  }
-                }
-              ]
-            }
+                    definition: {},
+                  },
+                },
+              ],
+            },
           })
         );
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style({}));
+        expect(
+          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+        ).toEqual(new ol.style.Style({}));
       });
 
       it("moet de conditie niet noodzakelijk falen als de geneste property een false waarde heeft", () => {
@@ -387,19 +473,25 @@ describe("de stijl functie", () => {
                 {
                   condition: {
                     kind: "==",
-                    left: { kind: "Property", type: "boolean", ref: "nestedProp.boolProp" },
-                    right: { kind: "Literal", value: false }
+                    left: {
+                      kind: "Property",
+                      type: "boolean",
+                      ref: "nestedProp.boolProp",
+                    },
+                    right: { kind: "Literal", value: false },
                   },
                   style: {
-                    definition: {}
-                  }
-                }
-              ]
-            }
+                    definition: {},
+                  },
+                },
+              ],
+            },
           })
         );
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style({}));
+        expect(
+          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+        ).toEqual(new ol.style.Style({}));
       });
 
       it("moet de conditie falen als het actuele type van de property niet overeenstemt met het gedeclareerde", () => {
@@ -413,19 +505,21 @@ describe("de stijl functie", () => {
                   condition: {
                     kind: "==",
                     left: { kind: "Property", type: "string", ref: "numProp" },
-                    right: { kind: "Literal", value: "R" }
+                    right: { kind: "Literal", value: "R" },
                   },
                   style: {
-                    definition: {}
-                  }
-                }
-              ]
-            }
+                    definition: {},
+                  },
+                },
+              ],
+            },
           })
         );
 
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
+        expect(
+          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+        ).toEqual(undefined);
       });
     });
   });
@@ -441,10 +535,10 @@ describe("de stijl functie", () => {
               rules: [
                 {
                   condition: { kind: "Literal", value: true },
-                  style: { definition: {} }
-                }
-              ]
-            }
+                  style: { definition: {} },
+                },
+              ],
+            },
           })
         );
         expect(result.isSuccess()).toBe(true);
@@ -461,10 +555,10 @@ describe("de stijl functie", () => {
               rules: [
                 {
                   condition: { kind: "Literal", value: "true" },
-                  style: { definition: {} }
-                }
-              ]
-            }
+                  style: { definition: {} },
+                },
+              ],
+            },
           })
         );
         expect(result.isFailure()).toBe(true);
@@ -486,10 +580,10 @@ describe("de stijl functie", () => {
               rules: [
                 {
                   condition: { kind: "Literal", value: "true" },
-                  style: { definition: {} }
-                }
-              ]
-            }
+                  style: { definition: {} },
+                },
+              ],
+            },
           })
         );
         expect(result.isFailure()).toBe(true);
@@ -505,11 +599,14 @@ describe("de stijl functie", () => {
             definition: {
               rules: [
                 {
-                  condition: { kind: "<=", left: { kind: "Literal", value: "1" } },
-                  style: { definition: {} }
-                }
-              ]
-            }
+                  condition: {
+                    kind: "<=",
+                    left: { kind: "Literal", value: "1" },
+                  },
+                  style: { definition: {} },
+                },
+              ],
+            },
           })
         );
         expect(result.isFailure()).toBe(true);
@@ -524,16 +621,22 @@ describe("de stijl functie", () => {
             definition: {
               rules: [
                 {
-                  condition: { kind: "<=", left: { kind: "Literal", value: "1" }, right: { kind: "Literal", value: "2" } },
-                  style: { definition: {} }
-                }
-              ]
-            }
+                  condition: {
+                    kind: "<=",
+                    left: { kind: "Literal", value: "1" },
+                    right: { kind: "Literal", value: "2" },
+                  },
+                  style: { definition: {} },
+                },
+              ],
+            },
           })
         );
         expect(result.isFailure()).toBe(true);
         expect(result.value[0]).toContain("typecontrole:");
-        expect(result.value[0]).toContain("'string' en 'string' gevonden, maar telkens 'number' verwacht");
+        expect(result.value[0]).toContain(
+          "'string' en 'string' gevonden, maar telkens 'number' verwacht"
+        );
       });
       it("mag enkel een vergelijking met 2 gelijke argumenten toelaten", () => {
         const result = definitieToStyleFunction(
@@ -543,16 +646,22 @@ describe("de stijl functie", () => {
             definition: {
               rules: [
                 {
-                  condition: { kind: "!=", left: { kind: "Literal", value: "1" }, right: { kind: "Literal", value: 2 } },
-                  style: { definition: {} }
-                }
-              ]
-            }
+                  condition: {
+                    kind: "!=",
+                    left: { kind: "Literal", value: "1" },
+                    right: { kind: "Literal", value: 2 },
+                  },
+                  style: { definition: {} },
+                },
+              ],
+            },
           })
         );
         expect(result.isFailure()).toBe(true);
         expect(result.value[0]).toContain("typecontrole:");
-        expect(result.value[0]).toContain("verwacht dat 'string' en 'number' gelijk zijn");
+        expect(result.value[0]).toContain(
+          "verwacht dat 'string' en 'number' gelijk zijn"
+        );
       });
     });
   });

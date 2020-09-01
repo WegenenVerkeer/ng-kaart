@@ -54,22 +54,37 @@ export abstract class ClassicSingleZoekerDirective extends KaartBaseDirective {
    */
   @Input()
   public set volledigeZoekPrioriteit(param: number) {
-    this._volledigeZoekPrioriteit = val.num(param, this._volledigeZoekPrioriteit);
+    this._volledigeZoekPrioriteit = val.num(
+      param,
+      this._volledigeZoekPrioriteit
+    );
   }
 
   constructor(injector: Injector, zoeker: Zoeker) {
     super(injector.get(NgZone));
 
-    const locatorService = injector.get(KaartClassicLocatorService) as KaartClassicLocatorService<ClassicZoekerComponent>;
+    const locatorService = injector.get(
+      KaartClassicLocatorService
+    ) as KaartClassicLocatorService<ClassicZoekerComponent>;
     const el: ElementRef<Element> = injector.get(ElementRef);
-    const zoekerComponent = locatorService.getComponent(injector, ClassicZoekerComponent, el);
+    const zoekerComponent = locatorService.getComponent(
+      injector,
+      ClassicZoekerComponent,
+      el
+    );
 
     this.bindToLifeCycle(
       rx.merge(
         this.initialising$.pipe(
           tap(() =>
             zoekerComponent.addZoeker(
-              zoekerMetPrioriteiten(zoeker, this._volledigeZoekPrioriteit, this._suggestiesPrioriteit, this._toonIcoon, this._toonGeometrie)
+              zoekerMetPrioriteiten(
+                zoeker,
+                this._volledigeZoekPrioriteit,
+                this._suggestiesPrioriteit,
+                this._toonIcoon,
+                this._toonGeometrie
+              )
             )
           )
         ),

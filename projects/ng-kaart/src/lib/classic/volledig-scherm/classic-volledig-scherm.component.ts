@@ -8,20 +8,28 @@ import { ClassicBaseDirective } from "../classic-base.directive";
  */
 @Component({
   selector: "awv-kaart-knop-volledig-scherm",
-  template: "<ng-content></ng-content>"
+  template: "<ng-content></ng-content>",
 })
-export class ClassicVolledigSchermComponent extends ClassicBaseDirective implements OnInit, OnDestroy {
+export class ClassicVolledigSchermComponent
+  extends ClassicBaseDirective
+  implements OnInit, OnDestroy {
   constructor(injector: Injector) {
     super(injector);
   }
 
   ngOnInit(): void {
     super.ngOnInit();
-    this.kaart.dispatch({ type: "VoegVolledigSchermToe", wrapper: kaartLogOnlyWrapper });
+    this.kaart.dispatch({
+      type: "VoegVolledigSchermToe",
+      wrapper: kaartLogOnlyWrapper,
+    });
   }
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    this.kaart.dispatch({ type: "VerwijderVolledigScherm", wrapper: kaartLogOnlyWrapper });
+    this.kaart.dispatch({
+      type: "VerwijderVolledigScherm",
+      wrapper: kaartLogOnlyWrapper,
+    });
   }
 }

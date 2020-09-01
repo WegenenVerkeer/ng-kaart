@@ -6,7 +6,7 @@ import { FilterEditor as fed } from "../filter-builder";
 @Component({
   selector: "awv-filter-conjunction",
   templateUrl: "./filter-conjunction.component.html",
-  styleUrls: ["./filter-conjunction.component.scss"]
+  styleUrls: ["./filter-conjunction.component.scss"],
 })
 export class FilterConjunctionComponent {
   @Input()
@@ -16,7 +16,9 @@ export class FilterConjunctionComponent {
   expressionEditor: fed.ExpressionEditor;
 
   @Output()
-  expressionEditorUpdate: EventEmitter<Endomorphism<fed.ExpressionEditor>> = new EventEmitter();
+  expressionEditorUpdate: EventEmitter<
+    Endomorphism<fed.ExpressionEditor>
+  > = new EventEmitter();
 
   voegConjunctionToe(isLast: boolean) {
     if (isLast) {
@@ -24,7 +26,9 @@ export class FilterConjunctionComponent {
     }
   }
 
-  onExpressionEditorUpdate(expressionEditorUpdate: Endomorphism<fed.ExpressionEditor>) {
+  onExpressionEditorUpdate(
+    expressionEditorUpdate: Endomorphism<fed.ExpressionEditor>
+  ) {
     this.expressionEditorUpdate.next(expressionEditorUpdate);
   }
 }

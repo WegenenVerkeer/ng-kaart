@@ -9,8 +9,12 @@ import { KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
 import { toStylish } from "./stijl-selector";
 
-export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): option.Option<ol.layer.Base> {
-  const projection: Function1<string[], string> = projections => supportedProjection(projections).getOrElse(kaart.config.srs);
+export function toOlLayer(
+  kaart: KaartWithInfo,
+  laag: ke.Laag
+): option.Option<ol.layer.Base> {
+  const projection: Function1<string[], string> = (projections) =>
+    supportedProjection(projections).getOrElse(kaart.config.srs);
 
   function createdTileWms(l: ke.WmsLaag) {
     return new ol.layer.Tile({
@@ -23,7 +27,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): option.Option<ol
         urls: l.urls,
         tileGrid: ol.tilegrid.createXYZ({
           extent: kaart.config.defaults.extent,
-          tileSize: l.tileSize.getOrElse(256)
+          tileSize: l.tileSize.getOrElse(256),
         }),
         tileLoadFunction: kaart.tileLoader.tileLoadFunction,
         params: {
@@ -32,9 +36,12 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): option.Option<ol
           SRS: projection(l.beschikbareProjecties),
           VERSION: l.versie.getOrElse("1.3.0"),
           FORMAT: l.format.getOrElse("image/png"),
-          ...l.cqlFilter.fold({}, cqlFilter => ({ CQL_FILTER: cqlFilter } as object))
-        }
-      })
+          ...l.cqlFilter.fold(
+            {},
+            (cqlFilter) => ({ CQL_FILTER: cqlFilter } as object)
+          ),
+        },
+      }),
     });
   }
 
@@ -54,20 +61,20 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): option.Option<ol
         tileGrid: new ol.tilegrid.WMTSTileGrid({
           origin: config.origin.getOrElseL(() => ol.extent.getTopLeft(extent)),
           resolutions: kaart.config.defaults.resolutions,
-          matrixIds: config.matrixIds
+          matrixIds: config.matrixIds,
         }),
         tileLoadFunction: kaart.tileLoader.tileLoadFunction,
         layer: l.naam,
         style: config.style.getOrElse(""),
         format: l.format.getOrElse("image/png"),
-        matrixSet: l.matrixSet
+        matrixSet: l.matrixSet,
       });
     }
     return new ol.layer.Tile({
       // title: l.titel, --> verdwenen in OL 6
       visible: true,
       extent: extent,
-      source: source
+      source: source,
     });
   }
 
@@ -79,23 +86,32 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): option.Option<ol
           LAYERS: l.naam,
           SRS: projection(l.beschikbareProjecties),
           VERSION: l.versie.getOrElse("1.3.0"),
-          FORMAT: l.format.getOrElse("image/png")
+          FORMAT: l.format.getOrElse("image/png"),
         },
         projection: projection(l.beschikbareProjecties),
         ratio: 1.1,
-        hidpi: false
-      })
+        hidpi: false,
+      }),
     });
   }
 
   function createVectorLayer(vectorlaag: ke.VectorLaag) {
-    if (array.isOutOfBound(vectorlaag.minZoom - 1, kaart.config.defaults.resolutions)) {
+    if (
+      array.isOutOfBound(
+        vectorlaag.minZoom - 1,
+        kaart.config.defaults.resolutions
+      )
+    ) {
       kaartLogger.error(`Ongeldige minZoom voor ${vectorlaag.titel}:
         ${vectorlaag.minZoom}, moet tussen 1 en ${kaart.config.defaults.resolutions.length} liggen`);
     }
-    if (array.isOutOfBound(vectorlaag.maxZoom, kaart.config.defaults.resolutions)) {
+    if (
+      array.isOutOfBound(vectorlaag.maxZoom, kaart.config.defaults.resolutions)
+    ) {
       kaartLogger.error(`Ongeldige maxZoom voor ${vectorlaag.titel}:
-        ${vectorlaag.maxZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
+        ${vectorlaag.maxZoom}, moet tussen 0 en ${
+        kaart.config.defaults.resolutions.length - 1
+      } liggen`);
     }
 
     /**
@@ -116,17 +132,27 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): option.Option<ol
     const vector = new ol.layer.Vector({
       source: vectorlaag.clusterDistance.foldL(
         () => vectorlaag.source,
-        distance => new ol.source.Cluster({ source: vectorlaag.source, distance: distance })
+        (distance) =>
+          new ol.source.Cluster({
+            source: vectorlaag.source,
+            distance: distance,
+          })
       ),
       visible: true,
-      style: vectorlaag.styleSelector.map(toStylish).getOrElse(kaart.config.defaults.style),
+      style: vectorlaag.styleSelector
+        .map(toStylish)
+        .getOrElse(kaart.config.defaults.style),
       minResolution: array
         .lookup(vectorlaag.maxZoom, kaart.config.defaults.resolutions)
-        .getOrElse(kaart.config.defaults.resolutions[kaart.config.defaults.resolutions.length - 1]),
+        .getOrElse(
+          kaart.config.defaults.resolutions[
+            kaart.config.defaults.resolutions.length - 1
+          ]
+        ),
       maxResolution: array
         .lookup(vectorlaag.minZoom, kaart.config.defaults.resolutions)
-        .map(maxResolutie => maxResolutie + 0.0001) // max is exclusive, dus tel een fractie bij zodat deze inclusief wordt
-        .getOrElse(kaart.config.defaults.resolutions[0])
+        .map((maxResolutie) => maxResolutie + 0.0001) // max is exclusive, dus tel een fractie bij zodat deze inclusief wordt
+        .getOrElse(kaart.config.defaults.resolutions[0]),
     });
 
     vector.set(ke.LayerProperties.Selecteerbaar, vectorlaag.selecteerbaar);

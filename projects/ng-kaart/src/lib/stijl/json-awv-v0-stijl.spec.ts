@@ -22,15 +22,15 @@ describe("De json AWV V0 interpreter", () => {
   it("moet een Fill met alle opties maken", () => {
     const result = jsonAwvV0Style({
       fill: {
-        color: "#FF0"
-      }
+        color: "#FF0",
+      },
     });
     expect(result).toEqual(
       ok(
         new ol.style.Style({
           fill: new ol.style.Fill({
-            color: "#FF0"
-          })
+            color: "#FF0",
+          }),
         })
       )
     );
@@ -44,8 +44,8 @@ describe("De json AWV V0 interpreter", () => {
         lineJoin: "bevel",
         lineDash: [5, 0, 2, 0],
         miterLimit: 8,
-        width: 5
-      }
+        width: 5,
+      },
     });
     expect(result).toEqual(
       ok(
@@ -56,8 +56,8 @@ describe("De json AWV V0 interpreter", () => {
             lineJoin: "bevel",
             lineDash: [5, 0, 2, 0],
             miterLimit: 8,
-            width: 5
-          })
+            width: 5,
+          }),
         })
       )
     );
@@ -68,12 +68,12 @@ describe("De json AWV V0 interpreter", () => {
       circle: {
         radius: 10,
         fill: {
-          color: "green"
+          color: "green",
         },
         stroke: {
-          width: 3
-        }
-      }
+          width: 3,
+        },
+      },
     });
     expect(result).toEqual(
       ok(
@@ -81,16 +81,18 @@ describe("De json AWV V0 interpreter", () => {
           image: new ol.style.Circle({
             radius: 10,
             stroke: new ol.style.Stroke({
-              width: 3
+              width: 3,
             }),
             fill: new ol.style.Fill({
-              color: "green"
-            })
-          })
+              color: "green",
+            }),
+          }),
         })
       )
     );
-    pending("Jasmine struikelt over het 'canvas' element dat openlayers aanmaakt.");
+    pending(
+      "Jasmine struikelt over het 'canvas' element dat openlayers aanmaakt."
+    );
   });
 
   it("moet een Text met alle opties maken", () => {
@@ -107,12 +109,12 @@ describe("De json AWV V0 interpreter", () => {
         textBaseline: "middle",
         placement: "point",
         fill: {
-          color: "red"
+          color: "red",
         },
         stroke: {
-          width: 6
-        }
-      }
+          width: 6,
+        },
+      },
     });
     expect(result).toEqual(
       ok(
@@ -129,12 +131,12 @@ describe("De json AWV V0 interpreter", () => {
             textBaseline: "middle",
             placement: "point",
             fill: new ol.style.Fill({
-              color: "red"
+              color: "red",
             }),
             stroke: new ol.style.Stroke({
-              width: 6
-            })
-          } as any)
+              width: 6,
+            }),
+          } as any),
         })
       )
     );
@@ -149,12 +151,12 @@ describe("De json AWV V0 interpreter", () => {
         radius2: 10,
         angle: 0,
         fill: {
-          color: "red"
+          color: "red",
         },
         stroke: {
-          width: 6
-        }
-      }
+          width: 6,
+        },
+      },
     });
     expect(result).toEqual(
       ok(
@@ -166,25 +168,27 @@ describe("De json AWV V0 interpreter", () => {
             radius2: 10,
             angle: 0,
             fill: new ol.style.Fill({
-              color: "red"
+              color: "red",
             }),
             stroke: new ol.style.Stroke({
-              width: 6
-            })
-          })
+              width: 6,
+            }),
+          }),
         })
       )
     );
-    pending("Jasmine struikelt over het 'canvas' element dat openlayers aanmaakt.");
+    pending(
+      "Jasmine struikelt over het 'canvas' element dat openlayers aanmaakt."
+    );
   });
 
   it("mag geen Circle zonder radius maken", () => {
     const result = jsonAwvV0Style({
       circle: {
         fill: {
-          color: "blue"
-        }
-      }
+          color: "blue",
+        },
+      },
     });
     expect(result.isFailure()).toBe(true);
     expect(result.value[0]).toContain("geen veld 'radius'");

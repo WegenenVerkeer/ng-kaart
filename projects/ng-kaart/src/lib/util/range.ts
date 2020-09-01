@@ -1,4 +1,8 @@
-export const rangeIter: (_1: number, _2?: number, _3?: number) => Iterable<number> = (size, start?, step?) => ({
+export const rangeIter: (
+  _1: number,
+  _2?: number,
+  _3?: number
+) => Iterable<number> = (size, start?, step?) => ({
   *[Symbol.iterator]() {
     let n = 0;
     for (let i = start || 0; n < size; i += step || 1) {
@@ -6,8 +10,12 @@ export const rangeIter: (_1: number, _2?: number, _3?: number) => Iterable<numbe
       yield i;
     }
     return n;
-  }
+  },
 });
 
-export const rangeArray: (_1: number, _2?: number, _3?: number) => Array<number> = (size, start?, step?) =>
-  Array.from(Array(size).keys()).map(i => i * (step || 1) + (start || 0));
+export const rangeArray: (
+  _1: number,
+  _2?: number,
+  _3?: number
+) => Array<number> = (size, start?, step?) =>
+  Array.from(Array(size).keys()).map((i) => i * (step || 1) + (start || 0));

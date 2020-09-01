@@ -6,13 +6,20 @@ import { kaartLogger } from "../kaart/log";
 
 import * as arrays from "./arrays";
 import { PartialFunction1 } from "./function";
-import { GeoJsonCore, GeoJsonFeature, GeoJsonFeatureCollection, GeoJsonFeatures } from "./geojson-types";
+import {
+  GeoJsonCore,
+  GeoJsonFeature,
+  GeoJsonFeatureCollection,
+  GeoJsonFeatures,
+} from "./geojson-types";
 import * as ol from "./openlayers-compat";
 
 // De GeoJSON ziet er thread safe uit (volgens de Openlayers source code)
 const format = new ol.format.GeoJSON();
 
-export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = laagnaam => geojson => {
+export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = (
+  laagnaam
+) => (geojson) => {
   // id moet uniek zijn over lagen heen , anders krijg je problemen als deze gemengd worden in de selection layer
   // de "echte" id van de geojson feature blijft staan in de properties van de feature
   // Feature.id mag dus niet meer gebruikt worden door clients, maar alleen intern door ng-kaart en openlayers
@@ -21,7 +28,7 @@ export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = laagnaam =
     const feature = new ol.Feature({
       id: geojson.id,
       properties: geojson.properties,
-      geometry: format.readGeometry(geojson.geometry)
+      geometry: format.readGeometry(geojson.geometry),
     });
     feature.setId(uniekId);
     return modifyWithLaagnaam(laagnaam)(feature);
@@ -33,51 +40,66 @@ export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = laagnaam =
 };
 
 // o.a. voor gebruik bij stijlen en identify
-export const modifyWithLaagnaam: Curried2<string, ol.Feature, ol.Feature> = laagnaam => feature => {
+export const modifyWithLaagnaam: Curried2<string, ol.Feature, ol.Feature> = (
+  laagnaam
+) => (feature) => {
   feature.set("laagnaam", laagnaam); // Opgelet: side-effect!
   return feature;
 };
 
-const singleFeatureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeature> = feature =>
+const singleFeatureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeature> = (
+  feature
+) =>
   pipe(
     option.fromNullable(feature.getId()),
-    option.chain(id =>
+    option.chain((id) =>
       pipe(
         option.fromNullable(feature.getGeometry()),
-        option.chain(geometry =>
+        option.chain((geometry) =>
           option.tryCatch(() => ({
             type: "Feature" as "Feature",
             id,
             geometry: format.writeGeometryObject(geometry),
-            properties: feature.get("properties")
+            properties: feature.get("properties"),
           }))
         )
       )
     )
   );
 
-const multipleFeatureToGeoJson: Curried2<ol.Feature, ol.Feature[], option.Option<GeoJsonFeatureCollection>> = feature => features => {
+const multipleFeatureToGeoJson: Curried2<
+  ol.Feature,
+  ol.Feature[],
+  option.Option<GeoJsonFeatureCollection>
+> = (feature) => (features) => {
   return pipe(
     option.fromNullable(feature.getGeometry()),
-    option.chain(geometry =>
+    option.chain((geometry) =>
       option.tryCatch(() => ({
         type: "FeatureCollection" as "FeatureCollection",
         geometry: format.writeGeometryObject(geometry),
-        features: array.mapOption(features, singleFeatureToGeoJson)
+        features: array.mapOption(features, singleFeatureToGeoJson),
       }))
     )
   );
 };
 
-export const featureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeatures> = feature => {
+export const featureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeatures> = (
+  feature
+) => {
   const features = option.fromNullable(feature.get("features"));
   return features
     .filter(arrays.isArray)
-    .chain<GeoJsonFeatureCollection | GeoJsonFeature>(multipleFeatureToGeoJson(feature))
+    .chain<GeoJsonFeatureCollection | GeoJsonFeature>(
+      multipleFeatureToGeoJson(feature)
+    )
     .orElse(() => singleFeatureToGeoJson(feature));
 };
 
-export const clusterFeaturesToGeoJson: PartialFunction1<ol.Feature[], GeoJsonFeatures[]> = features =>
+export const clusterFeaturesToGeoJson: PartialFunction1<
+  ol.Feature[],
+  GeoJsonFeatures[]
+> = (features) =>
   traversable.traverse(option.option, array.array)(features, featureToGeoJson);
 
 // Een type dat onze features encapsuleert. Die hebben in 99% van de gevallen een id en een laagnaam.
@@ -89,14 +111,20 @@ export interface FeatureWithIdAndLaagnaam {
 
 export namespace Feature {
   // geef de "echte" id van een Feature terug indien aanwezig, dus niet de technische sleutel die we hebben gezet in olToFeature
-  export const propertyId: PartialFunction1<ol.Feature, string> = feature =>
-    option.fromNullable(feature.getProperties()["id"]).map(id => id.toString());
+  export const propertyId: PartialFunction1<ol.Feature, string> = (feature) =>
+    option
+      .fromNullable(feature.getProperties()["id"])
+      .map((id) => id.toString());
 
-  export const technicalId: PartialFunction1<ol.Feature, string> = feature => option.fromNullable(feature.getId()).map(id => id.toString());
+  export const technicalId: PartialFunction1<ol.Feature, string> = (feature) =>
+    option.fromNullable(feature.getId()).map((id) => id.toString());
 
-  export const properties: FunctionN<[ol.Feature], any> = feature => feature.getProperties().properties;
+  export const properties: FunctionN<[ol.Feature], any> = (feature) =>
+    feature.getProperties().properties;
 
-  export const fieldKeyToPropertyPath: FunctionN<[string], string> = fieldKey => `properties.${fieldKey}`;
+  export const fieldKeyToPropertyPath: FunctionN<[string], string> = (
+    fieldKey
+  ) => `properties.${fieldKey}`;
 
   const SelectionRenderedMarker = "selectionRendered";
 
@@ -110,48 +138,87 @@ export namespace Feature {
     return feature;
   };
 
-  export const isSelectedRendered = (feature: ol.Feature): boolean => feature.get(SelectionRenderedMarker) === true;
+  export const isSelectedRendered = (feature: ol.Feature): boolean =>
+    feature.get(SelectionRenderedMarker) === true;
 
-  export const getLaagnaam: PartialFunction1<ol.Feature, string> = feature => {
+  export const getLaagnaam: PartialFunction1<ol.Feature, string> = (
+    feature
+  ) => {
     const singleFeature = option
       .fromNullable(feature.get("features"))
       .filter(arrays.isArray)
       .filter(arrays.isNonEmpty)
-      .chain(features => option.fromNullable(features[0]))
+      .chain((features) => option.fromNullable(features[0]))
       .getOrElse(feature);
     return option.fromNullable(singleFeature.get("laagnaam").toString());
   };
 
-  export const featureWithIdAndLaagnaam: PartialFunction1<ol.Feature, FeatureWithIdAndLaagnaam> = feature =>
+  export const featureWithIdAndLaagnaam: PartialFunction1<
+    ol.Feature,
+    FeatureWithIdAndLaagnaam
+  > = (feature) =>
     pipe(
       feature,
       propertyId,
-      option.chain(id =>
+      option.chain((id) =>
         pipe(
           getLaagnaam(feature),
-          option.map(laagnaam => ({ id, laagnaam, feature }))
+          option.map((laagnaam) => ({ id, laagnaam, feature }))
         )
       )
     );
 
-  export const eqFeatureTechnicalId: eq.Eq<ol.Feature> = eq.contramap(technicalId)(option.getEq(eq.eqString));
+  export const eqFeatureTechnicalId: eq.Eq<ol.Feature> = eq.contramap(
+    technicalId
+  )(option.getEq(eq.eqString));
 
-  export const notInExtent: FunctionN<[ol.Extent], Refinement<ol.Feature, ol.Feature>> = extent => (feature): feature is ol.Feature => {
+  export const notInExtent: FunctionN<
+    [ol.Extent],
+    Refinement<ol.Feature, ol.Feature>
+  > = (extent) => (feature): feature is ol.Feature => {
     const featureGeometry = feature.getGeometry();
     if (featureGeometry) {
-      const [featureMinX, featureMinY, featureMaxX, featureMaxY]: ol.Extent = featureGeometry.getExtent();
-      const [extentMinX, extentMinY, extentMaxX, extentMaxY]: ol.Extent = extent;
-      return extentMinX > featureMaxX || extentMaxX < featureMinX || extentMinY > featureMaxY || extentMaxY < featureMinY;
+      const [
+        featureMinX,
+        featureMinY,
+        featureMaxX,
+        featureMaxY,
+      ]: ol.Extent = featureGeometry.getExtent();
+      const [
+        extentMinX,
+        extentMinY,
+        extentMaxX,
+        extentMaxY,
+      ]: ol.Extent = extent;
+      return (
+        extentMinX > featureMaxX ||
+        extentMaxX < featureMinX ||
+        extentMinY > featureMaxY ||
+        extentMaxY < featureMinY
+      );
     } else {
       return true;
     }
   };
 
-  export const overlapsExtent: FunctionN<[ol.Extent], Refinement<ol.Feature, ol.Feature>> = extent => (feature): feature is ol.Feature => {
+  export const overlapsExtent: FunctionN<
+    [ol.Extent],
+    Refinement<ol.Feature, ol.Feature>
+  > = (extent) => (feature): feature is ol.Feature => {
     const featureGeometry = feature.getGeometry();
     if (featureGeometry) {
-      const [featureMinX, featureMinY, featureMaxX, featureMaxY]: ol.Extent = featureGeometry.getExtent();
-      const [extentMinX, extentMinY, extentMaxX, extentMaxY]: ol.Extent = extent;
+      const [
+        featureMinX,
+        featureMinY,
+        featureMaxX,
+        featureMaxY,
+      ]: ol.Extent = featureGeometry.getExtent();
+      const [
+        extentMinX,
+        extentMinY,
+        extentMaxX,
+        extentMaxY,
+      ]: ol.Extent = extent;
       return (
         ((extentMinX <= featureMaxX && extentMinX >= featureMinX) ||
           (extentMaxX <= featureMaxX && extentMaxX >= featureMinX) ||
@@ -165,11 +232,16 @@ export namespace Feature {
     }
   };
 
-  export const combineExtents: PartialFunction1<ol.Extent[], ol.Extent> = array.foldLeft(
+  export const combineExtents: PartialFunction1<
+    ol.Extent[],
+    ol.Extent
+  > = array.foldLeft(
     () => option.none,
     (head, tail) =>
       arrays.isEmpty(tail) //
         ? option.some(head)
-        : option.some(array.reduce([...head] as ol.Extent, ol.extent.extend)(tail)) // copie omdat we head niet willen aanpassen
+        : option.some(
+            array.reduce([...head] as ol.Extent, ol.extent.extend)(tail)
+          ) // copie omdat we head niet willen aanpassen
   );
 }

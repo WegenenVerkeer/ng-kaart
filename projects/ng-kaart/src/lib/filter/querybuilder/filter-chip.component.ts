@@ -7,7 +7,7 @@ import { literalValueStringRenderer } from "../rederer-helper";
 @Component({
   selector: "awv-filter-chip",
   templateUrl: "./filter-chip.component.html",
-  styleUrls: ["./filter-chip.component.scss"]
+  styleUrls: ["./filter-chip.component.scss"],
 })
 export class FilterChipComponent {
   @Input()
@@ -18,14 +18,19 @@ export class FilterChipComponent {
   expressionEditor: fed.ExpressionEditor;
 
   @Output()
-  expressionEditorUpdate: EventEmitter<Endomorphism<fed.ExpressionEditor>> = new EventEmitter();
+  expressionEditorUpdate: EventEmitter<
+    Endomorphism<fed.ExpressionEditor>
+  > = new EventEmitter();
 
   setCurrent() {
     this.expressionEditorUpdate.emit(fed.setCurrent(this.editor));
   }
 
   isCurrentStyle(): string {
-    return this.expressionEditor && fed.isCurrent(this.expressionEditor)(this.editor) ? "selected" : "";
+    return this.expressionEditor &&
+      fed.isCurrent(this.expressionEditor)(this.editor)
+      ? "selected"
+      : "";
   }
 
   asOperatorSelection(): fed.OperatorSelection {
@@ -45,7 +50,8 @@ export class FilterChipComponent {
   }
 
   completedValue(): string {
-    return this.editor.kind === "CompletedWithValue" && this.editor.valueSelector.kind !== "empty"
+    return this.editor.kind === "CompletedWithValue" &&
+      this.editor.valueSelector.kind !== "empty"
       ? literalValueStringRenderer(this.editor.selectedValue)
       : "";
   }

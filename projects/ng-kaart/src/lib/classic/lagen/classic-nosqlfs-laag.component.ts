@@ -12,7 +12,11 @@ import { NosqlFsSource } from "../../source/nosql-fs-source";
 import { ofType } from "../../util";
 import { asap } from "../../util/asap";
 import { Consumer1 } from "../../util/function";
-import { cachedFeaturesLookupReadyMsg, CachedFeaturesLookupReadyMsg, logOnlyWrapper } from "../messages";
+import {
+  cachedFeaturesLookupReadyMsg,
+  CachedFeaturesLookupReadyMsg,
+  logOnlyWrapper,
+} from "../messages";
 import * as val from "../webcomponent-support/params";
 
 import { ClassicVectorLaagLikeDirective } from "./classic-vector-laag-like.directive";
@@ -25,7 +29,7 @@ export interface PrecacheFeatures {
 @Component({
   selector: "awv-kaart-nosqlfs-laag",
   template: "<ng-content></ng-content>",
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeDirective {
   _url = "/geolatte-nosqlfs";
@@ -90,12 +94,21 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeDirective 
     this._maxFeaturesInMemCache = val.num(param, this._maxFeaturesInMemCache);
   }
 
-  private _cachedFeaturesProviderConsumer: Consumer1<CachedFeatureLookup> = () => {};
+  private _cachedFeaturesProviderConsumer: Consumer1<
+    CachedFeatureLookup
+  > = () => {};
 
   @Input()
   set precache(input: PrecacheFeatures) {
     if (input) {
-      this.dispatch(prt.VulCacheVoorNosqlLaag(this._titel, input.wkt, input.startMetLegeCache, logOnlyWrapper));
+      this.dispatch(
+        prt.VulCacheVoorNosqlLaag(
+          this._titel,
+          input.wkt,
+          input.startMetLegeCache,
+          logOnlyWrapper
+        )
+      );
     }
   }
 
@@ -110,7 +123,14 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeDirective 
       this._cachedFeaturesProviderConsumer = input;
       // Dit moet op de volgende execution gescheduled worden omdat de laag niet geregistreerd is op het moment dat de
       // eerste @Input gezet wordt.
-      asap(() => this.dispatch(prt.VraagCachedFeaturesLookupCmd(this._titel, cachedFeaturesLookupReadyMsg)));
+      asap(() =>
+        this.dispatch(
+          prt.VraagCachedFeaturesLookupCmd(
+            this._titel,
+            cachedFeaturesLookupReadyMsg
+          )
+        )
+      );
     }
   }
 
@@ -119,10 +139,14 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeDirective 
 
     this.bindToLifeCycle(
       this.viewReady$.pipe(
-        switchMap(() => this.kaart.kaartClassicSubMsg$.pipe(ofType<CachedFeaturesLookupReadyMsg>("CachedFeaturesLookupReady")))
+        switchMap(() =>
+          this.kaart.kaartClassicSubMsg$.pipe(
+            ofType<CachedFeaturesLookupReadyMsg>("CachedFeaturesLookupReady")
+          )
+        )
       )
-    ).subscribe(msg => {
-      const lookup = msg.cacheLookupValidation.fold(fail => {
+    ).subscribe((msg) => {
+      const lookup = msg.cacheLookupValidation.fold((fail) => {
         const errMsg = fail.join(", ");
         kaartLogger.error("Kon geen query object maken: ", errMsg);
         return CachedFeatureLookup.fromFailureMessage(errMsg);
@@ -148,18 +172,24 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeDirective 
       clusterDistance: this._clusterDistance,
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
-      selectieStyleSelector: option.fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
-      hoverStyleSelector: option.fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
+      selectieStyleSelector: option
+        .fromNullable(this.selectieStyle)
+        .chain(ss.asStyleSelector),
+      hoverStyleSelector: option
+        .fromNullable(this.hoverStyle)
+        .chain(ss.asStyleSelector),
       selecteerbaar: this._selecteerbaar,
       hover: this._hover,
       minZoom: this._minZoom,
       maxZoom: this._maxZoom,
       offsetveld: this._offsetveld,
-      velden: new Map<string, ke.VeldInfo>(this._veldInfos.map(vi => [vi.naam, vi] as [string, ke.VeldInfo])),
+      velden: new Map<string, ke.VeldInfo>(
+        this._veldInfos.map((vi) => [vi.naam, vi] as [string, ke.VeldInfo])
+      ),
       verwijderd: false,
       // TODO: dit veld (en offsetveld en ident8) zijn eigenlijk stijl concerns en zouden beter naar daar verhuisd moet worden
       rijrichtingIsDigitalisatieZin: false,
-      filter: option.fromNullable(this._filter)
+      filter: option.fromNullable(this._filter),
     };
   }
 }

@@ -1,6 +1,10 @@
 import { Component, Injector, Input } from "@angular/core";
 
-import { defaultMarkerStyle as defaultClickMarkerStyle, MarkeerKaartklikOpties, MarkeerKaartklikUiSelector } from "../../kaart";
+import {
+  defaultMarkerStyle as defaultClickMarkerStyle,
+  MarkeerKaartklikOpties,
+  MarkeerKaartklikUiSelector,
+} from "../../kaart";
 import * as ss from "../../kaart/stijl-selector";
 import { toOption } from "../../util";
 import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
@@ -12,7 +16,7 @@ import * as val from "../webcomponent-support/params";
  */
 @Component({
   selector: "awv-kaart-markeer-kaartklik",
-  template: ""
+  template: "",
 })
 export class ClassicMarkeerKaartklikComponent extends ClassicUIElementSelectorDirective {
   private _markerStyle: ss.Stylish = defaultClickMarkerStyle;
@@ -28,7 +32,7 @@ export class ClassicMarkeerKaartklikComponent extends ClassicUIElementSelectorDi
       markerStyle: this._markerStyle,
       disabled: this._disabled,
       includeFeatureClick: this._includeFeatureClick,
-      id: "classic_opties"
+      id: "classic_opties",
     };
   }
 
@@ -37,8 +41,8 @@ export class ClassicMarkeerKaartklikComponent extends ClassicUIElementSelectorDi
   set markeerStijlSpec(stijlSpec: ss.AwvV0StyleSpec) {
     this._markerStyle = val
       .optStyleSpec(stijlSpec)
-      .map(stijlSpec => ss.validateAwvV0StyleSpec(stijlSpec))
-      .chain(validation => toOption(validation))
+      .map((stijlSpec) => ss.validateAwvV0StyleSpec(stijlSpec))
+      .chain((validation) => toOption(validation))
       .getOrElse(this._markerStyle);
   }
 

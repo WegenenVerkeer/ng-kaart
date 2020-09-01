@@ -8,11 +8,11 @@ import { ProtractorComponent } from "./protractor.component";
 @Component({
   selector: "awv-ng-kaart-test-app",
   template: "<router-outlet></router-outlet>",
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class AppComponent {}
 
 export const routes: Routes = [
   { path: "", component: FeatureDemoComponent },
-  { path: "test", component: ProtractorComponent } // Zorg er voor dat de Protractor tests een eenvoudiger pagina zien
+  { path: "test", component: ProtractorComponent }, // Zorg er voor dat de Protractor tests een eenvoudiger pagina zien
 ];

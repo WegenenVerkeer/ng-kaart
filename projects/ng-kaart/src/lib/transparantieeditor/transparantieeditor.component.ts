@@ -1,8 +1,21 @@
-import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  NgZone,
+  ViewEncapsulation,
+} from "@angular/core";
 import { array, option } from "fp-ts";
 import { Function2, identity } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, sample, shareReplay, startWith, tap } from "rxjs/operators";
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  sample,
+  shareReplay,
+  startWith,
+  tap,
+} from "rxjs/operators";
 
 import { KaartChildDirective } from "../kaart/kaart-child.directive";
 import * as ke from "../kaart/kaart-elementen";
@@ -12,7 +25,11 @@ import { KaartComponent } from "../kaart/kaart.component";
 import { isNumber } from "../util/number";
 import { collectOption, forEvery } from "../util/operators";
 
-import { isAanpassingBezig, isAanpassingNietBezig, TransparantieaanpassingBezig } from "./state";
+import {
+  isAanpassingBezig,
+  isAanpassingNietBezig,
+  TransparantieaanpassingBezig,
+} from "./state";
 import { Transparantie } from "./transparantie";
 
 @Component({
@@ -20,7 +37,7 @@ import { Transparantie } from "./transparantie";
   templateUrl: "./transparantieeditor.component.html",
   styleUrls: ["./transparantieeditor.component.scss"],
   encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TransparantieeditorComponent extends KaartChildDirective {
   readonly zichtbaar$: rx.Observable<boolean>;
@@ -35,24 +52,32 @@ export class TransparantieeditorComponent extends KaartChildDirective {
       filter(isAanpassingBezig),
       shareReplay(1) // Alle observables die later subscriben (en er zijn er veel) moeten de huidige toestand kennen.
     );
-    const geenAanpassing$ = kaart.modelChanges.transparantieaanpassingState$.pipe(filter(isAanpassingNietBezig));
+    const geenAanpassing$ = kaart.modelChanges.transparantieaanpassingState$.pipe(
+      filter(isAanpassingNietBezig)
+    );
 
-    this.zichtbaar$ = kaart.modelChanges.transparantieaanpassingState$.pipe(map(isAanpassingBezig));
+    this.zichtbaar$ = kaart.modelChanges.transparantieaanpassingState$.pipe(
+      map(isAanpassingBezig)
+    );
 
-    const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], option.Option<ke.ToegevoegdeLaag>> = (titel, lgn) =>
-      array.findFirst(lgn, lg => lg.titel === titel);
-    const laag$: rx.Observable<ke.ToegevoegdeLaag> = forEvery(aanpassing$)(aanpassing =>
-      kaart.modelChanges.lagenOpGroep[aanpassing.laag.laaggroep].pipe(
-        collectOption(lgn => findLaagOpTitel(aanpassing.laag.titel, lgn)),
-        startWith(aanpassing.laag)
-      )
+    const findLaagOpTitel: Function2<
+      string,
+      ke.ToegevoegdeLaag[],
+      option.Option<ke.ToegevoegdeLaag>
+    > = (titel, lgn) => array.findFirst(lgn, (lg) => lg.titel === titel);
+    const laag$: rx.Observable<ke.ToegevoegdeLaag> = forEvery(aanpassing$)(
+      (aanpassing) =>
+        kaart.modelChanges.lagenOpGroep[aanpassing.laag.laaggroep].pipe(
+          collectOption((lgn) => findLaagOpTitel(aanpassing.laag.titel, lgn)),
+          startWith(aanpassing.laag)
+        )
     ).pipe(
       shareReplay(1) // De huidige laag moet bewaard blijven voor alle volgende subscribers
     );
 
-    this.titel$ = laag$.pipe(map(laag => laag.titel));
+    this.titel$ = laag$.pipe(map((laag) => laag.titel));
     this.gezetteWaarde$ = laag$.pipe(
-      map(laag => laag.transparantie),
+      map((laag) => laag.transparantie),
       map(Transparantie.toNumber),
       distinctUntilChanged(),
       shareReplay(1)
@@ -60,11 +85,16 @@ export class TransparantieeditorComponent extends KaartChildDirective {
 
     const pasToeClick$ = this.actionFor$("pasTransparantieToe");
 
-    const waarde$: rx.Observable<number> = this.actionDataFor$("value", isNumber);
-    const cmd$ = forEvery(this.titel$)(titel =>
+    const waarde$: rx.Observable<number> = this.actionDataFor$(
+      "value",
+      isNumber
+    );
+    const cmd$ = forEvery(this.titel$)((titel) =>
       waarde$.pipe(
         collectOption(Transparantie.fromNumber),
-        map(value => prt.ZetTransparantieVoorLaagCmd(titel, value, kaartLogOnlyWrapper)),
+        map((value) =>
+          prt.ZetTransparantieVoorLaagCmd(titel, value, kaartLogOnlyWrapper)
+        ),
         sample(pasToeClick$)
       )
     );
@@ -91,7 +121,7 @@ export class TransparantieeditorComponent extends KaartChildDirective {
             this.dispatch(prt.StopTransparantieBewerkingCmd());
           })
         ),
-        cmd$.pipe(tap(cmd => this.dispatch(cmd)))
+        cmd$.pipe(tap((cmd) => this.dispatch(cmd)))
       )
     );
   }

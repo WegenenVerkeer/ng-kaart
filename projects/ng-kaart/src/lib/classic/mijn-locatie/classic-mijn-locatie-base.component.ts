@@ -1,4 +1,10 @@
-import { AfterViewInit, Directive, EventEmitter, Injector, Output } from "@angular/core";
+import {
+  AfterViewInit,
+  Directive,
+  EventEmitter,
+  Injector,
+  Output,
+} from "@angular/core";
 import { merge } from "rxjs";
 import { distinctUntilChanged, tap } from "rxjs/operators";
 
@@ -15,7 +21,9 @@ interface StateChange {
 }
 
 @Directive()
-export class ClassicMijnLocatieDirective extends ClassicUIElementSelectorDirective implements AfterViewInit {
+export class ClassicMijnLocatieDirective
+  extends ClassicUIElementSelectorDirective
+  implements AfterViewInit {
   @Output()
   stateChange: EventEmitter<StateChange> = new EventEmitter<StateChange>();
 
@@ -29,16 +37,26 @@ export class ClassicMijnLocatieDirective extends ClassicUIElementSelectorDirecti
         this.kaart.kaartClassicSubMsg$.lift(
           classicMsgSubscriptionCmdOperator(
             this.kaart.dispatcher,
-            prt.MijnLocatieStateChangeSubscription(stateChange =>
-              KaartClassicMsg(MijnLocatieStateChangeMsg(stateChange.oudeState, stateChange.nieuweState, stateChange.event))
+            prt.MijnLocatieStateChangeSubscription((stateChange) =>
+              KaartClassicMsg(
+                MijnLocatieStateChangeMsg(
+                  stateChange.oudeState,
+                  stateChange.nieuweState,
+                  stateChange.event
+                )
+              )
             )
           )
         ),
         this.kaart.kaartClassicSubMsg$.pipe(
           ofType<MijnLocatieStateChangeMsg>("MijnLocatieStateChangeMsg"),
           distinctUntilChanged(),
-          tap(stateChange =>
-            this.stateChange.emit({ oudeState: stateChange.oudeState, nieuweState: stateChange.nieuweState, event: stateChange.event })
+          tap((stateChange) =>
+            this.stateChange.emit({
+              oudeState: stateChange.oudeState,
+              nieuweState: stateChange.nieuweState,
+              event: stateChange.event,
+            })
           )
         )
       )

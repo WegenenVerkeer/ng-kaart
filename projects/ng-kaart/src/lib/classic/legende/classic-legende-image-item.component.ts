@@ -14,7 +14,7 @@ import { ClassicLegendeItemDirective } from "./classic-legende-item.directive";
 
 @Component({
   selector: "awv-legende-image-item",
-  template: "<ng-content></ng-content>"
+  template: "<ng-content></ng-content>",
 })
 export class ClassicLegendeImageItemComponent extends ClassicLegendeItemDirective {
   _image: string;
@@ -35,7 +35,7 @@ export class ClassicLegendeImageItemComponent extends ClassicLegendeItemDirectiv
     return {
       type: "Image",
       beschrijving: this._beschrijving,
-      image: this._image
+      image: this._image,
     };
   }
 }

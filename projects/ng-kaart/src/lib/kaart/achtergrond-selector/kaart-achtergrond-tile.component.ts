@@ -7,7 +7,7 @@ import { AchtergrondLaag, Laag, ToegevoegdeLaag } from "../kaart-elementen";
 @Component({
   selector: "awv-kaart-achtergrond-tile",
   templateUrl: "./kaart-achtergrond-tile.component.html",
-  styleUrls: ["./kaart-achtergrond-tile.component.scss"]
+  styleUrls: ["./kaart-achtergrond-tile.component.scss"],
 })
 export class KaartAchtergrondTileComponent {
   @Input()
@@ -19,6 +19,8 @@ export class KaartAchtergrondTileComponent {
 
   background() {
     const bron: Laag = this.laag.bron;
-    return bron.hasOwnProperty("backgroundUrl") ? (bron as AchtergrondLaag).backgroundUrl : "";
+    return bron.hasOwnProperty("backgroundUrl")
+      ? (bron as AchtergrondLaag).backgroundUrl
+      : "";
   }
 }

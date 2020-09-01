@@ -6,4 +6,8 @@ export const Dichtgeklapt = "Dichtgeklapt";
 export type Dichtgeklapt = typeof Dichtgeklapt;
 export const Sluimerend = "Sluimerend";
 export type Sluimerend = typeof Sluimerend;
-export type TabelActiviteit = Onbeschikbaar | Opengeklapt | Dichtgeklapt | Sluimerend;
+export type TabelActiviteit =
+  | Onbeschikbaar
+  | Opengeklapt
+  | Dichtgeklapt
+  | Sluimerend;

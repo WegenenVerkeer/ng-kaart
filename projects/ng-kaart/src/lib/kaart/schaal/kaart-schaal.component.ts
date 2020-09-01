@@ -1,4 +1,11 @@
-import { AfterViewInit, Component, ElementRef, NgZone, OnDestroy, ViewChild } from "@angular/core";
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  NgZone,
+  OnDestroy,
+  ViewChild,
+} from "@angular/core";
 import { option } from "fp-ts";
 
 import { KaartChildDirective } from "../kaart-child.directive";
@@ -11,9 +18,11 @@ export const SchaalUiSelector = "Schaal";
 @Component({
   selector: "awv-schaal",
   templateUrl: "./kaart-schaal.component.html",
-  styleUrls: ["./kaart-schaal.component.scss"]
+  styleUrls: ["./kaart-schaal.component.scss"],
 })
-export class KaartSchaalComponent extends KaartChildDirective implements AfterViewInit, OnDestroy {
+export class KaartSchaalComponent
+  extends KaartChildDirective
+  implements AfterViewInit, OnDestroy {
   @ViewChild("schaal")
   schaalElement: ElementRef;
 
@@ -23,7 +32,12 @@ export class KaartSchaalComponent extends KaartChildDirective implements AfterVi
 
   ngAfterViewInit(): void {
     super.ngAfterViewInit();
-    this.dispatch(prt.VoegSchaalToeCmd(option.fromNullable(this.schaalElement.nativeElement), kaartLogOnlyWrapper));
+    this.dispatch(
+      prt.VoegSchaalToeCmd(
+        option.fromNullable(this.schaalElement.nativeElement),
+        kaartLogOnlyWrapper
+      )
+    );
   }
 
   ngOnDestroy(): void {
