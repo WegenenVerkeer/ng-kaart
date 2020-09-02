@@ -115,6 +115,11 @@ export const getWithCommonHeaders: () => RequestInit = () => ({
   method: "GET",
 });
 
+const postWithoutHeaders: (_: string) => RequestInit = (body) => ({
+  method: "POST",
+  body: body,
+});
+
 const postWithCommonHeaders: (_: string) => RequestInit = (body) => ({
   ...cacheCredentials(),
   method: "POST",
@@ -305,7 +310,8 @@ export class NosqlFsSource extends ol.source.Vector {
     private readonly baseFilter: option.Option<string>, // De basisfilter voor de data (bijv. voor EM-installaties)
     private readonly laagnaam: string,
     readonly memCacheSize: number,
-    readonly gebruikCache: boolean
+    readonly gebruikCache: boolean,
+    readonly cors: boolean = false
   ) {
     super({
       loader: function (extent: Extent) {
@@ -520,7 +526,7 @@ export class NosqlFsSource extends ol.source.Vector {
     if (gebruikCache) {
       return fetchWithTimeoutObs$(
         composedQueryUrl,
-        getWithCommonHeaders(),
+        this.cors ? getWithoutHeaders() : getWithCommonHeaders(),
         FETCH_TIMEOUT
       ).pipe(
         split(featureDelimiter),
@@ -528,7 +534,10 @@ export class NosqlFsSource extends ol.source.Vector {
         mapToGeoJson
       );
     } else {
-      return fetchObs$(composedQueryUrl, getWithCommonHeaders()).pipe(
+      return fetchObs$(
+        composedQueryUrl,
+        this.cors ? getWithoutHeaders() : getWithCommonHeaders()
+      ).pipe(
         split(featureDelimiter),
         filter((lijn) => lijn.trim().length > 0),
         mapToGeoJson
@@ -539,7 +548,7 @@ export class NosqlFsSource extends ol.source.Vector {
   fetchFeaturesByWkt$(wkt: string): rx.Observable<GeoJsonLike> {
     return fetchObs$(
       this.composeQueryUrl(option.none, option.none),
-      postWithCommonHeaders(wkt)
+      this.cors ? postWithoutHeaders(wkt) : postWithCommonHeaders(wkt)
     ).pipe(
       split(featureDelimiter),
       filter((lijn) => lijn.trim().length > 0),
@@ -556,7 +565,7 @@ export class NosqlFsSource extends ol.source.Vector {
               switchMap(() =>
                 fetchObs$(
                   this.composeFeatureCollectionTotalUrl(),
-                  getWithCommonHeaders()
+                  this.cors ? getWithoutHeaders() : getWithCommonHeaders()
                 ).pipe(
                   split(featureDelimiter),
                   mapToFeatureCollection,
@@ -577,7 +586,7 @@ export class NosqlFsSource extends ol.source.Vector {
   ): rx.Observable<FeatureCollection> {
     return fetchObs$(
       this.composeFeatureCollectionWithFilteredTotalUrl(pagingSpec),
-      getWithCommonHeaders()
+      this.cors ? getWithoutHeaders() : getWithCommonHeaders()
     ).pipe(
       split(featureDelimiter), // Eigenlijk 1 lange lijn
       mapToFeatureCollection
@@ -587,7 +596,7 @@ export class NosqlFsSource extends ol.source.Vector {
   private fetchCollectionSummary$(): rx.Observable<CollectionSummary> {
     return fetchObs$(
       this.composeCollectionSummaryUrl(),
-      getWithCommonHeaders()
+      this.cors ? getWithoutHeaders() : getWithCommonHeaders()
     ).pipe(
       split(featureDelimiter), // Eigenlijk alles op 1 lijn
       mapToCollectionSummary
