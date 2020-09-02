@@ -343,6 +343,14 @@
                                     [minZoom]="7" [view]="null"
                                     [veldinfos]="telpostenInfos"></awv-kaart-nosqlfs-laag>
 
+            <awv-kaart-nosqlfs-laag [titel]="'gemeenten'"
+                                    [url]="'https://opendata.apps.mow.vlaanderen.be/geolatte-nosqlfs'"
+                                    [database]="'published'"
+                                    [collection]="'41f144c6-c81f-4a93-8e81-9a794da4b479'"
+                                    [minZoom]="5"
+                                    [cors]="true"
+            ></awv-kaart-nosqlfs-laag>
+
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-schaal></awv-kaart-schaal>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>

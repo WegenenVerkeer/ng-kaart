@@ -35,6 +35,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   _collection: string;
   _filter: string;
   _gebruikCache = false;
+  _cors = false;
   _maxFeaturesInMemCache = 2500;
   _veldInfos: ke.VeldInfo[] = [];
 
@@ -66,6 +67,11 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   @Input()
   set filter(param: string) {
     this._filter = val.str(param, this._filter);
+  }
+
+  @Input()
+  set cors(param: boolean) {
+    this._cors = val.bool(param, this._cors);
   }
 
   @Input()
@@ -144,7 +150,8 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
         option.fromNullable(this._filter),
         this._titel,
         this._maxFeaturesInMemCache,
-        this._gebruikCache
+        this._gebruikCache,
+        this._cors
       ),
       clusterDistance: this._clusterDistance,
       styleSelector: this.getMaybeStyleSelector(),
