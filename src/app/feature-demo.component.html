@@ -17,7 +17,7 @@
     <span class="material-icons" *ngIf="!voorbeeldenSectie.sectieZichtbaar">expand_more</span>
   </div>
   <div *ngIf="voorbeeldenSectie.sectieZichtbaar" [@enterAnimation]>
-    <div (click)="filterenSectie.toggleSectieZichtbaar();scrollTo('orthophotos')" class="sub-titel">
+    <div (click)="filterenSectie.toggleSectieZichtbaar();scrollTo('filteren')" class="sub-titel">
       Filteren
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !filterenSectie.sectieZichtbaar }">visibility</span>
     </div>
@@ -93,7 +93,7 @@
     <span class="material-icons" *ngIf="applicatiesSectie.sectieZichtbaar">expand_less</span>
     <span class="material-icons" *ngIf="!applicatiesSectie.sectieZichtbaar">expand_more</span>
   </div>
-  <div *ngIf="applicatiesSectie.sectieZichtbaar" [@enterAnimation]>
+  <div *ngIf="applicatiesSectie.sectieZichtbaar">
     <div (click)="geoloket2Sectie.toggleSectieZichtbaar();scrollTo('geoloket2')" class="sub-titel">
       Geoloket2
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !geoloket2Sectie.sectieZichtbaar }">visibility</span>

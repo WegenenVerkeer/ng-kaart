@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 
 import { animate, style, transition, trigger } from "@angular/animations";
+import scrollIntoView from "scroll-into-view-if-needed";
 import {
   ChangeDetectorRef,
   Component,
@@ -1911,7 +1912,9 @@ export class FeatureDemoComponent {
   scrollTo(idName: string): void {
     const element = document.getElementById(idName);
     forEach(option.fromNullable(element), (elt) =>
-      elt.scrollIntoView({ behavior: "smooth" })
+      setTimeout(() => {
+        scrollIntoView(elt, { behavior: "smooth", scrollMode: "if-needed" });
+      }, 300)
     );
   }
 
