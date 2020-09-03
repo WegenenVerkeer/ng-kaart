@@ -1,6 +1,10 @@
-import { Component, Input, OnInit, ViewEncapsulation } from "@angular/core";
-import { option } from "fp-ts";
-import { forEach } from "../../projects/ng-kaart/src/lib/util";
+import {
+  Component,
+  ContentChildren,
+  Input,
+  QueryList,
+  ViewEncapsulation,
+} from "@angular/core";
 
 @Component({
   selector: "awv-test-sectie",
@@ -8,7 +12,7 @@ import { forEach } from "../../projects/ng-kaart/src/lib/util";
   styleUrls: ["test-sectie.component.scss"],
   encapsulation: ViewEncapsulation.None,
 })
-export class TestSectieComponent implements OnInit {
+export class TestSectieComponent {
   @Input()
   sectieId = "";
   @Input()
@@ -20,11 +24,22 @@ export class TestSectieComponent implements OnInit {
   @Input()
   sectieZichtbaar = false;
 
-  ngOnInit(): void {
-    // Nog niks.
-  }
+  @ContentChildren(TestSectieComponent)
+  children: QueryList<TestSectieComponent>;
 
   toggleSectieZichtbaar() {
     this.sectieZichtbaar = !this.sectieZichtbaar;
+  }
+
+  zetSectieZichtbaarheid(zichtbaar: boolean) {
+    this.sectieZichtbaar = zichtbaar;
+  }
+
+  maakSectieZichtbaar(id: string) {
+    const sectie = this.children.find((child) => child.sectieId === id);
+    if (sectie) {
+      this.children.map((child) => child.zetSectieZichtbaarheid(false));
+      sectie.zetSectieZichtbaarheid(true);
+    }
   }
 }

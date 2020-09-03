@@ -1,11 +1,8 @@
 <div [id]="sectieId" [ngClass]="{ 'sectie': !subSectie, 'sub-sectie': subSectie, 'sub-secties': bevatSubSecties }">
-  <div [ngClass]="{ 'titel': !subSectie, 'sub-titel': subSectie }" (click)="toggleSectieZichtbaar()">
+  <div *ngIf="sectieZichtbaar && subSectie" [hidden]="!subSectie" [ngClass]="{ 'titel': !subSectie, 'sub-titel': subSectie }" (click)="toggleSectieZichtbaar()">
     {{sectieTitel}}
-    <span class="material-icons" *ngIf="subSectie" [ngClass]="{ 'niet-zichtbaar': !sectieZichtbaar }">visibility</span>
-    <span class="material-icons" *ngIf="!subSectie && sectieZichtbaar">expand_less</span>
-    <span class="material-icons" *ngIf="!subSectie && !sectieZichtbaar">expand_more</span>
   </div>
-  <div class="content" *ngIf="sectieZichtbaar" [@enterAnimation]>
+  <div class="content" *ngIf="sectieZichtbaar">
     <ng-content></ng-content>
   </div>
 </div>
