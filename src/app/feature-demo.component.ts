@@ -370,7 +370,7 @@ export class FeatureDemoComponent {
       anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
       scale: 1,
       opacity: 1,
-      src: "ng-kaart/ic_place_48px.svg",
+      src: "/ng-kaart/ic_place_48px.svg",
     }),
     text: new ol.style.Text({
       font: "12px 'Helvetica Neue', sans-serif",
@@ -391,7 +391,7 @@ export class FeatureDemoComponent {
       anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
       scale: 1,
       opacity: 1,
-      src: "ng-kaart/ic_place_48px.svg",
+      src: "/ng-kaart/ic_place_48px.svg",
     }),
     text: new ol.style.Text({
       font: "12px 'Helvetica Neue', sans-serif",
@@ -413,7 +413,7 @@ export class FeatureDemoComponent {
       scale: 1,
       opacity: 1,
       color: "#FA1",
-      src: "ng-kaart/ic_local_airport_48px.svg",
+      src: "/ng-kaart/ic_local_airport_48px.svg",
     }),
     text: new ol.style.Text({
       font: "12px 'Helvetica Neue', sans-serif",
@@ -1604,7 +1604,7 @@ export class FeatureDemoComponent {
         anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
         scale: 1,
         opacity: 1,
-        src: "icon.svg",
+        src: "/ng-kaart/icon.svg",
       },
     },
   };
@@ -1617,7 +1617,7 @@ export class FeatureDemoComponent {
       anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
       scale: 1,
       opacity: 1,
-      src: "icon.svg",
+      src: "/ng-kaart/icon.svg",
     }),
   });
 

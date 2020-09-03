@@ -29,21 +29,9 @@
       Orthophotos
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !orthophotosSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="ingezoomdSectie.toggleSectieZichtbaar();scrollTo('ingezoomd')" class="sub-titel">
-      Ingezoomd
-      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !ingezoomdSectie.sectieZichtbaar }">visibility</span>
-    </div>
-    <div (click)="districtenSectie.toggleSectieZichtbaar();scrollTo('districten')" class="sub-titel">
-      Districten
-      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !districtenSectie.sectieZichtbaar }">visibility</span>
-    </div>
     <div (click)="dynamischeFeatures.toggleSectieZichtbaar();scrollTo('dynamische-features')" class="sub-titel">
       Dynamische features
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !dynamischeFeatures.sectieZichtbaar }">visibility</span>
-    </div>
-    <div (click)="straatkolkenSectie.toggleSectieZichtbaar();scrollTo('straatkolken')" class="sub-titel">
-      Straatkolken
-      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !straatkolkenSectie.sectieZichtbaar }">visibility</span>
     </div>
     <div (click)="propClusterStraatkolkenSectie.toggleSectieZichtbaar();scrollTo('propClusterStraatkolken')" class="sub-titel">
       Proportioneel Geclusterde Straatkolken
@@ -52,10 +40,6 @@
     <div (click)="clusterStraatkolkenSectie.toggleSectieZichtbaar();scrollTo('clusterStraatkolken')" class="sub-titel">
       Geclusterde Straatkolken
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !clusterStraatkolkenSectie.sectieZichtbaar }">visibility</span>
-    </div>
-    <div (click)="fietspadenSectie.toggleSectieZichtbaar();scrollTo('fietspaden')" class="sub-titel">
-      Fietspaden
-      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !fietspadenSectie.sectieZichtbaar }">visibility</span>
     </div>
     <div (click)="verkeersbordenSectie.toggleSectieZichtbaar();scrollTo('verkeersborden')" class="sub-titel">
       Verkeersborden
@@ -363,37 +347,6 @@
         </div>
       </awv-test-sectie>
 
-      <awv-test-sectie sectieId="districten" sectieTitel="Districten" [subSectie]="true" #districtenSectie
-                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && districtenSectie.sectieZichtbaar">
-        <div *ngIf="districtenSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [naam]="'districten'" [hoogte]="400">
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
-            <awv-kaart-wfs-laag [url]="'/geoserver/wfs'"
-                                [titel]="'Districten'"
-                                [typeNames] = "'awv:districten'"
-                                [style]="districtStyle"
-                                [minZoom]="2"></awv-kaart-wfs-laag>
-            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
-            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
-          </awv-kaart-classic>
-        </div>
-      </awv-test-sectie>
-
-      <awv-test-sectie sectieId="ingezoomd" sectieTitel="Ingezoomd" [subSectie]="true" #ingezoomdSectie
-                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && ingezoomdSectie.sectieZichtbaar">
-        <div *ngIf="ingezoomdSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [naam]="'ingezoomd'" [breedte]="600" [hoogte]="600" [zoom]="6" [middelpunt]="installatieCoordinaat">
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
-            <awv-kaart-features-laag [features]="installatie" [titel]="'features'" [style]="pinIcon" [minZoom]="2"></awv-kaart-features-laag>
-            <awv-kaart-schaal></awv-kaart-schaal>
-            <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
-          </awv-kaart-classic>
-          <div class="onder-kaart">
-            Geselecteerd:<span *ngFor="let feature of geselecteerdeFeatures">ID: {{ feature.get('id') }}</span>
-          </div>
-        </div>
-      </awv-test-sectie>
-
       <awv-test-sectie sectieId="dynamische-features" sectieTitel="Dynamische features" [subSectie]="true" #dynamischeFeatures
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && dynamischeFeatures.sectieZichtbaar">
         <div *ngIf="dynamischeFeatures.sectieZichtbaar" [@enterAnimation]>
@@ -402,25 +355,6 @@
             <awv-kaart-features-laag [features]="installaties" [titel]="'features'" [minZoom]="2"></awv-kaart-features-laag>
             <awv-kaart-schaal></awv-kaart-schaal>
             <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
-          </awv-kaart-classic>
-        </div>
-      </awv-test-sectie>
-
-      <awv-test-sectie sectieId="straatkolken" sectieTitel="Straatkolken (geen default progressbar, logt busy naar de console)" [subSectie]="true" #straatkolkenSectie
-                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && straatkolkenSectie.sectieZichtbaar">
-        <div *ngIf="straatkolkenSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [naam]="'straatkolken'"
-                             #kolkenKaart (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, kolkenKaart)"
-                             [selectieModus]="'single'"
-                             [hoogte]="400">
-            <awv-kaart-laden (busy)="busy($event)" [forceProgressBar]="false" [defaultProgressbarEnabled]="true"></awv-kaart-laden>
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
-            <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'/geolatte-nosqlfs'"
-                                    [database]="'featureserver'" [collection]="'straatkolken'" [style]="kolkStyle"
-                                    [minZoom]="8"></awv-kaart-nosqlfs-laag>
-            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
-            <awv-kaart-streetview ></awv-kaart-streetview>
-            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
           </awv-kaart-classic>
         </div>
       </awv-test-sectie>
@@ -506,21 +440,6 @@
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
           </awv-kaart-classic>
-        </div>
-      </awv-test-sectie>
-
-      <awv-test-sectie sectieId="fietspaden" sectieTitel="Fietspaden" [subSectie]="true" #fietspadenSectie
-                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && fietspadenSectie.sectieZichtbaar">
-        <div *ngIf="fietspadenSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [naam]="'fietspaden'" (zichtbareFeatures)="onZichtbareFeatures($event)" [hoogte]="400" [selectieModus]="'single'">
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
-            <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'/geolatte-nosqlfs'"
-                                    [database]="'featureserver'" [collection]="'fietspaden'" [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset" [offsetveld]="'zijderijbaan'"
-                                    [minZoom]="9" [refreshTrigger]="fietspadenRefresh$"></awv-kaart-nosqlfs-laag>
-            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
-            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
-          </awv-kaart-classic>
-          <button (click)="onRefreshFietspadenClicked()">Ververs</button>
         </div>
       </awv-test-sectie>
 
