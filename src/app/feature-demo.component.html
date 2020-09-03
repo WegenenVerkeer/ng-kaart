@@ -6,7 +6,7 @@
 
   <div *ngIf="hoofdSectie.sectieZichtbaar">
     <!-- configurator -->
-    <div (click)="hoofdSectie.maakSectieZichtbaar('configurator')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('configurator')" class="sub-titel clickable">
       Configurator
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !configuratorSectie.sectieZichtbaar }">visibility</span>
     </div>
@@ -14,71 +14,71 @@
     <div class="titel">
       Voorbeelden
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('filteren')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('filteren')" class="sub-titel clickable">
       Filteren
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !filterenSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('tabel')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('tabel')" class="sub-titel clickable">
       Tabel
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !tabelSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('orthophotos')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('orthophotos')" class="sub-titel clickable">
       Featureselectie
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !geselecteerdeFeatureSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('orthophotos')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('orthophotos')" class="sub-titel clickable">
       Orthophotos
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !orthophotosSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('dynamische-features')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('dynamische-features')" class="sub-titel clickable">
       Dynamische features
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !dynamischeFeatures.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('propClusterStraatkolken')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('propClusterStraatkolken')" class="sub-titel clickable">
       Proportioneel Geclusterde Straatkolken
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !propClusterStraatkolkenSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('clusterStraatkolken')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('clusterStraatkolken')" class="sub-titel clickable">
       Geclusterde Straatkolken
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !clusterStraatkolkenSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('offline')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('offline')" class="sub-titel clickable">
       Offline dienstkaart
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !offlineSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('offlineFeaturesSectie')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('offlineFeaturesSectie')" class="sub-titel clickable">
       Offline features
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !offlineFeaturesSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('lagen-met-offsets')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('lagen-met-offsets')" class="sub-titel clickable">
       Lagen met offsets
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !lagenMetOffsetsSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('buiten-kaart')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('buiten-kaart')" class="sub-titel clickable">
       Toon features buiten de kaart
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !buitenKaartSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('zoeken')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('zoeken')" class="sub-titel clickable">
       Zoeken
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !zoekenSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('tekenen')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('tekenen')" class="sub-titel clickable">
       Gebied intekenen
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !tekenenSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('kaartInfo')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('kaartInfo')" class="sub-titel clickable">
       Kaart bevragen
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !kaartInfoSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('wfsFilter')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('wfsFilter')" class="sub-titel clickable">
       WFS filter
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !wfsFilterSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('lambert2008')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('lambert2008')" class="sub-titel clickable">
       Andere projectie
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !lambert2008Sectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('zoombereik')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('zoombereik')" class="sub-titel clickable">
       Zoombereik
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !zoombereikSectie.sectieZichtbaar }">visibility</span>
     </div>
@@ -88,23 +88,23 @@
     Gebruik in applicaties
   </div>
 
-    <div (click)="hoofdSectie.maakSectieZichtbaar('geoloket2')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('geoloket2')" class="sub-titel clickable">
       Geoloket2
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !geoloket2Sectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('av')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('av')" class="sub-titel clickable">
       Adviezen & Vergunningen
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !avSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('patrimonium')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('patrimonium')" class="sub-titel clickable">
       Patrimonium
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !patrimoniumSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('vtc-loket')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('vtc-loket')" class="sub-titel clickable">
       VTC-loket
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !vtcLoketSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('elisa')" class="sub-titel">
+    <div (click)="hoofdSectie.maakSectieZichtbaar('elisa')" class="sub-titel clickable">
       Elisa
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !elisaSectie.sectieZichtbaar }">visibility</span>
     </div>

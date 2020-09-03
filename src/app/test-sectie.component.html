@@ -1,5 +1,5 @@
 <div [id]="sectieId" [ngClass]="{ 'sectie': !subSectie, 'sub-sectie': subSectie, 'sub-secties': bevatSubSecties }">
-  <div *ngIf="sectieZichtbaar && subSectie" [hidden]="!subSectie" [ngClass]="{ 'titel': !subSectie, 'sub-titel': subSectie }" (click)="toggleSectieZichtbaar()">
+  <div *ngIf="sectieZichtbaar && subSectie" [hidden]="!subSectie" [ngClass]="{ 'titel': !subSectie, 'sub-titel': subSectie }">
     {{sectieTitel}}
   </div>
   <div class="content" *ngIf="sectieZichtbaar">

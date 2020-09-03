@@ -32,7 +32,6 @@ body {
     margin: 0;
     padding: 24px;
     height: 40px;
-    cursor: pointer;
 
     .material-icons {
       margin-right: 16px;
@@ -69,10 +68,13 @@ body {
     border-top: 1px solid $border-color;
   }
 
+  .clickable {
+    cursor: pointer;
+  }
+
   .titel, .sub-titel {
     z-index: 2;
     color: $secondary-text-color;
-    cursor: pointer;
     display: flex;
     align-items: center;
 
