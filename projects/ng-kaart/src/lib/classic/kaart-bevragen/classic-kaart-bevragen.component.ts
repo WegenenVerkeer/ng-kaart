@@ -32,7 +32,7 @@ export class ClassicKaartBevragenComponent
   /** De unit van de zoekAfstand: "Meter" of "Pixel", default is "Meter" */
   @Input()
   set unit(value: UnitType) {
-    this._unit = val.enu<UnitType>(value, "Meter", "Pixel");
+    this._unit = val.enu<UnitType>(value, this._unit, "Meter", "Pixel");
   }
 
   /** De zoekafstand om te gebuiken in het bevragen, default is 25 */
