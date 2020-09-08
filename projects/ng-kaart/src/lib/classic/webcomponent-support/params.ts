@@ -94,7 +94,7 @@ const getOptionalParameter: <A>(
       option.none // Dit kan niet omdat json.optional zelf al option.none returnt
     );
   } else {
-    return option.some(param);
+    return option.fromNullable(param);
   }
 };
 

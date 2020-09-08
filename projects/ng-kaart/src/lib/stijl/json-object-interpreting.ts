@@ -62,7 +62,7 @@ export function optional<T>(
   interpreter: Interpreter<T>
 ): Interpreter<option.Option<T>> {
   return firstOf(
-    map<T, option.Option<T>>(option.some, interpreter),
+    map<T, option.Option<T>>(option.fromNullable, interpreter),
     succeed(option.none)
   );
 }

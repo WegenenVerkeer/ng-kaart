@@ -17,7 +17,14 @@ import { CachedFeatureLookup } from "projects/ng-kaart/src/lib/kaart/cache/looku
 import * as ol from "projects/ng-kaart/src/lib/util/openlayers-compat";
 import { urlWithParams } from "projects/ng-kaart/src/lib/util/url";
 import * as rx from "rxjs";
-import { reduce, scan, share, startWith, throttleTime } from "rxjs/operators";
+import {
+  reduce,
+  scan,
+  share,
+  startWith,
+  throttleTime,
+  delay,
+} from "rxjs/operators";
 
 import {
   AwvV0DynamicStyle,
@@ -467,6 +474,15 @@ export class FeatureDemoComponent {
   huidigeZoom = -1;
   minZoom = 2;
   maxZoom = 5;
+
+  extentChange$: rx.Observable<ol.Extent> = rx
+    .of([
+      5626.272240711754,
+      143317.38419108064,
+      275630.73751375626,
+      250942.4824563699,
+    ])
+    .pipe(delay(10000));
 
   objectKeys = Object.keys;
   mogelijkeOpties = {
