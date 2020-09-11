@@ -72,6 +72,8 @@
               "newtype-ts",
               "newtype-ts/lib/NonNegativeInteger",
               "ng4-click-outside",
+              "pbf",
+              "pixelworks/lib/index.js",
               "resize-observer",
               "uuid"
            ]
