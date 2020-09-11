@@ -120,7 +120,7 @@ export type Command<Msg extends KaartMsg> =
   | ZoekGekliktCmd;
 
 export interface SubscriptionResult {
-  readonly subscription: rx.Subscription;
+  readonly subscriptionHandle: string;
   readonly subscriberName: string;
 }
 

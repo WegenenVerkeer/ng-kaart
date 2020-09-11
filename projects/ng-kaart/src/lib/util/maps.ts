@@ -53,21 +53,21 @@ export function filterKey<K, V>(
   return newMap;
 }
 
-export function set<V>(
-  kvs: Map<string, V>,
-  key: string,
-  value: V
-): Map<string, V> {
-  const newMap = new Map<string, V>(kvs.entries());
+export function get<K, V>(kvs: Map<K, V>, key: K): option.Option<V> {
+  return option.fromNullable(kvs.get(key));
+}
+
+export function set<K, V>(kvs: Map<K, V>, key: K, value: V): Map<K, V> {
+  const newMap = new Map<K, V>(kvs.entries());
   newMap.set(key, value);
   return newMap;
 }
 
-export function modify<V>(
-  kvs: Map<string, V>,
-  key: string,
+export function modify<K, V>(
+  kvs: Map<K, V>,
+  key: K,
   f: Endomorphism<V>
-): Map<string, V> {
+): Map<K, V> {
   return pipe(
     kvs.get(key),
     option.fromNullable,
@@ -76,6 +76,12 @@ export function modify<V>(
       (value) => set(kvs, key, f(value))
     )
   );
+}
+
+export function remove<K, V>(kvs: Map<K, V>, key: K): Map<K, V> {
+  const copy = new Map<K, V>(kvs.entries());
+  copy.delete(key);
+  return copy;
 }
 
 export function mapValues<K, A, B>(

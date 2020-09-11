@@ -1,5 +1,5 @@
 import { option } from "fp-ts";
-import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
+import { BehaviorSubject, ReplaySubject, Subject, Subscription } from "rxjs";
 
 import * as ol from "../util/openlayers-compat";
 import { ZoekerMetWeergaveopties } from "../zoeker/zoeker";
@@ -38,6 +38,7 @@ export class KaartWithInfo {
   readonly scrollZoomOnFocus: boolean = false;
   readonly showBackgroundSelector: boolean = false;
   readonly zoekersMetPrioriteiten: ZoekerMetWeergaveopties[] = [];
+  readonly subscriptionsOpHandle: Map<string, Subscription> = new Map();
 
   // Een serieuze doorn in het oog. Dit is een collectie die automagisch door OL up-to-date gehouden wordt (mbv interactie).
   readonly geselecteerdeFeatures: ol.Collection<ol.Feature> = new ol.Collection<
