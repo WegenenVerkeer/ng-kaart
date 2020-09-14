@@ -20,6 +20,7 @@ import {
   throttleTime,
 } from "rxjs/operators";
 
+import { v4 as uuidV4 } from "uuid";
 import {
   FilterAanpassend,
   GeenFilterAanpassingBezig,
@@ -2380,15 +2381,24 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       cmnd: prt.SubscribeCmd<Msg>
     ): ModelWithResult<Msg> {
       function modelWithSubscriptionResult(
-        name: string,
+        subscriberName: string,
         subscription: Subscription
       ): ModelWithResult<Msg> {
+        const subscriptionHandle: string = uuidV4();
+        const updatedModel = {
+          ...model,
+          subscriptionsOpHandle: maps.set(
+            model.subscriptionsOpHandle,
+            subscriptionHandle,
+            subscription
+          ),
+        };
         return toModelWithValueResult(
           cmnd.wrapper,
           success(
-            ModelAndValue(model, {
-              subscription: subscription,
-              subscriberName: name,
+            ModelAndValue(updatedModel, {
+              subscriptionHandle,
+              subscriberName,
             })
           )
         );
@@ -2788,8 +2798,21 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function handleUnsubscriptions(
       cmnd: prt.UnsubscribeCmd
     ): ModelWithResult<Msg> {
-      cmnd.subscriptionResult.subscription.unsubscribe();
-      return ModelWithResult(model);
+      const maybeSubscription = maps.get(
+        model.subscriptionsOpHandle,
+        cmnd.subscriptionResult.subscriptionHandle
+      );
+      const updatedModel = maybeSubscription.fold(model, (subscription) => {
+        subscription.unsubscribe();
+        return {
+          ...model,
+          subscriptionsOpHandle: maps.remove(
+            model.subscriptionsOpHandle,
+            cmnd.subscriptionResult.subscriptionHandle
+          ),
+        };
+      });
+      return ModelWithResult(updatedModel);
     }
 
     function unsafeHandleCommand(): ModelWithResult<Msg> {
