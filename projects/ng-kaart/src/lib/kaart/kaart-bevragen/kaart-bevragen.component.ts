@@ -14,6 +14,7 @@ import {
   timeoutWith,
 } from "rxjs/operators";
 
+import { ZoekerPerceelService } from "../../zoeker/perceel/zoeker-perceel.service";
 import * as arrays from "../../util/arrays";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import * as ol from "../../util/openlayers-compat";
@@ -37,6 +38,7 @@ import {
   LaagLocationInfo,
   LaagLocationInfoResult,
   LaagLocationInfoService,
+  PerceelResult,
   WegLocatiesResult,
 } from "./laaginfo.model";
 
@@ -60,7 +62,12 @@ const defaultOptions: BevraagKaartOpties = {
 export class KaartBevragenComponent
   extends KaartModusDirective
   implements OnInit, OnDestroy {
-  constructor(parent: KaartComponent, zone: NgZone, private http: HttpClient) {
+  constructor(
+    parent: KaartComponent,
+    zone: NgZone,
+    private http: HttpClient,
+    private zoekerPerceelService: ZoekerPerceelService
+  ) {
     super(parent, zone);
   }
 
@@ -137,7 +144,16 @@ export class KaartBevragenComponent
               ),
             srv
               .adresViaXY$(this.http, locatie)
-              .pipe(map((adres) => srv.withAdres(timestamp, locatie, adres)))
+              .pipe(map((adres) => srv.withAdres(timestamp, locatie, adres))),
+            srv
+              .getPerceelDetailsByXY$(
+                this.http,
+                this.zoekerPerceelService,
+                locatie
+              )
+              .pipe(
+                map((perceel) => srv.withPerceel(timestamp, locatie, perceel))
+              )
           );
     const clickOutsideFeature$ = this.modelChanges.kaartKlikLocatie$.pipe(
       filter((l) => !l.coversFeature)
@@ -214,11 +230,13 @@ export class KaartBevragenComponent
       const options = tuple.snd;
       const adres = msg.adres;
       const wegLocaties = msg.weglocaties;
+      const perceel = msg.perceel;
       if (!options.onderdrukInfoBoodschappen) {
         this.toonInfoBoodschap(
           msg.kaartLocatie,
           adres,
           wegLocaties,
+          perceel,
           msg.lagenLocatieInfo
         );
       }
@@ -227,6 +245,7 @@ export class KaartBevragenComponent
         msg.kaartLocatie,
         adres,
         wegLocaties,
+        perceel,
         msg.lagenLocatieInfo
       );
     });
@@ -236,6 +255,7 @@ export class KaartBevragenComponent
     coordinaat: ol.Coordinate,
     maybeAdres: Progress<AdresResult>,
     wegLocaties: Progress<WegLocatiesResult>,
+    maybePerceel: Progress<PerceelResult>,
     lagenLocatieInfo: Map<string, Progress<LaagLocationInfoResult>>
   ) {
     this.dispatch(
@@ -251,6 +271,7 @@ export class KaartBevragenComponent
         weglocaties: arrays.fromOption(
           progress.toOption(wegLocaties).map(arrays.fromEither)
         ),
+        perceel: progress.toOption(maybePerceel).chain(option.fromEither),
         laagLocatieInfoOpTitel: lagenLocatieInfo,
         verbergMsgGen: () => option.none,
       })
@@ -262,6 +283,7 @@ export class KaartBevragenComponent
     coordinaat: ol.Coordinate,
     maybeAdres: Progress<AdresResult>,
     wegLocaties: Progress<WegLocatiesResult>,
+    perceel: Progress<PerceelResult>,
     lagenLocatieInfo: Map<string, Progress<LaagLocationInfoResult>>
   ) {
     this.dispatch(
@@ -270,6 +292,7 @@ export class KaartBevragenComponent
         coordinaat: coordinaat,
         maybeAdres: maybeAdres,
         wegLocaties: wegLocaties,
+        perceel: perceel,
         lagenLocatieInfo: lagenLocatieInfo,
       })
     );

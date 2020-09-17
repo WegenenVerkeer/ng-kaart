@@ -57,6 +57,7 @@ export interface Perceel {
 }
 
 export interface PerceelDetails {
+  readonly error: string;
   readonly macht: string;
   readonly capakey: string;
   readonly sectiecode: string;

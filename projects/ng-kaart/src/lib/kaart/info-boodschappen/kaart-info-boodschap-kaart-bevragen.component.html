@@ -52,6 +52,30 @@
     </div>
   </mat-expansion-panel>
 
+  <mat-expansion-panel class="mat-elevation-z0" *ngIf="perceel">
+    <mat-expansion-panel-header>
+      <mat-panel-title class="naam">
+        Kadastrale informatie
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+
+    <div class="velden">
+      <div class="veldnamen">Gemeente</div><div class="veldwaarden">{{ perceel?.gemeente }}</div>
+    </div>
+    <div class="velden">
+      <div class="veldnamen">Afdeling</div><div class="veldwaarden">{{ perceel?.afdeling }}</div>
+    </div>
+    <div class="velden">
+      <div class="veldnamen">Sectie</div><div class="veldwaarden">{{ perceel?.sectie }}</div>
+    </div>
+    <div class="velden">
+      <div class="veldnamen">Perceel</div><div class="veldwaarden">{{ perceel?.perceel }}</div>
+    </div>
+    <div class="velden">
+      <div class="veldnamen">CaPaKey</div><div class="veldwaarden">{{ perceel?.capaKey }}</div>
+    </div>
+  </mat-expansion-panel>
+
   <ng-container *ngFor="let info of laagInfos">
 
     <mat-expansion-panel class="mat-elevation-z0" hideToggle *ngIf="info.busy || info.timedout">

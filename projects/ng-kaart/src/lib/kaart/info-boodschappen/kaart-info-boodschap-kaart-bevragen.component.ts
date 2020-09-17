@@ -18,6 +18,7 @@ import * as maps from "../../util/maps";
 import { Progress, withProgress } from "../../util/progress";
 import {
   LaagLocationInfoResult,
+  PerceelInfo,
   TextLaagLocationInfo,
   VeldinfoLaagLocationInfo,
   Veldwaarde,
@@ -109,6 +110,7 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildDirectiv
   coordinaatInformatieWgs84: string;
   wegLocaties: WegLocatie[];
   adressen: Adres[];
+  perceel: PerceelInfo | undefined;
 
   @Input()
   set boodschap(boodschap: InfoBoodschapKaartBevragenProgress) {
@@ -143,6 +145,7 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildDirectiv
     this.wegLocaties = array.sort(projectafstandOrd)(boodschap.weglocaties);
 
     this.adressen = boodschap.adres.fold([], (adres) => [adres]); // Array van 0 of 1 eltn isomorf met Option, maar makkelijker voor Angular
+    this.perceel = boodschap.perceel.toUndefined();
   }
 
   constructor(kaartComponent: KaartComponent, zone: NgZone) {

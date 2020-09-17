@@ -2,13 +2,19 @@ import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { either, option } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { catchError, map } from "rxjs/operators";
+import { catchError, flatMap, map, switchMap } from "rxjs/operators";
 
 import { Coordinates } from "../../coordinaten";
 import * as arrays from "../../util/arrays";
 import * as maps from "../../util/maps";
 import * as ol from "../../util/openlayers-compat";
 import { proceed, Progress, Received, Requested } from "../../util/progress";
+import {
+  Afdeling,
+  Gemeente,
+  PerceelDetails,
+  ZoekerPerceelService,
+} from "../../zoeker/perceel/zoeker-perceel.service";
 import { kaartLogger } from "../log";
 
 import {
@@ -16,6 +22,9 @@ import {
   AdresResult,
   BevragenErrorReason,
   LaagLocationInfoResult,
+  PerceelDetailsResult,
+  PerceelInfo,
+  PerceelResult,
   WegLocatie,
   WegLocaties,
   WegLocatiesResult,
@@ -26,6 +35,7 @@ export interface LocatieInfo {
   readonly kaartLocatie: ol.Coordinate;
   readonly adres: Progress<AdresResult>;
   readonly weglocaties: Progress<WegLocatiesResult>;
+  readonly perceel: Progress<PerceelResult>;
   readonly lagenLocatieInfo: Map<string, Progress<LaagLocationInfoResult>>;
 }
 
@@ -34,6 +44,7 @@ export function LocatieInfo(
   kaartLocatie: ol.Coordinate,
   adres: Progress<AdresResult>,
   weglocaties: Progress<WegLocatiesResult>,
+  perceel: Progress<PerceelResult>,
   lagenLocatieInfo: Map<string, Progress<LaagLocationInfoResult>>
 ): LocatieInfo {
   return {
@@ -41,6 +52,7 @@ export function LocatieInfo(
     kaartLocatie: kaartLocatie,
     adres: adres,
     weglocaties: weglocaties,
+    perceel: perceel,
     lagenLocatieInfo: lagenLocatieInfo,
   };
 }
@@ -103,6 +115,17 @@ export interface AgivAdres {
 
 export function toWegLocaties(lsWegLocaties: LsWegLocaties): Array<WegLocatie> {
   return lsWegLocaties.items.map(toWegLocatie);
+}
+
+export function toPerceel(perceel: PerceelDetails): PerceelInfo {
+  // TODO: fill in gemeente en afdeling naam
+  return {
+    gemeente: perceel.niscode,
+    afdeling: perceel.afdelingcode,
+    capaKey: perceel.capakey,
+    perceel: perceel.perceelsnummer,
+    sectie: perceel.sectiecode,
+  };
 }
 
 const geoJSONOptions = <ol.format.GeoJSONOptions>{
@@ -168,11 +191,31 @@ export function LsWegLocatiesResultToEither(
     .map(toWegLocaties);
 }
 
+export function PerceelDetailsToEither(
+  response: PerceelDetails
+): PerceelDetailsResult {
+  return either.fromPredicate<BevragenErrorReason, PerceelDetails>(
+    (r) => r.capakey != null,
+    (r) =>
+      option
+        .fromNullable(r.error)
+        .map<BevragenErrorReason>(() => "ServiceError")
+        .getOrElse("NoData")
+  )(response);
+}
+
 export function fromTimestampAndCoordinate(
   timestamp: number,
   coordinaat: ol.Coordinate
 ): LocatieInfo {
-  return LocatieInfo(timestamp, coordinaat, Requested, Requested, new Map());
+  return LocatieInfo(
+    timestamp,
+    coordinaat,
+    Requested,
+    Requested,
+    Requested,
+    new Map()
+  );
 }
 
 export function withAdres(
@@ -185,6 +228,22 @@ export function withAdres(
     coordinaat,
     Received(adres),
     Requested,
+    Requested,
+    new Map()
+  );
+}
+
+export function withPerceel(
+  timestamp: number,
+  coordinaat: ol.Coordinate,
+  perceel: PerceelResult
+): LocatieInfo {
+  return LocatieInfo(
+    timestamp,
+    coordinaat,
+    Requested,
+    Requested,
+    Received(perceel),
     new Map()
   );
 }
@@ -199,6 +258,7 @@ export function fromWegLocaties(
     coordinaat,
     Requested,
     Received(wegLocaties),
+    Requested,
     new Map()
   );
 }
@@ -212,6 +272,7 @@ export function merge(i1: LocatieInfo, i2: LocatieInfo): LocatieInfo {
         i2.kaartLocatie,
         proceed(i2.adres, i1.adres),
         proceed(i2.weglocaties, i1.weglocaties),
+        proceed(i2.perceel, i1.perceel),
         maps.concat(i1.lagenLocatieInfo)(i2.lagenLocatieInfo)
       )
     : i2;
@@ -266,6 +327,76 @@ export function adresViaXY$(
         // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
         return rx.of(
           either.left<BevragenErrorReason, Adres>(errorToReason(error))
+        );
+      })
+    );
+}
+
+export function enhancePerceelMetGemeenteEnAfdeling(
+  perceel: PerceelDetails,
+  gemeenten: Gemeente[],
+  afdelingen: Afdeling[]
+): PerceelResult {
+  return either.right({
+    gemeente: option
+      .fromNullable(
+        gemeenten.find(
+          (gemeente) => gemeente.niscode.toString() === perceel.niscode
+        )
+      )
+      .map((gemeente) => gemeente.naam)
+      .getOrElse(perceel.niscode),
+    afdeling: option
+      .fromNullable(
+        afdelingen.find((afdeling) => afdeling.code === perceel.afdelingcode)
+      )
+      .map((afdeling) => afdeling.naam)
+      .getOrElse(perceel.afdelingcode),
+    sectie: perceel.sectiecode,
+    perceel: perceel.perceelsnummer,
+    capaKey: perceel.capakey,
+  });
+}
+
+export function enhancePerceelMetGemeenteEnAfdeling$(
+  maybePerceel: PerceelDetailsResult,
+  zoekerPerceelService: ZoekerPerceelService
+): rx.Observable<PerceelResult> {
+  return maybePerceel.fold(
+    (error) => rx.of(either.left<BevragenErrorReason, PerceelInfo>(error)),
+    (perceel) =>
+      rx
+        .zip(
+          zoekerPerceelService.getAlleGemeenten$(),
+          zoekerPerceelService.getAfdelingen$(parseInt(perceel.niscode, 10))
+        )
+        .pipe(
+          map(([gemeenten, afdelingen]) =>
+            enhancePerceelMetGemeenteEnAfdeling(perceel, gemeenten, afdelingen)
+          )
+        )
+  );
+}
+
+export function getPerceelDetailsByXY$(
+  http: HttpClient,
+  perceelService: ZoekerPerceelService,
+  coordinaat: ol.Coordinate
+): rx.Observable<PerceelResult> {
+  return http
+    .get<PerceelDetails>(
+      `/locatorservices/rest/capakey/perceel/by/xy/${coordinaat[0]}/${coordinaat[1]}`
+    )
+    .pipe(
+      map(PerceelDetailsToEither),
+      switchMap((perceel) =>
+        enhancePerceelMetGemeenteEnAfdeling$(perceel, perceelService)
+      ),
+      catchError((error) => {
+        // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
+        kaartLogger.error("Fout bij opvragen adres", error);
+        return rx.of(
+          either.left<BevragenErrorReason, PerceelInfo>(errorToReason(error))
         );
       })
     );

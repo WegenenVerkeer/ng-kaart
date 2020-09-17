@@ -8,6 +8,7 @@ import { TypedRecord } from "../util/typed-record";
 import {
   Adres,
   LaagLocationInfoResult,
+  PerceelInfo,
   WegLocaties,
 } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
@@ -51,6 +52,7 @@ export interface InfoBoodschapKaartBevragenProgress extends InfoBoodschapBase {
   readonly coordinaat: ol.Coordinate;
   readonly adres: option.Option<Adres>; // Zou ook Progress<Adres> kunnen zijn
   readonly weglocaties: WegLocaties; // Zou ook Progress<<WegLocaties> kunnen zijn
+  readonly perceel: option.Option<PerceelInfo>;
   readonly laagLocatieInfoOpTitel: Map<
     string,
     Progress<LaagLocationInfoResult>

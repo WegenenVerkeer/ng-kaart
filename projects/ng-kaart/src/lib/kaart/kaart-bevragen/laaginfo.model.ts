@@ -6,6 +6,7 @@ import * as ol from "../../util/openlayers-compat";
 import { Progress } from "../../util/progress";
 import * as progress from "../../util/progress";
 import { VeldInfo } from "../kaart-elementen";
+import { PerceelDetails } from "../../zoeker/perceel/zoeker-perceel.service";
 
 export type LaagLocationInfo = TextLaagLocationInfo | VeldinfoLaagLocationInfo;
 
@@ -40,6 +41,14 @@ export const VeldinfoLaagLocationInfo: Function2<
   veldinfos: veldinfos,
 });
 
+export interface PerceelInfo {
+  readonly gemeente: string;
+  readonly afdeling: string;
+  readonly sectie: string;
+  readonly perceel: string;
+  readonly capaKey: string;
+}
+
 export interface WegLocatie {
   readonly ident8: string;
   readonly hm: number;
@@ -62,6 +71,12 @@ export type BevragenErrorReason = "Unreachable" | "ServiceError" | "NoData";
 
 export type AdresResult = either.Either<BevragenErrorReason, Adres>;
 export type WegLocatiesResult = either.Either<BevragenErrorReason, WegLocaties>;
+export type PerceelResult = either.Either<BevragenErrorReason, PerceelInfo>;
+export type PerceelDetailsResult = either.Either<
+  BevragenErrorReason,
+  PerceelDetails
+>;
+
 export type LaagLocationInfoResult = either.Either<
   BevragenErrorReason,
   LaagLocationInfo
@@ -72,6 +87,7 @@ export interface KaartLocaties {
   readonly coordinaat: ol.Coordinate;
   readonly maybeAdres: Progress<AdresResult>;
   readonly wegLocaties: Progress<WegLocatiesResult>;
+  readonly perceel: Progress<PerceelResult>;
   readonly lagenLocatieInfo: Map<string, Progress<LaagLocationInfoResult>>;
 }
 
