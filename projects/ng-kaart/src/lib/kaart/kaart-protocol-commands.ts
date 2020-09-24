@@ -760,6 +760,13 @@ export function VerplaatsLaagCmd<Msg extends KaartMsg>(
   return { type: "VerplaatsLaag", titel, naarPositie, wrapper };
 }
 
+export function VervangLaagCmd<Msg extends KaartMsg>(
+  laag: ke.Laag,
+  wrapper: BareValidationWrapper<Msg>
+): VervangLaagCmd<Msg> {
+  return { type: "VervangLaagCmd", laag, wrapper };
+}
+
 export function VraagSchaalAanCmd<Msg extends KaartMsg>(
   wrapper: BareValidationWrapper<Msg>
 ): VraagSchaalAanCmd<Msg> {
