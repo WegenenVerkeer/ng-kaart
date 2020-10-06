@@ -32,7 +32,7 @@ export type Expression =
 
 export type TypeType = "boolean" | "string" | "number";
 
-export type ValueType = boolean | string | number;
+export type ValueType = boolean | string | number | string[];
 
 export interface Literal {
   readonly kind: "Literal";
@@ -64,7 +64,16 @@ export interface Exists {
   readonly ref: string;
 }
 
-export type ComparisonOperator = "<" | ">" | "<=" | ">=" | "==" | "!=" | "L==";
+export type ComparisonOperator =
+  | "<"
+  | ">"
+  | "<="
+  | ">="
+  | "=="
+  | "!="
+  | "L=="
+  | "CONTAINS"
+  | "!CONTAINS";
 export interface Comparison {
   readonly kind: ComparisonOperator;
   readonly left: Expression;

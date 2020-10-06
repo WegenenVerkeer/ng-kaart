@@ -133,6 +133,8 @@ export const jsonAwvV0RuleInterpreter: Interpreter<AwvV0DynamicStyle> = (
     "==": comparison("=="),
     "!=": comparison("!="),
     "L==": comparison("L=="),
+    CONTAINS: comparison("CONTAINS"),
+    "!CONTAINS": comparison("!CONTAINS"),
     "&&": combination("&&"),
     "||": combination("||"),
     "!": negation,
@@ -230,7 +232,8 @@ function compileRules(
       .chain((properties) =>
         option.fromNullable(getNestedProperty(key, properties))
       )
-      .filter((value) => typeof value === typeName);
+      // TODO: beter een apart array type definieren en overal gebruiken in geval van array.
+      .filter((value) => typeof value === typeName || Array.isArray(value));
   const checkFeatureDefined = (key: string) => (ctx: Context) =>
     option
       .fromNullable(ctx.feature.get("properties"))
@@ -336,6 +339,20 @@ function compileRules(
       case "L==":
         return leftRight(
           (a: string, b: string) => a.toLowerCase() === b,
+          allTypes2("string"),
+          "boolean",
+          expression
+        );
+      case "CONTAINS":
+        return leftRight(
+          (a: string[], b: string) => a.includes(b),
+          allTypes2("string"),
+          "boolean",
+          expression
+        );
+      case "!CONTAINS":
+        return leftRight(
+          (a: string[], b: string) => !a.includes(b),
           allTypes2("string"),
           "boolean",
           expression
