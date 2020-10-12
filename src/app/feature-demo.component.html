@@ -231,7 +231,7 @@
           <awv-mijn-mobiele-locatie *ngIf="isOptieActief('mijnlocatie')" (stateChange)="onMijnMobieleLocatieStateChange($event)"></awv-mijn-mobiele-locatie>
           <!--de awv-meet-knop blijft voorlopig beschikbaar maar is deprecated -->
           <!-- <awv-meet-knop [toonInfoBoodschap]="isOptieActief('metenToon')" [meerdereGeometrieen]="isOptieActief('metenMeerdere')" *ngIf="isOptieActief('meten')"></awv-meet-knop> -->
-          <awv-multi-meet-knop [toonInfoBoodschap]="isOptieActief('metenToon')" *ngIf="isOptieActief('meten')" [keuzemogelijkheidTonen]="isOptieActief('keuzemogelijkheidTonen')"></awv-multi-meet-knop>
+          <awv-kaart-multi-meet-knop [toonInfoBoodschap]="isOptieActief('metenToon')" *ngIf="isOptieActief('meten')" [keuzemogelijkheidTonen]="isOptieActief('keuzemogelijkheidTonen')"></awv-kaart-multi-meet-knop>
           <awv-kaart-teken></awv-kaart-teken>
           <awv-kaart-zoomknoppen *ngIf="isOptieActief('zoomknoppen')"></awv-kaart-zoomknoppen>
           <awv-bevraag-kaart [onderdrukInfoBoodschappen]="isOptieActief('onderdrukKaartBevragenBoodschappen')" *ngIf="isOptieActief('bevraagkaart')"></awv-bevraag-kaart>
@@ -283,7 +283,7 @@
               <awv-kaart-perceel-zoeker [toonGeometrie]="false" [suggestiesPrioriteit]="undefined"></awv-kaart-perceel-zoeker>
             </awv-kaart-zoeker>
 
-            <awv-multi-meet-knop [toonInfoBoodschap]="true" [keuzemogelijkheidTonen]="true" [metRouting]="true"></awv-multi-meet-knop>
+            <awv-kaart-multi-meet-knop [toonInfoBoodschap]="true" [keuzemogelijkheidTonen]="true" [metRouting]="true"></awv-kaart-multi-meet-knop>
             <awv-kaart-teken></awv-kaart-teken>
             <awv-bevraag-kaart></awv-bevraag-kaart>
 
