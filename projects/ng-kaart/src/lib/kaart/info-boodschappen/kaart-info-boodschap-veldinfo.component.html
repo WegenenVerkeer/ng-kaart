@@ -10,7 +10,7 @@
   </span>
   </div>
 
-  <div class="vantot" *ngIf="heeftLocatieGegevensVoor('hm')">{{ waarde("hm") }}
+  <div class="vantot" *ngIf="heeftOpschrift()">{{ opschrift() }}
     <span class="afstand">{{ verpl() }}</span>
     <span *ngIf="heeftLocatieGegevensVoor('zijderijbaan') || heeftLocatieGegevensVoor('afstandrijbaan')">
     / {{ zijderijbaan() }}

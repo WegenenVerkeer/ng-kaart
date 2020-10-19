@@ -38,7 +38,9 @@ const ZIJDERIJBAAN = "zijderijbaan";
 const AFSTANDRIJBAAN = "afstandrijbaan";
 const BREEDTE = "breedte";
 const HM = "hm";
+const OPSCHRIFT = "opschrift";
 const VERPL = "verpl";
+const AFSTAND = "afstand";
 
 export type VeldinfoMap = Map<string, VeldInfo>;
 export interface Properties {
@@ -148,7 +150,9 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     ZIJDERIJBAAN,
     BREEDTE,
     HM,
+    OPSCHRIFT,
     VERPL,
+    AFSTAND,
   ];
 
   constructor(
@@ -498,9 +502,24 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     return this.maybeDateTimeWaarde(veldnaam).isSome();
   }
 
+  heeftOpschrift() {
+    return (
+      this.heeftLocatieGegevensVoor(HM) ||
+      this.heeftLocatieGegevensVoor(OPSCHRIFT)
+    );
+  }
+
+  opschrift(): string | number {
+    return option
+      .fromNullable(this.waarde(HM))
+      .alt(option.fromNullable(this.waarde(OPSCHRIFT)))
+      .getOrElse("");
+  }
+
   verpl(): string {
     return option
-      .fromNullable(this.waarde("verpl"))
+      .fromNullable(this.waarde(VERPL))
+      .alt(option.fromNullable(this.waarde(AFSTAND)))
       .map(this.signed)
       .getOrElse("");
   }
