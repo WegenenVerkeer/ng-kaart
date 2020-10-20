@@ -34,10 +34,12 @@ export function offsetStyleFunction(
       resolution
     );
 
-    // indien er geen stijl gedefinieerd is of we geen rijrichting kunnen afleiden
+    // indien de geometry geen segment is, er geen stijl gedefinieerd is of we geen rijrichting kunnen afleiden
     // (als er geen ident8 is en de rijrichting is niet de digitalisatie zin),
     // dan sturen we gewoon de style terug zonder offset toegepast
     if (
+      (!(feature.getGeometry() instanceof ol.geom.LineString) &&
+        !(feature.getGeometry() instanceof ol.geom.MultiLineString)) ||
       !style ||
       (!rijrichtingIsDigitalisatieZin && getValue(feature, ident8Veld).isNone())
     ) {
