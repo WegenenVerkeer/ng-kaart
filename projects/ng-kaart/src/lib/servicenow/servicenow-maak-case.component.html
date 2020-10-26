@@ -1,0 +1,28 @@
+<div class="servicenowlink" (click)="this.toggleToonCaseForm()">
+  <mat-icon class="link-icon">chat</mat-icon>
+  Case maken
+</div>
+
+<div *ngIf="toonServiceNowCaseForm" [@enterAnimation]>
+  <form novalidate class="melding-form" (ngSubmit)="verstuurMelding()">
+
+    <mat-form-field>
+      <input matInput [formControl]="serviceNowInputControl">
+
+      <mat-error *ngIf="serviceNowInputControl.hasError('required')">
+        Een boodschap is verplicht
+      </mat-error>
+
+    </mat-form-field>
+
+    <button mat-button [disabled]="!serviceNowInputControl.valid">
+      <mat-icon>send</mat-icon>
+    </button>
+
+  </form>
+</div>
+
+<div>
+  <div class="succes">{{ serviceNowSuccessBoodschap }}</div>
+  <div class="fout">{{ serviceNowFoutBoodschap }}</div>
+</div>

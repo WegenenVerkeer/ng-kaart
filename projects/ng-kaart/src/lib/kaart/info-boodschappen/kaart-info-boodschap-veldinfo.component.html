@@ -33,12 +33,8 @@
     </div>
   </div>
 
-  <div *ngIf="heeftMaakAbbameldaMelding()">
-
-    <awv-abbamelda-stuur-melding
-      [abbamelda_pad]="waarde('installatieNaampad')"
-      [abbamelda_onderdeel]="waarde('rootPad')"></awv-abbamelda-stuur-melding>
-
+  <div *ngIf="aanmakenCaseServiceNowMogelijk()">
+    <awv-servicenow-maak-case [installatieId]="waarde('id')"></awv-servicenow-maak-case>
   </div>
 
   <div class="separator-na-locatie"></div>

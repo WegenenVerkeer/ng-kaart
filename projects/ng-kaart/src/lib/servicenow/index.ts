@@ -7,9 +7,9 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 
-import { AbbameldaStuurmeldingComponent } from "./abbamelda-stuurmelding.component";
+import { ServicenowMaakCaseComponent } from "./servicenow-maak-case.component";
 
-const components: any[] = [AbbameldaStuurmeldingComponent];
+const components: any[] = [ServicenowMaakCaseComponent];
 
 @NgModule({
   imports: [
@@ -27,13 +27,13 @@ const components: any[] = [AbbameldaStuurmeldingComponent];
   exports: [components],
   providers: [],
 })
-export class AbbameldaModule {
-  static forRoot(): ModuleWithProviders<AbbameldaModule> {
+export class ServiceNowModule {
+  static forRoot(): ModuleWithProviders<ServiceNowModule> {
     return {
-      ngModule: AbbameldaModule,
+      ngModule: ServiceNowModule,
       providers: [],
     };
   }
 }
 
-export * from "./abbamelda-stuurmelding.component";
+export * from "./servicenow-maak-case.component";
