@@ -6,7 +6,7 @@ import {
   OnInit,
   ViewEncapsulation,
 } from "@angular/core";
-import { array, eq, option } from "fp-ts";
+import { array, eq, option, ord } from "fp-ts";
 import {
   Curried2,
   Endomorphism,
@@ -23,6 +23,7 @@ import { Lens, Optional } from "monocle-ts";
 import * as rx from "rxjs";
 import {
   debounceTime,
+  distinctUntilChanged,
   filter,
   map,
   pairwise,
@@ -79,6 +80,13 @@ import { KaartComponent } from "../kaart.component";
 import * as ss from "../stijl-selector";
 
 import { RouteEvent, RouteEventId } from "./route.msg";
+import { RoutingService } from "./routing-service";
+import {
+  GetekendeRoute,
+  getekendeRoute,
+  routingRapport,
+  RoutingRapport,
+} from "./teken.api";
 import {
   AddPoint,
   DeletePoint,
@@ -92,7 +100,11 @@ import {
   StartDrawing,
   StopDrawing,
 } from "./tekenen-model";
-import { directeRoutes, routesViaRoutering } from "./waypoint-ops";
+import {
+  customRoutes,
+  directeRoutes,
+  routesViaRoutering,
+} from "./waypoint-ops";
 import {
   AddWaypoint,
   RemoveWaypoint,
@@ -592,7 +604,7 @@ const drawOpsReducer: Function3<
 type FeaturesByWaypointId = NumberMapped<ol.Feature>;
 type FeaturesByRouteId = StringMapped<ol.Feature>;
 
-interface RouteSegmentState {
+export interface RouteSegmentState {
   readonly featuresByStartWaypointId: FeaturesByWaypointId; // Een waypoint is de start van hoogstens 1 route segment
   readonly featuresByRouteId: FeaturesByRouteId; // Elke route id heeft exact 1 feature/geometry
 }
@@ -695,6 +707,7 @@ const routeSegmentReducer: Function2<
       case "RouteAdded":
         // maken we een feature met de te tekenen geometrie
         const line = new ol.Feature(ops.geometry);
+        line.set("edges", ops.edges);
         line.setStyle(createLineStyle(lineColour));
 
         // dan kijken we of de eindpunten veranderd zijn en als dat zo is, dan maken we daar een DrawOps voor
@@ -738,6 +751,7 @@ export class KaartMultiTekenLaagComponent
   extends KaartChildDirective
   implements OnInit, OnDestroy {
   private readonly internalDrawOpsSubj: rx.Subject<DrawOps> = new rx.Subject();
+  private routingRapportSubj: rx.Subject<RoutingRapport>;
 
   constructor(
     parent: KaartComponent,
@@ -819,12 +833,17 @@ export class KaartMultiTekenLaagComponent
       })
     );
     // Kies de correcte routering
-    const routeSegmentOps$: Function1<boolean, rx.Observable<RouteEvent>> = (
-      useRouting
-    ) =>
-      waypointObsSubj.pipe(
-        useRouting ? routesViaRoutering(this.http) : directeRoutes()
+    const routeSegmentOps$: Function2<
+      boolean,
+      option.Option<RoutingService>,
+      rx.Observable<RouteEvent>
+    > = (useRouting, customRoutingService) => {
+      const routingService = customRoutingService.foldL(
+        () => (useRouting ? routesViaRoutering(this.http) : directeRoutes()),
+        (rs) => customRoutes(rs)
       );
+      return waypointObsSubj.pipe(routingService);
+    };
 
     const initialRouteSegmentState: RouteSegmentState = {
       featuresByStartWaypointId: {},
@@ -834,6 +853,7 @@ export class KaartMultiTekenLaagComponent
     interface DrawOptions {
       readonly useRouting: boolean;
       readonly featureColour: clr.Kleur;
+      readonly customRoutingService: option.Option<RoutingService>;
       readonly polygonStyleFunction: option.Option<ol.style.StyleFunction>;
     }
 
@@ -846,13 +866,14 @@ export class KaartMultiTekenLaagComponent
           useRouting: useRouting,
           featureColour: start.featureColour,
           polygonStyleFunction: start.polygonStyleFunction,
+          customRoutingService: start.customRoutingService,
         }))
       );
 
     // Verbind de geproduceerde WaypointOps met de routing service
     const routeEventProcessor$: rx.Observable<RouteSegmentState> = routingStart$.pipe(
       switchMap((start) =>
-        routeSegmentOps$(start.useRouting).pipe(
+        routeSegmentOps$(start.useRouting, start.customRoutingService).pipe(
           scan(
             routeSegmentReducer(start.featureColour, (ops) =>
               asap(() => this.internalDrawOpsSubj.next(ops))
@@ -882,6 +903,57 @@ export class KaartMultiTekenLaagComponent
       )
     );
 
+    const stringMappedOrd: ord.Ord<[string, any]> = ord.contramap<
+      string,
+      [string, any]
+    >((idToFeature) => idToFeature[0], ord.ordString);
+
+    const numberMappedOrd: ord.Ord<[number, any]> = ord.contramap<
+      number,
+      [number, any]
+    >((idToFeature) => idToFeature[0], ord.ordNumber);
+
+    const routingRapport$: rx.Observable<RoutingRapport> = routeEventProcessor$.pipe(
+      withLatestFrom(
+        drawOpsProcessor$.pipe(
+          map((drawState) => {
+            const waypointIdToWaypoint = new Map(
+              array.catOptions(
+                drawState.pointFeatures.map((pf) =>
+                  extractId(pf).map((i) => [i, pf])
+                )
+              )
+            );
+            return waypointIdToWaypoint;
+          })
+        )
+      ),
+      distinctUntilChanged(),
+      map(([routeSegmentState, waypointIdToWaypoint]) => {
+        const sortedWaypoints = array
+          .sort(numberMappedOrd)([...waypointIdToWaypoint.entries()])
+          .map(([key, value]) => <ol.Feature>value);
+
+        const routesByStartId: Array<[number, GetekendeRoute]> = Object.entries(
+          routeSegmentState.featuresByRouteId
+        ).map(([key, value]) => {
+          const keys = key.split("_");
+          const startId = Number(keys[0]);
+          const van = waypointIdToWaypoint.get(startId);
+          const tot = waypointIdToWaypoint.get(Number(keys[1]));
+          const segmenten = value.get("edges");
+          const route = getekendeRoute(van!, tot!, segmenten);
+          return [startId, route];
+        });
+
+        const sortedRoutes = array
+          .sort(numberMappedOrd)(routesByStartId)
+          .map(([key, value]) => <GetekendeRoute>value);
+
+        return routingRapport(sortedWaypoints, sortedRoutes);
+      })
+    );
+
     // Steek alles in gang. Tot nu toe was het enkel compositie
     this.runInViewReady(
       rx.merge(
@@ -902,6 +974,11 @@ export class KaartMultiTekenLaagComponent
               )
             )
           )
+        ),
+        routingRapport$.pipe(
+          tap((rr) => {
+            this.routingRapportSubj.next(rr);
+          })
         ),
         doubleClick$
       )
@@ -929,5 +1006,18 @@ export class KaartMultiTekenLaagComponent
     );
 
     onderdrukBoodschapOpties$.subscribe();
+  }
+
+  ngOnInit() {
+    super.ngOnInit();
+    // Hou de subject bij.
+    this.bindToLifeCycle(
+      this.kaartModel$.pipe(
+        distinctUntilChanged(
+          (k1, k2) => k1.routingRapportSubj === k2.routingRapportSubj
+        ), //
+        map((kwi) => kwi.routingRapportSubj)
+      )
+    ).subscribe((s) => (this.routingRapportSubj = s));
   }
 }

@@ -1,4 +1,10 @@
-import { Component, Injector, Input } from "@angular/core";
+import {
+  Component,
+  EventEmitter,
+  Injector,
+  Input,
+  Output,
+} from "@angular/core";
 
 import * as clr from "../../stijl/colour";
 
@@ -9,6 +15,12 @@ import {
 import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 
 import * as val from "../webcomponent-support/params";
+import * as prt from "../../kaart/kaart-protocol";
+import { KaartClassicMsg, DummyMsg } from "../messages";
+import { classicMsgSubscriptionCmdOperator } from "../kaart-classic.component";
+import { DrawOpsCmd } from "../../kaart/kaart-protocol-commands";
+import { DrawOps } from "../../kaart/tekenen/tekenen-model";
+import { RoutingRapport } from "../../kaart/tekenen/teken.api";
 
 /**
  * De component zorgt voor een knop aan de rechterkant waarmee een meet-tool geactiveerd kan worden.
@@ -50,6 +62,14 @@ export class ClassicMultiMetenComponent extends ClassicUIElementSelectorDirectiv
     );
   }
 
+  @Input()
+  set drawCommand(drawOps: DrawOps) {
+    this.kaart.dispatch(DrawOpsCmd(drawOps));
+  }
+
+  @Output()
+  routingRapport: EventEmitter<RoutingRapport> = new EventEmitter();
+
   constructor(injector: Injector) {
     super(MultiMetenUiSelector, injector);
   }
@@ -63,5 +83,21 @@ export class ClassicMultiMetenComponent extends ClassicUIElementSelectorDirectiv
       showInfoMessage: this._toonInfoBoodschap,
       connectionSelectable: this._keuzemogelijkheidTonen,
     };
+  }
+
+  ngOnInit() {
+    super.ngOnInit();
+
+    this.bindToLifeCycle(
+      this.kaart.kaartClassicSubMsg$.lift(
+        classicMsgSubscriptionCmdOperator(
+          this.kaart.dispatcher,
+          prt.RoutingrapportSubscription((routingRapport) => {
+            this.routingRapport.emit(routingRapport);
+            return KaartClassicMsg(DummyMsg());
+          })
+        )
+      )
+    ).subscribe();
   }
 }

@@ -10,6 +10,7 @@ import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { ModelChanger } from "./model-changes";
 import { initStyleSelectorsInMap } from "./stijl-selector";
+import { RoutingRapport } from "./tekenen/teken.api";
 import { TileLoader } from "./tile-loader";
 
 /**
@@ -60,6 +61,9 @@ export class KaartWithInfo {
   >(1);
   readonly geometryChangedSubj: Subject<ke.Tekenresultaat> = new Subject<
     ke.Tekenresultaat
+  >();
+  readonly routingRapportSubj: Subject<RoutingRapport> = new Subject<
+    RoutingRapport
   >();
   readonly tekenSettingsSubj: BehaviorSubject<
     option.Option<ke.TekenSettings>

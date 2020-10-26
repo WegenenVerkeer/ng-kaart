@@ -2598,6 +2598,17 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         );
       }
 
+      function subscribeToRoutingRapport(
+        sub: prt.RoutingRapportSubscription<Msg>
+      ): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "RoutingRapport",
+          model.routingRapportSubj
+            .pipe(distinctUntilChanged())
+            .subscribe(consumeMessage(sub))
+        );
+      }
+
       function subscribeToTekenen(
         sub: prt.TekenenSubscription<Msg>
       ): ModelWithResult<Msg> {
@@ -2766,6 +2777,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToZoekers(cmnd.subscription);
         case "GeometryChanged":
           return subscribeToGeometryChanged(cmnd.subscription);
+        case "RoutingRapport":
+          return subscribeToRoutingRapport(cmnd.subscription);
         case "Tekenen":
           return subscribeToTekenen(cmnd.subscription);
         case "PublishedKaartLocaties":

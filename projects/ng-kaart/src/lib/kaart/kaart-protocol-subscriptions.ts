@@ -19,6 +19,7 @@ import {
   MijnLocatieStateChange,
   PrecacheLaagProgress,
 } from "./model-changes";
+import { RoutingRapport } from "./tekenen/teken.api";
 
 export type Subscription<Msg> =
   | AchtergrondTitelSubscription<Msg>
@@ -27,6 +28,7 @@ export type Subscription<Msg> =
   | MeldingenSubscription<Msg>
   | ExtentSubscription<Msg>
   | GeometryChangedSubscription<Msg>
+  | RoutingRapportSubscription<Msg>
   | GeselecteerdeFeaturesSubscription<Msg>
   | HoverFeaturesSubscription<Msg>
   | InErrorSubscription<Msg>
@@ -206,6 +208,11 @@ export interface GeometryChangedSubscription<Msg> {
   readonly type: "GeometryChanged";
   readonly tekenSettings: ke.TekenSettings;
   readonly wrapper: MsgGen<ke.Tekenresultaat, Msg>;
+}
+
+export interface RoutingRapportSubscription<Msg> {
+  readonly type: "RoutingRapport";
+  readonly wrapper: (routingRapport: RoutingRapport) => Msg;
 }
 
 export interface TekenenSubscription<Msg> {
@@ -428,6 +435,12 @@ export function GeometryChangedSubscription<Msg>(
     tekenSettings: tekenSettings,
     wrapper: wrapper,
   };
+}
+
+export function RoutingrapportSubscription<Msg>(
+  wrapper: (routingRapport: RoutingRapport) => Msg
+): RoutingRapportSubscription<Msg> {
+  return { type: "RoutingRapport", wrapper: wrapper };
 }
 
 export function TekenenSubscription<Msg>(
