@@ -170,7 +170,7 @@ module.exports = {
     "no-unused-labels": "error",
     "no-var": "error",
     "prefer-const": "error",
-    "prettier/prettier": "error",
+    "prettier/prettier": "warn",
     "quote-props": "off",
     "radix": "error",
     "space-before-function-paren": "off",

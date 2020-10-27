@@ -4,7 +4,7 @@ import { Observable } from "rxjs";
 import * as rx from "rxjs";
 import { catchError, map } from "rxjs/operators";
 
-import { Interpreter } from "../../stijl/json-object-interpreting";
+import { Interpreter, Validation } from "../../stijl/json-object-interpreting";
 import * as st from "../../stijl/json-object-interpreting";
 import * as ol from "../../util/openlayers-compat";
 import { kaartLogger } from "../log";
@@ -87,24 +87,25 @@ export class VerfijndeRoutingService implements RoutingService {
       `?precision=50`;
 
     return this.http.get<object>(url).pipe(
-      map(toWegEdges),
-      map((vldtn) =>
-        vldtn.getOrElseL((errs) => {
+      map((edges) => {
+        const vldtn = toWegEdges(edges) as Validation<WegEdge[]>;
+        const wegEdges = vldtn.getOrElseL((errs) => {
           kaartLogger.error(
             `Onverwacht antwoordformaat van routeservice: ${errs}. We gaan verder zonder dit antwoord.`
           );
           throw errs;
-        })
-      ),
-      map((wegEdges) => ({
-        id: protoRoute.id,
-        version: protoRoute.version,
-        begin: protoRoute.begin,
-        end: protoRoute.end,
-        geometry: new ol.geom.GeometryCollection(
-          wegEdges.map((edge) => edge.geometry)
-        ),
-      })),
+        });
+        return {
+          id: protoRoute.id,
+          version: protoRoute.version,
+          begin: protoRoute.begin,
+          end: protoRoute.end,
+          geometry: new ol.geom.GeometryCollection(
+            wegEdges.map((edge) => edge.geometry)
+          ),
+          edges: edges,
+        };
+      }),
       catchError((err) => {
         kaartLogger.error(`Routing heeft gefaald: ${err.message}`, err);
         return rx.of(protoRouteToFallbackGeometryRoute(protoRoute));

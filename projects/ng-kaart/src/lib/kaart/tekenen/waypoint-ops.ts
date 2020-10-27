@@ -204,6 +204,17 @@ export function routesViaRoutering(
   );
 }
 
+export function customRoutes(
+  customRoutingService: RoutingService
+): Pipeable<WaypointOperation, RouteEvent> {
+  return waypointOpsToRouteOperation(
+    new CompositeRoutingService([
+      new SimpleRoutingService(),
+      customRoutingService,
+    ])
+  );
+}
+
 const ifDifferentLocation: Function2<
   ol.Coordinate,
   Waypoint,

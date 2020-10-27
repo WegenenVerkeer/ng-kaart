@@ -20,6 +20,7 @@ export interface GeometryRoute {
   readonly begin: Waypoint;
   readonly end: Waypoint;
   readonly geometry: ol.geom.Geometry;
+  readonly edges?: any;
 }
 
 export type RouteEvent = RouteAdded | RouteRemoved;
@@ -34,6 +35,7 @@ export interface RouteAdded {
   readonly geometry: ol.geom.Geometry;
   readonly beginSnap: option.Option<Waypoint>;
   readonly endSnap: option.Option<Waypoint>;
+  readonly edges: any;
 }
 
 export interface RouteRemoved {
@@ -68,6 +70,7 @@ export function routeAdded(
     version: geometryRoute.version,
     startWaypointId: geometryRoute.begin.id,
     geometry: geometryRoute.geometry,
+    edges: geometryRoute.edges,
     beginSnap: beginSnap,
     endSnap: endSnap,
   };
