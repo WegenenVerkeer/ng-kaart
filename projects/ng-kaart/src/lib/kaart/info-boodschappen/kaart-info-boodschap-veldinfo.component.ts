@@ -608,7 +608,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
   aanmakenCaseServiceNowMogelijk(): boolean {
     return (
       this.serviceNowActief &&
-      hasVeld(this.veldbeschrijvingen, "aanmakenCaseServiceNowMogelijk")
+      hasVeld(this.veldbeschrijvingen, "installatieNaampad")
     );
   }
 }
