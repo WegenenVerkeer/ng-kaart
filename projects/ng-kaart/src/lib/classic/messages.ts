@@ -268,6 +268,10 @@ export function SubscribedMsg(
   };
 }
 
+export function DummyMsg(): DummyMsg {
+  return { type: "Dummy" };
+}
+
 export function BusyMsg(busy: boolean): BusyMsg {
   return { type: "Busy", busy: busy };
 }

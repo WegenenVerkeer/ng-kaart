@@ -247,6 +247,7 @@ export class KaartMultiMetenComponent extends KaartModusDirective {
         StartDrawing(
           this.metenOpties.markColour,
           this.metenOpties.useRouting,
+          option.none,
           option.none
         )
       )

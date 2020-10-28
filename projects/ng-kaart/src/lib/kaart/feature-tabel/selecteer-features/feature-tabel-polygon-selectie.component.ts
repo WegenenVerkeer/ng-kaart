@@ -11,6 +11,7 @@ import {
   Function2,
   identity,
 } from "fp-ts/lib/function";
+import { none } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import { LineString, Point, Polygon } from "ol/geom";
 import * as rx from "rxjs";
@@ -258,6 +259,7 @@ export class FeatureTabelSelectieViaPolygonComponent
             StartDrawing(
               this.opties.markColour,
               this.opties.useRouting,
+              none,
               option.some(this.opties.polygonStyleFunction)
             )
           ),
