@@ -15,14 +15,27 @@
 
     </mat-form-field>
 
-    <button mat-button [disabled]="!serviceNowInputControl.valid">
+    <button *ngIf="!versturenBezig" mat-button [disabled]="!serviceNowInputControl.valid">
       <mat-icon>send</mat-icon>
     </button>
+
+    <mat-icon *ngIf="versturenBezig" svgIcon="spinner"></mat-icon>
 
   </form>
 </div>
 
 <div>
-  <div class="succes">{{ serviceNowSuccessBoodschap }}</div>
+  <div class="succes">
+
+    <div class="resultaat">
+      {{ serviceNowSuccessBoodschap }}
+    </div>
+
+    <button *ngIf="caseNummer" mat-icon-button class="copy" matTooltip="Kopieer casenummer">
+      <mat-icon (click)="copyToClipboard(caseNummer)">content_copy</mat-icon>
+    </button>
+
+  </div>
   <div class="fout">{{ serviceNowFoutBoodschap }}</div>
+
 </div>

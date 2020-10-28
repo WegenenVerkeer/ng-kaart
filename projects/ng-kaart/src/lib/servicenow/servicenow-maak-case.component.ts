@@ -2,6 +2,7 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import { HttpClient } from "@angular/common/http";
 import { Component, Input } from "@angular/core";
 import { FormControl, Validators } from "@angular/forms";
+import { copyToClipboard } from "../util/clipboard";
 
 import { kaartLogger } from "../kaart/log";
 
@@ -39,8 +40,10 @@ export class ServicenowMaakCaseComponent {
 
   serviceNowSuccessBoodschap = "";
   serviceNowFoutBoodschap = "";
+  caseNummer: string | undefined;
 
   toonServiceNowCaseForm = false;
+  versturenBezig = false;
   serviceNowInputControl = new FormControl("", [Validators.required]);
 
   constructor(private http: HttpClient) {}
@@ -53,6 +56,7 @@ export class ServicenowMaakCaseComponent {
   verstuurMelding() {
     const boodschap = this.serviceNowInputControl.value;
 
+    this.versturenBezig = true;
     this.http
       .post<ServiceNowResultaat>("/geoloket/rest/servicenow/maak/case", {
         installatieId: this.installatieId,
@@ -60,16 +64,25 @@ export class ServicenowMaakCaseComponent {
       })
       .subscribe(
         (res) => {
+          this.versturenBezig = false;
           this.serviceNowSuccessBoodschap = res.boodschap;
           this.serviceNowFoutBoodschap = "";
+          this.caseNummer = res.caseNummer;
           this.toggleToonCaseForm();
         }, //
         (err) => {
+          this.versturenBezig = false;
           const errorboodschap = `Kon ServiceNow case niet aanmaken: ${err.boodschap}`;
           this.serviceNowSuccessBoodschap = "";
           this.serviceNowFoutBoodschap = errorboodschap;
           kaartLogger.error(errorboodschap);
         }
       );
+  }
+
+  copyToClipboard(toCopy?: string) {
+    if (toCopy) {
+      copyToClipboard(toCopy);
+    }
   }
 }

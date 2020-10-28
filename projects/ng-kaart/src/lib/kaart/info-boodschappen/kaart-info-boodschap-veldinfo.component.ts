@@ -155,6 +155,10 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     AFSTAND,
   ];
 
+  // ServiceNow cases aanmaken actief of niet?
+  // Default staat deze af. Kan geënabled worden door via ServiceNowOpties serviceNowCasesActief op true te zetten. Zal door Geoloket
+  // op actief gezet worden indien de gebruiker rol VTC_Gebruiker heeft
+  // We tonen enkel de ServiceNow form indien deze boolean true is en de laag een veld "installatieNaamPad" heeft (eminfra specifiek)
   serviceNowActief = false;
 
   constructor(
