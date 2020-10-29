@@ -46,6 +46,7 @@ export class ServicenowMaakCaseComponent {
         }, //
         (err) => {
           this.versturenBezig = false;
+          this.caseNummer = undefined;
           const errorboodschap = err?.error?.boodschap;
           this.serviceNowSuccessBoodschap = "";
           this.serviceNowFoutBoodschap = errorboodschap;
