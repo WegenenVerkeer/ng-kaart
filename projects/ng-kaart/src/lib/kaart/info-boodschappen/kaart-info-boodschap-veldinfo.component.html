@@ -25,16 +25,18 @@
 
   <div class="separator-na-locatie" *ngIf="heeftIdent8()"></div>
 
+  <div *ngIf="aanmakenCaseServiceNowMogelijk()">
+    <awv-servicenow-maak-case [installatieId]="waarde('bronid')"></awv-servicenow-maak-case>
+  </div>
+
+  <div class="separator-na-locatie"></div>
+
   <div class="velden" *ngFor="let veld of linkEigenschappen()">
     <div class="veldlinks">
       <a href="{{ waarde(veld) }}" target="_blank">
         <mat-icon class="link-icon">open_in_new</mat-icon>
         {{ label(veld) }}</a>
     </div>
-  </div>
-
-  <div *ngIf="aanmakenCaseServiceNowMogelijk()">
-    <awv-servicenow-maak-case [installatieId]="waarde('bronid')"></awv-servicenow-maak-case>
   </div>
 
   <div class="separator-na-locatie"></div>
