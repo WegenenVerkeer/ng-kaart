@@ -15,40 +15,24 @@
   }
 }
 
+.verstuur-button {
+  padding: 8px 12px 8px 12px;
+  margin: 8px;
+  color: white;
+  background-color: $awv-primary-3;
+  line-height: 24px;
+}
+
 .link-icon {
   line-height: 26px;
-  color: rgba(247, 144, 45, 0.87);
+  color: white;
   width: 16px;
   vertical-align: text-bottom;
 }
 
-.melding-form {
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  font-size: 15px;
-
-  mat-form-field {
-    flex-grow: 1;
-    padding-right: 8px;
-  }
-
-  button {
-    padding: 0;
-    min-width: 36px;
-    height: 36px;
-  }
-
-  mat-icon {
-    color: rgba(247, 144, 45, 0.87);
-    line-height: 32px;
-    vertical-align: text-bottom;
-  }
-}
-
 .fout {
   line-height: 26px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 300;
   color: rgba(255, 0, 0, 0.87);
 }
@@ -61,7 +45,7 @@
 
 .resultaat {
   line-height: 26px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 300;
   color: rgba(0, 0, 0, 0.87);
   margin-right: 8px;
