@@ -17,7 +17,7 @@
 
 .verstuur-button {
   padding: 8px 12px 8px 12px;
-  margin: 8px;
+  margin-bottom: 8px;
   color: white;
   background-color: $awv-primary-3;
   line-height: 24px;
@@ -41,6 +41,7 @@
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
+  justify-content: space-between;
 }
 
 .resultaat {
@@ -56,6 +57,7 @@
   line-height: 26px;
   height: 16px;
   min-width: 16px;
+  margin-right: 4px;
 }
 
 .mat-icon {
