@@ -1,9 +1,9 @@
-import { Component, Input, NgZone } from "@angular/core";
+import { ChangeDetectorRef, Component, Input, NgZone } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
 import { eq, map, option } from "fp-ts";
+import { map as rxmap } from "rxjs/operators";
 import { constTrue, Function1, Function2, Predicate } from "fp-ts/lib/function";
 import * as Mustache from "mustache";
-
 import * as arrays from "../../util/arrays";
 import {
   formateerDate,
@@ -14,7 +14,7 @@ import {
 import { KaartChildDirective } from "../kaart-child.directive";
 import { VeldInfo } from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
-
+import { ServiceNowOpties, ServiceNowUiSelector } from "./service-now-opties";
 import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
 
 const GEOMETRY = "geometry";
@@ -155,13 +155,27 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     AFSTAND,
   ];
 
+  // ServiceNow cases aanmaken actief of niet?
+  // Default staat deze af. Kan geënabled worden door via ServiceNowOpties serviceNowCasesActief op true te zetten. Zal door Geoloket
+  // op actief gezet worden indien de gebruiker rol VTC_Gebruiker heeft
+  // We tonen enkel de ServiceNow form indien deze boolean true is en de laag een veld "installatieNaamPad" heeft (eminfra specifiek)
+  serviceNowActief = false;
+
   constructor(
+    private readonly cdr: ChangeDetectorRef,
     parent: KaartComponent,
     zone: NgZone,
     private kaartInfoBoodschapComponent: KaartInfoBoodschapComponent,
     private readonly sanitizer: DomSanitizer
   ) {
     super(parent, zone);
+
+    this.accumulatedOpties$<ServiceNowOpties>(ServiceNowUiSelector)
+      .pipe(rxmap((o) => o.serviceNowCasesActief))
+      .subscribe((actief) => {
+        this.serviceNowActief = actief;
+        cdr.detectChanges();
+      });
   }
 
   heeftLocatieGegevensVoor(key: string) {
@@ -595,7 +609,10 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       .getOrElse("");
   }
 
-  heeftMaakAbbameldaMelding(): boolean {
-    return hasVeld(this.veldbeschrijvingen, "meldingInAbbamelda");
+  aanmakenCaseServiceNowMogelijk(): boolean {
+    return (
+      this.serviceNowActief &&
+      hasVeld(this.veldbeschrijvingen, "installatieNaampad")
+    );
   }
 }

@@ -16,7 +16,7 @@ import {
 } from "@angular/material/tooltip";
 import { ClickOutsideModule } from "ng4-click-outside";
 
-import { AbbameldaModule } from "../abbamelda/index";
+import { ServiceNowModule } from "../servicenow/index";
 import { KaartOpenLayersStyleComponent } from "../classic/openlayers-style/classic-openlayers-style.component";
 import { KaartTekenComponent } from "../classic/tekenen/kaart-teken.component";
 import { FilterModule } from "../filter/index";
@@ -163,7 +163,7 @@ export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
-    AbbameldaModule,
+    ServiceNowModule,
     ZoekerModule.forRoot({}),
     LagenkiezerModule.withDefaults(),
     StijleditorModule,
@@ -213,6 +213,7 @@ export * from "./info-boodschappen/kaart-info-boodschap-meten.component";
 export * from "./info-boodschappen/kaart-info-boodschap-veldinfo.component";
 export * from "./info-boodschappen/kaart-info-boodschap.component";
 export * from "./info-boodschappen/kaart-info-boodschappen.component";
+export * from "./info-boodschappen/service-now-opties";
 export * from "./kaart-base.directive";
 export * from "./kaart-bevragen/kaart-bevragen-opties";
 export * from "./kaart-bevragen/kaart-bevragen.component";

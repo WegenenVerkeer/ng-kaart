@@ -1586,6 +1586,27 @@ export class FeatureDemoComponent {
     },
   ];
 
+  readonly verlichtingenVeldinfos: VeldInfo[] = [
+    {
+      isBasisVeld: true,
+      label: "ID",
+      naam: "bronid",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Onderdeel type",
+      naam: "typeNaam",
+      type: "string",
+    },
+    {
+      isBasisVeld: true,
+      label: "Naampad",
+      naam: "installatieNaampad",
+      type: "string",
+    },
+  ];
+
   private readonly featureSelectieModusSubj: rx.Subject<
     SelectieModus
   > = new rx.Subject();

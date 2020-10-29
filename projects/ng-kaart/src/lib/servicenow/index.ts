@@ -6,10 +6,22 @@ import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
+import {
+  MAT_TOOLTIP_DEFAULT_OPTIONS,
+  MatTooltipDefaultOptions,
+  MatTooltipModule,
+} from "@angular/material/tooltip";
 
-import { AbbameldaStuurmeldingComponent } from "./abbamelda-stuurmelding.component";
+import { ServicenowMaakCaseComponent } from "./servicenow-maak-case.component";
 
-const components: any[] = [AbbameldaStuurmeldingComponent];
+const components: any[] = [ServicenowMaakCaseComponent];
+
+/** Custom options the configure the tooltip's default show/hide delays. */
+export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
+  showDelay: 750,
+  hideDelay: 0,
+  touchendHideDelay: 0,
+};
 
 @NgModule({
   imports: [
@@ -22,18 +34,21 @@ const components: any[] = [AbbameldaStuurmeldingComponent];
     MatIconModule,
     MatInputModule,
     MatFormFieldModule,
+    MatTooltipModule,
   ],
   declarations: [components],
   exports: [components],
-  providers: [],
+  providers: [
+    { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: myCustomTooltipDefaults },
+  ],
 })
-export class AbbameldaModule {
-  static forRoot(): ModuleWithProviders<AbbameldaModule> {
+export class ServiceNowModule {
+  static forRoot(): ModuleWithProviders<ServiceNowModule> {
     return {
-      ngModule: AbbameldaModule,
+      ngModule: ServiceNowModule,
       providers: [],
     };
   }
 }
 
-export * from "./abbamelda-stuurmelding.component";
+export * from "./servicenow-maak-case.component";

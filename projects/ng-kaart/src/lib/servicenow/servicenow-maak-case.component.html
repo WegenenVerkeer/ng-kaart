@@ -1,0 +1,41 @@
+<div class="servicenowlink" (click)="this.toggleToonCaseForm()">
+  <mat-icon class="link-icon">chat</mat-icon>
+  Case maken
+</div>
+
+<div *ngIf="toonServiceNowCaseForm" [@enterAnimation]>
+  <form novalidate class="melding-form" (ngSubmit)="verstuurMelding()">
+
+    <mat-form-field>
+      <input matInput [formControl]="serviceNowInputControl">
+
+      <mat-error *ngIf="serviceNowInputControl.hasError('required')">
+        Een boodschap is verplicht
+      </mat-error>
+
+    </mat-form-field>
+
+    <button *ngIf="!versturenBezig" mat-button [disabled]="!serviceNowInputControl.valid">
+      <mat-icon>send</mat-icon>
+    </button>
+
+    <mat-icon *ngIf="versturenBezig" svgIcon="spinner"></mat-icon>
+
+  </form>
+</div>
+
+<div>
+  <div class="succes">
+
+    <div class="resultaat">
+      {{ serviceNowSuccessBoodschap }}
+    </div>
+
+    <button *ngIf="caseNummer" mat-icon-button class="copy" matTooltip="Kopieer casenummer">
+      <mat-icon (click)="copyToClipboard(caseNummer)">content_copy</mat-icon>
+    </button>
+
+  </div>
+  <div class="fout">{{ serviceNowFoutBoodschap }}</div>
+
+</div>
