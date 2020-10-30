@@ -6,6 +6,7 @@ $tile-size: 76px;
   background-color: whitesmoke;
   width: $tile-size; // zo groot willen we zijn
   height: $tile-size;
+  background-size: contain; // fit de tile in de div
   max-height: inherit; // We willen dat we passen in de parent
   max-width: inherit;
   overflow: hidden;

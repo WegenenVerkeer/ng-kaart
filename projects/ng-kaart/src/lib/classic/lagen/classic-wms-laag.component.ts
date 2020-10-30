@@ -338,7 +338,7 @@ export class ClassicWmsLaagComponent
       format: this._format,
       srs: "EPSG:31370",
       crs: "EPSG:31370",
-      bbox: "104528,188839.75,105040,189351.75",
+      bbox: "110160,191911.75,112208,193959.75",
     });
   }
 

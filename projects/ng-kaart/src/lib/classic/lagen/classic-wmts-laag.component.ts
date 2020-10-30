@@ -191,9 +191,9 @@ export class ClassicWmtsLaagComponent
         WIDTH: 256,
         HEIGHT: 256,
         Format: this._format,
-        TileMatrix: 9,
-        TileCol: 185,
-        TileRow: 273,
+        TileMatrix: 7,
+        TileCol: 49,
+        TileRow: 66,
       });
     } else {
       // TODO: bepalen op basis van de echte parameters. Rekening houden met config.
