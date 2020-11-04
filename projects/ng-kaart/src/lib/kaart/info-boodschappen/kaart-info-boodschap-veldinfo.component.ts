@@ -457,7 +457,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       .getOrElse(false);
   }
 
-  copyToClipboard(toCopy: string) {
+  copyToClipboard(toCopy: string | number) {
     copyToClipboard(toCopy);
   }
 
