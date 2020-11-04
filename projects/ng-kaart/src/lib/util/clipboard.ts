@@ -1,6 +1,6 @@
-export function copyToClipboard(toCopy: string) {
+export function copyToClipboard(toCopy: string | number) {
   const elem = document.createElement("textarea");
-  elem.value = toCopy;
+  elem.value = toCopy as string;
   document.body.appendChild(elem);
   elem.select();
   document.execCommand("copy");
