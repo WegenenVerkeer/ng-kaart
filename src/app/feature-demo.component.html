@@ -26,10 +26,6 @@
       Featureselectie
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !geselecteerdeFeatureSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="hoofdSectie.maakSectieZichtbaar('orthophotos')" class="sub-titel clickable">
-      Orthophotos
-      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !orthophotosSectie.sectieZichtbaar }">visibility</span>
-    </div>
     <div (click)="hoofdSectie.maakSectieZichtbaar('dynamische-features')" class="sub-titel clickable">
       Dynamische features
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !dynamischeFeatures.sectieZichtbaar }">visibility</span>
@@ -326,7 +322,7 @@
                                     [minZoom]="7" [view]="null"
                                     [veldinfos]="telpostenInfos"></awv-kaart-nosqlfs-laag>
 
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart'" [laagNaam]="'dienstkaart'"></awv-kaart-tilecache-laag>
             <awv-kaart-schaal></awv-kaart-schaal>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
@@ -341,7 +337,7 @@
           <awv-kaart-classic [naam]="'tabel'"
                              [zoom]="10" [selectieModus]="'single'" [middelpunt]="verkeersbordenCoordinaat" [hoogte]="800">
             <awv-feature-tabel></awv-feature-tabel>
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart'" [laagNaam]="'dienstkaart'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Referentiepunten'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'referentiepunten'"
                                     [minZoom]="5" [maxZoom]="15"
@@ -366,23 +362,11 @@
         </div>
       </awv-test-sectie>
 
-
-      <awv-test-sectie sectieId="orthophotos" sectieTitel="Orthophotos" [subSectie]="true" #orthophotosSectie
-                       [sectieZichtbaar]="hoofdSectie.sectieZichtbaar && orthophotosSectie.sectieZichtbaar">
-        <div *ngIf="orthophotosSectie.sectieZichtbaar">
-          <awv-kaart-classic class="qa-kaart" [naam]="'qa-kaart'" [hoogte]="800">
-            <awv-kaart-ortho-laag [titel]="'Ortho'" [groep]="'Voorgrond.Laag'"></awv-kaart-ortho-laag>
-            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
-            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
-          </awv-kaart-classic>
-        </div>
-      </awv-test-sectie>
-
       <awv-test-sectie sectieId="dynamische-features" sectieTitel="Dynamische features" [subSectie]="true" #dynamischeFeatures
                        [sectieZichtbaar]="hoofdSectie.sectieZichtbaar && dynamischeFeatures.sectieZichtbaar">
         <div *ngIf="dynamischeFeatures.sectieZichtbaar">
           <awv-kaart-classic [naam]="'dynamische-features'" [breedte]="800" [hoogte]="800" [zoom]="6" [middelpunt]="installatieCoordinaat">
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart'" [laagNaam]="'dienstkaart'"></awv-kaart-tilecache-laag>
             <awv-kaart-features-laag [features]="installaties" [titel]="'features'" [minZoom]="2"></awv-kaart-features-laag>
             <awv-kaart-schaal></awv-kaart-schaal>
             <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
@@ -482,7 +466,7 @@
                              [selectieModus]="'single'"
                              [hoogte]="800"
                              (zichtbareFeatures)="onZichtbareFeatures($event)">
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart'" [laagNaam]="'dienstkaart'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'fietspaden'"
                                     [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset"
@@ -509,7 +493,7 @@
             [geselecteerdeFeatures]="geselecteerdeFietspadsegmenten"
             (geselecteerdeFeaturesChange)="onFietspadsegmentViaKaartSelectie($event)"
             [selectieModus]="'multipleKlik'" [zoom]="6">
-              <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+              <awv-kaart-tilecache-laag [titel]="'Dienstkaart'" [laagNaam]="'dienstkaart'"></awv-kaart-tilecache-laag>
               <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
               <awv-kaart-nosqlfs-laag
                 [titel]="'Fietspaden'"
@@ -555,7 +539,7 @@
             [selectieModus]="featureSelectieModus$ | async"
             [zoom]="10"
             [middelpunt]="mechelenCentrum">
-              <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+              <awv-kaart-tilecache-laag [titel]="'Dienstkaart'" [laagNaam]="'dienstkaart'"></awv-kaart-tilecache-laag>
               <awv-kaart-features-laag [titel]="'Mechelen features'" [features]="mechelenFeatures"
               [style]="pinIcon" [minZoom]="4"
               [selectieStyle]="pinIconSelect"
@@ -583,7 +567,7 @@
         <div *ngIf="zoekenSectie.sectieZichtbaar">
         <awv-kaart-classic [naam]="'zoeken'" [hoogte]="800">
           <awv-kaart-lagenkiezer [verwijderbareLagen]="true" [verplaatsbareLagen]="true" [toonLegende]="true"></awv-kaart-lagenkiezer>
-          <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+          <awv-kaart-tilecache-laag [titel]="'Dienstkaart'" [laagNaam]="'dienstkaart'"></awv-kaart-tilecache-laag>
           <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
           <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
           <!-- Alternatieve manier om zoekers te definiëren als je meer controle wil over de weergave -->
@@ -619,7 +603,7 @@
 
         <div *ngIf="tekenenSectie.sectieZichtbaar">
           <awv-kaart-classic [naam]="'tekenen'" [breedte]="1200" [hoogte]="800" [zoom]="6" [middelpunt]="installatieCoordinaat">
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart'" [laagNaam]="'dienstkaart'"></awv-kaart-tilecache-laag>
             <awv-kaart-schaal></awv-kaart-schaal>
             <awv-kaart-teken [geometryType]="geometryType" [tekenen]="tekenenActief" (getekendeGeom)="geomGetekend($event)"></awv-kaart-teken>
             <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
@@ -657,6 +641,8 @@
 
             <awv-kaart-classic [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)"
                              [zoom]="10" [selectieModus]="'single'" [middelpunt]="verkeersbordenCoordinaat" [hoogte]="800">
+
+              <awv-kaart-tilecache-laag [titel]="'Dienstkaart'" [laagNaam]="'dienstkaart'"></awv-kaart-tilecache-laag>
 
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'"
                                       [laagNaam]="'dienstkaart-grijs'"
@@ -701,7 +687,7 @@
 
           <awv-kaart-classic #offlineFeatureKaart [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)" [geselecteerdeFeatures]="offlineGeselecteerdeFeatures"
                              [zoom]="9" [selectieModus]="'single'" [middelpunt]="[161206, 226075]" [hoogte]="800">
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart'" [laagNaam]="'dienstkaart'"></awv-kaart-tilecache-laag>
             <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
 
             <awv-kaart-nosqlfs-laag [titel]="'Verkeersborden'" [url]="'/geolatte-nosqlfs'"
@@ -729,7 +715,7 @@
           <awv-kaart-classic #kaartInfoKaart [naam]="'kaartInfo'" (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, kaartInfoKaart)"
                              [zoom]="9" [selectieModus]="'single'" [middelpunt]="[160026, 222847]" [hoogte]="800">
             <awv-feature-tabel></awv-feature-tabel>
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart'" [laagNaam]="'dienstkaart'"></awv-kaart-tilecache-laag>
             <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
 
             <awv-kaart-nosqlfs-laag [titel]="'Borden'" [url]="'/geolatte-nosqlfs'"
@@ -795,7 +781,7 @@
                               [zoom]="3"
                               [selectieModus]="'single'"
                               [hoogte]="800">
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart'" [laagNaam]="'dienstkaart'"></awv-kaart-tilecache-laag>
             <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
 
             <awv-kaart-lagenkiezer></awv-kaart-lagenkiezer>
@@ -854,7 +840,7 @@
           <awv-kaart-classic
             [naam]="'zoombereik'" [hoogte]="800" (zoomChange)="onZoomEvent($event)"
             [minZoom]="minZoom" [maxZoom]="maxZoom">
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart'" [laagNaam]="'dienstkaart'"></awv-kaart-tilecache-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
           </awv-kaart-classic>
@@ -877,6 +863,7 @@
                              (middelpuntChange)="onMiddelpunt($event)"
                              [extent]="extentChange$ | async"
                              (extentChange)="onExtent($event)">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart'" [laagNaam]="'dienstkaart'"></awv-kaart-tilecache-laag>
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
             <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
@@ -935,6 +922,7 @@
         <div *ngIf="elisaSectie.sectieZichtbaar" style="height: 800px">
           <awv-kaart-classic [naam]="'elisa'"
                              [zoom]="9" [selectieModus]="'single'" [middelpunt]="[161206, 226075]">
+
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag
               [minZoom]="9"
