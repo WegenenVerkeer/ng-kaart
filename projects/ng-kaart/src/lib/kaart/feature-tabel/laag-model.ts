@@ -730,7 +730,7 @@ export namespace LaagModel {
 
   const withFullExtent: Endomorphism<PageRequest> = (pageRequest) => ({
     ...pageRequest,
-    dataExtent: [-113072, -109144.25, 411216.0, 415143.75],
+    dataExtent: [18000.0, 152999.75, 280144.0, 415143.75],
   });
 
   const updateLaagPage: Function1<Page, Endomorphism<LaagModel>> = (page) =>
