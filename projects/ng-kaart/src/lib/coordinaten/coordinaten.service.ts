@@ -91,7 +91,7 @@ export const supportedProjection: PartialFunction1<string[], string> = (
 ) => first(stringIntersector(supportedProjections, new Set(projections)));
 
 // Onze dienstkaartextent
-const Lambert72Extent: ol.Extent = [18000.0, 152999.75, 280144.0, 415143.75];
+const Lambert72Extent: ol.Extent = [-113072, -109144.25, 411216.0, 415143.75];
 
 const updateExtent = (crs: string) =>
   ol.proj

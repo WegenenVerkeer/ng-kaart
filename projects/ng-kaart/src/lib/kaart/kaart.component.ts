@@ -317,7 +317,7 @@ export class KaartComponent extends KaartBaseDirective {
   private initieelModel(): KaartWithInfo {
     const dienstkaartProjectie: ol.proj.Projection = ol.proj.get("EPSG:31370");
     // Zonder deze extent zoomen we op de hele wereld en Vlaanderen is daar maar een heeel klein deeltje van
-    dienstkaartProjectie.setExtent([18000.0, 152999.75, 280144.0, 415143.75]); // zet de extent op die van de dienstkaart
+    dienstkaartProjectie.setExtent([-113072, -109144.25, 411216.0, 415143.75]); // zet de extent op die van de dienstkaart
 
     const kaart = new ol.Map({
       loadTilesWhileAnimating: true,

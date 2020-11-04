@@ -567,7 +567,7 @@ export class FeatureDemoComponent {
     progressbar: { value: false, label: "Progressbar zichtbaar" },
   };
 
-  configuratorMiddelpunt = [130000, 193000];
+  configuratorMiddelpunt = [160000, 170000];
 
   readonly districtStyle: ol.style.Style = definitieToStyle(
     "json",

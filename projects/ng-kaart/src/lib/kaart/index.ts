@@ -104,7 +104,7 @@ export const defaultKaartConfig: KaartConfig = {
   srs: "EPSG:31370",
   defaults: {
     zoom: 2,
-    middelpunt: [130000, 193000],
+    middelpunt: [160000, 170000],
     grootte: [undefined, 500],
     resolutions: [
       1024.0,
@@ -124,7 +124,7 @@ export const defaultKaartConfig: KaartConfig = {
       0.0625,
       0.03125,
     ],
-    extent: [18000.0, 152999.75, 280144.0, 415143.75],
+    extent: [-113072, -109144.25, 411216.0, 415143.75],
     style: (null as any) as ol.style.Style,
   },
   envParams: {
