@@ -1000,8 +1000,19 @@ export class FeatureDemoComponent {
   ];
 
   readonly fietspadenVeldinfos: VeldInfo[] = [
-    { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
-    { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
+    {
+      isBasisVeld: false,
+      label: "ID",
+      naam: "id",
+      type: "string",
+      isKopieerbaar: true,
+    },
+    {
+      isBasisVeld: true,
+      label: "Ident8",
+      naam: "ident8",
+      type: "string",
+    },
     {
       isBasisVeld: true,
       label: "Van refpunt",
@@ -1078,6 +1089,7 @@ export class FeatureDemoComponent {
       label: "Type",
       naam: "typefietspad",
       type: "string",
+      isKopieerbaar: true,
       uniekeWaarden: [
         "",
         "AANLIGGEND",
@@ -1196,7 +1208,13 @@ export class FeatureDemoComponent {
       naam: "creatiedatum",
       type: "date",
     },
-    { isBasisVeld: false, label: "Gebied", naam: "gebied", type: "string" },
+    {
+      isBasisVeld: false,
+      label: "Gebied",
+      naam: "gebied",
+      type: "string",
+      isKopieerbaar: true,
+    },
     {
       isBasisVeld: false,
       label: "Bebouwde kom",

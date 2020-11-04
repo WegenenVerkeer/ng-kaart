@@ -1,3 +1,5 @@
+@import "../../css/kaart.component-common.scss";
+
 .card-content {
   padding: 16px;
   margin-bottom: 0;
@@ -51,14 +53,32 @@
 
 .veldnamen {
   order: 1;
-  flex-basis: 40%;
+  flex-grow: 4;
   max-width: 40%;
 }
 
 .veldwaarden {
   order: 2;
-  flex-basis: 60%;
-  max-width: 60%;
+  flex-grow: 5;
+  max-width: 50%;
+}
+
+.veldicon {
+  order: 3;
+  flex-grow: 1;
+  max-width: 10%;
+
+  button {
+    float: right;
+    line-height: 18px;
+    height: 18px;
+    width: 24px;
+  }
+
+  .mat-icon {
+    @include mat-icon-size(16px);
+    vertical-align: top;
+  }
 }
 
 .veldlinks {

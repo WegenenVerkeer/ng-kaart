@@ -51,6 +51,11 @@
       <div [innerHTML]="waarde(veld)" class="veldwaarde">
       </div>
     </div>
+    <div class="veldicon">
+      <button *ngIf="isKopieerbaar(veld)" mat-icon-button matTooltip="Kopieer {{ label(veld) }}">
+        <mat-icon (click)="copyToClipboard(waarde(veld))">content_copy</mat-icon>
+      </button>
+    </div>
   </div>
 
   <div class="velden" *ngFor="let veld of dateEigenschappen()">
@@ -61,6 +66,11 @@
     </div>
     <div class="veldwaarden">
       <div class="veldwaarde">{{dateWaarde(veld)}} <span *ngIf="!validDateWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum geïnterpreteerd worden">{{waarde(veld)}}</span></div>
+    </div>
+    <div class="veldicon">
+      <button *ngIf="isKopieerbaar(veld)" mat-icon-button matTooltip="Kopieer {{ label(veld) }}">
+        <mat-icon (click)="copyToClipboard(dateWaarde(veld))">content_copy</mat-icon>
+      </button>
     </div>
   </div>
 
@@ -75,6 +85,11 @@
         <span class="positief" *ngIf="waarde(veld)">JA</span>
         <span class="negatief" *ngIf="!waarde(veld)">NEE</span>
       </div>
+    </div>
+    <div class="veldicon">
+      <button *ngIf="isKopieerbaar(veld)" mat-icon-button matTooltip="Kopieer {{ label(veld) }}">
+        <mat-icon (click)="copyToClipboard(waarde(veld))">content_copy</mat-icon>
+      </button>
     </div>
   </div>
 
@@ -107,6 +122,11 @@
     <div class="veldwaarden">
       <div [innerHTML]="waarde(veld)" class="veldwaarde"></div>
     </div>
+    <div class="veldicon">
+      <button *ngIf="isKopieerbaar(veld)" mat-icon-button matTooltip="Kopieer {{ label(veld) }}">
+        <mat-icon (click)="copyToClipboard(waarde(veld))">content_copy</mat-icon>
+      </button>
+    </div>
   </div>
 
   <div class="velden" *ngFor="let veld of geavanceerdeDateEigenschappen()">
@@ -117,6 +137,11 @@
     </div>
     <div class="veldwaarden">
       <div class="veldwaarde">{{dateWaarde(veld)}} <span *ngIf="!validDateWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum geïnterpreteerd worden">{{waarde(veld)}}</span></div>
+    </div>
+     <div class="veldicon">
+      <button *ngIf="isKopieerbaar(veld)" mat-icon-button matTooltip="Kopieer {{ label(veld) }}">
+        <mat-icon (click)="copyToClipboard(dateWaarde(veld))">content_copy</mat-icon>
+      </button>
     </div>
   </div>
 
@@ -131,6 +156,11 @@
         <span class="positief" *ngIf="waarde(veld)">JA</span>
         <span class="negatief" *ngIf="!waarde(veld)">NEE</span>
       </div>
+    </div>
+    <div class="veldicon">
+      <button *ngIf="isKopieerbaar(veld)" mat-icon-button matTooltip="Kopieer {{ label(veld) }}">
+        <mat-icon (click)="copyToClipboard(waarde(veld))">content_copy</mat-icon>
+      </button>
     </div>
   </div>
 

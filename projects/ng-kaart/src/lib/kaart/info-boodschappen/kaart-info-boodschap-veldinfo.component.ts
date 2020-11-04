@@ -14,6 +14,7 @@ import {
 import { KaartChildDirective } from "../kaart-child.directive";
 import { VeldInfo } from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
+import { copyToClipboard } from "../../util/clipboard";
 import { ServiceNowOpties, ServiceNowUiSelector } from "./service-now-opties";
 import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
 
@@ -444,10 +445,20 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     return !this.isGeenLocatieVeld(veldnaam);
   }
 
+  isKopieerbaar(veldnaam: string): boolean {
+    return veldbeschrijving(veldnaam, this.veldbeschrijvingen)
+      .chain((veldInfo) => option.fromNullable(veldInfo.isKopieerbaar))
+      .getOrElse(false);
+  }
+
   isGeenLocatieVeld(veldnaam: string): boolean {
     return veldbeschrijving(veldnaam, this.veldbeschrijvingen)
       .chain((veldInfo) => option.fromNullable(veldInfo.isGeenLocatieVeld))
       .getOrElse(false);
+  }
+
+  copyToClipboard(toCopy: string) {
+    copyToClipboard(toCopy);
   }
 
   waarde(veldnaam: string): string | number {

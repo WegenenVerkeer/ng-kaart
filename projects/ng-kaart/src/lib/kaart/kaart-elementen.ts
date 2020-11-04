@@ -113,6 +113,7 @@ export interface VeldInfo {
   readonly displayFormat?: string; // voor date
   readonly sqlFormat?: string; // voor date
   readonly isGeenLocatieVeld?: boolean; // beschouw veld niet als deel van de weglocatie informatie
+  readonly isKopieerbaar?: boolean; // toon kopieer knop in identify popup
 }
 
 export interface VectorLaag {

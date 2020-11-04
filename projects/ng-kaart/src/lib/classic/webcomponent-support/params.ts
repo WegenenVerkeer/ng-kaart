@@ -166,6 +166,7 @@ const veldInfoInter: json.Interpreter<ke.VeldInfo> = json.interpretUndefinedReco
     isGeenLocatieVeld: json.nullable(
       json.field("isGeenLocatieVeld", json.bool)
     ),
+    isKopieerbaar: json.nullable(json.field("isKopieerbaar", json.bool)),
   }
 );
 export const veldInfoArray: ParamGetter<ke.VeldInfo[]> = getParameter(
