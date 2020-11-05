@@ -1622,6 +1622,7 @@ export class FeatureDemoComponent {
       label: "Naampad",
       naam: "installatieNaampad",
       type: "string",
+      isKopieerbaar: true,
     },
   ];
 

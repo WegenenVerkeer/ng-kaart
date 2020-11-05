@@ -54,14 +54,15 @@
 }
 
 .copy {
-  max-width: 16px;
-  line-height: 26px;
-  height: 16px;
-  min-width: 16px;
-  margin-right: 4px;
+  max-width: 18px;
+  line-height: 18px;
+  height: 18px;
+  min-width: 18px;
+  margin-right: 3px;
 }
 
 .mat-icon {
-  @include mat-icon-size(20px);
+  @include mat-icon-size(16px);
   vertical-align: top;
+  line-height: 18px;
 }
