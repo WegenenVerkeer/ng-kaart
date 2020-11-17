@@ -113,8 +113,11 @@
               {{ info.titel }}
             </mat-panel-title>
         </mat-expansion-panel-header>
-        <awv-kaart-info-boodschap-veldinfo [properties]="info.properties" [veldbeschrijvingen]="info.veldinfos">
-        </awv-kaart-info-boodschap-veldinfo>
+      <div *ngIf="!heeftWaarden(info.properties)" class="foutboodschap">
+         Geen data op deze locatie
+      </div>
+      <awv-kaart-info-boodschap-veldinfo *ngIf="heeftWaarden(info.properties)" class="veld-info-card" [properties]="info.properties" [veldbeschrijvingen]="info.veldinfos">
+      </awv-kaart-info-boodschap-veldinfo>
     </mat-expansion-panel>
   </ng-container>
 

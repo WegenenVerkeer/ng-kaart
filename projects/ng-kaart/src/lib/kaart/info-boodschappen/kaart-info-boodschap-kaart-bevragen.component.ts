@@ -152,6 +152,10 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildDirectiv
     super(kaartComponent, zone);
   }
 
+  heeftWaarden(properties: Properties): boolean {
+    return Object.keys(properties).length > 0;
+  }
+
   signed(value: number): string {
     if (value >= 0) {
       return `+${value}`;

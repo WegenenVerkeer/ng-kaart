@@ -47,6 +47,7 @@ const liftProperties: Function1<ol.Feature, Properties> = (feature) => {
 @Component({
   selector: "awv-kaart-info-boodschap-identify",
   templateUrl: "./kaart-info-boodschap-identify.component.html",
+  styleUrls: ["./kaart-info-boodschap-identify.component.scss"],
 })
 export class KaartInfoBoodschapIdentifyComponent extends KaartChildDirective {
   properties: Properties;
