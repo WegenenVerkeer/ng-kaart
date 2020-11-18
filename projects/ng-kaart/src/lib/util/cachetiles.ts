@@ -76,7 +76,7 @@ export const refreshTiles: Function6<
   }
 
   const sourceProjection = source.getProjection();
-  const tileUrlFunction = source.getTileUrlFunction();
+  const tileUrlFunction = source.getTileUrlFunction().bind(source);
   const tileGrid = source.getTileGrid();
 
   const calculateTileRange = function (extent: ol.Extent, zoom: number) {
