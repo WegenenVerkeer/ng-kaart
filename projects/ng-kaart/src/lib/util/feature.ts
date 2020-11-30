@@ -77,7 +77,7 @@ const multipleFeatureToGeoJson: Curried2<
     option.chain((geometry) =>
       option.tryCatch(() => ({
         type: "FeatureCollection" as "FeatureCollection",
-        geometry: format.writeGeometryObject(geometry),
+        geometry: format.writeFeaturesObject(features),
         features: array.mapOption(features, singleFeatureToGeoJson),
       }))
     )

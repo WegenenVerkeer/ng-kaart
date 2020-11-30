@@ -32,10 +32,22 @@ export namespace AwvV0StaticStyleInterpreters {
     color: st.field("color", colorStyle), // ol ondersteunt meer dan enkel een string, maar wij niet
   });
 
+  const lineCap: Interpreter<CanvasLineCap> = st.enu<CanvasLineCap>(
+    "butt",
+    "round",
+    "square"
+  );
+
+  const lineJoin: Interpreter<CanvasLineJoin> = st.enu<CanvasLineJoin>(
+    "bevel",
+    "miter",
+    "round"
+  );
+
   const strokeStyle: Interpreter<ss.StrokeStyle> = st.interpretUndefinedRecord({
     color: st.undefField("color", colorStyle),
-    lineCap: st.undefField("lineCap", st.str),
-    lineJoin: st.undefField("lineJoin", st.str),
+    lineCap: st.undefField("lineCap", lineCap),
+    lineJoin: st.undefField("lineJoin", lineJoin),
     lineDash: st.undefField("lineDash", st.arr(st.num)),
     lineDashOffset: st.undefField("lineDashOffset", st.num),
     miterLimit: st.undefField("miterLimit", st.num),
