@@ -475,13 +475,15 @@ export class FeatureDemoComponent {
   minZoom = 2;
   maxZoom = 5;
 
+  private extent: ol.Extent = [
+    5626.272240711754,
+    143317.38419108064,
+    275630.73751375626,
+    250942.4824563699,
+  ];
+
   extentChange$: rx.Observable<ol.Extent> = rx
-    .of([
-      5626.272240711754,
-      143317.38419108064,
-      275630.73751375626,
-      250942.4824563699,
-    ])
+    .of(this.extent)
     .pipe(delay(10000));
 
   objectKeys = Object.keys;

@@ -16,8 +16,8 @@ export interface FillStyle {
 
 export interface StrokeStyle {
   color?: ColorType;
-  lineCap?: string; // Deze en volgende zouden fijner kunnen. Bijv. enums.
-  lineJoin?: string;
+  lineCap?: CanvasLineCap;
+  lineJoin?: CanvasLineJoin;
   lineDash?: number[];
   lineDashOffset?: number;
   miterLimit?: number;
