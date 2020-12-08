@@ -4,8 +4,8 @@ import {
   Input,
   NgZone,
 } from "@angular/core";
-import { array, option, ord } from "fp-ts";
-import { Curried2, Function1, Function2, Function3 } from "fp-ts/lib/function";
+import { array, either, option, ord } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import { Adres, WegLocatie } from "..";
 import {
@@ -17,6 +17,7 @@ import { copyToClipboard } from "../../util/clipboard";
 import * as maps from "../../util/maps";
 import { Progress, withProgress } from "../../util/progress";
 import {
+  LaagLocationInfo,
   LaagLocationInfoResult,
   PerceelInfo,
   TextLaagLocationInfo,
@@ -43,21 +44,19 @@ export interface LaagInfo {
 }
 
 const projectafstandOrd: ord.Ord<WegLocatie> = ord.contramap(
-  (wl) => wl.projectieafstand,
-  ord.ordNumber
-);
+  (wl: WegLocatie) => wl.projectieafstand
+)(ord.ordNumber);
 
-const textLaagLocationInfoToLaagInfo: Function2<
-  string,
-  TextLaagLocationInfo,
-  LaagInfo
-> = (titel, tlli) => ({
+const textLaagLocationInfoToLaagInfo: (
+  arg1: string,
+  arg2: TextLaagLocationInfo
+) => LaagInfo = (titel, tlli) => ({
   titel: titel,
   busy: false,
   text: tlli.text,
 });
 
-const veldwaardenToProperties: Function1<Veldwaarde[], Properties> = (
+const veldwaardenToProperties: (arg: Veldwaarde[]) => Properties = (
   veldwaarden
 ) =>
   veldwaarden.reduce((obj, waarde) => {
@@ -65,18 +64,17 @@ const veldwaardenToProperties: Function1<Veldwaarde[], Properties> = (
     return obj;
   }, {});
 
-const veldinfoLaagLocationInfoToLaagInfo: Function2<
-  string,
-  VeldinfoLaagLocationInfo,
-  LaagInfo
-> = (titel, vlli) => ({
+const veldinfoLaagLocationInfoToLaagInfo: (
+  arg1: string,
+  arg2: VeldinfoLaagLocationInfo
+) => LaagInfo = (titel, vlli) => ({
   titel: titel,
   busy: false,
   properties: veldwaardenToProperties(vlli.waarden),
   veldinfos: maps.toMapByKey(vlli.veldinfos, (vi) => vi.naam),
 });
 
-const errorToLaagInfo: Curried2<string, string, LaagInfo> = (titel) => (
+const errorToLaagInfo: (string) => (string) => LaagInfo = (titel) => (
   error
 ) => ({
   titel: titel,
@@ -85,18 +83,17 @@ const errorToLaagInfo: Curried2<string, string, LaagInfo> = (titel) => (
   text: error,
 });
 
-const laagLocationInfoResultToLaagInfo: Function2<
-  string,
-  LaagLocationInfoResult,
-  LaagInfo
-> = (titel, llie) =>
-  llie.fold(
+const laagLocationInfoResultToLaagInfo: (
+  titel: string,
+  llie: LaagLocationInfoResult
+) => LaagInfo = (titel, llie) =>
+  either.fold(
     errorToLaagInfo(titel), //
-    (lli) =>
+    (lli: LaagLocationInfo) =>
       lli.type === "TextLaagLocationInfo"
         ? textLaagLocationInfoToLaagInfo(titel, lli)
         : veldinfoLaagLocationInfoToLaagInfo(titel, lli)
-  );
+  )(llie);
 
 @Component({
   selector: "awv-kaart-info-boodschap-kaart-bevragen",
@@ -116,12 +113,11 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildDirectiv
   set boodschap(boodschap: InfoBoodschapKaartBevragenProgress) {
     // Deze waarden voor de template worden berekend op het moment dat er een nieuwe input is, niet elke
     // keer dat Angular denkt dat hij change detection moet laten lopen.
-    const foldF: Function3<
-      string,
-      Progress<LaagLocationInfoResult>,
-      LaagInfo[],
-      LaagInfo[]
-    > = (key, value, acc) =>
+    const foldF: (
+      key: string,
+      value: Progress<LaagLocationInfoResult>,
+      acc: LaagInfo[]
+    ) => LaagInfo[] = (key, value, acc) =>
       array.snoc(
         acc,
         withProgress<LaagLocationInfoResult, LaagInfo>(
@@ -132,20 +128,25 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildDirectiv
         )(value)
       );
     this.laagInfos = maps.fold(boodschap.laagLocatieInfoOpTitel)(foldF)([]);
-    this.coordinaatInformatieLambert72 = option
-      .fromNullable(boodschap.coordinaat)
-      .map(formatCoordinate(0))
-      .getOrElse("");
-    this.coordinaatInformatieWgs84 = option
-      .fromNullable(boodschap.coordinaat)
-      .map(lambert72ToWgs84)
-      .map(switchVolgorde) // andere volgorde weergeven voor wgs84
-      .map(formatCoordinate(7))
-      .getOrElse("");
+    this.coordinaatInformatieLambert72 = pipe(
+      option.fromNullable(boodschap.coordinaat),
+      option.map(formatCoordinate(0)),
+      option.getOrElse(() => "")
+    );
+    this.coordinaatInformatieWgs84 = pipe(
+      option.fromNullable(boodschap.coordinaat),
+      option.map(lambert72ToWgs84),
+      option.map(switchVolgorde), // andere volgorde weergeven voor wgs84
+      option.map(formatCoordinate(7)),
+      option.getOrElse(() => "")
+    );
     this.wegLocaties = array.sort(projectafstandOrd)(boodschap.weglocaties);
 
-    this.adressen = boodschap.adres.fold([], (adres) => [adres]); // Array van 0 of 1 eltn isomorf met Option, maar makkelijker voor Angular
-    this.perceel = boodschap.perceel.toUndefined();
+    this.adressen = option.fold(
+      () => [],
+      (adres: Adres) => [adres]
+    )(boodschap.adres); // Array van 0 of 1 eltn isomorf met Option, maar makkelijker voor Angular
+    this.perceel = option.toUndefined(boodschap.perceel);
   }
 
   constructor(kaartComponent: KaartComponent, zone: NgZone) {

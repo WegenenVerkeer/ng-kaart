@@ -1,5 +1,6 @@
-import { option } from "fp-ts";
-import { Function1, Function2, identity } from "fp-ts/lib/function";
+import { option, either } from "fp-ts";
+import { identity } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import * as ke from "../../kaart/kaart-elementen";
 import { kaartLogger } from "../../kaart/log";
@@ -21,8 +22,8 @@ import { validationChain } from "../../util/validation";
  * Ingeval we null of undefined als waarde meegeven, zal het resultaat ook de fallbackwaarde zijn.
  */
 
-export type ParamGetter<A> = Function2<A, A, A>;
-export type OptionalParamGetter<A> = Function1<A, option.Option<A>>;
+export type ParamGetter<A> = (a: A, aa: A) => A;
+export type OptionalParamGetter<A> = (a: A) => option.Option<A>;
 
 const parseJSON: (param: string) => json.Validation<Object> = (param) => {
   try {
@@ -36,14 +37,20 @@ const getParameter: <A>(_: json.Interpreter<A>) => ParamGetter<A> = (
   interpreter
 ) => (param, fallback) => {
   if (typeof param === "string") {
-    return validationChain(parseJSON(param), interpreter).getOrElseL(() => {
-      kaartLogger.warn(
-        `Een parameter met waarde '${param}' kon niet correct geïnterpreteerd worden.`
-      );
-      return fallback;
-    });
+    return pipe(
+      validationChain(parseJSON(param), interpreter),
+      either.getOrElse(() => {
+        kaartLogger.warn(
+          `Een parameter met waarde '${param}' kon niet correct geïnterpreteerd worden.`
+        );
+        return fallback;
+      })
+    );
   } else {
-    return option.fromNullable(param).getOrElse(fallback);
+    return pipe(
+      option.fromNullable(param),
+      option.getOrElse(() => fallback)
+    );
   }
 };
 
@@ -53,16 +60,20 @@ export function enu<T extends string>(
   ...values: T[]
 ): T {
   if (typeof param === "string") {
-    return json
-      .enu(...values)(param)
-      .getOrElseL(() => {
+    return pipe(
+      json.enu(...values)(param),
+      either.getOrElse(() => {
         kaartLogger.warn(
           `Een parameter met waarde '${param}' kon niet correct geïnterpreteerd worden.`
         );
         return fallback;
-      });
+      })
+    );
   } else {
-    return option.fromNullable(param as T).getOrElse(fallback);
+    return pipe(
+      option.fromNullable(param as T),
+      option.getOrElse(() => fallback)
+    );
   }
 }
 
@@ -71,15 +82,17 @@ export function optEnu<T extends string>(
   ...values: T[]
 ): option.Option<T> {
   if (typeof param === "string") {
-    return json
-      .optional(json.enu(...values))(param)
-      .getOrElse(
-        option.none // Dit kan niet omdat json.optional zelf al option.none returnt
-      );
+    return pipe(
+      json.optional(json.enu(...values))(param),
+      either.getOrElse(
+        () => option.none // Dit kan niet omdat json.optional zelf al option.none returnt
+      )
+    );
   } else {
-    return option
-      .fromNullable(param as option.Option<T>)
-      .getOrElse(option.none);
+    return pipe(
+      option.fromNullable(param as option.Option<T>),
+      option.getOrElse(() => option.none)
+    );
   }
 }
 
@@ -87,11 +100,12 @@ const getOptionalParameter: <A>(
   _: json.Interpreter<A>
 ) => OptionalParamGetter<A> = (interpreter) => (param) => {
   if (typeof param === "string") {
-    return validationChain(
+    return pipe(
       parseJSON(param),
-      json.optional(interpreter)
-    ).getOrElse(
-      option.none // Dit kan niet omdat json.optional zelf al option.none returnt
+      json.optional(interpreter),
+      either.getOrElse(
+        () => option.none // Dit kan niet omdat json.optional zelf al option.none returnt
+      )
     );
   } else {
     return option.fromNullable(param);

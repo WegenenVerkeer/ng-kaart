@@ -1,12 +1,5 @@
 import { array, option } from "fp-ts";
-import {
-  Curried2,
-  Endomorphism,
-  flow,
-  Function1,
-  Function2,
-  Predicate,
-} from "fp-ts/lib/function";
+import { Endomorphism, flow, Predicate } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import { fromTraversable, Getter, Lens, Traversal } from "monocle-ts";
 import * as rx from "rxjs";
@@ -41,10 +34,10 @@ export namespace TableModel {
   export type TableModelAsyncUpdate = AsyncUpdate<TableModel>;
   export type TableModelUpdate = Update<TableModel>;
 
-  export const empty: Function2<Viewinstellingen, KaartConfig, TableModel> = (
-    viewinstellingen,
-    config
-  ) => ({
+  export const empty: (
+    viewinstellingen: Viewinstellingen,
+    config: KaartConfig
+  ) => TableModel = (viewinstellingen, config) => ({
     laagData: [],
     viewinstellingen,
     layout:
@@ -67,10 +60,9 @@ export namespace TableModel {
   );
   export const layoutInstellingGetter: TableModelGetter<TableLayoutMode> = layoutInstellingLens.asGetter();
 
-  const laagForTitelTraversal: Function1<
-    string,
-    Traversal<TableModel, LaagModel>
-  > = (titel) =>
+  const laagForTitelTraversal: (
+    arg: string
+  ) => Traversal<TableModel, LaagModel> = (titel) =>
     laagDataLens.composeTraversal(
       selectiveArrayTraversal((tl) => tl.titel === titel)
     );
@@ -85,18 +77,15 @@ export namespace TableModel {
     arrays.isNonEmpty
   );
 
-  export const laagForTitelOnLaagData: Curried2<
-    string,
-    LaagModel[],
-    option.Option<LaagModel>
-  > = (titel) => (laagData) =>
-    array.findFirst(laagData, (laag) => laag.titel === titel);
+  export const laagForTitelOnLaagData: (
+    arg1: string
+  ) => (arg2: LaagModel[]) => option.Option<LaagModel> = (titel) => (
+    laagData
+  ) => array.findFirst<LaagModel>((laag) => laag.titel === titel)(laagData);
 
-  export const laagForTitel: Curried2<
-    string,
-    TableModel,
-    option.Option<LaagModel>
-  > = (titel) => (model) => {
+  export const laagForTitel: (
+    arg1: string
+  ) => (arg2: TableModel) => option.Option<LaagModel> = (titel) => (model) => {
     // asFold geeft een bug: Zie https://github.com/gcanti/monocle-ts/issues/96
     // return laagForTitelTraversal(titel).asFold().headOption;
     return laagForTitelOnLaagData(titel)(model.laagData);
@@ -104,42 +93,39 @@ export namespace TableModel {
 
   // We willen hier niet de state voor alle lagen opnieuw initialiseren. We moeten enkel de nieuwe lagen toevoegen en de
   // oude verwijderen. Van de bestaande moeten we de state aanpassen indien nodig.
-  export const updateLagen: Function1<
-    ke.ToegevoegdeVectorLaag[],
-    TableModelUpdate
-  > = (lagen) => {
+  export const updateLagen: (
+    arg: ke.ToegevoegdeVectorLaag[]
+  ) => TableModelUpdate = (lagen) => {
     return Update.createSync<TableModel>((model) =>
       laagDataLens.modify((laagData) =>
         pipe(
           lagen,
-          array.filterMap(
-            (laag) =>
-              laagForTitelOnLaagData(laag.titel)(laagData) // kennen we die laag al?
-                .orElse(() => LaagModel.create(laag, model.viewinstellingen)) // indien niet, creëer er een nieuw model voor
+          array.filterMap((laag) =>
+            pipe(
+              laagForTitelOnLaagData(laag.titel)(laagData), // kennen we die laag al?
+              option.alt(() => LaagModel.create(laag, model.viewinstellingen)) // indien niet, creëer er een nieuw model voor
+            )
           )
         )
       )(model)
     );
   };
 
-  export const liftLaagUpdate: Curried2<
-    string,
-    LaagModel.LaagModelUpdate,
-    TableModelUpdate
-  > = (titel) =>
+  export const liftLaagUpdate: (
+    arg1: string
+  ) => (arg2: LaagModel.LaagModelUpdate) => TableModelUpdate = (titel) =>
     Update.liftUpdate(laagForTitel(titel), (f) =>
       laagForTitelTraversal(titel).modify(f)
     );
 
-  const liftSyncLaagUpdateForAllLagenByTitle: Function1<
-    Function1<string, LaagModel.LaagModelSyncUpdate>,
-    TableModelSyncUpdate
-  > = (flmsu) => allLagenTraversal.modify((laag) => flmsu(laag.titel)(laag));
+  const liftSyncLaagUpdateForAllLagenByTitle: (
+    arg: (arg: string) => LaagModel.LaagModelSyncUpdate
+  ) => TableModelSyncUpdate = (flmsu) =>
+    allLagenTraversal.modify((laag) => flmsu(laag.titel)(laag));
 
-  const liftAsyncLaagUpdateForAllLagenByTitle: Function1<
-    Function1<string, LaagModel.LaagModelAsyncUpdate>,
-    TableModelAsyncUpdate
-  > = (flmau) => (table) =>
+  const liftAsyncLaagUpdateForAllLagenByTitle: (
+    arg: (arg: string) => LaagModel.LaagModelAsyncUpdate
+  ) => TableModelAsyncUpdate = (flmau) => (table) =>
     rx.merge(
       ...table.laagData.map((laag: LaagModel) =>
         flmau(laag.titel)(laag).pipe(
@@ -151,10 +137,9 @@ export namespace TableModel {
     );
 
   // Pas de gegeven LaagModelUpdate geconditioneerd door de laagtitel toe op alle lagen
-  const liftLaagUpdateForAllLagenByTitle: Function1<
-    Function1<string, LaagModel.LaagModelUpdate>,
-    TableModelUpdate
-  > = (flmu) =>
+  const liftLaagUpdateForAllLagenByTitle: (
+    arg: (arg: string) => LaagModel.LaagModelUpdate
+  ) => TableModelUpdate = (flmu) =>
     Update.create(
       liftSyncLaagUpdateForAllLagenByTitle((title) => flmu(title).syncUpdate)
     )(
@@ -162,40 +147,37 @@ export namespace TableModel {
     );
 
   // Pas de gegeven LaagModelUpdate toe op alle lagen
-  const liftLaagUpdateForAllLagen: Function1<
-    LaagModel.LaagModelUpdate,
-    TableModelUpdate
-  > = (lmu) => liftLaagUpdateForAllLagenByTitle(() => lmu);
+  const liftLaagUpdateForAllLagen: (
+    arg: LaagModel.LaagModelUpdate
+  ) => TableModelUpdate = (lmu) => liftLaagUpdateForAllLagenByTitle(() => lmu);
 
   const updateByTitle = <A>(
     featuresPerLaag: ReadonlyMap<string, A>,
-    updater: Function1<A, Update<LaagModel>>
+    updater: (arg: A) => Update<LaagModel>
   ) => (title: string): Update<LaagModel> =>
-    option
-      .fromNullable(featuresPerLaag.get(title))
-      .fold(Update.mempty, updater);
+    pipe(
+      option.fromNullable(featuresPerLaag.get(title)),
+      option.fold(() => Update.mempty, updater)
+    );
 
-  export const updateZoomAndExtent: Function1<
-    Viewinstellingen,
-    TableModelUpdate
-  > = (vi) =>
+  export const updateZoomAndExtent: (
+    arg: Viewinstellingen
+  ) => TableModelUpdate = (vi) =>
     Update.combineAll(
       Update.createSync(viewinstellingLens.set(vi)),
       liftLaagUpdateForAllLagen(LaagModel.setViewInstellingen(vi))
     );
 
-  export const updateZichtbareFeatures: Function1<
-    ReadonlyMap<string, ol.Feature[]>,
-    TableModelUpdate
-  > = (featuresByTitle) =>
+  export const updateZichtbareFeatures: (
+    featuresByTitle: ReadonlyMap<string, ol.Feature[]>
+  ) => TableModelUpdate = (featuresByTitle) =>
     liftLaagUpdateForAllLagenByTitle(
       updateByTitle(featuresByTitle, LaagModel.updateVisibleFeatures)
     );
 
-  export const updateSelectedFeatures: Function1<
-    GeselecteerdeFeatures,
-    TableModelUpdate
-  > = (features) =>
+  export const updateSelectedFeatures: (
+    arg: GeselecteerdeFeatures
+  ) => TableModelUpdate = (features) =>
     liftLaagUpdateForAllLagenByTitle(
       updateByTitle(
         features.featuresPerLaag,
@@ -203,10 +185,9 @@ export namespace TableModel {
       )
     );
 
-  export const updateFilterSettings: Function1<
-    ke.ToegevoegdeVectorLaag,
-    TableModelUpdate
-  > = (tvlg) =>
+  export const updateFilterSettings: (
+    arg: ke.ToegevoegdeVectorLaag
+  ) => TableModelUpdate = (tvlg) =>
     liftLaagUpdate(tvlg.titel)(LaagModel.updateFilter(tvlg.filterinstellingen));
 
   export const setCompactLayout: TableModelUpdate = Update.createSync(
@@ -216,10 +197,9 @@ export namespace TableModel {
     layoutInstellingLens.set("Comfortable")
   );
 
-  export const updateLaagInstellingen: Function1<
-    Laagtabelinstellingen,
-    TableModelUpdate
-  > = (lti) =>
+  export const updateLaagInstellingen: (
+    arg: Laagtabelinstellingen
+  ) => TableModelUpdate = (lti) =>
     liftLaagUpdate(lti.laagnaam)(
       LaagModel.updateSelectedFieldsAndSortings(
         lti.zichtbareVelden,

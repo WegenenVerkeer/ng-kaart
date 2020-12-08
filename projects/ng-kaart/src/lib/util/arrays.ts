@@ -1,5 +1,11 @@
 import { array, either, eq, option, ord } from "fp-ts";
-import { identity, pipe, Predicate, Refinement } from "fp-ts/lib/function";
+import {
+  flow,
+  identity,
+  pipe,
+  Predicate,
+  Refinement,
+} from "fp-ts/lib/function";
 
 import { PartialFunction1 } from "./function";
 
@@ -12,7 +18,7 @@ export const hasLengthBetween: (
   _2: number
 ) => <A>(_: A[]) => boolean = (lower, upper) => (array) =>
   array.length >= lower && array.length <= upper;
-export const isEmpty: <A>(_: A[]) => boolean = isOfLength(0);
+export const isEmpty: <A>(as: A[]) => boolean = isOfLength(0);
 export const isSingleton: <A>(_: A[]) => boolean = isOfLength(1);
 export const isNonEmpty: <A>(_: A[]) => boolean = (array) => array.length > 0;
 export const hasAtLeastLength: (_: number) => <A>(_: A[]) => boolean = (n) => (
@@ -29,7 +35,11 @@ const findOffsetElement: <A>(
 ) => (p: Predicate<A>) => (offset: number) => option.Option<A> = (as) => (
   predicate
 ) => (offset) =>
-  array.findIndex(as, predicate).chain((i) => array.lookup(i + offset, as));
+  pipe(
+    as,
+    array.findIndex(predicate),
+    option.chain((i) => array.lookup(i + offset, as))
+  );
 
 export const previousElement: <A>(
   as: Array<A>
@@ -46,29 +56,44 @@ export const insertAfter: <A>(
 ) => (p: Predicate<A>) => (a: A) => option.Option<Array<A>> = (as) => (
   predicate
 ) => (a) =>
-  array.findIndex(as, predicate).chain((i) => array.insertAt(i + 1, a, as));
+  pipe(
+    as,
+    array.findIndex(predicate),
+    option.chain((i) => array.insertAt(i + 1, a)(as))
+  );
 
 export const deleteFirst: <A>(
   as: Array<A>
 ) => (p: Predicate<A>) => option.Option<Array<A>> = (as) => (predicate) =>
-  array.findIndex(as, predicate).chain((i) => array.deleteAt(i, as));
+  pipe(
+    as,
+    array.findIndex(predicate),
+    option.chain((i) => array.deleteAt(i)(as))
+  );
 
 export const splitInChunks = <A>(
   as: Array<A>,
   aantalChunks: number
 ): Array<Array<A>> => {
   const chunkSize = Math.ceil(as.length / aantalChunks);
-  return array.chunksOf(as, chunkSize);
+  return array.chunksOf(chunkSize)(as);
 };
 
 export const fromOption: <A>(maybeArray: option.Option<A[]>) => A[] = (mas) =>
-  mas.fold(pure(), identity);
+  pipe(
+    mas,
+    option.fold(() => pure(), identity)
+  );
 export const fromEither: <L, A>(
   eitherArray: either.Either<L, A[]>
-) => A[] = pipe(option.fromEither, fromOption);
+) => A[] = flow(option.fromEither, fromOption);
 export const fromNullable: <A>(aOrAs: null | undefined | A | A[]) => A[] = (
   aOrAs
-) => option.fromNullable(aOrAs).fold([], toArray);
+) =>
+  pipe(
+    option.fromNullable(aOrAs),
+    option.fold(() => [], toArray)
+  );
 
 /**
  * Finds the first element of an array according to option.some ordering.
@@ -77,10 +102,19 @@ export const fromNullable: <A>(aOrAs: null | undefined | A | A[]) => A[] = (
 export const findFirstBy: <A>(order: ord.Ord<A>) => PartialFunction1<A[], A> = (
   order
 ) => (as) =>
-  array.fold(as, option.none, (head, tail) =>
-    findFirstBy(order)(tail)
-      .map((first) => (order.compare(head, first) < 0 ? head : first))
-      .orElse(() => option.some(head))
+  pipe(
+    as,
+    array.foldLeft(
+      () => option.none,
+      (head, tail) =>
+        pipe(
+          findFirstBy(order)(tail),
+          option.map((first) =>
+            order.compare(head, first) < 0 ? head : first
+          ),
+          option.alt(() => option.some(head))
+        )
+    )
   );
 
 /**
@@ -107,7 +141,7 @@ export const forAll: <A>(pred: Predicate<A>) => (as: A[]) => boolean = (pred) =>
 export const containsAll = <A>(eq: eq.Eq<A>) => (as: A[], bs: A[]): boolean =>
   forAll((b: A) => array.elem(eq)(b, as))(bs);
 
-export const getStringsSetoid: eq.Eq<string[]> = array.getSetoid(eq.eqString);
+export const getStringsSetoid: eq.Eq<string[]> = array.getEq(eq.eqString);
 
 export const isOneOf = <A>(...as: A[]) => (a: A): boolean =>
   array.elem(eq.fromEquals(eq.strictEqual))(a, as);

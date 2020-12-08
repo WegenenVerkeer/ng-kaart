@@ -1,5 +1,5 @@
-import { array, option, ordering, strmap } from "fp-ts";
-import { Function1, Function2, Function3 } from "fp-ts/lib/function";
+import { array, option, ordering, record } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 
 import * as ol from "../util/openlayers-compat";
@@ -48,23 +48,20 @@ export interface Zoeker {
   zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekAntwoord>;
 }
 
-export type PrioriteitenOpZoekertype = strmap.StrMap<number>;
+export type PrioriteitenOpZoekertype = Record<string, number>;
 
-// Vreemde manier van werken, maar constructor heeft een type nodig
-export const emptyPrioriteitenOpZoekertype: PrioriteitenOpZoekertype = strmap.remove(
-  "dummy",
-  new strmap.StrMap({ dummy: 0 })
-);
+export const emptyPrioriteitenOpZoekertype: PrioriteitenOpZoekertype = {};
 
-const maybeInsertPrioriteit: Function3<
-  option.Option<number>,
-  Zoektype,
-  PrioriteitenOpZoekertype,
-  PrioriteitenOpZoekertype
-> = (maybePrio, zoektype, prioriteiten) =>
-  maybePrio
-    .map((prio) => strmap.insert(zoektype, prio, prioriteiten))
-    .getOrElse(prioriteiten);
+const maybeInsertPrioriteit: (
+  maybePrio: option.Option<number>,
+  zoektype: Zoektype,
+  prioriteiten: PrioriteitenOpZoekertype
+) => PrioriteitenOpZoekertype = (maybePrio, zoektype, prioriteiten) =>
+  pipe(
+    maybePrio,
+    option.map((prio) => record.insertAt(zoektype, prio)(prioriteiten)),
+    option.getOrElse(() => prioriteiten)
+  );
 
 export interface Weergaveopties {
   readonly prioriteiten: PrioriteitenOpZoekertype;
@@ -121,10 +118,10 @@ export class ZoekAntwoord {
   }
 }
 
-export const nietOndersteund: Function2<string, Zoektype, ZoekAntwoord> = (
-  naam,
-  zoektype
-) => new ZoekAntwoord(naam, zoektype);
+export const nietOndersteund: (
+  naam: string,
+  zoektype: Zoektype
+) => ZoekAntwoord = (naam, zoektype) => new ZoekAntwoord(naam, zoektype);
 
 const nonNegative = option.fromPredicate((n: number) => n >= 0);
 
@@ -155,13 +152,16 @@ export const zoekerMetPrioriteiten: (
   toonOppervlak: toonOppervlak,
 });
 
-export const zoekerMetNaam: Function1<
-  string,
-  Function1<ZoekerMetWeergaveopties[], option.Option<Zoeker>>
-> = (naam) => (zmps) =>
-  array
-    .findFirst(zmps, (zmp) => zmp.zoeker.naam() === naam)
-    .map((zmp) => zmp.zoeker);
+export const zoekerMetNaam: (
+  naam: string
+) => (zmps: ZoekerMetWeergaveopties[]) => option.Option<Zoeker> = (naam) => (
+  zmps
+) =>
+  pipe(
+    zmps,
+    array.findFirst((zmp) => zmp.zoeker.naam() === naam),
+    option.map((zmp) => zmp.zoeker)
+  );
 
 // De resultaten worden getoond volgens een bepaalde hiërarchie
 // - Eerst wordt er gesorteerd volgens zoekernaam.
@@ -170,8 +170,8 @@ export const zoekerMetNaam: Function1<
 //   voor die van de prioriteitenGetter.
 export function zoekResultaatOrdering(
   input: string,
-  prioriteitenGetter: Function1<ZoekResultaat, number>
-): Function2<ZoekResultaat, ZoekResultaat, ordering.Ordering> {
+  prioriteitenGetter: (z: ZoekResultaat) => number
+): (a: ZoekResultaat, b: ZoekResultaat) => ordering.Ordering {
   return (a, b) => {
     const prioA = prioriteitenGetter(a);
     const prioB = prioriteitenGetter(b);
@@ -211,30 +211,28 @@ function matchesInput(res: ZoekResultaat, input: string): boolean {
   return res.omschrijving.toLowerCase().startsWith(input.toLowerCase());
 }
 
-export const StringZoekInput: Function1<string, StringZoekInput> = (value) => ({
+export const StringZoekInput: (value: string) => StringZoekInput = (value) => ({
   type: "string",
   value: value,
 });
-export const UrlZoekInput: Function1<string, UrlZoekInput> = (value) => ({
+export const UrlZoekInput: (value: string) => UrlZoekInput = (value) => ({
   type: "url",
   value: value,
 });
 
-export const VolledigeZoekOpdracht: Function2<
-  string[],
-  ZoekInput,
-  Zoekopdracht
-> = (zoekernamen, zoekpatroon) => ({
+export const VolledigeZoekOpdracht: (
+  zoekernamen: string[],
+  zoekpatroon: ZoekInput
+) => Zoekopdracht = (zoekernamen, zoekpatroon) => ({
   zoektype: "Volledig",
   zoekernamen,
   zoekpatroon,
 });
 
-export const SuggestiesZoekOpdracht: Function2<
-  string[],
-  ZoekInput,
-  Zoekopdracht
-> = (zoekernamen, zoekpatroon) => ({
+export const SuggestiesZoekOpdracht: (
+  zoekernamen: string[],
+  zoekpatroon: ZoekInput
+) => Zoekopdracht = (zoekernamen, zoekpatroon) => ({
   zoektype: "Suggesties",
   zoekernamen,
   zoekpatroon,

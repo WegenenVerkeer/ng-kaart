@@ -9,7 +9,7 @@ import {
 } from "@angular/core";
 import { MatButton } from "@angular/material/button";
 import { option } from "fp-ts";
-import { Function1, Predicate } from "fp-ts/lib/function";
+import { Predicate } from "fp-ts/lib/function";
 import { AbsoluteOrientationSensor } from "motion-sensors-polyfill";
 import * as rx from "rxjs";
 import {
@@ -28,6 +28,7 @@ import {
   throttleTime,
 } from "rxjs/operators";
 
+import { pipe } from "fp-ts/lib/pipeable";
 import { Transparantie } from "../../transparantieeditor/transparantie";
 import { forEach } from "../../util";
 import * as ol from "../../util/openlayers-compat";
@@ -179,10 +180,13 @@ const moetKijkrichtingTonen: Predicate<State> = (state) =>
   state === "TrackingCenter" ||
   state === "TrackingAutoRotate";
 
-const zetStijl: Function1<TrackingInfo, void> = (info) =>
-  info.feature.map((feature) => feature.setStyle(locatieStijlFunctie(info)));
+const zetStijl: (arg: TrackingInfo) => void = (info) =>
+  pipe(
+    info.feature,
+    option.map((feature) => feature.setStyle(locatieStijlFunctie(info)))
+  );
 
-const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = (
+const locatieStijlFunctie: (arg: TrackingInfo) => ol.style.StyleFunction = (
   info
 ) => {
   const fillColor = "rgba(65, 105, 225, 0.15)";
@@ -283,9 +287,11 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = (
       radius
     );
 
-    return kijkrichting
-      .map((arc) => [binnencirkel, buitencirkel, arc])
-      .getOrElse([binnencirkel, buitencirkel]);
+    return pipe(
+      kijkrichting,
+      option.map((arc) => [binnencirkel, buitencirkel, arc]),
+      option.getOrElse(() => [binnencirkel, buitencirkel])
+    );
   };
 };
 
@@ -361,7 +367,7 @@ export class KaartMijnLocatieComponent
 
     this.viewinstellingen$ = this.parent.modelChanges.viewinstellingen$;
     this.zoomdoelSetting$ = this.parent.modelChanges.mijnLocatieZoomDoel$;
-    this.enabled$ = this.zoomdoelSetting$.pipe(map((m) => m.isSome()));
+    this.enabled$ = this.zoomdoelSetting$.pipe(map((m) => option.isSome(m)));
   }
 
   ngAfterViewInit() {
@@ -526,26 +532,26 @@ export class KaartMijnLocatieComponent
     this.bindToLifeCycle(this.currentState$).subscribe((state) => {
       if (
         (moetCentreren(state) || moetLocatieTonen(state)) &&
-        this.watchId.isNone()
+        option.isNone(this.watchId)
       ) {
         this.startPositieTracking();
       }
       if (
         !(moetCentreren(state) || moetLocatieTonen(state)) &&
-        this.watchId.isSome()
+        option.isSome(this.watchId)
       ) {
         this.stopPositieTracking();
       }
       if (
         (moetRoteren(state) || moetKijkrichtingTonen(state)) &&
-        this.sensor.isNone()
+        option.isNone(this.sensor)
       ) {
         this.startRotatieTracking();
       }
       if (
         !moetRoteren(state) &&
         !moetKijkrichtingTonen(state) &&
-        this.sensor.isSome()
+        option.isSome(this.sensor)
       ) {
         this.stopRotatieTracking();
       }
@@ -622,7 +628,10 @@ export class KaartMijnLocatieComponent
   }
 
   private stopPositieTracking() {
-    this.watchId.map((watchId) => navigator.geolocation.clearWatch(watchId));
+    pipe(
+      this.watchId,
+      option.map((watchId) => navigator.geolocation.clearWatch(watchId))
+    );
     this.watchId = option.none;
     this.mijnLocatie = option.none;
     this.dispatch(
@@ -636,7 +645,7 @@ export class KaartMijnLocatieComponent
 
   private startPositieTracking() {
     if (navigator.geolocation) {
-      if (this.watchId.isNone()) {
+      if (option.isNone(this.watchId)) {
         this.watchId = option.some(
           navigator.geolocation.watchPosition(
             //
@@ -697,16 +706,20 @@ export class KaartMijnLocatieComponent
   }
 
   private stopRotatieTracking() {
-    this.sensor = this.sensor.chain((sensor) => {
-      sensor.stop();
-      return option.none;
-    });
+    this.sensor = pipe(
+      this.sensor,
+      option.chain((sensor) => {
+        sensor.stop();
+        return option.none;
+      })
+    );
   }
 
   private zetMijnPositie(info: TrackingInfo) {
     if (moetLocatieTonen(info.state)) {
-      this.mijnLocatie = this.mijnLocatie
-        .chain(() => {
+      this.mijnLocatie = pipe(
+        this.mijnLocatie,
+        option.chain(() => {
           // TODO hier stond voorheen { feature: option.some(feature), ...info } wat
           // wil zeggen dat we op de bestaande feature van info aan het werken
           // waren. Als we daarentegen op de feature van mijnLocatie willen
@@ -715,11 +728,11 @@ export class KaartMijnLocatieComponent
           // aangepast worden.
           pasLocatieFeatureAan(info);
           return info.feature;
-        })
-        .orElse(() => {
+        }),
+        option.alt(() => {
           return this.maakNieuwFeature(info);
-        })
-        .map((feature) => {
+        }),
+        option.map((feature) => {
           if (
             info.stateVeranderd &&
             info.zoom < info.doelzoom &&
@@ -733,7 +746,8 @@ export class KaartMijnLocatieComponent
             );
           }
           return feature;
-        });
+        })
+      );
     }
 
     this.centreerIndienNodig(info.state);
@@ -742,16 +756,19 @@ export class KaartMijnLocatieComponent
   private centreerIndienNodig(state: State) {
     if (moetCentreren(state)) {
       // kleine delay om OL tijd te geven eerst de icon te verplaatsen
-      this.mijnLocatie.map((feature) =>
-        setTimeout(
-          () =>
-            this.dispatch(
-              prt.VeranderMiddelpuntCmd(
-                (<ol.geom.Point>feature.getGeometry()).getCoordinates(),
-                option.some(TrackingInterval)
-              )
-            ),
-          50
+      pipe(
+        this.mijnLocatie,
+        option.map((feature) =>
+          setTimeout(
+            () =>
+              this.dispatch(
+                prt.VeranderMiddelpuntCmd(
+                  (<ol.geom.Point>feature.getGeometry()).getCoordinates(),
+                  option.some(TrackingInterval)
+                )
+              ),
+            50
+          )
         )
       );
     }

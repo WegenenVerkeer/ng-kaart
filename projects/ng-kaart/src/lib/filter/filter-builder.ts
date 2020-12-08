@@ -1,14 +1,7 @@
 import { array, eq, option, ord } from "fp-ts";
 import {
-  Curried2,
-  Curried3,
   Endomorphism,
   flow,
-  Function1,
-  Function2,
-  Function3,
-  Function4,
-  Function5,
   Lazy,
   not,
   Predicate,
@@ -180,14 +173,13 @@ export namespace FilterEditor {
     readonly selectedValue: SelectedValue;
   }
 
-  const Property: Function5<
-    fltr.TypeType,
-    string,
-    string,
-    option.Option<string>,
-    string[],
-    Property
-  > = (typetype, name, label, sqlFormat, distinctValues) => ({
+  const Property: (
+    typetype: fltr.TypeType,
+    name: string,
+    label: string,
+    sqlFormat: option.Option<string>,
+    distinctValues: string[]
+  ) => Property = (typetype, name, label, sqlFormat, distinctValues) => ({
     kind: "Property",
     type: typetype,
     ref: name,
@@ -196,11 +188,9 @@ export namespace FilterEditor {
     distinctValues,
   });
 
-  export const LiteralValue: Curried2<
-    fltr.TypeType,
-    fltr.ValueType,
-    LiteralValue
-  > = (valueType) => (value) => ({
+  export const LiteralValue: (
+    valueType: fltr.TypeType
+  ) => (value: fltr.ValueType) => LiteralValue = (valueType) => (value) => ({
     kind: "Literal",
     value,
     valueType,
@@ -229,16 +219,14 @@ export namespace FilterEditor {
   const hasAcceptableName: Predicate<ke.VeldInfo> = (veld) =>
     veld.naam.match(/^[\w\.]+$/) !== null;
 
-  const veldinfos: Function1<ke.ToegevoegdeVectorLaag, ke.VeldInfo[]> = (
-    laag
-  ) =>
+  const veldinfos: (arg: ke.ToegevoegdeVectorLaag) => ke.VeldInfo[] = (laag) =>
     ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag).filter(
       // filter de speciale velden er uit
       (veld) =>
-        option.fromNullable(veld.label).isSome() &&
-        option.fromNullable(veld.constante).isNone() &&
-        option.fromNullable(veld.template).isNone() &&
-        option.fromNullable(veld.html).isNone() &&
+        pipe(option.fromNullable(veld.label), option.isSome) &&
+        pipe(option.fromNullable(veld.constante), option.isNone) &&
+        pipe(option.fromNullable(veld.template), option.isNone) &&
+        pipe(option.fromNullable(veld.html), option.isNone) &&
         hasAcceptableName(veld)
     );
 
@@ -254,10 +242,10 @@ export namespace FilterEditor {
       "date",
     ]);
 
-  const asAcceptedVeldType: PartialFunction1<
-    ke.VeldType,
-    fltr.TypeType
-  > = option.fromRefinement(isAcceptedVeldType);
+  const asAcceptedVeldType: PartialFunction1<ke.VeldType, fltr.TypeType> = flow(
+    option.fromNullable,
+    option.filter(isAcceptedVeldType)
+  );
 
   const properties: (laag: ke.ToegevoegdeVectorLaag) => Property[] = flow(
     veldinfos,
@@ -269,7 +257,10 @@ export namespace FilterEditor {
           Property(
             typetype,
             vi.naam,
-            option.fromNullable(vi.label).getOrElse(vi.naam),
+            pipe(
+              option.fromNullable(vi.label),
+              option.getOrElse(() => vi.naam)
+            ),
             option.fromNullable(vi.sqlFormat),
             array.sort(ord.ordString)(arrays.fromNullable(vi.uniekeWaarden))
           )
@@ -279,17 +270,16 @@ export namespace FilterEditor {
   );
 
   // Initieer aanmaak van een Comparison
-  const FieldSelection: Function1<ke.ToegevoegdeVectorLaag, TermEditor> = (
+  const FieldSelection: (arg: ke.ToegevoegdeVectorLaag) => TermEditor = (
     laag
   ) => ({ kind: "Field", properties: properties(laag) });
 
-  const BinaryComparisonOperator: Function4<
-    string,
-    string,
-    fltr.BinaryComparisonOperator,
-    fltr.TypeType,
-    BinaryComparisonOperator
-  > = (label, shortLabel, operator, typeType) => ({
+  const BinaryComparisonOperator: (
+    label: string,
+    shortLabel: string,
+    operator: fltr.BinaryComparisonOperator,
+    typeType: fltr.TypeType
+  ) => BinaryComparisonOperator = (label, shortLabel, operator, typeType) => ({
     kind: "BinaryComparisonOperator",
     label,
     shortLabel,
@@ -297,12 +287,11 @@ export namespace FilterEditor {
     typeType,
   });
 
-  const UnaryComparisonOperator: Function3<
-    string,
-    string,
-    fltr.UnaryComparisonOperator,
-    UnaryComparisonOperator
-  > = (label, shortLabel, operator) => ({
+  const UnaryComparisonOperator: (
+    label: string,
+    shortLabel: string,
+    operator: fltr.UnaryComparisonOperator
+  ) => UnaryComparisonOperator = (label, shortLabel, operator) => ({
     kind: "UnaryComparisonOperator",
     label,
     shortLabel,
@@ -331,7 +320,7 @@ export namespace FilterEditor {
     ...unaryOperators,
   ];
 
-  const numberOperatorsGen: Function1<fltr.TypeType, ComparisonOperator[]> = (
+  const numberOperatorsGen: (arg: fltr.TypeType) => ComparisonOperator[] = (
     typeType
   ) => [
     BinaryComparisonOperator("is", "is", "equality", typeType),
@@ -388,10 +377,9 @@ export namespace FilterEditor {
     readonly shortLabel: string;
   }
 
-  const fullOperatorMap: Function1<
-    ComparisonOperator[],
-    Map<fltr.ComparisonOperator, OperatorLabels>
-  > = (operators) =>
+  const fullOperatorMap: (
+    arg: ComparisonOperator[]
+  ) => Map<fltr.ComparisonOperator, OperatorLabels> = (operators) =>
     maps.toMapByKeyAndValue(
       operators,
       (op) => op.operator,
@@ -413,12 +401,11 @@ export namespace FilterEditor {
     isNotEmpty: { label: "heeft een waarde", shortLabel: "heeft een waarde" },
   };
 
-  const typedComparisonOperator: Function3<
-    Map<fltr.ComparisonOperator, OperatorLabels>,
-    fltr.BinaryComparisonOperator,
-    fltr.TypeType,
-    BinaryComparisonOperator
-  > = (opMap, operator, typeType) =>
+  const typedComparisonOperator: (
+    opMap: Map<fltr.ComparisonOperator, OperatorLabels>,
+    operator: fltr.BinaryComparisonOperator,
+    typeType: fltr.TypeType
+  ) => BinaryComparisonOperator = (opMap, operator, typeType) =>
     BinaryComparisonOperator(
       opMap.get(operator)!.label, // We moeten er maar voor zorgen dat onze map volledig is
       opMap.get(operator)!.shortLabel, // We moeten er maar voor zorgen dat onze map volledig is
@@ -426,21 +413,19 @@ export namespace FilterEditor {
       typeType
     );
 
-  const unaryComparisonOperator: Function1<
-    fltr.UnaryComparisonOperator,
-    UnaryComparisonOperator
-  > = (operator) =>
+  const unaryComparisonOperator: (
+    arg: fltr.UnaryComparisonOperator
+  ) => UnaryComparisonOperator = (operator) =>
     UnaryComparisonOperator(
       unaryOperatorLabelsByOperator[operator].label,
       unaryOperatorLabelsByOperator[operator].shortLabel,
       operator
     );
 
-  const binaryComparisonOperator: Function2<
-    fltr.BinaryComparisonOperator,
-    fltr.Literal,
-    BinaryComparisonOperator
-  > = (operator, literal) =>
+  const binaryComparisonOperator: (
+    operator: fltr.BinaryComparisonOperator,
+    literal: fltr.Literal
+  ) => BinaryComparisonOperator = (operator, literal) =>
     fltr.matchTypeTypeWithFallback({
       string: () =>
         typedComparisonOperator(stringOperatorMap, operator, literal.type),
@@ -458,20 +443,18 @@ export namespace FilterEditor {
         BinaryComparisonOperator("is", "is", "equality", "string"), // niet ondersteund!
     })(literal.type);
 
-  const FreeInputValueSelector: Function1<
-    FreeInputValueType,
-    FreeInputValueSelector
-  > = (valueType) => ({ kind: "free", valueType });
+  const FreeInputValueSelector: (
+    arg: FreeInputValueType
+  ) => FreeInputValueSelector = (valueType) => ({ kind: "free", valueType });
 
   export const freeStringInputValueSelector: FreeInputValueSelector = FreeInputValueSelector(
     "string"
   );
 
-  const SelectionValueSelector: Function2<
-    SelectionType,
-    string[],
-    SelectionValueSelector
-  > = (selectionType, values) => ({
+  const SelectionValueSelector: (
+    arg1: SelectionType,
+    arg2: string[]
+  ) => SelectionValueSelector = (selectionType, values) => ({
     kind: "selection",
     selectionType,
     values,
@@ -490,7 +473,7 @@ export namespace FilterEditor {
     ),
   });
 
-  const DateValueSelector: Function1<DateType, DateValueSelector> = (
+  const DateValueSelector: (arg: DateType) => DateValueSelector = (
     dateType
   ) => ({
     kind: "date",
@@ -505,17 +488,18 @@ export namespace FilterEditor {
     readonly valueSelector: ValueSelector;
   }
 
-  const OperatorsAndValueSelector: Function2<
-    ComparisonOperator[],
-    ValueSelector,
-    OperatorsAndValueSelector
-  > = (operators, valueSelector) => ({ operators, valueSelector });
+  const OperatorsAndValueSelector: (
+    arg1: ComparisonOperator[],
+    arg2: ValueSelector
+  ) => OperatorsAndValueSelector = (operators, valueSelector) => ({
+    operators,
+    valueSelector,
+  });
 
-  const bestStringValueSelector: Function2<
-    Property,
-    BinaryComparisonOperator,
-    ValueSelector
-  > = (property, operator) =>
+  const bestStringValueSelector: (
+    arg1: Property,
+    arg2: BinaryComparisonOperator
+  ) => ValueSelector = (property, operator) =>
     arrays.isNonEmpty(property.distinctValues) &&
     ["equality", "inequality"].includes(operator.operator)
       ? arrays.hasAtLeastLength(0)(property.distinctValues) // Volgens acceptatiecrits AGL-3454 8 ipv 0, maar meerwaarde onduidelijk
@@ -523,10 +507,9 @@ export namespace FilterEditor {
         : SelectionValueSelector("dropdown", property.distinctValues)
       : FreeInputValueSelector("string");
 
-  const bestDateValueSelector: Function1<
-    BinaryComparisonOperator,
-    ValueSelector
-  > = (operator) =>
+  const bestDateValueSelector: (
+    arg: BinaryComparisonOperator
+  ) => ValueSelector = (operator) =>
     operator.operator === "within"
       ? RangeValueSelector(
           "integer",
@@ -535,10 +518,9 @@ export namespace FilterEditor {
         )
       : DateValueSelector("date");
 
-  const genericOperatorSelectors: Function1<
-    fltr.Property,
-    OperatorsAndValueSelector
-  > = (property) =>
+  const genericOperatorSelectors: (
+    arg: fltr.Property
+  ) => OperatorsAndValueSelector = (property) =>
     fltr.matchTypeTypeWithFallback({
       string: () =>
         OperatorsAndValueSelector(
@@ -562,11 +544,10 @@ export namespace FilterEditor {
       fallback: () => OperatorsAndValueSelector([], EmptyValueSelector), // Geen ops voor onbekende types: beter terminale error operator
     })(property.type);
 
-  const specificOperatorSelectors: Function2<
-    Property,
-    BinaryComparisonOperator,
-    OperatorsAndValueSelector
-  > = (property, operator) =>
+  const specificOperatorSelectors: (
+    arg1: Property,
+    arg2: BinaryComparisonOperator
+  ) => OperatorsAndValueSelector = (property, operator) =>
     fltr.matchTypeTypeWithFallback({
       string: () =>
         OperatorsAndValueSelector(
@@ -593,11 +574,10 @@ export namespace FilterEditor {
       fallback: () => OperatorsAndValueSelector([], EmptyValueSelector), // Geen ops voor onbekende types: beter terminale error operator
     })(property.type);
 
-  const completedOperatorSelectors: Function2<
-    Property,
-    ComparisonOperator,
-    OperatorsAndValueSelector
-  > = (property, operator) =>
+  const completedOperatorSelectors: (
+    arg1: Property,
+    arg2: ComparisonOperator
+  ) => OperatorsAndValueSelector = (property, operator) =>
     matchComparisonOperator({
       UnaryComparisonOperator: () =>
         OperatorsAndValueSelector(unaryOperators, EmptyValueSelector),
@@ -608,11 +588,9 @@ export namespace FilterEditor {
   // Overgang van FieldSelection naar OperatorSelection -> De overgangen zouden beter Validations zijn om er rekening
   // mee te houden dat de overgang eventueel niet mogelijk is. Bijvoorbeeld wanneer een veld opgegeven wordt dat niet in
   // de lijst staat.
-  export const selectedProperty: Curried2<
-    Property,
-    FieldSelection,
-    TermEditor
-  > = (property) => (selection) => ({
+  export const selectedProperty: (
+    Property
+  ) => (FieldSelection) => TermEditor = (property) => (selection) => ({
     ...selection,
     kind: "Operator",
     selectedProperty: property,
@@ -620,13 +598,17 @@ export namespace FilterEditor {
     valueSelector: genericOperatorSelectors(property).valueSelector,
   });
 
-  const toValueSelection: Function4<
-    OperatorSelection,
-    ComparisonOperator,
-    ValueSelector,
-    boolean,
-    ValueSelection
-  > = (selection, selectedOperator, valueSelector, caseSensitive) => ({
+  const toValueSelection: (
+    selection: OperatorSelection,
+    selectedOperator: ComparisonOperator,
+    valueSelector: ValueSelector,
+    caseSensitive: boolean
+  ) => ValueSelection = (
+    selection,
+    selectedOperator,
+    valueSelector,
+    caseSensitive
+  ) => ({
     ...selection,
     kind: "Value",
     selectedOperator,
@@ -635,11 +617,10 @@ export namespace FilterEditor {
     caseSensitive: caseSensitive,
   });
 
-  const booleanCompleted: Function2<
-    OperatorSelection,
-    BinaryComparisonOperator,
-    TermEditor
-  > = (selection, selectedOperator) => ({
+  const booleanCompleted: (
+    arg1: OperatorSelection,
+    arg2: BinaryComparisonOperator
+  ) => TermEditor = (selection, selectedOperator) => ({
     ...selection,
     kind: "CompletedWithValue",
     selectedOperator,
@@ -658,22 +639,20 @@ export namespace FilterEditor {
   });
 
   // nooit aanroepen met lege array
-  const ConjunctionEditor: Function1<TermEditor[], ConjunctionEditor> = (
+  const ConjunctionEditor: (arg: TermEditor[]) => ConjunctionEditor = (
     termEditors
   ) => ({ termEditors });
 
-  const DisjunctionEditor: Function1<
-    ConjunctionEditor[],
-    DisjunctionsEditor
-  > = (conjunctionEditors) => ({ conjunctionEditors });
+  const DisjunctionEditor: (arg: ConjunctionEditor[]) => DisjunctionsEditor = (
+    conjunctionEditors
+  ) => ({ conjunctionEditors });
 
   // Overgang van OperatorSelection naar ValueSelection (of Completed voor unaire operators)
-  export const selectOperator: Curried3<
-    ComparisonOperator,
-    boolean,
-    OperatorSelection,
-    TermEditor
-  > = (selectedOperator) => (caseSensitive) => (selection) =>
+  export const selectOperator: (
+    ComparisonOperator
+  ) => (boolean) => (OperatorSelection) => TermEditor = (selectedOperator) => (
+    caseSensitive
+  ) => (selection) =>
     matchComparisonOperator<TermEditor>({
       UnaryComparisonOperator: (unOp) => ({
         ...selection,
@@ -726,11 +705,9 @@ export namespace FilterEditor {
 
   // Overgang van ValueSelection naar CompletedWithValue als alles OK is. Kan ook van CompletedWithValue naar
   // ValueSelection gaan wanneer nieuwe input gegeven wordt.
-  export const selectValue: Curried2<
-    option.Option<SelectedValue>,
-    ValueSelection,
-    TermEditor
-  > = (maybeSelectedValue) => (selection) => {
+  export const selectValue: (
+    maybeSelectedValue: option.Option<SelectedValue>
+  ) => (ValueSelection) => TermEditor = (maybeSelectedValue) => (selection) => {
     // Voorlopig ondersteunen we dus enkel LiteralValues
 
     type SelectedValueChecker = PartialFunction1<SelectedValue, SelectedValue>;
@@ -755,9 +732,10 @@ export namespace FilterEditor {
             ["date", "range"].includes(selectedValue.valueType)
         ),
         option.alt(() =>
-          parseDate(option.some("d/M/yyyy"))(
-            selectedValue.value.toString()
-          ).map((date) => LiteralValue("date")(date))
+          pipe(
+            parseDate(option.some("d/M/yyyy"))(selectedValue.value.toString()),
+            option.map((date) => LiteralValue("date")(date))
+          )
         )
       );
 
@@ -815,31 +793,34 @@ export namespace FilterEditor {
       option.chain(validateDateType),
       option.chain(validateDistinct),
       option.fold(failTransition, (selectedValue) =>
-        validatedOperator.foldL<TermEditor>(failTransition, (binOp) => ({
-          ...selection,
-          kind: "CompletedWithValue",
-          selectedValue,
-          selectedOperator: binOp,
-        }))
+        option.fold(
+          () => failTransition,
+          (binOp) => ({
+            ...selection,
+            kind: "CompletedWithValue",
+            selectedValue,
+            selectedOperator: binOp,
+          })
+        )(validatedOperator)
       )
     );
   };
 
-  export const selectHoofdletterGevoelig: Curried2<
-    boolean,
-    ValueSelection | Completed,
-    TermEditor
-  > = (hoofdLetterGevoelig) => (selection) => ({
+  export const selectHoofdletterGevoelig: (
+    boolean
+  ) => (selection: ValueSelection | Completed) => TermEditor = (
+    hoofdLetterGevoelig
+  ) => (selection) => ({
     ...selection,
     caseSensitive: hoofdLetterGevoelig,
   });
 
-  const initConjunctionEditor: Function1<TermEditor, ConjunctionEditor> = (
+  const initConjunctionEditor: (arg: TermEditor) => ConjunctionEditor = (
     termEditor
   ) => ConjunctionEditor([termEditor]);
 
   // Maak een compleete nieuwe builder aan
-  export const init: Function1<ke.ToegevoegdeVectorLaag, ExpressionEditor> = (
+  export const init: (arg: ke.ToegevoegdeVectorLaag) => ExpressionEditor = (
     laag
   ) => {
     const current = FieldSelection(laag);
@@ -851,20 +832,20 @@ export namespace FilterEditor {
     };
   };
 
-  const currentLens: Lens<ExpressionEditor, TermEditor> = Lens.fromProp(
-    "current"
-  );
+  const currentLens: Lens<ExpressionEditor, TermEditor> = Lens.fromProp<
+    ExpressionEditor
+  >()("current");
   const disjunctionsLens: Lens<
     ExpressionEditor,
     DisjunctionsEditor
-  > = Lens.fromProp("disjunctions");
+  > = Lens.fromProp<ExpressionEditor>()("disjunctions");
   const conjunctionEditorsLens: Lens<
     DisjunctionsEditor,
     ConjunctionEditor[]
-  > = Lens.fromProp("conjunctionEditors");
-  const termEditorsLens: Lens<ConjunctionEditor, TermEditor[]> = Lens.fromProp(
-    "termEditors"
-  );
+  > = Lens.fromProp<DisjunctionsEditor>()("conjunctionEditors");
+  const termEditorsLens: Lens<ConjunctionEditor, TermEditor[]> = Lens.fromProp<
+    ConjunctionEditor
+  >()("termEditors");
   const conjunctionEditorTraversal: Traversal<
     ConjunctionEditor[],
     ConjunctionEditor
@@ -874,46 +855,42 @@ export namespace FilterEditor {
     TermEditor
   > = fromTraversable(array.array)<TermEditor>();
 
-  const sameTermEditorAs: Function1<TermEditor, Predicate<TermEditor>> = (
+  const sameTermEditorAs: (arg: TermEditor) => Predicate<TermEditor> = (
     ee1
   ) => (ee2) => ee1 === ee2;
-  const differentTermEditorFrom: Function1<
-    TermEditor,
-    Predicate<TermEditor>
-  > = (ee) => not(sameTermEditorAs(ee));
-  const sameConjuctionEditorAs: Function1<
-    ConjunctionEditor,
-    Predicate<ConjunctionEditor>
-  > = (conj1) => (conj2) => conj1 === conj2;
-  const containsSameEditorAs: Function1<
-    TermEditor,
-    Predicate<ConjunctionEditor>
-  > = (ee1) =>
+  const differentTermEditorFrom: (arg: TermEditor) => Predicate<TermEditor> = (
+    ee
+  ) => not(sameTermEditorAs(ee));
+  const sameConjuctionEditorAs: (
+    arg: ConjunctionEditor
+  ) => Predicate<ConjunctionEditor> = (conj1) => (conj2) => conj1 === conj2;
+  const containsSameEditorAs: (
+    arg: TermEditor
+  ) => Predicate<ConjunctionEditor> = (ee1) =>
     termEditorsLens
       .composeTraversal(termEditorTraversal)
       .asFold()
       .exist(sameTermEditorAs(ee1));
 
-  const getTermEditorInTermEditorsPrism: Function1<
-    TermEditor,
-    Prism<TermEditor, TermEditor>
-  > = (ee) => Prism.fromPredicate(sameTermEditorAs(ee));
-  const getTermEditorInConjunctionEditorPrism: Function1<
-    TermEditor,
-    Prism<ConjunctionEditor, ConjunctionEditor>
-  > = (ee) => Prism.fromPredicate(containsSameEditorAs(ee));
-  const getConjunctionEditorPrism: Function1<
-    ConjunctionEditor,
-    Prism<ConjunctionEditor, ConjunctionEditor>
-  > = (conj) => Prism.fromPredicate(sameConjuctionEditorAs(conj));
-  const nameLens: Lens<ExpressionEditor, option.Option<string>> = Lens.fromProp(
-    "name"
-  );
+  const getTermEditorInTermEditorsPrism: (
+    arg: TermEditor
+  ) => Prism<TermEditor, TermEditor> = (ee) =>
+    Prism.fromPredicate(sameTermEditorAs(ee));
+  const getTermEditorInConjunctionEditorPrism: (
+    arg: TermEditor
+  ) => Prism<ConjunctionEditor, ConjunctionEditor> = (ee) =>
+    Prism.fromPredicate(containsSameEditorAs(ee));
+  const getConjunctionEditorPrism: (
+    arg: ConjunctionEditor
+  ) => Prism<ConjunctionEditor, ConjunctionEditor> = (conj) =>
+    Prism.fromPredicate(sameConjuctionEditorAs(conj));
+  const nameLens: Lens<ExpressionEditor, option.Option<string>> = Lens.fromProp<
+    ExpressionEditor
+  >()("name");
 
-  const getTermEditorTraversal: Function1<
-    TermEditor,
-    Traversal<ExpressionEditor, TermEditor>
-  > = (ee) =>
+  const getTermEditorTraversal: (
+    arg: TermEditor
+  ) => Traversal<ExpressionEditor, TermEditor> = (ee) =>
     disjunctionsLens
       .compose(conjunctionEditorsLens)
       .composeTraversal(conjunctionEditorTraversal)
@@ -921,26 +898,24 @@ export namespace FilterEditor {
       .compose(termEditorTraversal)
       .composePrism(getTermEditorInTermEditorsPrism(ee));
 
-  const getConjunctionEditorForTermEditorTraversal: Function1<
-    TermEditor,
-    Traversal<ExpressionEditor, ConjunctionEditor>
-  > = (ee) =>
+  const getConjunctionEditorForTermEditorTraversal: (
+    arg: TermEditor
+  ) => Traversal<ExpressionEditor, ConjunctionEditor> = (ee) =>
     disjunctionsLens
       .compose(conjunctionEditorsLens)
       .composeTraversal(conjunctionEditorTraversal)
       .composePrism(getTermEditorInConjunctionEditorPrism(ee));
 
-  const getConjunctionEditorTraversal: Function1<
-    ConjunctionEditor,
-    Traversal<ExpressionEditor, ConjunctionEditor>
-  > = (conj) =>
+  const getConjunctionEditorTraversal: (
+    arg: ConjunctionEditor
+  ) => Traversal<ExpressionEditor, ConjunctionEditor> = (conj) =>
     disjunctionsLens
       .compose(conjunctionEditorsLens)
       .composeTraversal(conjunctionEditorTraversal)
       .composePrism(getConjunctionEditorPrism(conj));
 
   // Pas de huidige TermEditor aan
-  export const update: Function1<TermEditor, Endomorphism<ExpressionEditor>> = (
+  export const update: (arg: TermEditor) => Endomorphism<ExpressionEditor> = (
     termEditor
   ) => (expressionEditor) => {
     const originalTermEditor = currentLens.get(expressionEditor);
@@ -950,17 +925,14 @@ export namespace FilterEditor {
     ])(expressionEditor);
   };
 
-  export const setName: Function1<
-    option.Option<string>,
-    Endomorphism<ExpressionEditor>
-  > = nameLens.set;
+  export const setName: (
+    arg: option.Option<string>
+  ) => Endomorphism<ExpressionEditor> = nameLens.set;
 
-  export const setCurrent: Function1<
-    TermEditor,
-    Endomorphism<ExpressionEditor>
-  > = currentLens.set;
+  export const setCurrent: (arg: TermEditor) => Endomorphism<ExpressionEditor> =
+    currentLens.set;
 
-  export const isCurrent: Function1<ExpressionEditor, Predicate<TermEditor>> = (
+  export const isCurrent: (arg: ExpressionEditor) => Predicate<TermEditor> = (
     expressionEditor
   ) => sameTermEditorAs(currentLens.get(expressionEditor));
 
@@ -981,32 +953,34 @@ export namespace FilterEditor {
     const unsafeRemoved = affectedConjunctionEditorTraversal
       .composeLens(termEditorsLens)
       .modify((terms) =>
-        array.filter(terms, differentTermEditorFrom(expressionEditor.current))
+        array.filter(differentTermEditorFrom(expressionEditor.current))(terms)
       )(expressionEditor);
     // We moeten er voor zorgen dat er geen conjunctions zonder terms in zijn
     const normalised = disjunctionsLens
       .compose(conjunctionEditorsLens)
       .modify((conjunctionEditors) =>
-        array.filter(conjunctionEditors, (conjunctionEditor) =>
+        array.filter((conjunctionEditor: ConjunctionEditor) =>
           arrays.isNonEmpty(conjunctionEditor.termEditors)
-        )
+        )(conjunctionEditors)
       )(unsafeRemoved);
     // De laatste TermEditor in dezelfde ConjunctionEditor als current
-    const maybeLastSibling = affectedConjunctionEditorTraversal
-      .composeLens(termEditorsLens)
-      .asFold()
-      .headOption(expressionEditor)
-      .chain((terms) =>
-        array.findLast(terms, differentTermEditorFrom(expressionEditor.current))
-      );
-    // Met NonEmptyArray ipv Array zou `last` veel properder zijn
-    const next = maybeLastSibling.getOrElseL(
-      () =>
-        array
-          .last(normalised.disjunctions.conjunctionEditors)
-          .chain((ce) => array.last(ce.termEditors))
-          .getOrElse(expressionEditor.current) // Omdat de arrays niet leeg kunnen zijn, weten we dat dit nooit nodig zal zijn
+    const maybeLastSibling = pipe(
+      affectedConjunctionEditorTraversal
+        .composeLens(termEditorsLens)
+        .asFold()
+        .headOption(expressionEditor),
+      option.chain((terms) =>
+        array.findLast(differentTermEditorFrom(expressionEditor.current))(terms)
+      )
     );
+    // Met NonEmptyArray ipv Array zou `last` veel properder zijn
+    const next = option.getOrElse(() =>
+      pipe(
+        array.last(normalised.disjunctions.conjunctionEditors),
+        option.chain((ce) => array.last(ce.termEditors)),
+        option.getOrElse(() => expressionEditor.current) // Omdat de arrays niet leeg kunnen zijn, weten we dat dit nooit nodig zal zijn
+      )
+    )(maybeLastSibling);
     return setCurrent(next)(normalised);
   };
 
@@ -1034,10 +1008,11 @@ export namespace FilterEditor {
   };
 
   // voeg een EN toe op geselecteerde rij van de huidige TermEditor en maak die de nieuwe actieve
-  export const addConjunction: Function1<
-    ConjunctionEditor,
-    Endomorphism<ExpressionEditor>
-  > = (conjunctionEditor) => (expressionEditor) => {
+  export const addConjunction: (
+    arg: ConjunctionEditor
+  ) => Endomorphism<ExpressionEditor> = (conjunctionEditor) => (
+    expressionEditor
+  ) => {
     const newEditor = FieldSelection(expressionEditor.laag);
     return applySequential([
       getConjunctionEditorTraversal(conjunctionEditor)
@@ -1047,33 +1022,37 @@ export namespace FilterEditor {
     ])(expressionEditor);
   };
 
-  const ExpressionEditor: Function4<
-    option.Option<string>,
-    ke.ToegevoegdeVectorLaag,
-    TermEditor,
-    DisjunctionsEditor,
-    ExpressionEditor
-  > = (name, laag, current, disjunctions) => ({
+  const ExpressionEditor: (
+    name: option.Option<string>,
+    laag: ke.ToegevoegdeVectorLaag,
+    current: TermEditor,
+    disjunctions: DisjunctionsEditor
+  ) => ExpressionEditor = (name, laag, current, disjunctions) => ({
     name,
     laag,
     current,
     disjunctions,
   });
 
-  const toLiteralValue: Function1<fltr.Literal, LiteralValue> = (literal) =>
+  const toLiteralValue: (literal: fltr.Literal) => LiteralValue = (literal) =>
     LiteralValue(literal.type)(literal.value);
 
-  const completedTermEditor: Function2<
-    ke.ToegevoegdeVectorLaag,
-    fltr.Comparison,
-    TermEditor
-  > = (laag, comparison) => {
-    const distinctValues = array
-      .findFirst(veldinfos(laag), (vi) => vi.naam === comparison.property.ref)
-      .chain((vi) =>
-        option.fromNullable(vi.uniekeWaarden).map(array.sort(ord.ordString))
-      )
-      .getOrElse([]);
+  const completedTermEditor: (
+    arg1: ke.ToegevoegdeVectorLaag,
+    arg2: fltr.Comparison
+  ) => TermEditor = (laag, comparison) => {
+    const distinctValues = pipe(
+      array.findFirst((vi: ke.VeldInfo) => vi.naam === comparison.property.ref)(
+        veldinfos(laag)
+      ),
+      option.chain((vi) =>
+        pipe(
+          option.fromNullable(vi.uniekeWaarden),
+          option.map(array.sort(ord.ordString))
+        )
+      ),
+      option.getOrElse(() => [])
+    );
     const selectedProperty: Property = {
       ...comparison.property,
       distinctValues,
@@ -1115,12 +1094,11 @@ export namespace FilterEditor {
     })(comparison);
   };
 
-  const fromComparison: Function3<
-    option.Option<string>,
-    ke.ToegevoegdeVectorLaag,
-    fltr.Comparison,
-    ExpressionEditor
-  > = (name, laag, comparison) => {
+  const fromComparison: (
+    name: option.Option<string>,
+    laag: ke.ToegevoegdeVectorLaag,
+    comparison: fltr.Comparison
+  ) => ExpressionEditor = (name, laag, comparison) => {
     const current: TermEditor = completedTermEditor(laag, comparison);
     return ExpressionEditor(
       name,
@@ -1130,11 +1108,10 @@ export namespace FilterEditor {
     );
   };
 
-  const toConjunctionEditor: Function2<
-    ke.ToegevoegdeVectorLaag,
-    fltr.ConjunctionExpression,
-    ConjunctionEditor
-  > = (laag, expression) => {
+  const toConjunctionEditor: (
+    arg1: ke.ToegevoegdeVectorLaag,
+    arg2: fltr.ConjunctionExpression
+  ) => ConjunctionEditor = (laag, expression) => {
     switch (expression.kind) {
       case "And":
         return ConjunctionEditor(
@@ -1150,12 +1127,11 @@ export namespace FilterEditor {
     }
   };
 
-  const fromConjunction: Function3<
-    option.Option<string>,
-    ke.ToegevoegdeVectorLaag,
-    fltr.Conjunction,
-    ExpressionEditor
-  > = (name, laag, conjunction) => {
+  const fromConjunction: (
+    name: option.Option<string>,
+    laag: ke.ToegevoegdeVectorLaag,
+    conjunction: fltr.Conjunction
+  ) => ExpressionEditor = (name, laag, conjunction) => {
     const conjunctionEditor = toConjunctionEditor(laag, conjunction);
     const current = conjunctionEditor.termEditors[0]; // Bij constructie heeft een Conjunction minstens 2 comparisons
     return ExpressionEditor(
@@ -1166,11 +1142,10 @@ export namespace FilterEditor {
     );
   };
 
-  const toDisjunctionsEditor: Function2<
-    ke.ToegevoegdeVectorLaag,
-    fltr.Expression,
-    DisjunctionsEditor
-  > = (laag, expression) => {
+  const toDisjunctionsEditor: (
+    arg1: ke.ToegevoegdeVectorLaag,
+    arg2: fltr.Expression
+  ) => DisjunctionsEditor = (laag, expression) => {
     switch (expression.kind) {
       case "Or":
         return DisjunctionEditor(
@@ -1192,12 +1167,11 @@ export namespace FilterEditor {
     }
   };
 
-  const fromDisjunction: Function3<
-    option.Option<string>,
-    ke.ToegevoegdeVectorLaag,
-    fltr.Disjunction,
-    ExpressionEditor
-  > = (name, laag, disjunction) => {
+  const fromDisjunction: (
+    name: option.Option<string>,
+    laag: ke.ToegevoegdeVectorLaag,
+    disjunction: fltr.Disjunction
+  ) => ExpressionEditor = (name, laag, disjunction) => {
     const disjunctions = toDisjunctionsEditor(laag, disjunction);
     // Bij constructie minstens 2 conjunctions en elke conjunction minstens 1 comparison
     const current = disjunctions.conjunctionEditors[0].termEditors[0];
@@ -1205,12 +1179,11 @@ export namespace FilterEditor {
   };
 
   // Maak een builder aan voor een bestaande expressie
-  const fromExpression: Function3<
-    option.Option<string>,
-    ke.ToegevoegdeVectorLaag,
-    fltr.Expression,
-    ExpressionEditor
-  > = (name, laag, expression) =>
+  const fromExpression: (
+    name: option.Option<string>,
+    laag: ke.ToegevoegdeVectorLaag,
+    expression: fltr.Expression
+  ) => ExpressionEditor = (name, laag, expression) =>
     fltr.matchExpression({
       And: (expr) => fromConjunction(name, laag, expr),
       Or: (expr) => fromDisjunction(name, laag, expr),
@@ -1218,32 +1191,31 @@ export namespace FilterEditor {
       UnaryComparison: (expr) => fromComparison(name, laag, expr),
     })(expression);
 
-  export const fromToegevoegdeVectorLaag: Function1<
-    ke.ToegevoegdeVectorLaag,
-    ExpressionEditor
-  > = (laag) =>
+  export const fromToegevoegdeVectorLaag: (
+    arg: ke.ToegevoegdeVectorLaag
+  ) => ExpressionEditor = (laag) =>
     fltr.matchFilter({
       EmptyFilter: () => init(laag),
       ExpressionFilter: (expr) =>
         fromExpression(expr.name, laag, expr.expression),
     })(laag.filterinstellingen.spec);
 
-  const toLiteral: Function2<
-    BinaryComparisonOperator,
-    LiteralValue,
-    fltr.Literal
-  > = (operator, lv) => fltr.Literal(operator.typeType, lv.value);
+  const toLiteral: (
+    arg1: BinaryComparisonOperator,
+    arg2: LiteralValue
+  ) => fltr.Literal = (operator, lv) =>
+    fltr.Literal(operator.typeType, lv.value);
 
   interface ComparisonOperatorMatcher<A> {
-    readonly UnaryComparisonOperator: Function1<UnaryComparisonOperator, A>;
-    readonly BinaryComparisonOperator: Function1<BinaryComparisonOperator, A>;
+    readonly UnaryComparisonOperator: (arg: UnaryComparisonOperator) => A;
+    readonly BinaryComparisonOperator: (arg: BinaryComparisonOperator) => A;
   }
 
   const matchComparisonOperator: <A>(
     _: ComparisonOperatorMatcher<A>
-  ) => Function1<ComparisonOperator, A> = matchers.matchKind;
+  ) => (arg: ComparisonOperator) => A = matchers.matchKind;
 
-  const toComparison: Function1<TermEditor, option.Option<fltr.Comparison>> = (
+  const toComparison: (arg: TermEditor) => option.Option<fltr.Comparison> = (
     termEditor
   ) => {
     switch (termEditor.kind) {
@@ -1268,74 +1240,73 @@ export namespace FilterEditor {
     }
   };
 
-  const toConjunctionExpression: Function1<
-    TermEditor[],
-    option.Option<fltr.ConjunctionExpression>
-  > = (termEditors) =>
-    array.array
-      .traverse(option.option)(termEditors, toComparison)
-      .chain((comps) =>
-        array.fold(
-          comps,
-          array.head(comps), // ingeval er maar 1 element is, bnehouden we dat gewoon
-          (first, next) =>
+  const toConjunctionExpression: (
+    arg: TermEditor[]
+  ) => option.Option<fltr.ConjunctionExpression> = (termEditors) =>
+    pipe(
+      array.array.traverse(option.option)(termEditors, toComparison),
+      option.chain((comps) =>
+        array.foldLeft(
+          () => array.head(comps), // ingeval er maar 1 element is, bnehouden we dat gewoon
+          (first: fltr.Comparison, next) =>
             option.some(
               next.reduce<fltr.ConjunctionExpression>(
                 (sum, val) => fltr.Conjunction(sum, val),
                 first
               )
             )
-        )
-      );
+        )(comps)
+      )
+    );
 
-  const toDisjunctionExpression: Function1<
-    ConjunctionEditor[],
-    option.Option<fltr.Expression>
-  > = (conjunctionEditors) =>
-    array.array
-      .traverse(option.option)(
+  const toDisjunctionExpression: (
+    arg: ConjunctionEditor[]
+  ) => option.Option<fltr.Expression> = (conjunctionEditors) =>
+    pipe(
+      array.array.traverse(option.option)(
         conjunctionEditors.map((ce) => ce.termEditors),
         toConjunctionExpression
-      )
-      .chain((conjs) =>
-        array.fold(
-          conjs,
-          array.head(conjs), // ingeval er maar 1 element is, bnehouden we dat gewoon
-          (first, next) =>
+      ),
+      option.chain((conjs) =>
+        array.foldLeft(
+          () => array.head(conjs), // ingeval er maar 1 element is, bnehouden we dat gewoon
+          (first: fltr.ConjunctionExpression, next) =>
             option.some(
               next.reduce<fltr.Expression>(
                 (sum, val) => fltr.Disjunction(sum, val),
                 first
               )
             )
-        )
-      );
+        )(conjs)
+      )
+    );
 
-  const toExpression: Function1<
-    ExpressionEditor,
-    option.Option<fltr.Expression>
-  > = (expressionEditor) =>
+  const toExpression: (
+    arg: ExpressionEditor
+  ) => option.Option<fltr.Expression> = (expressionEditor) =>
     toDisjunctionExpression(expressionEditor.disjunctions.conjunctionEditors);
 
-  export const toExpressionFilter: Function1<
-    ExpressionEditor,
-    option.Option<fltr.ExpressionFilter>
-  > = (expressionEditor) =>
-    toExpression(expressionEditor).map((expression) =>
-      fltr.ExpressionFilter(expressionEditor.name, expression)
+  export const toExpressionFilter: (
+    arg: ExpressionEditor
+  ) => option.Option<fltr.ExpressionFilter> = (expressionEditor) =>
+    pipe(
+      toExpression(expressionEditor),
+      option.map((expression) =>
+        fltr.ExpressionFilter(expressionEditor.name, expression)
+      )
     );
 
   export interface TermEditorMatcher<A> {
-    readonly Field: Function1<FieldSelection, A>;
-    readonly Operator: Function1<OperatorSelection, A>;
-    readonly Value: Function1<ValueSelection, A>;
-    readonly Completed: Function1<Completed, A>;
-    readonly CompletedWithValue: Function1<CompletedWithValue, A>;
+    readonly Field: (arg: FieldSelection) => A;
+    readonly Operator: (arg: OperatorSelection) => A;
+    readonly Value: (arg: ValueSelection) => A;
+    readonly Completed: (arg: Completed) => A;
+    readonly CompletedWithValue: (arg: CompletedWithValue) => A;
   }
 
   export const matchTermEditor: <A>(
     _: TermEditorMatcher<A>
-  ) => Function1<TermEditor, A> = matchers.matchKind;
+  ) => (arg: TermEditor) => A = matchers.matchKind;
 
   const setoidFieldSelection: eq.Eq<FilterEditor.FieldSelection> = eq.getStructEq(
     {
@@ -1368,9 +1339,9 @@ export namespace FilterEditor {
 
   const setoidOperatorSelection: eq.Eq<OperatorSelection> = eq.getStructEq({
     kind: eq.eqString,
-    properties: array.getSetoid(fltr.setoidPropertyByRef),
+    properties: array.getEq(fltr.setoidPropertyByRef),
     selectedProperty: fltr.setoidPropertyByRef,
-    operatorSelectors: array.getSetoid(setoidComparisonOperator),
+    operatorSelectors: array.getEq(setoidComparisonOperator),
   });
 
   const freeInputValueTypeSetoid: eq.Eq<FreeInputValueType> = eq.eqString;
@@ -1412,9 +1383,9 @@ export namespace FilterEditor {
 
   const setoidValueSelection: eq.Eq<ValueSelection> = eq.getStructEq({
     kind: eq.eqString,
-    properties: array.getSetoid(fltr.setoidPropertyByRef),
+    properties: array.getEq(fltr.setoidPropertyByRef),
     selectedProperty: fltr.setoidPropertyByRef,
-    operatorSelectors: array.getSetoid(setoidComparisonOperator),
+    operatorSelectors: array.getEq(setoidComparisonOperator),
     selectedOperator: setoidComparisonOperator,
     valueSelector: setoidValueSelector,
   });
@@ -1425,17 +1396,17 @@ export namespace FilterEditor {
 
   const setoidCompleted: eq.Eq<Completed> = eq.getStructEq({
     kind: eq.eqString,
-    properties: array.getSetoid(fltr.setoidPropertyByRef),
+    properties: array.getEq(fltr.setoidPropertyByRef),
     selectedProperty: fltr.setoidPropertyByRef,
-    operatorSelectors: array.getSetoid(setoidComparisonOperator),
+    operatorSelectors: array.getEq(setoidComparisonOperator),
     selectedOperator: setoidComparisonOperator,
   });
 
   const setoidCompletedWithValue: eq.Eq<CompletedWithValue> = eq.getStructEq({
     kind: eq.eqString,
-    properties: array.getSetoid(fltr.setoidPropertyByRef),
+    properties: array.getEq(fltr.setoidPropertyByRef),
     selectedProperty: fltr.setoidPropertyByRef,
-    operatorSelectors: array.getSetoid(setoidComparisonOperator),
+    operatorSelectors: array.getEq(setoidComparisonOperator),
     selectedOperator: setoidComparisonOperator,
     valueSelector: setoidValueSelector,
     selectedValue: setoidSelectedValue,
@@ -1472,18 +1443,18 @@ export namespace FilterEditor {
 
   export const matchLiteralValueWithFallback: <A>(
     _: matchers.FallbackMatcher<LiteralValue, A, fltr.TypeType>
-  ) => Function1<LiteralValue, A> = (matcher) =>
+  ) => (lv: LiteralValue) => A = (matcher) =>
     matchers.matchWithFallback(matcher)((lv) => lv.valueType);
 
   export interface ValueSelectorMatcher<A> {
-    readonly empty: Function1<EmptyValueSelector, A>;
-    readonly free: Function1<FreeInputValueSelector, A>;
-    readonly selection: Function1<SelectionValueSelector, A>;
-    readonly date: Function1<DateValueSelector, A>;
-    readonly range: Function1<RangeValueSelector, A>;
+    readonly empty: (arg: EmptyValueSelector) => A;
+    readonly free: (arg: FreeInputValueSelector) => A;
+    readonly selection: (arg: SelectionValueSelector) => A;
+    readonly date: (arg: DateValueSelector) => A;
+    readonly range: (arg: RangeValueSelector) => A;
   }
 
   export const matchValueSelector: <A>(
     matcher: ValueSelectorMatcher<A>
-  ) => Function1<ValueSelector, A> = matchers.matchKind;
+  ) => (arg: ValueSelector) => A = matchers.matchKind;
 }

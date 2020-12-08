@@ -1,5 +1,3 @@
-import { Function1 } from "fp-ts/lib/function";
-
 import * as ol from "../util/openlayers-compat";
 import {
   validationChain as chain,
@@ -60,7 +58,7 @@ export const validateAwvV0RuleDefintion: Validator<
   ol.style.StyleFunction
 > = jsonAwvV0RuleCompiler;
 
-export const serialiseAwvV0DynamicStyle: Function1<
-  AwvV0DynamicStyle,
-  string
-> = (style) => JSON.stringify({ version: Version, definition: style });
+export const serialiseAwvV0DynamicStyle: (
+  style: AwvV0DynamicStyle
+) => string = (style) =>
+  JSON.stringify({ version: Version, definition: style });

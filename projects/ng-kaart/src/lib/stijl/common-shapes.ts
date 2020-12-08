@@ -1,3 +1,5 @@
+import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as ss from "../kaart/stijl-selector";
 import { fromValidation } from "../util";
 
@@ -28,17 +30,19 @@ export namespace disc {
     borderWidth: number,
     radius: number
   ): ss.StyleSelector {
-    return fromValidation(
-      ss.validateAwvV0StyleSpec(
-        styleSpec(borderColour, innerColour, borderWidth, radius)
-      )
-    )
-      .map(ss.StaticStyle)
-      .getOrElseL(() => {
+    return pipe(
+      fromValidation(
+        ss.validateAwvV0StyleSpec(
+          styleSpec(borderColour, innerColour, borderWidth, radius)
+        )
+      ),
+      option.map(ss.StaticStyle),
+      option.getOrElse(() => {
         throw new Error(
           "Slechte stijldefinitie. Dit zou niet mogen kunnen gebeuren."
         );
-      });
+      })
+    );
   }
 
   export function stylish(
@@ -47,15 +51,18 @@ export namespace disc {
     borderWidth: number,
     radius: number
   ): ss.Stylish {
-    return fromValidation(
-      ss.validateAwvV0StyleSpec(
-        styleSpec(borderColour, innerColour, borderWidth, radius)
-      )
-    ).getOrElseL(() => {
-      throw new Error(
-        "Slechte stijldefinitie. Dit zou niet mogen kunnen gebeuren."
-      );
-    });
+    return pipe(
+      fromValidation(
+        ss.validateAwvV0StyleSpec(
+          styleSpec(borderColour, innerColour, borderWidth, radius)
+        )
+      ),
+      option.getOrElse(() => {
+        throw new Error(
+          "Slechte stijldefinitie. Dit zou niet mogen kunnen gebeuren."
+        );
+      })
+    );
   }
 }
 
@@ -76,24 +83,29 @@ export namespace solidLine {
     lineColour: Kleur,
     lineWidth: number
   ): ss.StyleSelector {
-    return fromValidation(
-      ss.validateAwvV0StyleSpec(styleSpec(lineColour, lineWidth))
-    )
-      .map(ss.StaticStyle)
-      .getOrElseL(() => {
+    return pipe(
+      fromValidation(
+        ss.validateAwvV0StyleSpec(styleSpec(lineColour, lineWidth))
+      ),
+      option.map(ss.StaticStyle),
+      option.getOrElse(() => {
         throw new Error(
           "Slechte stijldefinitie. Dit zou niet mogen kunnen gebeuren."
         );
-      });
+      })
+    );
   }
 
   export function stylish(lineColour: Kleur, lineWidth: number): ss.Stylish {
-    return fromValidation(
-      ss.validateAwvV0StyleSpec(styleSpec(lineColour, lineWidth))
-    ).getOrElseL(() => {
-      throw new Error(
-        "Slechte stijldefinitie. Dit zou niet mogen kunnen gebeuren."
-      );
-    });
+    return pipe(
+      fromValidation(
+        ss.validateAwvV0StyleSpec(styleSpec(lineColour, lineWidth))
+      ),
+      option.getOrElse(() => {
+        throw new Error(
+          "Slechte stijldefinitie. Dit zou niet mogen kunnen gebeuren."
+        );
+      })
+    );
   }
 }

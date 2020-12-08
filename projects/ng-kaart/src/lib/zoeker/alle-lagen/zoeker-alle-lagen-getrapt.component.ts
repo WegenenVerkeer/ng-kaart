@@ -8,7 +8,6 @@ import {
 } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { option } from "fp-ts";
-import { Function1 } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import {
   distinctUntilChanged,
@@ -74,10 +73,10 @@ export class ZoekerAlleLagenGetraptComponent
 
     this.bronnen$ = services$.pipe(
       switchMap((svcs) =>
-        svcs.foldL(
+        option.fold(
           () => rx.of([]), // Geen service betekent geen bronnen
-          (svc) => svc.bronnen$
-        )
+          (svc: AlleLagenZoekerService) => svc.bronnen$
+        )(svcs)
       )
     );
 
@@ -87,16 +86,15 @@ export class ZoekerAlleLagenGetraptComponent
       share()
     );
 
-    const svcsToCategorieenProvider: Function1<
-      AlleLagenZoekerService,
-      CategorieObsProvider
-    > = (svcs) => svcs.categorie$Provider;
+    const svcsToCategorieenProvider: (
+      arg: AlleLagenZoekerService
+    ) => CategorieObsProvider = (svcs) => svcs.categorie$Provider;
 
     const bronEnProvider$: rx.Observable<[
       string,
       CategorieObsProvider
     ]> = services$.pipe(
-      collectOption((s) => s.map(svcsToCategorieenProvider)),
+      collectOption((s) => option.map(svcsToCategorieenProvider)(s)),
       switchMap((catProv) =>
         gekozenBron$.pipe(
           map((bron) => [bron, catProv] as [string, CategorieObsProvider])
@@ -107,14 +105,16 @@ export class ZoekerAlleLagenGetraptComponent
 
     this.categorieen$ = bronEnProvider$.pipe(
       switchMap(([bron, subCatProv]) =>
-        subCatProv(bron).getOrElseL(() => rx.EMPTY)
+        option.getOrElse<rx.Observable<string[]>>(() => rx.EMPTY)(
+          subCatProv(bron)
+        )
       ),
       share()
     );
 
     this.hasCategorieen$ = rx.combineLatest(
       bronEnProvider$.pipe(
-        map(([bron, subCatProv]) => subCatProv(bron).isSome())
+        map(([bron, subCatProv]) => option.isSome(subCatProv(bron)))
       ),
       this.bronControl.valueChanges.pipe(
         distinctUntilChanged(),
@@ -139,7 +139,7 @@ export class ZoekerAlleLagenGetraptComponent
     // in Geoloket2 verwacht. Dat type noemt daar AlleLagenZoekenInput, maar kunnen we vanuit ng-kaart niet refereren.
     const selectie$ = bronEnProvider$.pipe(
       switchMap(([bron, subCatProv]) =>
-        subCatProv(bron).foldL(
+        option.fold(
           () =>
             rx.of({ type: "AlleLagen", bron: bron, categorie: option.none }), //
           () =>
@@ -150,7 +150,7 @@ export class ZoekerAlleLagenGetraptComponent
                 categorie: option.some(categorie),
               }))
             )
-        )
+        )(subCatProv(bron))
       )
     );
 

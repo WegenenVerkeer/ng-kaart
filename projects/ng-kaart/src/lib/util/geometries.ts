@@ -1,5 +1,6 @@
 import { array, eq, field, foldable, option } from "fp-ts";
-import { constant, Function1, identity } from "fp-ts/lib/function";
+import { constant, identity } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import * as ol from "./openlayers-compat";
 
@@ -23,43 +24,56 @@ export function matchGeometryType<T>(
   const tryFallback = () =>
     mapper.geometry ? option.some(mapper.geometry(geometry)) : option.none;
   const applyIfDefined: <G extends ol.geom.Geometry>(
-    f?: Function1<G, T>
+    f?: (arg: G) => T
   ) => option.Option<T> = (f) =>
     f ? option.some(f(geometry as any)) : option.none;
 
   switch (geometry.getType()) {
     case "Point":
-      return applyIfDefined<ol.geom.Point>(mapper.point).orElse(tryFallback);
+      return pipe(
+        applyIfDefined<ol.geom.Point>(mapper.point),
+        option.alt(tryFallback)
+      );
     case "LineString":
-      return applyIfDefined<ol.geom.LineString>(mapper.lineString).orElse(
-        tryFallback
+      return pipe(
+        applyIfDefined<ol.geom.LineString>(mapper.lineString),
+        option.alt(tryFallback)
       );
     case "LinearRing":
-      return applyIfDefined<ol.geom.LinearRing>(mapper.linearRing).orElse(
-        tryFallback
+      return pipe(
+        applyIfDefined<ol.geom.LinearRing>(mapper.linearRing),
+        option.alt(tryFallback)
       );
     case "Polygon":
-      return applyIfDefined<ol.geom.Polygon>(mapper.polygon).orElse(
-        tryFallback
+      return pipe(
+        applyIfDefined<ol.geom.Polygon>(mapper.polygon),
+        option.alt(tryFallback)
       );
     case "MultiPoint":
-      return applyIfDefined<ol.geom.MultiPoint>(mapper.multiPoint).orElse(
-        tryFallback
+      return pipe(
+        applyIfDefined<ol.geom.MultiPoint>(mapper.multiPoint),
+        option.alt(tryFallback)
       );
     case "MultiLineString":
-      return applyIfDefined<ol.geom.MultiLineString>(
-        mapper.multiLineString
-      ).orElse(tryFallback);
+      return pipe(
+        applyIfDefined<ol.geom.MultiLineString>(mapper.multiLineString),
+        option.alt(tryFallback)
+      );
     case "MultiPolygon":
-      return applyIfDefined<ol.geom.MultiPolygon>(mapper.multiPolygon).orElse(
-        tryFallback
+      return pipe(
+        applyIfDefined<ol.geom.MultiPolygon>(mapper.multiPolygon),
+        option.alt(tryFallback)
       );
     case "GeometryCollection":
-      return applyIfDefined<ol.geom.GeometryCollection>(
-        mapper.geometryCollection
-      ).orElse(tryFallback);
+      return pipe(
+        applyIfDefined<ol.geom.GeometryCollection>(mapper.geometryCollection),
+        option.alt(tryFallback)
+      );
     case "Circle":
-      return applyIfDefined<ol.geom.Circle>(mapper.circle).orElse(tryFallback);
+      return pipe(
+        applyIfDefined<ol.geom.Circle>(mapper.circle),
+        option.alt(tryFallback)
+      );
   }
   return option.none;
 }
@@ -67,74 +81,90 @@ export function matchGeometryType<T>(
 export function toLineString(
   geometry: ol.geom.Geometry
 ): option.Option<ol.geom.LineString> {
-  return matchGeometryType(geometry, {
-    lineString: (line) => option.some(line),
-    multiLineString: (line) =>
-      option.some(
-        new ol.geom.LineString(
-          array.flatten(line.getCoordinates() as ol.Coordinate[][])
-        )
-      ),
-    polygon: (poly) =>
-      option.some(
-        new ol.geom.LineString(
-          array.flatten(poly.getCoordinates() as ol.Coordinate[][])
-        )
-      ),
-    geometryCollection: (collection) =>
-      array.array
-        .traverse(option.option)(collection.getGeometries(), toLineString)
-        .map(
-          (lines) =>
-            new ol.geom.LineString(
-              array.flatten(
-                lines.map((line) => line.getCoordinates() as ol.Coordinate[])
-              )
-            )
+  return pipe(
+    matchGeometryType(geometry, {
+      lineString: (line) => option.some(line),
+      multiLineString: (line) =>
+        option.some(
+          new ol.geom.LineString(
+            array.flatten(line.getCoordinates() as ol.Coordinate[][])
+          )
         ),
-  }).chain(identity);
+      polygon: (poly) =>
+        option.some(
+          new ol.geom.LineString(
+            array.flatten(poly.getCoordinates() as ol.Coordinate[][])
+          )
+        ),
+      geometryCollection: (collection) =>
+        pipe(
+          array.array.traverse(option.option)(
+            collection.getGeometries(),
+            toLineString
+          ),
+          option.map(
+            (lines: ol.geom.LineString[]) =>
+              new ol.geom.LineString(
+                array.flatten(
+                  lines.map(
+                    (line: ol.geom.LineString) =>
+                      line.getCoordinates() as ol.Coordinate[]
+                  )
+                )
+              )
+          )
+        ),
+    }),
+    option.chain(identity)
+  );
 }
 
-const numberArraySum: Function1<number[], number> = foldable.sum(
-  array.array,
-  field.fieldNumber
+const numberArraySum: (arg: number[]) => number = array.reduce(
+  0,
+  field.fieldNumber.add
 );
 
 export function geometryLength(geometry: ol.geom.Geometry): number {
-  return matchGeometryType(geometry, {
-    point: constant(0),
-    multiPoint: constant(0),
-    lineString: (line) => line.getLength(),
-    multiLineString: (lines) =>
-      numberArraySum(lines.getLineStrings().map(geometryLength)),
-    polygon: (poly) =>
-      numberArraySum(poly.getLinearRings().map(geometryLength)),
-    geometryCollection: (collection) =>
-      numberArraySum(collection.getGeometries().map(geometryLength)),
-    circle: (circle) => circle.getRadius() * 2 * Math.PI,
-    linearRing: (ring) =>
-      new ol.geom.LineString(ring.getCoordinates()).getLength(),
-    multiPolygon: (polys) =>
-      numberArraySum(polys.getPolygons().map(geometryLength)),
-  }).getOrElse(0);
+  return pipe(
+    matchGeometryType(geometry, {
+      point: constant(0),
+      multiPoint: constant(0),
+      lineString: (line) => line.getLength(),
+      multiLineString: (lines) =>
+        numberArraySum(lines.getLineStrings().map(geometryLength)),
+      polygon: (poly) =>
+        numberArraySum(poly.getLinearRings().map(geometryLength)),
+      geometryCollection: (collection) =>
+        numberArraySum(collection.getGeometries().map(geometryLength)),
+      circle: (circle) => circle.getRadius() * 2 * Math.PI,
+      linearRing: (ring) =>
+        new ol.geom.LineString(ring.getCoordinates()).getLength(),
+      multiPolygon: (polys) =>
+        numberArraySum(polys.getPolygons().map(geometryLength)),
+    }),
+    option.getOrElse(() => 0)
+  );
 }
 
 export function geometryCoordinates(geometry: ol.geom.Geometry): number[] {
-  return matchGeometryType(geometry, {
-    point: (point) => point.getFlatCoordinates(),
-    multiPoint: (multiPoint) => multiPoint.getFlatCoordinates(),
-    lineString: (line) => line.getFlatCoordinates(),
-    multiLineString: (lines) => lines.getFlatCoordinates(),
-    polygon: (poly) => poly.getFlatCoordinates(),
-    geometryCollection: (collection) =>
-      [].concat.apply(
-        [],
-        collection.getGeometries().map((geom) => geometryCoordinates(geom))
-      ),
-    circle: (circle) => circle.getCenter(),
-    linearRing: (ring) => ring.getFlatCoordinates(),
-    multiPolygon: (polys) => polys.getFlatCoordinates(),
-  }).getOrElse(0);
+  return pipe(
+    matchGeometryType(geometry, {
+      point: (point) => point.getFlatCoordinates(),
+      multiPoint: (multiPoint) => multiPoint.getFlatCoordinates(),
+      lineString: (line) => line.getFlatCoordinates(),
+      multiLineString: (lines) => lines.getFlatCoordinates(),
+      polygon: (poly) => poly.getFlatCoordinates(),
+      geometryCollection: (collection) =>
+        [].concat.apply(
+          [],
+          collection.getGeometries().map((geom) => geometryCoordinates(geom))
+        ),
+      circle: (circle) => circle.getCenter(),
+      linearRing: (ring) => ring.getFlatCoordinates(),
+      multiPolygon: (polys) => polys.getFlatCoordinates(),
+    }),
+    option.getOrElse(() => [])
+  );
 }
 
 export function distance(coord1: ol.Coordinate, coord2: ol.Coordinate): number {

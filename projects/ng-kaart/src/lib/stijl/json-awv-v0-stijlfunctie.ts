@@ -1,5 +1,5 @@
-import { array, option } from "fp-ts";
-import { flow, Function1, Function2 } from "fp-ts/lib/function";
+import { array, either, option } from "fp-ts";
+import { flow } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 
 import * as ol from "../util/openlayers-compat";
@@ -51,15 +51,18 @@ interface RuleStyle {
   readonly style: olStyle;
 }
 
-const RuleStyleConfig: Function1<RuleStyle[], RuleStyleConfig> = (rules) => ({
+const RuleStyleConfig: (arg: RuleStyle[]) => RuleStyleConfig = (rules) => ({
   rules: rules,
 });
 const alwaysTrue: Expression = { kind: "Literal", value: true };
-const RuleStyle: Function2<option.Option<Expression>, olStyle, RuleStyle> = (
-  maybeCondition,
-  style
-) => ({
-  condition: maybeCondition.getOrElse(alwaysTrue),
+const RuleStyle: (
+  maybeCondition: option.Option<Expression>,
+  style: olStyle
+) => RuleStyle = (maybeCondition, style) => ({
+  condition: pipe(
+    maybeCondition,
+    option.getOrElse(() => alwaysTrue)
+  ),
   style: style,
 });
 
@@ -144,7 +147,11 @@ export const jsonAwvV0RuleInterpreter: Interpreter<AwvV0DynamicStyle> = (
   const rule: Interpreter<Rule> = oi.map2(
     Rule,
     oi.map(
-      (maybeCondition) => maybeCondition.getOrElse(alwaysTrue),
+      (maybeCondition) =>
+        pipe(
+          maybeCondition,
+          option.getOrElse(() => alwaysTrue)
+        ),
       oi.optField<Expression>("condition", expression)
     ),
     oi.field(
@@ -155,15 +162,13 @@ export const jsonAwvV0RuleInterpreter: Interpreter<AwvV0DynamicStyle> = (
 
   const ruleConfig: Interpreter<RuleConfig> = oi.map(RuleConfig, oi.arr(rule));
 
-  return oi
-    .field(
-      "rules",
-      ruleConfig
-    )(json)
-    .mapFailure((msg) => [`syntaxcontrole: ${msg}`]);
+  return pipe(
+    oi.field("rules", ruleConfig)(json),
+    either.mapLeft((msg) => [`syntaxcontrole: ${msg}`])
+  );
 };
 
-const jsonAwvV0RuleConfig: Function1<AwvV0DynamicStyle, RuleStyleConfig> = (
+const jsonAwvV0RuleConfig: (arg: AwvV0DynamicStyle) => RuleStyleConfig = (
   style
 ) => ({
   rules: style.rules.map((rule) => ({
@@ -227,17 +232,21 @@ function compileRules(
   const getProperty = (key: string, typeName: TypeType) => (
     ctx: Context
   ): option.Option<any> =>
-    option
-      .fromNullable(ctx.feature.get("properties"))
-      .chain((properties) =>
+    pipe(
+      option.fromNullable(ctx.feature.get("properties")),
+      option.chain((properties) =>
         option.fromNullable(getNestedProperty(key, properties))
-      )
+      ),
       // TODO: beter een apart array type definieren en overal gebruiken in geval van array.
-      .filter((value) => typeof value === typeName || Array.isArray(value));
+      option.filter(
+        (value) => typeof value === typeName || Array.isArray(value)
+      )
+    );
   const checkFeatureDefined = (key: string) => (ctx: Context) =>
-    option
-      .fromNullable(ctx.feature.get("properties"))
-      .map((properties) => properties.hasOwnProperty(key));
+    pipe(
+      option.fromNullable(ctx.feature.get("properties")),
+      option.map((properties) => properties.hasOwnProperty(key))
+    );
   const getResolution = (ctx: Context) => option.some(ctx.resolution);
 
   // Type check functies
@@ -421,8 +430,11 @@ function compileRules(
     validation1: ValidatedTypedEvaluator
   ): ValidatedTypedEvaluator {
     return chain(validation1, (val1) =>
-      check(val1.typeName).map(() =>
-        TypedEvaluator(liftEvaluator1(f)(val1.evaluator), resultType)
+      pipe(
+        check(val1.typeName),
+        either.map(() =>
+          TypedEvaluator(liftEvaluator1(f)(val1.evaluator), resultType)
+        )
       )
     );
   }
@@ -436,10 +448,13 @@ function compileRules(
   ): ValidatedTypedEvaluator {
     return chain(validation1, (val1) =>
       chain(validation2, (val2) =>
-        check(val1.typeName, val2.typeName).map(() =>
-          TypedEvaluator(
-            liftEvaluator2(f)(val1.evaluator, val2.evaluator),
-            resultType
+        pipe(
+          check(val1.typeName, val2.typeName),
+          either.map(() =>
+            TypedEvaluator(
+              liftEvaluator2(f)(val1.evaluator, val2.evaluator),
+              resultType
+            )
           )
         )
       )
@@ -457,10 +472,17 @@ function compileRules(
     return chain(validation1, (val1) =>
       chain(validation2, (val2) =>
         chain(validation3, (val3) =>
-          check(val1.typeName, val2.typeName, val3.typeName).map(() =>
-            TypedEvaluator(
-              liftEvaluator3(f)(val1.evaluator, val2.evaluator, val3.evaluator),
-              resultType
+          pipe(
+            check(val1.typeName, val2.typeName, val3.typeName),
+            either.map(() =>
+              TypedEvaluator(
+                liftEvaluator3(f)(
+                  val1.evaluator,
+                  val2.evaluator,
+                  val3.evaluator
+                ),
+                resultType
+              )
             )
           )
         )
@@ -472,26 +494,49 @@ function compileRules(
   function liftEvaluator1(
     f: (v1: ValueType) => ValueType
   ): (ev1: Evaluator) => Evaluator {
-    return (ev1: Evaluator) => (ctx: Context) => ev1(ctx).map((r1) => f(r1));
+    return (ev1: Evaluator) => (ctx: Context) =>
+      pipe(
+        ev1(ctx),
+        option.map((r1) => f(r1))
+      );
   }
 
   function liftEvaluator2(
     f: (v1: ValueType, v2: ValueType) => ValueType
   ): (ev1: Evaluator, ev2: Evaluator) => Evaluator {
     return (ev1: Evaluator, ev2: Evaluator) => (ctx: Context) =>
-      ev1(ctx).chain((r1) => ev2(ctx).map((r2) => f(r1, r2)));
+      pipe(
+        ev1(ctx),
+        option.chain((r1) =>
+          pipe(
+            ev2(ctx),
+            option.map((r2) => f(r1, r2))
+          )
+        )
+      );
   }
 
   function liftEvaluator3(
     f: (v1: ValueType, v2: ValueType, v3: ValueType) => ValueType
   ): (ev1: Evaluator, ev2: Evaluator, ev3: Evaluator) => Evaluator {
     return (ev1: Evaluator, ev2: Evaluator, ev3: Evaluator) => (ctx: Context) =>
-      ev1(ctx).chain((r1) =>
-        ev2(ctx).chain((r2) => ev3(ctx).map((r3) => f(r1, r2, r3)))
+      pipe(
+        ev1(ctx),
+        option.chain((r1) =>
+          pipe(
+            ev2(ctx),
+            option.chain((r2) =>
+              pipe(
+                ev3(ctx),
+                option.map((r3) => f(r1, r2, r3))
+              )
+            )
+          )
+        )
       );
   }
 
-  type RuleExpression = Function1<Context, option.Option<ol.style.Style>>;
+  type RuleExpression = (arg: Context) => option.Option<ol.style.Style>;
 
   // De regels controleren en combineren zodat at run-time ze één voor één geprobeerd worden totdat er een match is
   const validatedCombinedRuleExpression: Validation<RuleExpression> = pipe(
@@ -503,15 +548,22 @@ function compileRules(
         return chain(combinedRuleValidation, (combinedRule) => {
           // WTF? Deze lambda moet blijkbaar in een {} block zitten of het faalt wanneer gebruikt in externe applicatie.
           // De conditie moet kosjer zijn
-          return compileCondition(
-            rule.condition
-          ).map((typedEvaluator) => (ctx: Context) =>
-            combinedRule(ctx).orElse(() =>
-              typedEvaluator
-                .evaluator(ctx)
-                .chain((outcome) =>
-                  (outcome as boolean) ? option.some(rule.style) : option.none
+          return pipe(
+            compileCondition(rule.condition),
+            either.map((typedEvaluator) => (ctx: Context) =>
+              pipe(
+                combinedRule(ctx),
+                option.alt(() =>
+                  pipe(
+                    typedEvaluator.evaluator(ctx),
+                    option.chain((outcome) =>
+                      (outcome as boolean)
+                        ? option.some(rule.style)
+                        : option.none
+                    )
+                  )
                 )
+              )
             )
           );
         });
@@ -519,13 +571,19 @@ function compileRules(
     )
   );
 
-  const styleFunctionFromRuleExpression: Function1<
-    RuleExpression,
-    ol.style.StyleFunction
-  > = (ruleExpression) => (feature: ol.Feature, resolution: number) =>
-    ruleExpression({ feature: feature, resolution: resolution }).getOrElse(
-      (undefined as any) as ol.style.Style
+  const styleFunctionFromRuleExpression: (
+    arg: RuleExpression
+  ) => ol.style.StyleFunction = (ruleExpression) => (
+    feature: ol.Feature,
+    resolution: number
+  ) =>
+    pipe(
+      ruleExpression({ feature: feature, resolution: resolution }),
+      option.getOrElse(() => (undefined as any) as ol.style.Style)
     );
 
-  return validatedCombinedRuleExpression.map(styleFunctionFromRuleExpression);
+  return pipe(
+    validatedCombinedRuleExpression,
+    either.map(styleFunctionFromRuleExpression)
+  );
 }

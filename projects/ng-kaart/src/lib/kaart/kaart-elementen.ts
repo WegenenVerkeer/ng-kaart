@@ -1,5 +1,5 @@
 import { eq, option, ord } from "fp-ts";
-import { Function1, Function2, Refinement } from "fp-ts/lib/function";
+import { Refinement } from "fp-ts/lib/function";
 import { Fold, Getter, Iso, Lens, Optional, Prism } from "monocle-ts";
 import * as rx from "rxjs";
 import { debounceTime, mapTo } from "rxjs/operators";
@@ -239,9 +239,8 @@ export const asVectorLaag: (
 ) => option.Option<VectorLaag> = option.fromPredicate(isVectorLaag) as (
   _: Laag
 ) => option.Option<VectorLaag>;
-export const asTiledWmsLaag: (
-  laag: Laag
-) => option.Option<WmsLaag> = option.fromRefinement(isTiledWmsLaag);
+export const asTiledWmsLaag: (laag: Laag) => option.Option<WmsLaag> = (laag) =>
+  option.filter(isTiledWmsLaag)(option.some(laag));
 export const isToegevoegdeVectorLaag: Refinement<
   ToegevoegdeLaag,
   ToegevoegdeVectorLaag
@@ -357,10 +356,7 @@ export namespace ToegevoegdeVectorLaag {
   export const veldInfosMapLens: Lens<
     ToegevoegdeVectorLaag,
     Map<string, VeldInfo>
-  > = Lens.fromPath<ToegevoegdeVectorLaag, "bron", "velden">([
-    "bron",
-    "velden",
-  ]);
+  > = Lens.fromPath<ToegevoegdeVectorLaag>()(["bron", "velden"]);
 
   export const veldInfosLens: Lens<
     ToegevoegdeVectorLaag,
@@ -372,31 +368,28 @@ export namespace ToegevoegdeVectorLaag {
     )
   );
 
-  export const veldInfoOpNaamOptional: Function1<
-    string,
-    Optional<ToegevoegdeVectorLaag, VeldInfo>
-  > = (veldnaam) =>
-    Lens.fromPath<ToegevoegdeVectorLaag, "bron", "velden">([
-      "bron",
-      "velden",
-    ]).composeOptional(mapToOptionalByKey(veldnaam));
+  export const veldInfoOpNaamOptional: (
+    veldnaam: string
+  ) => Optional<ToegevoegdeVectorLaag, VeldInfo> = (veldnaam) =>
+    Lens.fromPath<ToegevoegdeVectorLaag>()(["bron", "velden"]).composeOptional(
+      mapToOptionalByKey(veldnaam)
+    );
 
   export const noSqlFsSourceFold: Fold<
     ToegevoegdeVectorLaag,
     NosqlFsSource
-  > = Lens.fromPath<ToegevoegdeVectorLaag, "bron", "source">(["bron", "source"])
+  > = Lens.fromPath<ToegevoegdeVectorLaag>()(["bron", "source"])
     .asGetter()
-    .composePrism(Prism.fromRefinement(isNoSqlFsSource));
+    .composePrism(Prism.fromPredicate(isNoSqlFsSource));
 
   export const opTitelSetoid: eq.Eq<ToegevoegdeVectorLaag> = eq.contramap<
     string,
     ToegevoegdeVectorLaag
   >((laag) => laag.titel)(eq.eqString);
 
-  export const featuresChanged$: Function1<
-    ToegevoegdeVectorLaag,
-    rx.Observable<null>
-  > = (vlg) =>
+  export const featuresChanged$: (
+    vlg: ToegevoegdeVectorLaag
+  ) => rx.Observable<null> = (vlg) =>
     observableFromOlEvents(
       vlg.layer.getSource(),
       "addfeature",
@@ -413,7 +406,7 @@ export namespace VeldInfo {
   export const ordVeldOpBasisVeld: ord.Ord<VeldInfo> = ord.contramap<
     boolean,
     VeldInfo
-  >((vi) => vi.isBasisVeld, ord.ordBoolean);
+  >((vi) => vi.isBasisVeld)(ord.ordBoolean);
   export const veldnaamLens: Lens<VeldInfo, string> = Lens.fromProp<VeldInfo>()(
     "naam"
   );
@@ -429,15 +422,15 @@ export namespace VeldInfo {
     (vi) => vi.label || vi.naam
   );
 
-  export const veldInfoOpNaam: Function2<
-    string,
-    Map<string, VeldInfo>,
-    option.Option<VeldInfo>
-  > = (naam, veldinfos) => maps.findFirst(veldinfos, (vi) => vi.naam === naam);
+  export const veldInfoOpNaam: (
+    naam: string,
+    veldinfos: Map<string, VeldInfo>
+  ) => option.Option<VeldInfo> = (naam, veldinfos) =>
+    maps.findFirst(veldinfos, (vi) => vi.naam === naam);
 
   export const matchWithFallback: <A>(
     _: matchers.FallbackMatcher<VeldInfo, A, VeldType>
-  ) => Function1<VeldInfo, A> = (m) =>
+  ) => (m: VeldInfo) => A = (m) =>
     matchers.matchWithFallback(m)((veldinfo) => veldinfo.type);
 }
 

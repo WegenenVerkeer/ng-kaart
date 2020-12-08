@@ -1,12 +1,5 @@
 import { option } from "fp-ts";
-import {
-  constant,
-  Function1,
-  Function3,
-  Function4,
-  Lazy,
-  Refinement,
-} from "fp-ts/lib/function";
+import { constant, Lazy, Refinement } from "fp-ts/lib/function";
 
 import * as clr from "../../stijl/colour";
 import * as ol from "../../util/openlayers-compat";
@@ -85,13 +78,12 @@ export interface SnapWaypoint {
   readonly waypoint: Waypoint;
 }
 
-export const StartDrawing: Function4<
-  clr.Kleur,
-  boolean,
-  option.Option<RoutingService>,
-  option.Option<ol.style.StyleFunction>,
-  StartDrawing
-> = (
+export const StartDrawing: (
+  featureColour: clr.Kleur,
+  useRouting: boolean,
+  customRoutingService: option.Option<RoutingService>,
+  polygonStyleFunction: option.Option<ol.style.StyleFunction>
+) => StartDrawing = (
   featureColour,
   useRouting,
   customRoutingService,
@@ -114,7 +106,9 @@ export const EndDrawing: Lazy<EndDrawing> = constant(endDrawing);
 const stopDrawing: StopDrawing = { type: "StopDrawing" };
 export const StopDrawing: Lazy<StopDrawing> = constant(stopDrawing);
 
-export const RedrawRoute: Function1<boolean, RedrawRoute> = (useRouting) => ({
+export const RedrawRoute: (useRouting: boolean) => RedrawRoute = (
+  useRouting
+) => ({
   type: "RedrawRoute",
   useRouting: useRouting,
 });
@@ -123,24 +117,26 @@ export const isRedrawRoute: Refinement<DrawOps, RedrawRoute> = (
   ops
 ): ops is RedrawRoute => ops.type === "RedrawRoute";
 
-export const AddPoint: Function1<ol.Coordinate, AddPoint> = (coord) => ({
+export const AddPoint: (coord: ol.Coordinate) => AddPoint = (coord) => ({
   type: "AddPoint",
   coordinate: coord,
 });
 
-export const DraggingPoint: Function1<ol.Feature, DraggingPoint> = (
+export const DraggingPoint: (feature: ol.Feature) => DraggingPoint = (
   feature
 ) => ({ type: "DraggingPoint", feature: feature });
 
 const movePoint: MovePoint = { type: "MovePoint" };
 export const MovePoint: Lazy<MovePoint> = constant(movePoint);
 
-export const DeletePoint: Function1<ol.Feature, DeletePoint> = (feature) => ({
+export const DeletePoint: (feature: ol.Feature) => DeletePoint = (feature) => ({
   type: "DeletePoint",
   feature: feature,
 });
 
-export const SnapWaypoint: Function1<Waypoint, SnapWaypoint> = (waypoint) => ({
+export const SnapWaypoint: (waypoint: Waypoint) => SnapWaypoint = (
+  waypoint
+) => ({
   type: "SnapWaypoint",
   waypoint: waypoint,
 });

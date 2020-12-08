@@ -1,6 +1,6 @@
 import { NgZone } from "@angular/core";
 import { array, either, eq, option } from "fp-ts";
-import { flow, Function1, Function2 } from "fp-ts/lib/function";
+import { flow } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import {
@@ -228,7 +228,7 @@ export interface ModelChanges {
   readonly collapseUIRequest$: rx.Observable<null>;
 }
 
-const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = (olmap) => ({
+const viewinstellingen: (olmap: ol.Map) => prt.Viewinstellingen = (olmap) => ({
   zoom: olmap.getView().getZoom()!,
   minZoom: olmap.getView().getMinZoom(),
   maxZoom: olmap.getView().getMaxZoom(),
@@ -506,11 +506,10 @@ export const modelChanges = (
     share()
   );
 
-  const gevraagdeZoekers: Function2<
-    Zoekopdracht,
-    ZoekerMetWeergaveopties[],
-    ZoekerMetWeergaveopties[]
-  > = (opdracht, geregistreerd) =>
+  const gevraagdeZoekers: (
+    opdracht: Zoekopdracht,
+    geregistreerd: ZoekerMetWeergaveopties[]
+  ) => ZoekerMetWeergaveopties[] = (opdracht, geregistreerd) =>
     geregistreerd.filter((zmp) =>
       array.elem(eq.eqString)(zmp.zoeker.naam(), opdracht.zoekernamen)
     );

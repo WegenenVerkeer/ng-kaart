@@ -1,5 +1,4 @@
 import { eq } from "fp-ts";
-import { Function1 } from "fp-ts/lib/function";
 import { Lens } from "monocle-ts";
 
 import { LaagModel } from "./laag-model";
@@ -16,7 +15,7 @@ export namespace TableHeader {
     TableHeader
   >()("filterIsActive");
 
-  export const toHeader: Function1<LaagModel, TableHeader> = (laag) => ({
+  export const toHeader: (arg: LaagModel) => TableHeader = (laag) => ({
     titel: laag.titel,
     filterIsActive: laag.filterIsActive,
     hasFilter: laag.hasFilter,

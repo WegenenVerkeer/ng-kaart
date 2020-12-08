@@ -1,6 +1,7 @@
 import { Component, NgZone, ViewEncapsulation } from "@angular/core";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import { map } from "rxjs/operators";
 
@@ -60,7 +61,11 @@ const zoekHelpNodeToHelpContent = (
 ) => {
   return {
     titel: node.titel,
-    text: node.text.map(domSanitizer.bypassSecurityTrustHtml).toNullable(),
+    text: pipe(
+      node.text,
+      option.map(domSanitizer.bypassSecurityTrustHtml),
+      option.toNullable
+    ),
     isLeaf: node.children.size === 0,
   };
 };

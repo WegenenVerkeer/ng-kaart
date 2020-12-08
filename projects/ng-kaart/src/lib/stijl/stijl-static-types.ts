@@ -1,5 +1,5 @@
 import { option } from "fp-ts";
-import { Function1, identity, Refinement } from "fp-ts/lib/function";
+import { identity, Refinement } from "fp-ts/lib/function";
 import { Lens, Optional, Prism } from "monocle-ts";
 
 import { Kleur, kleurcodeValue, stringToKleur } from "./colour";
@@ -117,9 +117,9 @@ const isRegularShape: Refinement<ImageStyle, RegularShapeStyle> = (
 
 export function matchImageStyle<A>(
   image: ImageStyle,
-  fc: Function1<CircleStyle, A>,
-  fi: Function1<IconStyle, A>,
-  frs: Function1<RegularShapeStyle, A>
+  fc: (arg: CircleStyle) => A,
+  fi: (arg: IconStyle) => A,
+  frs: (arg: RegularShapeStyle) => A
 ): A {
   return isCircle(image)
     ? fc(image)
@@ -168,14 +168,14 @@ export namespace Image {
   export const circlePrism: Prism<
     ImageStyle,
     CircleStyle
-  > = Prism.fromRefinement(isCircle);
-  export const iconPrism: Prism<ImageStyle, IconStyle> = Prism.fromRefinement(
+  > = Prism.fromPredicate(isCircle);
+  export const iconPrism: Prism<ImageStyle, IconStyle> = Prism.fromPredicate(
     isIcon
   );
   export const regularShapePrism: Prism<
     ImageStyle,
     RegularShapeStyle
-  > = Prism.fromRefinement(isRegularShape);
+  > = Prism.fromPredicate(isRegularShape);
 }
 
 // eslint-disable-next-line no-redeclare
@@ -183,37 +183,39 @@ export namespace FullStyle {
   export const strokeOptional: Optional<
     FullStyle,
     StrokeStyle
-  > = Optional.fromNullableProp("stroke");
+  > = Optional.fromNullableProp<FullStyle>()("stroke");
   export const circleOptional: Optional<
     FullStyle,
     CircleStyle
-  > = Optional.fromNullableProp("circle");
+  > = Optional.fromNullableProp<FullStyle>()("circle");
   export const iconOptional: Optional<
     FullStyle,
     IconStyle
-  > = Optional.fromNullableProp("icon");
+  > = Optional.fromNullableProp<FullStyle>()("icon");
   export const regularShapeOptional: Optional<
     FullStyle,
     RegularShapeStyle
-  > = Optional.fromNullableProp("regularShape");
+  > = Optional.fromNullableProp<FullStyle>()("regularShape");
 }
 
 export namespace Circle {
   export const fillOptional: Optional<
     CircleStyle,
     FillStyle
-  > = Optional.fromNullableProp("fill");
+  > = Optional.fromNullableProp<CircleStyle>()("fill");
 }
 
 export namespace Fill {
-  export const colorLens: Lens<FillStyle, ColorType> = Lens.fromProp("color");
+  export const colorLens: Lens<FillStyle, ColorType> = Lens.fromProp<
+    FillStyle
+  >()("color");
 }
 
 export namespace Stroke {
   export const colorOptional: Optional<
     StrokeStyle,
     ColorType
-  > = Optional.fromNullableProp("color");
+  > = Optional.fromNullableProp<StrokeStyle>()("color");
 }
 
 export namespace Color {

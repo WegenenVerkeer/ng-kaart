@@ -9,14 +9,9 @@ import {
   Output,
   ViewEncapsulation,
 } from "@angular/core";
+import { flow } from "fp-ts/lib/function";
 import { array, eq, map as fpMap, option } from "fp-ts";
-import {
-  Curried2,
-  Function1,
-  Function2,
-  Function4,
-  pipe,
-} from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import { merge } from "rxjs";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, tap } from "rxjs/operators";
@@ -51,30 +46,36 @@ import * as val from "../webcomponent-support/params";
 
 import { ClassicLaagDirective } from "./classic-laag.directive";
 
-const wmsFeatureInfo: Function2<
-  HttpClient,
-  Function1<ol.Coordinate, string>,
-  Function1<ol.Coordinate, rx.Observable<string>>
-> = (httpClient, queryUrlFn) => (location) =>
-  httpClient.get(queryUrlFn(location), { responseType: "text" });
+const wmsFeatureInfo: (
+  httpClient: HttpClient,
+  queryUrlFn: (c: ol.Coordinate) => string
+) => (c: ol.Coordinate) => rx.Observable<string> = (httpClient, queryUrlFn) => (
+  location
+) => httpClient.get(queryUrlFn(location), { responseType: "text" });
 
-const textWmsFeatureInfo: Function2<
-  HttpClient,
-  Function1<ol.Coordinate, string>,
-  Function1<ol.Coordinate, rx.Observable<LaagLocationInfo>>
-> = (httpClient, queryUrlFn) => (location) =>
+const textWmsFeatureInfo: (
+  httpClient: HttpClient,
+  queryUrlFn: (c: ol.Coordinate) => string
+) => (c: ol.Coordinate) => rx.Observable<LaagLocationInfo> = (
+  httpClient,
+  queryUrlFn
+) => (location) =>
   wmsFeatureInfo(
     httpClient,
     queryUrlFn
   )(location).pipe(map(TextLaagLocationInfo));
 
-const veldWmsFeatureInfo: Function4<
-  HttpClient,
-  Function1<ol.Coordinate, string>,
-  Function1<string, Veldwaarde[]>,
-  ke.VeldInfo[],
-  Function1<ol.Coordinate, rx.Observable<LaagLocationInfo>>
-> = (httpClient, queryUrlFn, parser, veldinfos) => (location) =>
+const veldWmsFeatureInfo: (
+  httpClient: HttpClient,
+  queryUrlFn: (c: ol.Coordinate) => string,
+  parser: (s: string) => Veldwaarde[],
+  veldinfos: ke.VeldInfo[]
+) => (c: ol.Coordinate) => rx.Observable<LaagLocationInfo> = (
+  httpClient,
+  queryUrlFn,
+  parser,
+  veldinfos
+) => (location) =>
   wmsFeatureInfo(
     httpClient,
     queryUrlFn
@@ -97,24 +98,27 @@ export interface ClassicLaagKlikInfoEnStatus {
   readonly laagInfoFailure?: BevragenErrorReason;
 }
 
-const flatten: Curried2<
-  string,
-  KaartLocaties,
-  option.Option<ClassicLaagKlikInfoEnStatus>
-> = (titel) => (kaartLocaties) => {
+const flatten: (
+  string
+) => (KaartLocaties) => option.Option<ClassicLaagKlikInfoEnStatus> = (
+  titel
+) => (kaartLocaties) => {
   const maybeLaagInfoResult: option.Option<progress.Progress<
     LaagLocationInfoResult
   >> = fpMap.lookup(eq.eqString)(titel, kaartLocaties.lagenLocatieInfo);
-  return maybeLaagInfoResult.map((laagInfoResult) => ({
-    timestamp: kaartLocaties.timestamp,
-    coordinaat: kaartLocaties.coordinaat,
-    laagInfoStatus: progress.toProgressStatus(laagInfoResult),
-    laagInfo: progress
-      .toOption(laagInfoResult)
-      .chain(option.fromEither)
-      .toUndefined(),
-    laagInfoFailure: progressFailure(laagInfoResult),
-  }));
+  return option.map(
+    (laagInfoResult: progress.Progress<LaagLocationInfoResult>) => ({
+      timestamp: kaartLocaties.timestamp,
+      coordinaat: kaartLocaties.coordinaat,
+      laagInfoStatus: progress.toProgressStatus(laagInfoResult),
+      laagInfo: pipe(
+        progress.toOption(laagInfoResult),
+        option.chain(option.fromEither),
+        option.toUndefined
+      ),
+      laagInfoFailure: progressFailure(laagInfoResult),
+    })
+  )(maybeLaagInfoResult);
 };
 
 const infoSetoid: eq.Eq<ClassicLaagKlikInfoEnStatus> = eq.getStructEq({
@@ -134,11 +138,11 @@ export class ClassicWmsLaagComponent
   // Een functie die de output van een WMS featureInfo of een WFS GetFeature request omzet naar een lijst van key-value paren.
   // De keys moeten een subset zijn van de titels van de veldinfos
   @Input()
-  textParser?: Function1<string, Veldwaarde[]> = undefined;
+  textParser?: (arg: string) => Veldwaarde[] = undefined;
   // Een functie die coördinaten omzet naar een WMS GetFeatureInfo of WFS GetFeature URL
   // `undefined` als waarde van de Input wil zeggen dat er geen query uitgevoerd wordt
   @Input()
-  queryUrlFn?: Function1<ol.Coordinate, string> = undefined;
+  queryUrlFn?: (arg: ol.Coordinate) => string = undefined;
 
   @Input()
   set precache(input: PrecacheWMS | undefined) {
@@ -255,30 +259,35 @@ export class ClassicWmsLaagComponent
     super.voegLaagToe();
     forEach(option.fromNullable(this.queryUrlFn), (queryUrlFn) =>
       this.dispatch(
-        this._veldInfos
-          .chain((veldinfos) =>
-            option.fromNullable(this.textParser).map((textParser) =>
-              VoegLaagLocatieInformatieServiceToe(
-                this._titel,
-                {
-                  infoByLocation$: veldWmsFeatureInfo(
-                    this.http,
-                    queryUrlFn,
-                    textParser,
-                    veldinfos
-                  ),
-                },
-                logOnlyWrapper
+        pipe(
+          this._veldInfos,
+          option.chain((veldinfos) =>
+            pipe(
+              option.fromNullable(this.textParser),
+              option.map((textParser) =>
+                VoegLaagLocatieInformatieServiceToe(
+                  this._titel,
+                  {
+                    infoByLocation$: veldWmsFeatureInfo(
+                      this.http,
+                      queryUrlFn,
+                      textParser,
+                      veldinfos
+                    ),
+                  },
+                  logOnlyWrapper
+                )
               )
             )
-          )
-          .getOrElseL(() =>
+          ),
+          option.getOrElse(() =>
             VoegLaagLocatieInformatieServiceToe(
               this._titel,
               { infoByLocation$: textWmsFeatureInfo(this.http, queryUrlFn) },
               logOnlyWrapper
             )
           )
+        )
       )
     );
   }
@@ -354,10 +363,10 @@ export class ClassicWmsLaagComponent
             classicMsgSubscriptionCmdOperator(
               this.kaart.dispatcher,
               prt.PrecacheProgressSubscription(
-                pipe(PrecacheProgressMsg, KaartClassicMsg)
+                flow(PrecacheProgressMsg, KaartClassicMsg)
               ),
               prt.LaatsteCacheRefreshSubscription(
-                pipe(LaatsteCacheRefreshMsg, KaartClassicMsg)
+                flow(LaatsteCacheRefreshMsg, KaartClassicMsg)
               )
             )
           ),
@@ -370,7 +379,10 @@ export class ClassicWmsLaagComponent
           this.kaart.kaartClassicSubMsg$.pipe(
             ofType<LaatsteCacheRefreshMsg>("LaatsteCacheRefresh"),
             filter((m) =>
-              option.fromNullable(m.laatsteCacheRefresh[this._titel]).isSome()
+              pipe(
+                option.fromNullable(m.laatsteCacheRefresh[this._titel]),
+                option.isSome
+              )
             ),
             map((m) => m.laatsteCacheRefresh[this._titel]),
             distinctUntilChanged(),

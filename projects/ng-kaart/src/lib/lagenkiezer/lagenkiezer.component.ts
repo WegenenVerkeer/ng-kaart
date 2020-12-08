@@ -12,6 +12,7 @@ import { MatTabChangeEvent } from "@angular/material/tabs";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { array, option } from "fp-ts";
 import { not, Predicate } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import {
   debounceTime,
@@ -162,7 +163,7 @@ export class LagenkiezerComponent
             (laag) =>
               isZichtbaar(laag, zoom) &&
               laag.magGetoondWorden &&
-              laag.legende.isSome()
+              option.isSome(laag.legende)
           );
         }
       )
@@ -180,10 +181,13 @@ export class LagenkiezerComponent
       shareReplay(1)
     );
     this.lagenMetFilter$ = this.lagenHoog$.pipe(
-      map((lagen) => array.filter(lagen, isToegevoegdeVectorLaag)),
+      map((lagen) => pipe(lagen, array.filter(isToegevoegdeVectorLaag))),
       map((vlagen) =>
-        array.filter(vlagen, (vlaag) =>
-          Filter.isDefined(vlaag.filterinstellingen.spec)
+        pipe(
+          vlagen,
+          array.filter((vlaag) =>
+            Filter.isDefined(vlaag.filterinstellingen.spec)
+          )
         )
       )
     );
@@ -253,45 +257,58 @@ export class LagenkiezerComponent
   }
 
   isDropZone(laag: ToegevoegdeLaag): boolean {
-    return this.dragState.map((ds) => ds.from).contains(setoidGroep, laag);
+    return pipe(
+      this.dragState,
+      option.map((ds) => ds.from),
+      (ma) => option.elem(setoidGroep)(laag, ma)
+    );
   }
 
   isDragSource(laag: ToegevoegdeLaag): boolean {
-    return this.dragState.foldL(
-      () => false,
-      (ds) => {
-        if (isSource(laag)(ds)) {
-          return true;
-        } else {
-          return false;
+    return pipe(
+      this.dragState,
+      option.fold(
+        () => false,
+        (ds) => {
+          if (isSource(laag)(ds)) {
+            return true;
+          } else {
+            return false;
+          }
         }
-      }
+      )
     );
   }
 
   isDragTarget(laag: ToegevoegdeLaag): boolean {
-    return this.dragState.foldL(
-      () => false,
-      (ds) => {
-        if (isTarget(laag)(ds)) {
-          return true;
-        } else {
-          return false;
+    return pipe(
+      this.dragState,
+      option.fold(
+        () => false,
+        (ds) => {
+          if (isTarget(laag)(ds)) {
+            return true;
+          } else {
+            return false;
+          }
         }
-      }
+      )
     );
   }
 
   isDragUntargetable(laag: ToegevoegdeLaag): boolean {
-    return this.dragState.foldL(
-      () => false,
-      (ds) => {
-        if (ds.from.laaggroep !== laag.laaggroep) {
-          return true;
-        } else {
-          return false;
+    return pipe(
+      this.dragState,
+      option.fold(
+        () => false,
+        (ds) => {
+          if (ds.from.laaggroep !== laag.laaggroep) {
+            return true;
+          } else {
+            return false;
+          }
         }
-      }
+      )
     );
   }
 
@@ -326,40 +343,49 @@ export class LagenkiezerComponent
         ? "move"
         : "option.none";
     }
-    this.dragState.map((ds) => {
-      if (!isSource(laag)(ds) && ds.from.laaggroep === laag.laaggroep) {
-        this.dragState = option.some({
-          ...ds,
-          currentDrop: laag,
-        });
-      }
-    });
+    pipe(
+      this.dragState,
+      option.map((ds) => {
+        if (!isSource(laag)(ds) && ds.from.laaggroep === laag.laaggroep) {
+          this.dragState = option.some({
+            ...ds,
+            currentDrop: laag,
+          });
+        }
+      })
+    );
   }
 
   onDragOver(evt: DragEvent, laag: ToegevoegdeLaag) {
     if (this.isDropZone(laag)) {
       // enkel drop toelaten in zelfde groep
       evt.preventDefault();
-      this.dragState.map((ds) => {
-        this.dragState = option.some({
-          ...ds,
-          currentDrop: laag,
-        });
-      });
+      pipe(
+        this.dragState,
+        option.map((ds) => {
+          this.dragState = option.some({
+            ...ds,
+            currentDrop: laag,
+          });
+        })
+      );
     }
   }
 
   onDragLeave(laag: ToegevoegdeLaag) {
     // De current drop enkel aanpassen als er ondertussen nog geen dragenter was die al een andere laag als drop target
     // aangeduid heeft. Dat kan als we buiten de lijst gaan met de cursor.
-    this.dragState.map((ds) => {
-      if (isTarget(laag)(ds)) {
-        this.dragState = option.some({
-          ...ds,
-          currentDrop: ds.from,
-        });
-      }
-    });
+    pipe(
+      this.dragState,
+      option.map((ds) => {
+        if (isTarget(laag)(ds)) {
+          this.dragState = option.some({
+            ...ds,
+            currentDrop: ds.from,
+          });
+        }
+      })
+    );
   }
 
   onDrop(evt: DragEvent, laag: ToegevoegdeLaag) {
@@ -384,14 +410,17 @@ export class LagenkiezerComponent
         case "Bolletje":
           return `<svg class="legende-svg"><circle cx="12" cy="12" r="4" fill="${item.kleur}" class="legende-svg-item"/></svg>`;
         case "Lijn":
-          return item.achtergrondKleur.foldL(
-            () =>
-              `<svg class="legende-svg"><polygon points="0,8 24,8 24,16 0,16" fill="${item.kleur}" class="legende-svg-item"/></svg>`,
-            (achtergrondKleur) =>
-              `<svg class="legende-svg">
+          return pipe(
+            item.achtergrondKleur,
+            option.fold(
+              () =>
+                `<svg class="legende-svg"><polygon points="0,8 24,8 24,16 0,16" fill="${item.kleur}" class="legende-svg-item"/></svg>`,
+              (achtergrondKleur) =>
+                `<svg class="legende-svg">
                 <polygon points="0,8 24,8 24,16 0,16" fill="${achtergrondKleur}"/>
                 <polygon points="0,10 24,10 24,14 0,14" fill="${item.kleur}"/>
                </svg>`
+            )
           );
         case "Polygoon":
           // eslint-disable-next-line max-len

@@ -1,5 +1,7 @@
-import { Function1, identity } from "fp-ts/lib/function";
+import { identity } from "fp-ts/lib/function";
 
+import { either } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "../util/openlayers-compat";
 
 import { Interpreter } from "./json-object-interpreting";
@@ -12,8 +14,9 @@ import { ImageStyle, SizeType } from "./stijl-static-types";
 //
 
 export const jsonAwvV0Style: Interpreter<ol.style.Style> = (style) =>
-  AwvV0StaticStyleInterpreters.jsonAwvV0Definition(style).map(
-    StaticStyleEncoders.awvV0Style.encode
+  pipe(
+    AwvV0StaticStyleInterpreters.jsonAwvV0Definition(style),
+    either.map(StaticStyleEncoders.awvV0Style.encode)
   );
 
 export const jsonAwvV0Definition: Interpreter<ol.style.Style> = st.field(
@@ -157,7 +160,7 @@ export namespace AwvV0StaticStyleInterpreters {
 
 export namespace StaticStyleEncoders {
   export interface Encoder<I, O> {
-    encode: Function1<I, O>;
+    encode: (i: I) => O;
   }
 
   const Color: Encoder<string, string | ol.Color> = {

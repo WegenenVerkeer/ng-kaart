@@ -1,6 +1,6 @@
 import { Component, NgZone } from "@angular/core";
 import { eq, map as maps, option } from "fp-ts";
-import { Function1, Function2 } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import {
   distinctUntilChanged,
@@ -35,7 +35,7 @@ export interface MarkeerKaartklikOpties extends OptiesRecord {
   readonly id: string;
 }
 
-const featureGen: Function2<ol.Coordinate, ss.Stylish, ol.Feature> = (
+const featureGen: (location: ol.Coordinate, style: ss.Stylish) => ol.Feature = (
   location,
   style
 ) => {
@@ -88,10 +88,9 @@ const markerLayer: ke.VectorLaag = {
   filter: option.none,
 };
 
-const vervangFeatures: Function1<
-  ol.Feature[],
-  prt.VervangFeaturesCmd<KaartInternalMsg>
-> = (features) => ({
+const vervangFeatures: (
+  features: ol.Feature[]
+) => prt.VervangFeaturesCmd<KaartInternalMsg> = (features) => ({
   type: "VervangFeatures",
   titel: markerLayer.titel,
   features: features,
@@ -142,16 +141,16 @@ export class MarkeerKaartklikComponent extends KaartChildDirective {
     );
     const kaartKlik$ = this.modelChanges.kaartKlikLocatie$;
     const otherActive$ = this.modelChanges.actieveModus$.pipe(
-      map((maybeModus) => maybeModus.isSome())
+      map((maybeModus) => option.isSome(maybeModus))
     );
 
     const identifyBoodschapGesloten$ = this.internalMessage$.pipe(
       ofType<InfoBoodschappenMsg>("InfoBoodschappen"), // enkel de lijst van boodschappen intereseert ons
-      map(
-        (msg) =>
-          maps
-            .lookup(eq.eqString)("kaart_bevragen", msg.infoBoodschappen)
-            .isSome() // was er een kaart bevragen boodschap bij?
+      map((msg) =>
+        pipe(
+          maps.lookup(eq.eqString)("kaart_bevragen", msg.infoBoodschappen),
+          option.isSome // was er een kaart bevragen boodschap bij?
+        )
       ),
       distinctUntilChanged(),
       pairwise(), // combineer met de vorige

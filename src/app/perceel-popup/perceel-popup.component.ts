@@ -1,5 +1,6 @@
 import { Component, OnChanges } from "@angular/core";
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/function";
 import * as ol from "projects/ng-kaart/src/lib/util/openlayers-compat";
 
 @Component({
@@ -23,10 +24,13 @@ export class PerceelPopupComponent implements OnChanges {
 
   update(feature: option.Option<ol.Feature>) {
     this.feature = feature;
-    this.toggleVisibility(this.feature.isSome());
-    this.text = this.feature
-      .chain((f) => option.fromNullable(f.get("id")))
-      .getOrElse("");
+    this.toggleVisibility(option.isSome(this.feature));
+    this.text = pipe(
+      option.chain((f: ol.Feature) => option.fromNullable(f.get("id")))(
+        this.feature
+      ),
+      option.getOrElse(() => "")
+    );
   }
 
   private toggleVisibility(onOff) {

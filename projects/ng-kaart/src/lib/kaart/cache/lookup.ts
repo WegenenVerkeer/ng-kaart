@@ -1,4 +1,4 @@
-import { Function1, Function2, Lazy, Predicate } from "fp-ts/lib/function";
+import { Lazy, Predicate } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { filter, map } from "rxjs/operators";
 
@@ -8,25 +8,20 @@ import * as ol from "../../util/openlayers-compat";
 
 export interface CachedFeatureLookup {
   readonly all$: Lazy<rx.Observable<ol.Feature>>;
-  readonly filtered$: Function1<
-    Predicate<ol.Feature>,
-    rx.Observable<ol.Feature>
-  >; // een shorthand voor all + filter
-  readonly inExtent$: Function1<ol.Extent, rx.Observable<ol.Feature>>;
-  readonly filteredInExtent$: Function2<
-    ol.Extent,
-    Predicate<ol.Feature>,
-    rx.Observable<ol.Feature>
-  >;
-  readonly byIds$: Function1<(number | string)[], rx.Observable<ol.Feature>>;
+  readonly filtered$: (pf: Predicate<ol.Feature>) => rx.Observable<ol.Feature>; // een shorthand voor all + filter
+  readonly inExtent$: (e: ol.Extent) => rx.Observable<ol.Feature>;
+  readonly filteredInExtent$: (
+    e: ol.Extent,
+    pf: Predicate<ol.Feature>
+  ) => rx.Observable<ol.Feature>;
+  readonly byIds$: (as: (number | string)[]) => rx.Observable<ol.Feature>;
 }
 
 export namespace CachedFeatureLookup {
-  export const fromObjectStore: Function2<
-    string,
-    string,
-    CachedFeatureLookup
-  > = (storeName, laagnaam) => {
+  export const fromObjectStore: (
+    storeName: string,
+    laagnaam: string
+  ) => CachedFeatureLookup = (storeName, laagnaam) => {
     const all$ = () =>
       geojsonStore.getAllFeatures(storeName).pipe(map(toOlFeature(laagnaam)));
     const inExtent$ = (extent: ol.Extent) =>
@@ -45,7 +40,7 @@ export namespace CachedFeatureLookup {
     };
   };
 
-  export const fromFailureMessage: Function1<string, CachedFeatureLookup> = (
+  export const fromFailureMessage: (msg: string) => CachedFeatureLookup = (
     msg
   ) => {
     const errGen = () =>

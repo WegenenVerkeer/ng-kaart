@@ -1,6 +1,6 @@
 import { Component, Input, NgZone } from "@angular/core";
 import { option } from "fp-ts";
-import { Function1 } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import { matchGeometryType } from "../../util";
 import { isObject } from "../../util/object";
@@ -14,28 +14,39 @@ import {
   VeldinfoMap,
 } from "./kaart-info-boodschap-veldinfo.component";
 
-const liftProperties: Function1<ol.Feature, Properties> = (feature) => {
+const liftProperties: (f: ol.Feature) => Properties = (feature) => {
   const maybeOlProperties = option.fromNullable(feature.getProperties());
-  const logicalProperties = maybeOlProperties
-    .map((obj) => obj["properties"])
-    .filter(isObject)
-    .getOrElse({});
-  const geometryProperties = maybeOlProperties
-    .map((obj) => obj["geometry"])
-    .filter((obj) => obj instanceof ol.geom.Geometry)
-    .fold<Properties>({}, (obj) => {
-      const geometry = obj as ol.geom.Geometry;
-      return {
-        bbox: geometry.getExtent(),
-        type: geometry.getType(),
-        location: matchGeometryType(geometry, {
-          point: (p) => p.getCoordinates(),
-          circle: (p) => p.getCenter(),
-          // Voor andere types kan ook op een of andere manier een locatie vooropgesteld worden, maar overhead die practisch nooit nodig is
-        }).toUndefined(),
-        geometry,
-      };
-    });
+  const logicalProperties = pipe(
+    maybeOlProperties,
+    option.map((obj) => obj["properties"]),
+    option.filter(isObject),
+    option.getOrElse(() => ({}))
+  );
+  const geometryProperties = pipe(
+    maybeOlProperties,
+    option.map((obj) => obj["geometry"]),
+    option.filter((obj) => obj instanceof ol.geom.Geometry),
+    option.fold(
+      () => ({}),
+      (obj) => {
+        const geometry = obj as ol.geom.Geometry;
+        return {
+          bbox: geometry.getExtent(),
+          type: geometry.getType(),
+          location: pipe(
+            matchGeometryType(geometry, {
+              point: (p) => p.getCoordinates(),
+              circle: (p) => p.getCenter(),
+              // Voor andere types kan ook op een of andere manier een locatie vooropgesteld worden,
+              // maar overhead die practisch nooit nodig is
+            }),
+            option.toUndefined
+          ),
+          geometry,
+        };
+      }
+    )
+  );
   return {
     // geometry eerst zodat evt. geometry in logicalProperties voorrang heeft
     geometry: { ...geometryProperties },
@@ -56,9 +67,11 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildDirective {
   @Input()
   set boodschap(bsch: InfoBoodschapIdentify) {
     this.properties = liftProperties(bsch.feature);
-    this.veldbeschrijvingen = bsch.laag
-      .map((vectorlaag) => vectorlaag.velden)
-      .getOrElse(new Map());
+    this.veldbeschrijvingen = pipe(
+      bsch.laag,
+      option.map((vectorlaag) => vectorlaag.velden),
+      option.getOrElse(() => new Map())
+    );
   }
 
   constructor(parent: KaartComponent, zone: NgZone) {

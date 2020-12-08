@@ -1,15 +1,17 @@
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 
 const sendMessage = (message: any) => {
-  option
-    .fromNullable(navigator.serviceWorker)
-    .chain((sw) => option.fromNullable(sw.controller))
-    .map((swc) => swc.postMessage(message))
-    .orElse(() => {
+  pipe(
+    option.fromNullable(navigator.serviceWorker),
+    option.chain((sw) => option.fromNullable(sw.controller)),
+    option.map((swc) => swc.postMessage(message)),
+    option.alt(() => {
       throw new Error(
         "Geen navigator.serviceWorker.controller object gevonden. Werd ng-kaart-service-worker.js correct geïnitialiseerd?"
       );
-    });
+    })
+  );
 };
 
 export const registreerRoute = (cacheName: any, requestPattern: string) => {

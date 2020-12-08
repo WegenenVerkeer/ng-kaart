@@ -1,6 +1,5 @@
 import { Component, ElementRef, Injector, Input } from "@angular/core";
 import { array, option } from "fp-ts";
-import { concat } from "fp-ts/lib/function";
 import { delay } from "rxjs/operators";
 
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
@@ -79,8 +78,7 @@ export class ClassicZoekerComponent extends ClassicUIElementSelectorDirective {
     this.initialising$.pipe(delay(100)).subscribe(() => {
       // Een beetje een ingewikkelde constructie, maar we willen dat we zowel met deze tag alleen kunnen werken (backwards compatibility)
       // als met deze tag + child tags
-      const inputZoekers = concat(
-        toArray(option.fromNullable(this.zoeker)),
+      const inputZoekers = toArray(option.fromNullable(this.zoeker)).concat(
         this.zoekers
       );
       const stdZoekers: ZoekerMetWeergaveopties[] = [
@@ -108,7 +106,9 @@ export class ClassicZoekerComponent extends ClassicUIElementSelectorDirective {
 
   removeZoeker(zoeker: Zoeker): void {
     forEach(
-      array.findFirst(this.registered, (zmw) => zmw.zoeker === zoeker),
+      array.findFirst((zmw: ZoekerMetWeergaveopties) => zmw.zoeker === zoeker)(
+        this.registered
+      ),
       (toDelete) => {
         this.registered = this.registered.filter((zmw) => zmw !== toDelete);
         this.deregisterZoeker(toDelete);

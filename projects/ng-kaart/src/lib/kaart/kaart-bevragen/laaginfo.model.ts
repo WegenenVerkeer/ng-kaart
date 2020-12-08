@@ -1,5 +1,5 @@
 import { either, option } from "fp-ts";
-import { Function1, Function2 } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 
 import * as ol from "../../util/openlayers-compat";
@@ -27,15 +27,14 @@ export interface LaagLocationInfoService {
   infoByLocation$(location: ol.Coordinate): rx.Observable<LaagLocationInfo>;
 }
 
-export const TextLaagLocationInfo: Function1<string, TextLaagLocationInfo> = (
+export const TextLaagLocationInfo: (text: string) => TextLaagLocationInfo = (
   text
 ) => ({ type: "TextLaagLocationInfo", text: text });
 
-export const VeldinfoLaagLocationInfo: Function2<
-  Veldwaarde[],
-  VeldInfo[],
-  VeldinfoLaagLocationInfo
-> = (waarden, veldinfos) => ({
+export const VeldinfoLaagLocationInfo: (
+  waarden: Veldwaarde[],
+  veldinfos: VeldInfo[]
+) => VeldinfoLaagLocationInfo = (waarden, veldinfos) => ({
   type: "VeldinfoLaagLocationInfo",
   waarden: waarden,
   veldinfos: veldinfos,
@@ -94,7 +93,8 @@ export interface KaartLocaties {
 export const progressFailure: <A>(
   _: Progress<either.Either<BevragenErrorReason, A>>
 ) => BevragenErrorReason | undefined = (p) =>
-  progress
-    .toOption(p)
-    .chain((e) => option.fromEither(e.swap()))
-    .toUndefined();
+  pipe(
+    progress.toOption(p),
+    option.chain((e) => option.fromEither(either.swap(e))),
+    option.toUndefined
+  );

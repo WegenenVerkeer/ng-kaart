@@ -1,6 +1,7 @@
 import { Directive, NgZone } from "@angular/core";
 import { option } from "fp-ts";
 import { identity } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import {
   debounceTime,
@@ -36,9 +37,12 @@ export abstract class KaartModusDirective extends KaartChildDirective {
 
     const externIsActief$ = this.modelChanges.actieveModus$.pipe(
       map((maybeModus) =>
-        maybeModus.foldL(
-          () => this.isDefaultModus(),
-          (modus) => modus === this.modus()
+        pipe(
+          maybeModus,
+          option.fold(
+            () => this.isDefaultModus(),
+            (modus) => modus === this.modus()
+          )
         )
       )
     );

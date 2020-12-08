@@ -1,5 +1,5 @@
 import { eq, option } from "fp-ts";
-import { Function1, Lazy } from "fp-ts/lib/function";
+import { Lazy } from "fp-ts/lib/function";
 import { DateTime } from "luxon";
 
 import { Consumer1, Consumer2 } from "../util/function";
@@ -32,7 +32,7 @@ const ensureOption = (obj: unknown): unknown =>
 // We willen zo weinig mogelijk duplicatie in onze testen. Wat we parsen bevat enkel basis datatypes, geen Options. De
 // output echter, bevat wel Options. Voor de rest is echter alles gelijk. Daarom "fixen" we de velden waarvan we weten
 // dat het Optionals moeten zijn obv de ruwe waarde (als die er is).
-const fixOptionals: Function1<any, fltr.Filter> = (rawFilter) =>
+const fixOptionals: (rawFilter: any) => fltr.Filter = (rawFilter) =>
   (modifyKinded(rawFilter, {
     ExpressionFilter: (ef) => (ef.name = ensureOption(ef.name)),
     Property: (prop) => (prop.sqlFormat = ensureOption(prop.sqlFormat)),

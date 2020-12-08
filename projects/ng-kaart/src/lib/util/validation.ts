@@ -1,41 +1,41 @@
-import {
-  applicative,
-  array,
-  monad,
-  option,
-  semigroup,
-  traversable,
-  validation,
-} from "fp-ts";
-import { Function1, Predicate, Refinement } from "fp-ts/lib/function";
+import { applicative, array, either, monad, option, semigroup } from "fp-ts";
+import { getSemigroup } from "fp-ts/lib/NonEmptyArray";
+import { Predicate, Refinement } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 
-export type ErrValidation<A> = validation.Validation<string[], A>;
-export type Validator<A, B> = Function1<A, ErrValidation<B>>;
+export type ErrValidation<A> = either.Either<string[], A>;
+export type Validator<A, B> = (a: A) => ErrValidation<B>;
 
-export const validationSemigroup = semigroup.getArraySemigroup<string>();
+export const validationSemigroup = getSemigroup<string>();
 export const validationAp: applicative.Applicative2C<
-  validation.URI,
+  either.URI,
   string[]
-> = validation.getApplicative(validationSemigroup);
+> = either.getApplicativeValidation(validationSemigroup);
 
-export const allOf = traversable.sequence(validationAp, array.array);
+export const allOf = array.sequence(validationAp);
 
 export const success = <A>(a: A): ErrValidation<A> =>
-  validation.success<string[], A>(a);
+  either.right<string[], A>(a);
 export const failure = <A>(err: string): ErrValidation<A> =>
-  validation.failure<string[], A>([err]);
+  either.left<string[], A>([err]);
 
 export function fromOption<A>(
   maybe: option.Option<A>,
   errorMsg: string
 ): ErrValidation<A> {
-  return maybe
-    .map((t) => validation.success<string[], A>(t))
-    .getOrElse(validation.failure([errorMsg]));
+  return pipe(
+    maybe,
+    option.map((t) => success(t)),
+    option.getOrElse(() => failure(errorMsg))
+  );
 }
 
 export function toOption<A>(validation: ErrValidation<A>): option.Option<A> {
-  return validation.map(option.some).getOrElse(option.none);
+  return pipe(
+    validation,
+    either.map(option.some),
+    either.getOrElse(() => option.none)
+  );
 }
 
 export function fromPredicate<A, B extends A>(
@@ -53,20 +53,17 @@ export function fromPredicate<A>(
   pred: Predicate<A>,
   errMsg: string
 ): ErrValidation<A> {
-  return validation.fromPredicate(pred, () => [errMsg])(a);
+  return either.fromPredicate(pred, () => [errMsg])(a);
 }
 
 export function fromBoolean(
   thruth: boolean,
   errMsg: string
-): validation.Validation<string[], {}> {
-  return thruth ? validation.success({}) : validation.failure([errMsg]);
+): either.Either<string[], {}> {
+  return thruth ? success({}) : failure(errMsg);
 }
 
-export const validationMonad: monad.Monad2C<
-  validation.URI,
-  string[]
-> = validation.getMonad(semigroup.getArraySemigroup<string>());
+export const validationMonad = either.getValidation(validationSemigroup);
 
 export const validationChain: <A, B>(
   fa: ErrValidation<A>,

@@ -1,5 +1,6 @@
 import { ElementRef, Injectable, Injector } from "@angular/core";
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import { classicLogger } from "./log";
 
@@ -25,8 +26,14 @@ export class KaartClassicLocatorService<T extends object = any> {
     el: ElementRef<Element>
   ): T {
     const parentEl = this.findContainerElement(el.nativeElement, component);
-    if (parentEl.map((el) => this.registry.has(el)).getOrElse(false)) {
-      const foundComponent = this.registry.get(parentEl.toNullable()!)!;
+    if (
+      pipe(
+        parentEl,
+        option.map((el) => this.registry.has(el)),
+        option.getOrElse(() => false)
+      )
+    ) {
+      const foundComponent = this.registry.get(option.toNullable(parentEl)!)!;
       classicLogger.debug(
         `Component ${foundComponent.constructor.name} gevonden voor tag ${el.nativeElement.tagName}`
       );

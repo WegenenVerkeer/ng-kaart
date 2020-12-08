@@ -1,5 +1,7 @@
-import { array, option, traversable, validation } from "fp-ts";
+import { array, either, option, traversable } from "fp-ts";
 import { identity, Refinement } from "fp-ts/lib/function";
+import { NonEmptyArray } from "fp-ts/lib/NonEmptyArray";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import { kaartLogger } from "../kaart/log";
 import {
@@ -11,7 +13,7 @@ import {
 } from "../util/validation";
 
 export type Error = string;
-export type Validation<T> = validation.Validation<Error[], T>;
+export type Validation<T> = either.Either<Error[], T>;
 export type Interpreter<T> = (obj: Object) => Validation<T>;
 
 /// ////////////////////////////////
@@ -77,10 +79,12 @@ export function at<T>(
   nest: Array<string>,
   interpreter: Interpreter<T>
 ): Interpreter<T> {
-  return array.fold(
-    array.reverse(nest), //
-    interpreter,
-    (head, tail) => at(tail, field(head, interpreter))
+  return pipe(
+    array.reverse(nest),
+    array.foldLeft(
+      () => interpreter,
+      (head, tail) => at(tail, field(head, interpreter))
+    )
   );
 }
 
@@ -98,7 +102,7 @@ export function optField<T>(
   // Kan ook met een fold op field, maar gezien deze methode meer gebruikt wordt en de velden doorgaans undefined zijn, is dit effciënter.
   return (json: Object) =>
     json.hasOwnProperty(name) && json[name] !== undefined
-      ? interpreter(json[name]).map(option.some)
+      ? pipe(interpreter(json[name]), either.map(option.some))
       : ok(option.none);
 }
 
@@ -130,7 +134,10 @@ function validateArray<T>(
     ok(new Array<T>()),
     (vts: Validation<Array<T>>, json: Object) =>
       validationChain(vts, (ts) =>
-        interpreter(json).map((t) => array.snoc(ts, t))
+        pipe(
+          interpreter(json),
+          either.map((t) => array.snoc(ts, t))
+        )
       )
   );
 }
@@ -182,8 +189,9 @@ export function atMostOneOf<T>(
     const validations: Validation<Array<option.Option<T>>> = sequence(
       interpreters.map((i) => i(json))
     );
-    const presentValidations: Validation<Array<T>> = validations.map(
-      array.catOptions
+    const presentValidations: Validation<Array<T>> = pipe(
+      validations,
+      either.map(array.compact)
     );
     return validationChain(presentValidations, (values) => {
       switch (values.length) {
@@ -211,8 +219,9 @@ export function atMostOneDefined<T>(
     );
     const isDefined: Refinement<T | undefined, T> = (t): t is T =>
       t !== undefined;
-    const presentValidations: Validation<Array<T>> = validations.map((vals) =>
-      array.filter(vals, isDefined)
+    const presentValidations: Validation<Array<T>> = pipe(
+      validations,
+      either.map((vals) => pipe(vals, array.filter(isDefined)))
     );
     return validationChain(presentValidations, (values) => {
       switch (values.length) {
@@ -234,12 +243,18 @@ export function firstOf<T>(...interpreters: Interpreter<T>[]): Interpreter<T> {
   return (json: Object) => {
     return interpreters.reduce(
       (validation, interpreter) =>
-        validation.fold(
-          (allMsgs) =>
-            interpreter(json).mapFailure((msgs) =>
-              validationSemigroup.concat(allMsgs, msgs)
-            ), // foutboodschappen verzamelen
-          success
+        pipe(
+          validation,
+          either.fold(
+            (allMsgs: NonEmptyArray<string>) =>
+              pipe(
+                interpreter(json),
+                either.mapLeft((msgs: NonEmptyArray<string>) =>
+                  validationSemigroup.concat(allMsgs, msgs)
+                )
+              ), // foutboodschappen verzamelen
+            success
+          )
         ),
       fail<T>("Er moet 1 waarde aanwezig zijn")
     );
@@ -258,7 +273,7 @@ export function map<A1, Value>(
   f: (a1: A1) => Value,
   interpreter: Interpreter<A1>
 ): Interpreter<Value> {
-  return (json: Object) => interpreter(json).map(f);
+  return (json: Object) => pipe(interpreter(json), either.map(f));
 }
 
 export function map2<A1, A2, Value>(
@@ -268,7 +283,10 @@ export function map2<A1, A2, Value>(
 ): Interpreter<Value> {
   return (json: Object) =>
     validationChain(interpreter1(json), (a1) =>
-      interpreter2(json).map((a2) => f(a1, a2))
+      pipe(
+        interpreter2(json),
+        either.map((a2) => f(a1, a2))
+      )
     );
 }
 
@@ -281,7 +299,10 @@ export function map3<A1, A2, A3, Value>(
   return (json: Object) =>
     validationChain(interpreter1(json), (a1) =>
       validationChain(interpreter2(json), (a2) =>
-        interpreter3(json).map((a3) => f(a1, a2, a3))
+        pipe(
+          interpreter3(json),
+          either.map((a3) => f(a1, a2, a3))
+        )
       )
     );
 }
@@ -297,11 +318,10 @@ export function map4<A1, A2, A3, A4, Value>(
     validationChain(
       map2((a1: A1, a2: A2) => [a1, a2], interpreter1, interpreter2)(json),
       ([a1, a2]: [A1, A2]) =>
-        map2(
-          (a3: A3, a4: A4) => [a3, a4],
-          interpreter3,
-          interpreter4
-        )(json).map(([a3, a4]: [A3, A4]) => f(a1, a2, a3, a4))
+        pipe(
+          map2((a3: A3, a4: A4) => [a3, a4], interpreter3, interpreter4)(json),
+          either.map(([a3, a4]: [A3, A4]) => f(a1, a2, a3, a4))
+        )
     );
 }
 
@@ -317,12 +337,15 @@ export function map5<A1, A2, A3, A4, A5, Value>(
     validationChain(
       map2((a1: A1, a2: A2) => [a1, a2], interpreter1, interpreter2)(json),
       ([a1, a2]: [A1, A2]) =>
-        map3(
-          (a3: A3, a4: A4, a5: A5) => [a3, a4, a5],
-          interpreter3,
-          interpreter4,
-          interpreter5
-        )(json).map(([a3, a4, a5]: [A3, A4, A5]) => f(a1, a2, a3, a4, a5))
+        pipe(
+          map3(
+            (a3: A3, a4: A4, a5: A5) => [a3, a4, a5],
+            interpreter3,
+            interpreter4,
+            interpreter5
+          )(json),
+          either.map(([a3, a4, a5]: [A3, A4, A5]) => f(a1, a2, a3, a4, a5))
+        )
     );
 }
 
@@ -344,12 +367,15 @@ export function map6<A1, A2, A3, A4, A5, A6, Value>(
         interpreter3
       )(json),
       ([a1, a2, a3]: [A1, A2, A3]) =>
-        map3(
-          (a4: A4, a5: A5, a6: A6) => [a4, a5, a6],
-          interpreter4,
-          interpreter5,
-          interpreter6
-        )(json).map(([a4, a5, a6]: [A4, A5, A6]) => f(a1, a2, a3, a4, a5, a6))
+        pipe(
+          map3(
+            (a4: A4, a5: A5, a6: A6) => [a4, a5, a6],
+            interpreter4,
+            interpreter5,
+            interpreter6
+          )(json),
+          either.map(([a4, a5, a6]: [A4, A5, A6]) => f(a1, a2, a3, a4, a5, a6))
+        )
     );
 }
 
@@ -373,13 +399,16 @@ export function map7<A1, A2, A3, A4, A5, A6, A7, Value>(
         interpreter4
       )(json),
       ([a1, a2, a3, a4]: [A1, A2, A3, A4]) =>
-        map3(
-          (a5: A5, a6: A6, a7: A7) => [a5, a6, a7],
-          interpreter5,
-          interpreter6,
-          interpreter7
-        )(json).map(([a5, a6, a7]: [A5, A6, A7]) =>
-          f(a1, a2, a3, a4, a5, a6, a7)
+        pipe(
+          map3(
+            (a5: A5, a6: A6, a7: A7) => [a5, a6, a7],
+            interpreter5,
+            interpreter6,
+            interpreter7
+          )(json),
+          either.map(([a5, a6, a7]: [A5, A6, A7]) =>
+            f(a1, a2, a3, a4, a5, a6, a7)
+          )
         )
     );
 }
@@ -405,14 +434,17 @@ export function map8<A1, A2, A3, A4, A5, A6, A7, A8, Value>(
         interpreter4
       )(json),
       ([a1, a2, a3, a4]: [A1, A2, A3, A4]) =>
-        map4(
-          (a5: A5, a6: A6, a7: A7, a8: A8) => [a5, a6, a7, a8],
-          interpreter5,
-          interpreter6,
-          interpreter7,
-          interpreter8
-        )(json).map(([a5, a6, a7, a8]: [A5, A6, A7, A8]) =>
-          f(a1, a2, a3, a4, a5, a6, a7, a8)
+        pipe(
+          map4(
+            (a5: A5, a6: A6, a7: A7, a8: A8) => [a5, a6, a7, a8],
+            interpreter5,
+            interpreter6,
+            interpreter7,
+            interpreter8
+          )(json),
+          either.map(([a5, a6, a7, a8]: [A5, A6, A7, A8]) =>
+            f(a1, a2, a3, a4, a5, a6, a7, a8)
+          )
         )
     );
 }
@@ -450,14 +482,17 @@ export function map9<A1, A2, A3, A4, A5, A6, A7, A8, A9, Value>(
         interpreter5
       )(json),
       ([a1, a2, a3, a4, a5]: [A1, A2, A3, A4, A5]) =>
-        map4(
-          (a6: A6, a7: A7, a8: A8, a9: A9) => [a6, a7, a8, a9],
-          interpreter6,
-          interpreter7,
-          interpreter8,
-          interpreter9
-        )(json).map(([a6, a7, a8, a9]: [A6, A7, A8, A9]) =>
-          f(a1, a2, a3, a4, a5, a6, a7, a8, a9)
+        pipe(
+          map4(
+            (a6: A6, a7: A7, a8: A8, a9: A9) => [a6, a7, a8, a9],
+            interpreter6,
+            interpreter7,
+            interpreter8,
+            interpreter9
+          )(json),
+          either.map(([a6, a7, a8, a9]: [A6, A7, A8, A9]) =>
+            f(a1, a2, a3, a4, a5, a6, a7, a8, a9)
+          )
         )
     );
 }
@@ -497,15 +532,18 @@ export function map10<A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, Value>(
         interpreter5
       )(json),
       ([a1, a2, a3, a4, a5]: [A1, A2, A3, A4, A5]) =>
-        map5(
-          (a6: A6, a7: A7, a8: A8, a9: A9, a10: A10) => [a6, a7, a8, a9, a10],
-          interpreter6,
-          interpreter7,
-          interpreter8,
-          interpreter9,
-          interpreter10
-        )(json).map(([a6, a7, a8, a9, a10]: [A6, A7, A8, A9, A10]) =>
-          f(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+        pipe(
+          map5(
+            (a6: A6, a7: A7, a8: A8, a9: A9, a10: A10) => [a6, a7, a8, a9, a10],
+            interpreter6,
+            interpreter7,
+            interpreter8,
+            interpreter9,
+            interpreter10
+          )(json),
+          either.map(([a6, a7, a8, a9, a10]: [A6, A7, A8, A9, A10]) =>
+            f(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+          )
         )
     );
 }
@@ -555,21 +593,24 @@ export function map11<A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, Value>(
         interpreter6
       )(json),
       ([a1, a2, a3, a4, a5, a6]: [A1, A2, A3, A4, A5, A6]) =>
-        map5(
-          (a7: A7, a8: A8, a9: A9, a10: A10, a11: A11) => [
-            a7,
-            a8,
-            a9,
-            a10,
-            a11,
-          ],
-          interpreter7,
-          interpreter8,
-          interpreter9,
-          interpreter10,
-          interpreter11
-        )(json).map(([a7, a8, a9, a10, a11]: [A7, A8, A9, A10, A11]) =>
-          f(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+        pipe(
+          map5(
+            (a7: A7, a8: A8, a9: A9, a10: A10, a11: A11) => [
+              a7,
+              a8,
+              a9,
+              a10,
+              a11,
+            ],
+            interpreter7,
+            interpreter8,
+            interpreter9,
+            interpreter10,
+            interpreter11
+          )(json),
+          either.map(([a7, a8, a9, a10, a11]: [A7, A8, A9, A10, A11]) =>
+            f(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+          )
         )
     );
 }
@@ -642,14 +683,25 @@ function interpretOptionalRecord<A>(
         k
       ](json);
       // zet alle resultaten waarvoor de validation ok is
-      validationOutcome.map(
-        (maybeValue) => (result[k] = maybeValue.toUndefined())
+      pipe(
+        validationOutcome,
+        either.map(
+          (maybeValue) => (result[k] = pipe(maybeValue, option.toUndefined))
+        )
       ); // forEach
       // combineer alle fails, map de ok's weg (probleem is dat die allemaal een ander type hebben)
-      validations.push(validationOutcome.map(() => {}));
+      validations.push(
+        pipe(
+          validationOutcome,
+          either.map(() => {})
+        )
+      );
     }
     // De gesequencte validation is ok als alle deelvalidations ok zijn
-    return sequence(validations).map(() => result as A); // we hebben het echte resultaat al in de for loop gezet
+    return pipe(
+      sequence(validations),
+      either.map(() => result as A)
+    ); // we hebben het echte resultaat al in de for loop gezet
   };
 }
 
@@ -668,12 +720,23 @@ export function interpretRecord<A>(
       // noinspection JSUnfilteredForInLoop
       const validationOutcome: Validation<A[keyof A]> = record[k](json);
       // zet alle resultaten waarvoor de validation ok is
-      validationOutcome.map((value) => (result[k] = value)); // forEach
+      pipe(
+        validationOutcome,
+        either.map((value) => (result[k] = value))
+      ); // forEach
       // combineer alle fails, map de ok's weg (probleem is dat die allemaal een ander type hebben)
-      validations.push(validationOutcome.map(() => {}));
+      validations.push(
+        pipe(
+          validationOutcome,
+          either.map(() => {})
+        )
+      );
     }
     // De gesequencte validation is ok als alle deelvalidations ok zijn
-    return sequence(validations).map(() => result as A); // we hebben het echte resultaat al in de for loop gezet
+    return pipe(
+      sequence(validations),
+      either.map(() => result as A)
+    ); // we hebben het echte resultaat al in de for loop gezet
   };
 }
 
@@ -692,17 +755,28 @@ export function interpretUndefinedRecord<A>(
       // noinspection JSUnfilteredForInLoop
       const validationOutcome: Validation<A[keyof A]> = record[k](json);
       // zet alle resultaten waarvoor de validation ok is
-      validationOutcome.map((value) => (result[k] = value)); // forEach
+      pipe(
+        validationOutcome,
+        either.map((value) => (result[k] = value))
+      ); // forEach
       // combineer alle fails, map de ok's weg (probleem is dat die allemaal een ander type hebben)
-      validations.push(validationOutcome.map(() => {}));
+      validations.push(
+        pipe(
+          validationOutcome,
+          either.map(() => {})
+        )
+      );
     }
     // De gesequencte validation is ok als alle deelvalidations ok zijn
-    return sequence(validations).map(() => result as A); // we hebben het echte resultaat al in de for loop gezet
+    return pipe(
+      sequence(validations),
+      either.map(() => result as A)
+    ); // we hebben het echte resultaat al in de for loop gezet
   };
 }
 
 function sequence<T>(validations: Validation<T>[]): Validation<T[]> {
-  return traversable.sequence(validationAp, array.array)(validations);
+  return array.sequence(validationAp)(validations);
 }
 
 export function mapOptionRecord<A, B>(
@@ -725,11 +799,12 @@ export function byTypeDiscriminator<T>(
 ): Interpreter<T> {
   return (json: Object) => {
     return chain(field(discriminatorField, str), (kind: string) =>
-      option
-        .fromNullable(interpretersByKind[kind])
-        .getOrElse(() =>
+      pipe(
+        option.fromNullable(interpretersByKind[kind]),
+        option.getOrElse(() => () =>
           fail<T>(`Het typediscriminatieveld bevat een onbekend type '${kind}'`)
         )
+      )
     )(json);
   };
 }
@@ -757,7 +832,8 @@ export function mapFailure<T>(
   interpreter: Interpreter<T>,
   failureMsgF: (msgs: string[]) => string[]
 ): Interpreter<T> {
-  return (json: Object) => interpreter(json).bimap(failureMsgF, identity);
+  return (json: Object) =>
+    pipe(interpreter(json), either.bimap(failureMsgF, identity));
 }
 
 export function mapFailureTo<T>(

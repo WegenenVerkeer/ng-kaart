@@ -1,5 +1,4 @@
 import { option } from "fp-ts";
-import { Function1 } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { delay } from "rxjs/operators";
 
@@ -18,7 +17,7 @@ import {
 require("material-design-icons/toggle/svg/production/ic_star_border_24px.svg");
 require("material-design-icons/toggle/svg/production/ic_star_24px.svg");
 
-const randomResultaat: Function1<string, ZoekKaartResultaat> = (color) => {
+const randomResultaat: (color: string) => ZoekKaartResultaat = (color) => {
   const center = [
     100000 + Math.random() * 80000,
     175000 + Math.random() * 30000,

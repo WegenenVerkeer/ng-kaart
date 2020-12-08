@@ -1,4 +1,4 @@
-import { option } from "fp-ts";
+import { either, option } from "fp-ts";
 
 import * as ol from "../util/openlayers-compat";
 
@@ -113,8 +113,8 @@ export const kaartLogOnlyWrapper: prt.ValidationWrapper<
   any,
   KaartInternalMsg
 > = (v: prt.KaartCmdValidation<any>) => {
-  if (v.isFailure()) {
-    kaartLogger.error("Een intern command gaf een fout", v.value);
+  if (either.isLeft(v)) {
+    kaartLogger.error("Een intern command gaf een fout", v.left);
   }
   return {
     type: "KaartInternal",

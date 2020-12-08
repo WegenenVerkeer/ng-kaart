@@ -1,15 +1,6 @@
 import { array, eq, option } from "fp-ts";
-import {
-  Curried2,
-  Endomorphism,
-  Function1,
-  Function2,
-  Function3,
-  Function4,
-  Function5,
-  Predicate,
-  Refinement,
-} from "fp-ts/lib/function";
+import { Endomorphism, Predicate, Refinement } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import { Lens, Optional } from "monocle-ts";
 
 import * as clr from "../../stijl/colour";
@@ -65,17 +56,19 @@ export interface KleurPerVeldwaarde {
 //
 
 export namespace VeldwaardeKleur {
-  export const create: Function2<sft.ValueType, clr.Kleur, VeldwaardeKleur> = (
-    waarde,
-    kleur
-  ) => ({
+  export const create: (
+    waarde: sft.ValueType,
+    kleur: clr.Kleur
+  ) => VeldwaardeKleur = (waarde, kleur) => ({
     waarde: waarde,
     kleur: kleur,
   });
-  export const waarde: Lens<VeldwaardeKleur, sft.ValueType> = Lens.fromProp(
-    "waarde"
-  );
-  export const kleur: Lens<VeldwaardeKleur, clr.Kleur> = Lens.fromProp("kleur");
+  export const waarde: Lens<VeldwaardeKleur, sft.ValueType> = Lens.fromProp<
+    VeldwaardeKleur
+  >()("waarde");
+  export const kleur: Lens<VeldwaardeKleur, clr.Kleur> = Lens.fromProp<
+    VeldwaardeKleur
+  >()("kleur");
 
   export const getEq: eq.Eq<VeldwaardeKleur> = eq.getStructEq({
     waarde: eq.eqString,
@@ -84,14 +77,19 @@ export namespace VeldwaardeKleur {
 }
 
 export namespace VeldProps {
-  export const create: Function5<
-    string,
-    string,
-    ke.VeldType,
-    sft.TypeType,
-    sft.ValueType[],
-    VeldProps
-  > = (naam, label, weergavetype, expressietype, uniekeWaarden) => ({
+  export const create: (
+    naam: string,
+    label: string,
+    weergavetype: ke.VeldType,
+    expressietype: sft.TypeType,
+    uniekeWaarden: sft.ValueType[]
+  ) => VeldProps = (
+    naam,
+    label,
+    weergavetype,
+    expressietype,
+    uniekeWaarden
+  ) => ({
     naam: naam,
     label: label,
     weergavetype: weergavetype,
@@ -103,7 +101,7 @@ export namespace VeldProps {
     arrays.isArray(veld.uniekeWaarden) &&
     arrays.hasLengthBetween(1, 35)(veld.uniekeWaarden);
 
-  const convertType: Function1<ke.VeldType, option.Option<sft.TypeType>> = (
+  const convertType: (arg: ke.VeldType) => option.Option<sft.TypeType> = (
     vt
   ) => {
     switch (vt) {
@@ -119,9 +117,9 @@ export namespace VeldProps {
         return option.none;
     }
   };
-  const convertData: Curried2<sft.TypeType, string, sft.ValueType> = (
-    expType
-  ) => (waarde) => {
+  const convertData: (
+    expType: sft.TypeType
+  ) => (waarde: string) => sft.ValueType = (expType) => (waarde) => {
     switch (expType) {
       case "boolean":
         return waarde === "true"; // onze server stuurt enkel lower case
@@ -132,24 +130,29 @@ export namespace VeldProps {
     }
   };
 
-  export const fromVeldinfo: Function1<
-    ke.VeldInfo,
-    option.Option<VeldProps>
-  > = (veldinfo) =>
-    option
-      .fromPredicate(hasRightNumberOfUniekeWaarden)(veldinfo) //
-      .chain((veld) =>
-        convertType(veld.type) //
-          .map((exprtype) =>
+  export const fromVeldinfo: (arg: ke.VeldInfo) => option.Option<VeldProps> = (
+    veldinfo
+  ) =>
+    pipe(
+      option.fromPredicate(hasRightNumberOfUniekeWaarden)(veldinfo),
+      option.chain((veld) =>
+        pipe(
+          convertType(veld.type),
+          option.map((exprtype) =>
             create(
               veld.naam,
-              option.fromNullable(veld.label).getOrElse(""),
+              pipe(
+                option.fromNullable(veld.label),
+                option.getOrElse(() => "")
+              ),
               veld.type,
               exprtype,
               veld.uniekeWaarden!.map(convertData(exprtype))
             )
           )
-      );
+        )
+      )
+    );
   export const setoidWithoutUniekeWaarden: eq.Eq<VeldProps> = eq.getStructEq({
     expressietype: eq.eqString,
     weergavetype: eq.eqString,
@@ -169,7 +172,7 @@ export namespace LaagkleurInstellingen {
 }
 
 export namespace EnkeleKleur {
-  export const create: Function2<boolean, clr.Kleur, EnkeleKleur> = (
+  export const create: (afgeleid: boolean, kleur: clr.Kleur) => EnkeleKleur = (
     afgeleid,
     kleur
   ) => ({
@@ -178,9 +181,9 @@ export namespace EnkeleKleur {
     afgeleid: afgeleid,
   });
 
-  export const createAfgeleid: Function1<clr.Kleur, EnkeleKleur> = (kleur) =>
+  export const createAfgeleid: (kleur: clr.Kleur) => EnkeleKleur = (kleur) =>
     create(true, kleur);
-  export const createSynthetisch: Function1<clr.Kleur, EnkeleKleur> = (kleur) =>
+  export const createSynthetisch: (kleur: clr.Kleur) => EnkeleKleur = (kleur) =>
     create(false, kleur);
 
   export const setoid: eq.Eq<EnkeleKleur> = eq.getStructEq({
@@ -188,7 +191,9 @@ export namespace EnkeleKleur {
     afgeleid: eq.eqBoolean,
   });
 
-  const kleurLens: Lens<EnkeleKleur, clr.Kleur> = Lens.fromProp("kleur");
+  const kleurLens: Lens<EnkeleKleur, clr.Kleur> = Lens.fromProp<EnkeleKleur>()(
+    "kleur"
+  );
 
   export const zetKleur: ReduceFunction<
     EnkeleKleur,
@@ -196,19 +201,19 @@ export namespace EnkeleKleur {
   > = reducerFromLens(kleurLens);
 
   export const makeAfgeleid: Endomorphism<EnkeleKleur> = Lens.fromProp<
-    EnkeleKleur,
-    "afgeleid"
-  >("afgeleid").set(true);
+    EnkeleKleur
+  >()("afgeleid")
+    .asSetter()
+    .set(true);
 }
 
 export namespace KleurPerVeldwaarde {
-  export const create: Function4<
-    boolean,
-    VeldProps,
-    VeldwaardeKleur[],
-    clr.Kleur,
-    KleurPerVeldwaarde
-  > = (afgeleid, veld, waardekleuren, terugvalkleur) => ({
+  export const create: (
+    afgeleid: boolean,
+    veld: VeldProps,
+    waardekleuren: VeldwaardeKleur[],
+    terugvalkleur: clr.Kleur
+  ) => KleurPerVeldwaarde = (afgeleid, veld, waardekleuren, terugvalkleur) => ({
     type: "perVeldwaarde",
     afgeleid: afgeleid,
     veld: veld,
@@ -216,19 +221,18 @@ export namespace KleurPerVeldwaarde {
     terugvalkleur: terugvalkleur,
   });
 
-  export const createAfgeleid: Function3<
-    VeldProps,
-    VeldwaardeKleur[],
-    clr.Kleur,
-    KleurPerVeldwaarde
-  > = (veld, waardekleuren, terugvalkleur) =>
+  export const createAfgeleid: (
+    veld: VeldProps,
+    waardekleuren: VeldwaardeKleur[],
+    terugvalkleur: clr.Kleur
+  ) => KleurPerVeldwaarde = (veld, waardekleuren, terugvalkleur) =>
     create(true, veld, waardekleuren, terugvalkleur);
-  export const createSynthetisch: Function3<
-    VeldProps,
-    VeldwaardeKleur[],
-    clr.Kleur,
-    KleurPerVeldwaarde
-  > = (veld, waardekleuren, terugvalkleur) =>
+
+  export const createSynthetisch: (
+    veld: VeldProps,
+    waardekleuren: VeldwaardeKleur[],
+    terugvalkleur: clr.Kleur
+  ) => KleurPerVeldwaarde = (veld, waardekleuren, terugvalkleur) =>
     create(false, veld, waardekleuren, terugvalkleur);
 
   export const setoid: eq.Eq<KleurPerVeldwaarde> = eq.getStructEq({
@@ -240,34 +244,32 @@ export namespace KleurPerVeldwaarde {
   const waardekleurenLens: Lens<
     KleurPerVeldwaarde,
     VeldwaardeKleur[]
-  > = Lens.fromProp("waardekleuren");
-  const terugvalKleurLens: Lens<KleurPerVeldwaarde, clr.Kleur> = Lens.fromProp(
-    "terugvalkleur"
-  );
+  > = Lens.fromProp<KleurPerVeldwaarde>()("waardekleuren");
+  const terugvalKleurLens: Lens<KleurPerVeldwaarde, clr.Kleur> = Lens.fromProp<
+    KleurPerVeldwaarde
+  >()("terugvalkleur");
 
-  const findVeldwaardeKleurByWaarde: Curried2<
-    sft.ValueType,
-    VeldwaardeKleur[],
-    option.Option<VeldwaardeKleur>
-  > = (waarde) => (vkwn) =>
-    array.findFirst(vkwn, (vkw) => vkw.waarde === waarde);
+  const findVeldwaardeKleurByWaarde: (
+    waarde: sft.ValueType
+  ) => (vkwn: VeldwaardeKleur[]) => option.Option<VeldwaardeKleur> = (
+    waarde
+  ) => (vkwn) =>
+    array.findFirst<VeldwaardeKleur>((vkw) => vkw.waarde === waarde)(vkwn);
 
-  const arrayAsMapOptional: Function1<
-    sft.ValueType,
-    Optional<VeldwaardeKleur[], VeldwaardeKleur>
-  > = (waarde) =>
+  const arrayAsMapOptional: (
+    arg: sft.ValueType
+  ) => Optional<VeldwaardeKleur[], VeldwaardeKleur> = (waarde) =>
     new Optional<VeldwaardeKleur[], VeldwaardeKleur>(
       findVeldwaardeKleurByWaarde(waarde), // getter
       (vkw) => (vkwn) =>
-        findVeldwaardeKleurByWaarde(waarde)(vkwn).isSome()
+        pipe(findVeldwaardeKleurByWaarde(waarde)(vkwn), option.isSome)
           ? vkwn.map((vk) => (vk.waarde === vkw.waarde ? vkw : vk))
           : array.cons(vkw, vkwn)
     );
 
-  export const kleurVoorWaarde: Function1<
-    sft.ValueType,
-    Optional<KleurPerVeldwaarde, clr.Kleur>
-  > = (waarde) =>
+  export const kleurVoorWaarde: (
+    arg: sft.ValueType
+  ) => Optional<KleurPerVeldwaarde, clr.Kleur> = (waarde) =>
     waardekleurenLens.composeOptional(
       arrayAsMapOptional(waarde).composeLens(VeldwaardeKleur.kleur)
     );
@@ -286,7 +288,8 @@ export namespace KleurPerVeldwaarde {
   > = reducerFromLens(terugvalKleurLens);
 
   export const makeAfgeleid: Endomorphism<KleurPerVeldwaarde> = Lens.fromProp<
-    KleurPerVeldwaarde,
-    "afgeleid"
-  >("afgeleid").set(true);
+    KleurPerVeldwaarde
+  >()("afgeleid")
+    .asSetter()
+    .set(true);
 }

@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, Input, NgZone } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
 import { eq, map, option } from "fp-ts";
 import { map as rxmap } from "rxjs/operators";
-import { constTrue, Function1, Function2, Predicate } from "fp-ts/lib/function";
+import { constTrue, pipe, Predicate } from "fp-ts/lib/function";
 import * as Mustache from "mustache";
 import * as arrays from "../../util/arrays";
 import {
@@ -51,7 +51,7 @@ export interface Properties {
 const hasValue: Predicate<any> = (value) =>
   value !== undefined && value !== null;
 
-const nestedPropertyValue: Function2<string, Object, any> = (
+const nestedPropertyValue: (arg1: string, arg2: Object) => any = (
   propertyKey,
   object
 ) =>
@@ -81,40 +81,41 @@ const formateerJson = (
   return Mustache.render(formatString, jsonObject);
 };
 
-const veldnamen: Function1<VeldinfoMap, string[]> = (veldbeschrijvingen) => [
+const veldnamen: (arg: VeldinfoMap) => string[] = (veldbeschrijvingen) => [
   ...veldbeschrijvingen.keys(),
 ];
 
-const veldbeschrijving: Function2<
-  string,
-  VeldinfoMap,
-  option.Option<VeldInfo>
-> = (veld, veldbeschrijvingen) =>
+const veldbeschrijving: (
+  arg1: string,
+  arg2: VeldinfoMap
+) => option.Option<VeldInfo> = (veld, veldbeschrijvingen) =>
   map.lookup(eq.eqString)(veld, veldbeschrijvingen);
 
-const hasVeldSatisfying: Function1<
-  Predicate<VeldInfo>,
-  Function2<VeldinfoMap, string, boolean>
-> = (test) => (veldbeschrijvingen, veld) =>
-  veldbeschrijving(veld, veldbeschrijvingen).exists(test);
+const hasVeldSatisfying: (
+  arg: Predicate<VeldInfo>
+) => (arg1: VeldinfoMap, arg2: string) => boolean = (test) => (
+  veldbeschrijvingen,
+  veld
+) => pipe(veldbeschrijving(veld, veldbeschrijvingen), option.exists(test));
 
-const hasVeld: Function2<VeldinfoMap, string, boolean> = hasVeldSatisfying(
+const hasVeld: (arg1: VeldinfoMap, arg2: string) => boolean = hasVeldSatisfying(
   constTrue
 );
 
-const isType: Function1<string, Function2<VeldinfoMap, string, boolean>> = (
+const isType: (arg: string) => (arg1: VeldinfoMap, arg2: string) => boolean = (
   type
 ) => hasVeldSatisfying((veldInfo) => veldInfo.type === type);
 
-const isBooleanVeld: Function2<VeldinfoMap, string, boolean> = isType(
+const isBooleanVeld: (arg1: VeldinfoMap, arg2: string) => boolean = isType(
   "boolean"
 );
-const isDateVeld: Function2<VeldinfoMap, string, boolean> = isType("date");
+const isDateVeld: (arg1: VeldinfoMap, arg2: string) => boolean = isType("date");
 
 // indien geen meta informatie functie, toon alle velden
-const isBasisVeld: Function2<VeldinfoMap, string, boolean> = hasVeldSatisfying(
-  (veldInfo) => veldInfo.isBasisVeld
-);
+const isBasisVeld: (
+  arg1: VeldinfoMap,
+  arg2: string
+) => boolean = hasVeldSatisfying((veldInfo) => veldInfo.isBasisVeld);
 
 @Component({
   selector: "awv-kaart-info-boodschap-veldinfo",
@@ -193,19 +194,26 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
   }
 
   lengte(): option.Option<number> {
-    return option
-      .fromNullable(this.waarde(LOCATIE_LENGTE))
-      .map(Math.round)
-      .orElse(() => option.fromNullable(this.waarde(LENGTE)).map(Math.round))
-      .orElse(() =>
-        option
-          .fromNullable(this.waarde(LOCATIE_GEOMETRY_LENGTE))
-          .map(Math.round)
-      );
+    return pipe(
+      option.fromNullable(this.waarde(LOCATIE_LENGTE)),
+      option.map(Math.round),
+      option.alt(() =>
+        pipe(option.fromNullable(this.waarde(LENGTE)), option.map(Math.round))
+      ),
+      option.alt(() =>
+        pipe(
+          option.fromNullable(this.waarde(LOCATIE_GEOMETRY_LENGTE)),
+          option.map(Math.round)
+        )
+      )
+    );
   }
 
   breedte(): option.Option<string> {
-    return option.fromNullable(this.waarde(BREEDTE)).map((b) => b.toString());
+    return pipe(
+      option.fromNullable(this.waarde(BREEDTE)),
+      option.map((b) => b.toString())
+    );
   }
 
   heeftDimensies() {
@@ -218,13 +226,26 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
   }
 
   dimensies(): string {
-    return this.lengte().foldL(
-      () => this.breedte().fold("Geen dimensies", (breedte) => `${breedte}cm`),
-      (lengte) =>
-        this.breedte().foldL<string>(
-          () => `${lengte}m`,
-          (breedte) => `${lengte}m x ${breedte}cm`
-        )
+    return pipe(
+      this.lengte(),
+      option.fold(
+        () =>
+          pipe(
+            this.breedte(),
+            option.fold(
+              () => "Geen dimensies",
+              (breedte) => `${breedte}cm`
+            )
+          ),
+        (lengte) =>
+          pipe(
+            this.breedte(),
+            option.fold(
+              () => `${lengte}m`,
+              (breedte) => `${lengte}m x ${breedte}cm`
+            )
+          )
+      )
     );
   }
 
@@ -239,10 +260,11 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       case "O":
         return "Op";
       default:
-        return option
-          .fromNullable(this.waarde(ZIJDERIJBAAN))
-          .map((b) => b.toString())
-          .getOrElse("");
+        return pipe(
+          option.fromNullable(this.waarde(ZIJDERIJBAAN)),
+          option.map((b) => b.toString()),
+          option.getOrElse(() => "")
+        );
     }
   }
 
@@ -264,10 +286,11 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
   ident8en() {
     // TODO we ontbreken een string[] type
     const waarde = this.waarde(IDENT8EN);
-    return option
-      .fromPredicate(arrays.isArray)(waarde)
-      .map((s) => s.join(", "))
-      .getOrElse("");
+    return pipe(
+      option.fromPredicate(arrays.isArray)(waarde),
+      option.map((s) => s.join(", ")),
+      option.getOrElse(() => "")
+    );
   }
 
   heeftIdent8(): boolean {
@@ -282,45 +305,64 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     if (this.heeftIdent8en()) {
       return this.ident8en();
     } else {
-      return option
-        .fromNullable(this.waarde(IDENT8))
-        .orElse(() => option.fromNullable(this.waarde(LOCATIE_IDENT8)))
-        .getOrElse("");
+      return pipe(
+        option.fromNullable(this.waarde(IDENT8)),
+        option.alt(() => option.fromNullable(this.waarde(LOCATIE_IDENT8))),
+        option.getOrElse(() => "")
+      );
     }
   }
 
   van(): string {
-    return this.pos(BEGIN_OPSCHRIFT)
-      .alt(this.pos(BEGIN_OPSCHRIFT_ALT))
-      .getOrElse("");
+    return pipe(
+      this.pos(BEGIN_OPSCHRIFT),
+      option.alt(() => this.pos(BEGIN_OPSCHRIFT_ALT)),
+      option.getOrElse(() => "")
+    );
   }
 
   tot(): string {
-    return this.pos(EIND_OPSCHRIFT)
-      .alt(this.pos(EIND_OPSCHRIFT_ALT))
-      .getOrElse("");
+    return pipe(
+      this.pos(EIND_OPSCHRIFT),
+      option.alt(() => this.pos(EIND_OPSCHRIFT_ALT)),
+      option.getOrElse(() => "")
+    );
   }
 
   private afstand(afstandVeld: string): option.Option<string> {
-    return option.fromNullable(this.waarde(afstandVeld)).map(this.signed);
+    return pipe(
+      option.fromNullable(this.waarde(afstandVeld)),
+      option.map(this.signed)
+    );
   }
 
   vanAfstand(): string {
-    return this.afstand(BEGIN_AFSTAND)
-      .alt(this.afstand(BEGIN_AFSTAND_ALT))
-      .getOrElse("");
+    return pipe(
+      this.afstand(BEGIN_AFSTAND),
+      option.alt(() => this.afstand(BEGIN_AFSTAND_ALT)),
+      option.getOrElse(() => "")
+    );
   }
 
   totAfstand(): string {
-    return this.afstand(EIND_AFSTAND)
-      .alt(this.afstand(EIND_AFSTAND_ALT))
-      .getOrElse("");
+    return pipe(
+      this.afstand(EIND_AFSTAND),
+      option.alt(() => this.afstand(EIND_AFSTAND_ALT)),
+      option.getOrElse(() => "")
+    );
   }
 
   label(veld: string): string {
-    return veldbeschrijving(veld, this.veldbeschrijvingen)
-      .map((veldInfo) => option.fromNullable(veldInfo.label).getOrElse(""))
-      .getOrElse(veld);
+    return pipe(
+      veldbeschrijving(veld, this.veldbeschrijvingen),
+      option.map((veldInfo) =>
+        pipe(
+          option.fromNullable(veldInfo.label),
+          option.getOrElse(() => "")
+        )
+      ),
+      option.getOrElse(() => veld)
+    );
   }
 
   zichtbareEigenschappen(): string[] {
@@ -405,39 +447,40 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
   }
 
   constante(veld: string): option.Option<string> {
-    return (
-      veldbeschrijving(veld, this.veldbeschrijvingen)
-        .chain((veldInfo) => option.fromNullable(veldInfo.constante))
-        // vervang elke instantie van {id} in de waarde van 'constante' door de effectieve id :
-        .map((waarde) =>
-          veldnamen(this.veldbeschrijvingen).reduce((result, eigenschap) => {
-            const token = `{${eigenschap}}`;
-            // vervang _alle_ tokens met de waarde uit het record
-            return result.includes(token)
-              ? result
-                  .split(token)
-                  .join(`${nestedPropertyValue(eigenschap, this.properties)}`)
-              : result;
-          }, waarde)
-        )
+    return pipe(
+      veldbeschrijving(veld, this.veldbeschrijvingen),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.constante)),
+      // vervang elke instantie van {id} in de waarde van 'constante' door de effectieve id :
+      option.map((waarde) =>
+        veldnamen(this.veldbeschrijvingen).reduce((result, eigenschap) => {
+          const token = `{${eigenschap}}`;
+          // vervang _alle_ tokens met de waarde uit het record
+          return result.includes(token)
+            ? result
+                .split(token)
+                .join(`${nestedPropertyValue(eigenschap, this.properties)}`)
+            : result;
+        }, waarde)
+      )
     );
   }
 
   parseFormat(veldnaam: string): option.Option<string> {
-    return veldbeschrijving(
-      veldnaam,
-      this.veldbeschrijvingen
-    ).chain((veldInfo) => option.fromNullable(veldInfo.parseFormat));
+    return pipe(
+      veldbeschrijving(veldnaam, this.veldbeschrijvingen),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.parseFormat))
+    );
   }
 
   displayFormat(veldnaam: string): option.Option<string> {
-    return veldbeschrijving(
-      veldnaam,
-      this.veldbeschrijvingen
-    ).chain((veldInfo) =>
-      option
-        .fromNullable(veldInfo.displayFormat)
-        .orElse(() => option.fromNullable(veldInfo.parseFormat))
+    return pipe(
+      veldbeschrijving(veldnaam, this.veldbeschrijvingen),
+      option.chain((veldInfo) =>
+        pipe(
+          option.fromNullable(veldInfo.displayFormat),
+          option.alt(() => option.fromNullable(veldInfo.parseFormat))
+        )
+      )
     );
   }
 
@@ -446,15 +489,21 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
   }
 
   isKopieerbaar(veldnaam: string): boolean {
-    return veldbeschrijving(veldnaam, this.veldbeschrijvingen)
-      .chain((veldInfo) => option.fromNullable(veldInfo.isKopieerbaar))
-      .getOrElse(false);
+    return pipe(
+      veldbeschrijving(veldnaam, this.veldbeschrijvingen),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.isKopieerbaar)),
+      option.getOrElse(() => false)
+    );
   }
 
   isGeenLocatieVeld(veldnaam: string): boolean {
-    return veldbeschrijving(veldnaam, this.veldbeschrijvingen)
-      .chain((veldInfo) => option.fromNullable(veldInfo.isGeenLocatieVeld))
-      .getOrElse(false);
+    return pipe(
+      veldbeschrijving(veldnaam, this.veldbeschrijvingen),
+      option.chain((veldInfo) =>
+        option.fromNullable(veldInfo.isGeenLocatieVeld)
+      ),
+      option.getOrElse(() => false)
+    );
   }
 
   copyToClipboard(toCopy: string | number) {
@@ -463,68 +512,85 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
 
   waarde(veldnaam: string): string | number {
     // indien er een 'constante' object in de definitie is, geef dat terug, anders geef de waarde in het veld terug
-    return this.constante(veldnaam).getOrElseL(() => {
-      const waarde = nestedPropertyValue(veldnaam, this.properties);
-      if (
-        this.hasHtml(veldnaam) &&
-        waarde &&
-        this.veldtype(veldnaam) !== "url"
-      ) {
-        return this.sanitizer.bypassSecurityTrustHtml(
-          formateerJson(
+    return pipe(
+      this.constante(veldnaam),
+      option.getOrElse(() => {
+        const waarde = nestedPropertyValue(veldnaam, this.properties);
+        if (
+          this.hasHtml(veldnaam) &&
+          waarde &&
+          this.veldtype(veldnaam) !== "url"
+        ) {
+          return this.sanitizer.bypassSecurityTrustHtml(
+            formateerJson(
+              veldnaam,
+              this.veldtype(veldnaam),
+              waarde,
+              this.html(veldnaam)
+            )
+          );
+        } else if (this.hasTemplate(veldnaam) && waarde) {
+          return formateerJson(
             veldnaam,
             this.veldtype(veldnaam),
             waarde,
-            this.html(veldnaam)
-          )
-        );
-      } else if (this.hasTemplate(veldnaam) && waarde) {
-        return formateerJson(
-          veldnaam,
-          this.veldtype(veldnaam),
-          waarde,
-          this.template(veldnaam)
-        );
-      } else {
-        return waarde;
-      }
-    });
+            this.template(veldnaam)
+          );
+        } else {
+          return waarde;
+        }
+      })
+    );
   }
 
   private maybeDateWaarde(veldnaam: string): option.Option<string> {
-    return this.constante(veldnaam).orElse(() => {
-      const waarde = nestedPropertyValue(veldnaam, this.properties);
-      return option
-        .fromNullable(waarde)
-        .chain(parseDate(this.parseFormat(veldnaam)))
-        .map(formateerDate(this.displayFormat(veldnaam)));
-    });
+    return pipe(
+      this.constante(veldnaam),
+      option.alt(() => {
+        const waarde = nestedPropertyValue(veldnaam, this.properties);
+        return pipe(
+          option.fromNullable(waarde),
+          option.chain(parseDate(this.parseFormat(veldnaam))),
+          option.map(formateerDate(this.displayFormat(veldnaam)))
+        );
+      })
+    );
   }
 
   dateWaarde(veldnaam: string): string {
-    return this.maybeDateWaarde(veldnaam).getOrElse("");
+    return pipe(
+      this.maybeDateWaarde(veldnaam),
+      option.getOrElse(() => "")
+    );
   }
 
   validDateWaarde(veldnaam: string): boolean {
-    return this.maybeDateWaarde(veldnaam).isSome();
+    return pipe(this.maybeDateWaarde(veldnaam), option.isSome);
   }
 
   private maybeDateTimeWaarde(veldnaam: string): option.Option<string> {
-    return this.constante(veldnaam).orElse(() => {
-      const waarde = nestedPropertyValue(veldnaam, this.properties);
-      return option
-        .fromNullable(waarde)
-        .chain(parseDateTime(this.parseFormat(veldnaam)))
-        .map(formateerDateTime(this.displayFormat(veldnaam)));
-    });
+    return pipe(
+      this.constante(veldnaam),
+      option.alt(() => {
+        const waarde = nestedPropertyValue(veldnaam, this.properties);
+        return pipe(
+          option.fromNullable(waarde),
+          option.chain(parseDateTime(this.parseFormat(veldnaam))),
+          option.map(formateerDateTime(this.displayFormat(veldnaam)))
+        );
+      })
+    );
   }
 
   dateTimeWaarde(veldnaam: string): string {
-    return this.maybeDateTimeWaarde(veldnaam).getOrElse("");
+    return pipe(
+      this.maybeDateTimeWaarde(veldnaam),
+      option.getOrElse(() => "")
+    );
   }
 
   validDateTimeWaarde(veldnaam: string): boolean {
-    return this.maybeDateTimeWaarde(veldnaam).isSome();
+    return pipe(this.maybeDateTimeWaarde(veldnaam), option.isSome);
   }
 
   heeftOpschrift() {
@@ -535,25 +601,28 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
   }
 
   opschrift(): string | number {
-    return option
-      .fromNullable(this.waarde(HM))
-      .alt(option.fromNullable(this.waarde(OPSCHRIFT)))
-      .getOrElse("");
+    return pipe(
+      option.fromNullable(this.waarde(HM)),
+      option.alt(() => option.fromNullable(this.waarde(OPSCHRIFT))),
+      option.getOrElse(() => "")
+    );
   }
 
   verpl(): string {
-    return option
-      .fromNullable(this.waarde(VERPL))
-      .alt(option.fromNullable(this.waarde(AFSTAND)))
-      .map(this.signed)
-      .getOrElse("");
+    return pipe(
+      option.fromNullable(this.waarde(VERPL)),
+      option.alt(() => option.fromNullable(this.waarde(AFSTAND))),
+      option.map(this.signed),
+      option.getOrElse(() => "")
+    );
   }
 
   private pos(positieVeld: string): option.Option<string> {
-    return option
-      .fromNullable(this.waarde(positieVeld))
-      .filter((positie) => typeof positie === "number")
-      .map((positie) => `${Math.round((positie as number) * 10) / 10}`);
+    return pipe(
+      option.fromNullable(this.waarde(positieVeld)),
+      option.filter((positie) => typeof positie === "number"),
+      option.map((positie) => `${Math.round((positie as number) * 10) / 10}`)
+    );
   }
 
   private signed(value: number): string {
@@ -570,7 +639,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       .filter(
         (veldNaam) =>
           hasValue(nestedPropertyValue(veldNaam, this.properties)) ||
-          this.constante(veldNaam).isSome()
+          option.isSome(this.constante(veldNaam))
       )
       .filter(
         (veldNaam) => nestedPropertyValue(veldNaam, this.properties) !== ""
@@ -578,46 +647,57 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
   }
 
   private isLinkVeld(veld: string): boolean {
-    return (
-      option
-        .fromNullable(this.waarde(veld)) // indien waarde van veld begint met http
-        .filter((waarde) => typeof waarde === "string")
-        .exists((waarde) => `${waarde}`.startsWith("http")) ||
-      veldbeschrijving(veld, this.veldbeschrijvingen) // indien 'constante' veld start met http
-        .chain((veldInfo) => option.fromNullable(veldInfo.constante)) //
-        .exists((constante) => constante.startsWith("http")) ||
-      this.veldtype(veld) === "url"
+    return pipe(
+      option.fromNullable(this.waarde(veld)), // indien waarde van veld begint met http
+      option.filter((waarde) => typeof waarde === "string"),
+      option.exists((waarde) => `${waarde}`.startsWith("http")) ||
+        pipe(
+          veldbeschrijving(veld, this.veldbeschrijvingen), // indien 'constante' veld start met http
+          option.chain((veldInfo) => option.fromNullable(veldInfo.constante)), //
+          option.exists((constante) => constante.startsWith("http")) ||
+            this.veldtype(veld) === "url"
+        )
     );
   }
 
   private hasTemplate(veld: string): boolean {
-    return veldbeschrijving(veld, this.veldbeschrijvingen)
-      .chain((veldInfo) => option.fromNullable(veldInfo.template))
-      .isSome();
+    return pipe(
+      veldbeschrijving(veld, this.veldbeschrijvingen),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.template)),
+      option.isSome
+    );
   }
 
   private hasHtml(veld: string): boolean {
-    return veldbeschrijving(veld, this.veldbeschrijvingen)
-      .chain((veldInfo) => option.fromNullable(veldInfo.html))
-      .isSome();
+    return pipe(
+      veldbeschrijving(veld, this.veldbeschrijvingen),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.html)),
+      option.isSome
+    );
   }
 
   private template(veld: string): string {
-    return veldbeschrijving(veld, this.veldbeschrijvingen)
-      .chain((veldInfo) => option.fromNullable(veldInfo.template))
-      .getOrElse("");
+    return pipe(
+      veldbeschrijving(veld, this.veldbeschrijvingen),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.template)),
+      option.getOrElse(() => "")
+    );
   }
 
   private html(veld: string): string {
-    return veldbeschrijving(veld, this.veldbeschrijvingen)
-      .chain((veldInfo) => option.fromNullable(veldInfo.html))
-      .getOrElse("");
+    return pipe(
+      veldbeschrijving(veld, this.veldbeschrijvingen),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.html)),
+      option.getOrElse(() => "")
+    );
   }
 
   private veldtype(veld: string): string {
-    return veldbeschrijving(veld, this.veldbeschrijvingen)
-      .map((veldInfo) => veldInfo.type.toString())
-      .getOrElse("");
+    return pipe(
+      veldbeschrijving(veld, this.veldbeschrijvingen),
+      option.map((veldInfo) => veldInfo.type.toString()),
+      option.getOrElse(() => "")
+    );
   }
 
   aanmakenCaseServiceNowMogelijk(): boolean {

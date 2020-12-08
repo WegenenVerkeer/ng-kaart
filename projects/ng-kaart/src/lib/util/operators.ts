@@ -1,12 +1,12 @@
 import { option, tuple } from "fp-ts";
-import { Function1, Function2, Refinement } from "fp-ts/lib/function";
+import { pipe, Refinement } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { filter, map, scan, skipUntil, switchMap } from "rxjs/operators";
 
 import { ReduceFunction } from "./function";
 import { TypedRecord } from "./typed-record";
 
-export type Pipeable<A, B> = Function1<rx.Observable<A>, rx.Observable<B>>;
+export type Pipeable<A, B> = (obsa: rx.Observable<A>) => rx.Observable<B>;
 
 /**
  * Transformeert waarden van A naar waarden van B mbv f, maar verhindert propagatie als
@@ -75,9 +75,9 @@ export const skipOlder: <A>() => Pipeable<A, A> = () => (obs) =>
  */
 export const forEvery: <A>(
   _: rx.Observable<A>
-) => <B>(_: Function1<A, rx.Observable<B>>) => rx.Observable<B> = (
-  restarter
-) => (fObs) => restarter.pipe(switchMap(fObs));
+) => <B>(_: (a: A) => rx.Observable<B>) => rx.Observable<B> = (restarter) => (
+  fObs
+) => restarter.pipe(switchMap(fObs));
 
 /**
  * Een handige helper om na te gaan waarom events niet doorstromen. Met tap kunnen we wel next e.d. opvangen, maar vaak is het heel
@@ -133,12 +133,12 @@ export function scan2<A, B, C>(
     value: B;
     label: "B";
   }
-  const TaggedA: Function1<A, TaggedA> = (a) => ({ value: a, label: "A" });
-  const TaggedB: Function1<B, TaggedB> = (b) => ({ value: b, label: "B" });
+  const TaggedA: (a: A) => TaggedA = (a) => ({ value: a, label: "A" });
+  const TaggedB: (b: B) => TaggedB = (b) => ({ value: b, label: "B" });
   const TagA: Pipeable<A, TaggedA> = (a$) => a$.pipe(map(TaggedA));
   const TagB: Pipeable<B, TaggedB> = (b$) => b$.pipe(map(TaggedB));
 
-  const accumulate: Function2<C, Tagged, C> = (c, tagged) => {
+  const accumulate: (c: C, tagged: Tagged) => C = (c, tagged) => {
     switch (tagged.label) {
       case "A":
         return fa(c, tagged.value);
@@ -154,20 +154,18 @@ export function scan2<A, B, C>(
 
 export function scanState<A, S, B>(
   obsA: rx.Observable<A>,
-  runState: Function2<S, A, tuple.Tuple<S, B>>,
+  runState: (s: S, a: A) => [S, B],
   seed: S,
   rseed: B
 ): rx.Observable<B> {
-  const initial: tuple.Tuple<S, B> = new tuple.Tuple(seed, rseed);
+  const initial: [S, B] = [seed, rseed];
 
-  const accumulate: Function2<tuple.Tuple<S, B>, A, tuple.Tuple<S, B>> = (
-    ps,
-    a
-  ) => runState(ps.fst, a);
+  const accumulate: (ps: [S, B], a: A) => [S, B] = (ps, a) =>
+    runState(tuple.fst(ps), a);
 
   return obsA.pipe(
     scan(accumulate, initial),
-    map((ps) => ps.snd)
+    map((ps) => tuple.snd(ps))
   );
 }
 
@@ -186,8 +184,14 @@ export function select<A>(selectOps: ObsSelectOps<A>): Pipeable<boolean, A> {
     obs.pipe(
       switchMap((value) =>
         value
-          ? option.fromNullable(selectOps.ifTrue).getOrElse(rx.EMPTY)
-          : option.fromNullable(selectOps.ifFalse).getOrElse(rx.EMPTY)
+          ? pipe(
+              option.fromNullable(selectOps.ifTrue),
+              option.getOrElse(() => rx.EMPTY)
+            )
+          : pipe(
+              option.fromNullable(selectOps.ifFalse),
+              option.getOrElse(() => rx.EMPTY)
+            )
       )
     );
 }

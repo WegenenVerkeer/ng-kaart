@@ -1,4 +1,4 @@
-import { Function1, Refinement } from "fp-ts/lib/function";
+import { Refinement } from "fp-ts/lib/function";
 
 import * as ke from "../kaart-elementen";
 
@@ -15,10 +15,9 @@ export interface GeenLaagstijlaanpassing {
   readonly type: "geenAanpassing";
 }
 
-export const LaagstijlAanpassend: Function1<
-  ke.ToegevoegdeVectorLaag,
-  LaagstijlAanpassend
-> = (tvlg) => ({
+export const LaagstijlAanpassend: (
+  tvlg: ke.ToegevoegdeVectorLaag
+) => LaagstijlAanpassend = (tvlg) => ({
   type: "aanpassingBezig",
   laag: tvlg,
 });

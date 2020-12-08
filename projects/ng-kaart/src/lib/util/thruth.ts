@@ -1,4 +1,4 @@
-import { BinaryOperation, Endomorphism } from "fp-ts/lib/function";
+import { Endomorphism } from "fp-ts/lib/function";
 
 /**
  * Een function die zijn input inverteert.
