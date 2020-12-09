@@ -88,29 +88,6 @@
   }
 }
 
-.veldlinks {
-  order: 1;
-  flex-basis: 100%;
-  max-width: 100%;
-  line-height: 20px;
-  font-size: 14px;
-  font-weight: 300;
-  color: rgba(247, 144, 45, 0.87);
-  cursor: pointer;
-  a {
-    text-decoration: none;
-    color: rgba(247, 144, 45, 0.87);
-  }
-}
-
-.link-icon {
-  line-height: 32px;
-  font-size: 16px;
-  color: rgba(247, 144, 45, 0.87);
-  width: 16px;
-  vertical-align: text-bottom;
-}
-
 .veldnaam {
   line-height: 20px;
   font-size: 12px;
@@ -125,40 +102,12 @@
   color: rgba(0, 0, 0, 0.87);
 }
 
-.booleanwaarden {
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: row;
-}
-
-.booleanwaarde {
-  white-space: nowrap;
-  flex-basis: 50%;
-  max-width: 50%;
-  line-height: 20px;
-  font-size: 14px;
-  font-weight: 300;
-  color: rgba(0, 0, 0, 0.54);
-}
-
 .negatief {
   color: rgba(242, 68, 61, 0.87);
 }
 
 .positief {
   color: rgba(97, 186, 117, 0.87);
-}
-
-.mat-expand-button {
-  float: right;
-  padding-left: 0;
-  padding-right: 0;
-  min-width: 24px;
-  line-height: 24px;
-}
-
-.expand-line {
-  padding-bottom: 32px;
 }
 
 .badParse {
