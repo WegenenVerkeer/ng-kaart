@@ -11,14 +11,8 @@ import { eq, map, option } from "fp-ts";
 import { map as rxmap } from "rxjs/operators";
 import { constTrue, Function1, Function2, Predicate } from "fp-ts/lib/function";
 import * as Mustache from "mustache";
-import {
-  formateerDate,
-  formateerDateTime,
-  parseDate,
-  parseDateTime,
-} from "../../util/date-time";
 import { KaartChildDirective } from "../kaart-child.directive";
-import { VeldInfo, VeldType, isLocatie } from "../kaart-elementen";
+import { VeldInfo, VeldType } from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
 import { copyToClipboard } from "../../util/clipboard";
 import { ServiceNowOpties, ServiceNowUiSelector } from "./service-now-opties";

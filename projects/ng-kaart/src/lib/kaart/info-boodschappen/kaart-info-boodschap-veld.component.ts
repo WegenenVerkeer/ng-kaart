@@ -3,12 +3,7 @@ import { option } from "fp-ts";
 import { KaartChildDirective } from "../kaart-child.directive";
 import { copyToClipboard } from "../../util/clipboard";
 import { VeldType } from "../kaart-elementen";
-import {
-  formateerDate,
-  formateerDateTime,
-  parseDate,
-  parseDateTime,
-} from "../../util/date-time";
+import { formateerDate, parseDate } from "../../util/date-time";
 
 @Component({
   selector: "awv-kaart-info-veld",
