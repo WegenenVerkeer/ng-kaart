@@ -7,7 +7,7 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { array, option } from "fp-ts";
-import { flow, Refinement } from "fp-ts/lib/function";
+import { constant, flow, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import {
@@ -134,6 +134,10 @@ export class FeatureTabelDataComponent extends KaartChildDirective {
   public readonly rows$: rx.Observable<Row[]>;
   // Voor child components
   public readonly laag$: rx.Observable<LaagModel>;
+
+  // fp-ts functions in html
+  option = option;
+  constant = constant;
 
   @Input()
   laagTitel: string;

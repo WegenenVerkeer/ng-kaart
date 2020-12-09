@@ -13,7 +13,7 @@ import {
 } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { array, eq, map as fpMap, option, ord, record, tuple } from "fp-ts";
-import { identity, Predicate } from "fp-ts/lib/function";
+import { constant, identity, Predicate } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import {
@@ -161,6 +161,10 @@ export abstract class GetraptZoekerDirective extends KaartChildDirective {
   ) {
     super(kaartComponent, zone);
   }
+
+  // fp-ts functions in html
+  option = option;
+  constant = constant;
 
   maakVeldenLeeg(vanafNiveau: number) {
     this.zoekerComponent.maakResultaatLeeg();

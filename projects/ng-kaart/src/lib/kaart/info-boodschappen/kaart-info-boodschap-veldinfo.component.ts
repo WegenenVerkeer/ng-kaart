@@ -647,16 +647,18 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
   }
 
   private isLinkVeld(veld: string): boolean {
-    return pipe(
-      option.fromNullable(this.waarde(veld)), // indien waarde van veld begint met http
-      option.filter((waarde) => typeof waarde === "string"),
-      option.exists((waarde) => `${waarde}`.startsWith("http")) ||
-        pipe(
-          veldbeschrijving(veld, this.veldbeschrijvingen), // indien 'constante' veld start met http
-          option.chain((veldInfo) => option.fromNullable(veldInfo.constante)), //
-          option.exists((constante) => constante.startsWith("http")) ||
-            this.veldtype(veld) === "url"
-        )
+    return (
+      pipe(
+        option.fromNullable(this.waarde(veld)), // indien waarde van veld begint met http
+        option.filter((waarde) => typeof waarde === "string"),
+        option.exists((waarde) => `${waarde}`.startsWith("http"))
+      ) ||
+      pipe(
+        veldbeschrijving(veld, this.veldbeschrijvingen), // indien 'constante' veld start met http
+        option.chain((veldInfo) => option.fromNullable(veldInfo.constante)), //
+        option.exists((constante) => constante.startsWith("http"))
+      ) ||
+      this.veldtype(veld) === "url"
     );
   }
 
