@@ -124,6 +124,9 @@ export class LagenkiezerComponent
   readonly opties$: rx.Observable<LagenUiOpties>;
   readonly tabelState$: rx.Observable<TabelActiviteit>;
 
+  // fp-ts functions in html
+  option = option;
+
   constructor(
     parent: KaartComponent,
     ngZone: NgZone,
