@@ -1,15 +1,12 @@
 <div class="velden">
   <div class="veldnamen">
-    <div class="veldnaam">
-      {{ label }}
-    </div>
+    <div class="veldnaam">{{ label }}</div>
   </div>
 
   <span class="veldspacer"></span>
 
   <div class="veldwaarden" *ngIf="veldType !== 'boolean' && veldType !== 'date'">
-    <div [innerHTML]="waarde" class="veldwaarde">
-    </div>
+    <div [innerHTML]="waarde" class="veldwaarde"></div>
   </div>
 
   <div class="veldwaarden" *ngIf="veldType === 'date'">
