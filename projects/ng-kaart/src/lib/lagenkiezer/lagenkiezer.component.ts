@@ -30,7 +30,7 @@ import {
   ToegevoegdeVectorLaag,
 } from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
-import { LegendeItem } from "../kaart/kaart-legende";
+import { Legende, LegendeItem } from "../kaart/kaart-legende";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { isAanpassingBezig } from "../kaart/stijleditor/state";
@@ -126,6 +126,7 @@ export class LagenkiezerComponent
 
   // fp-ts functions in html
   option = option;
+  KrtLegende = Legende;
 
   constructor(
     parent: KaartComponent,
@@ -434,5 +435,13 @@ export class LagenkiezerComponent
     }
 
     return this.sanitizer.bypassSecurityTrustHtml(itemToHtml());
+  }
+
+  getLegendeItems(laag: ToegevoegdeLaag): Array<LegendeItem> {
+    return pipe(
+      laag.legende,
+      option.map((l) => l.items),
+      option.getOrElse(() => [])
+    );
   }
 }
