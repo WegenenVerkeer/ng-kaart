@@ -1,35 +1,12 @@
 <div class="card-content">
-  <div class="ident8" *ngIf="heeftIdent8()">{{ ident8() }}</div>
-  <div class="vantot" *ngIf="heeftVanTot()">van {{ van( ) }}
-    <span class="afstand">{{ vanAfstand() }}</span>
-    tot {{ tot() }}
-    <span class="afstand">{{ totAfstand() }}</span>
-    <span *ngIf="heeftLocatieGegevensVoor('zijderijbaan') || heeftLocatieGegevensVoor('afstandrijbaan')">
-    / {{ zijderijbaan() }}
-    <span class="afstand" *ngIf="heeftLocatieGegevensVoor('afstandrijbaan')">+{{ waarde("afstandrijbaan") }}cm</span>
-  </span>
-  </div>
+  <awv-weglocatie *ngIf="weglocatie" attr.weglocatie="{{ weglocatie }}"></awv-weglocatie>
 
-  <div class="vantot" *ngIf="heeftOpschrift()">{{ opschrift() }}
-    <span class="afstand">{{ verpl() }}</span>
-    <span *ngIf="heeftLocatieGegevensVoor('zijderijbaan') || heeftLocatieGegevensVoor('afstandrijbaan')">
-    / {{ zijderijbaan() }}
-    <span class="afstand" *ngIf="heeftLocatieGegevensVoor('afstandrijbaan')">+{{ waarde("afstandrijbaan") }}cm</span>
-  </span>
-  </div>
-
-  <div class="dimensies" *ngIf="heeftDimensies()">
-    <mat-icon class="dimensies-icon">straighten</mat-icon>
-    {{ dimensies() }}
-  </div>
-
-  <div class="separator-na-locatie" *ngIf="heeftIdent8()"></div>
+  <div class="separator-na-locatie" *ngIf="weglocatie"></div>
 
   <div *ngIf="aanmakenCaseServiceNowMogelijk()">
     <awv-servicenow-maak-case [installatieId]="waarde('bronid')"></awv-servicenow-maak-case>
   </div>
-
-  <div class="separator-na-locatie"></div>
+  <div class="separator-na-locatie" *ngIf="aanmakenCaseServiceNowMogelijk()"></div>
 
   <div class="velden" *ngFor="let veld of linkEigenschappen()">
     <div class="veldlinks">
@@ -41,56 +18,26 @@
 
   <div class="separator-na-locatie"></div>
 
-  <div class="velden" *ngFor="let veld of zichtbareEigenschappen()">
-    <div class="veldnamen">
-      <div class="veldnaam">
-        {{ label(veld) }}
-      </div>
-    </div>
-    <div class="veldwaarden">
-      <div [innerHTML]="waarde(veld)" class="veldwaarde">
-      </div>
-    </div>
-    <div class="veldicon">
-      <button *ngIf="isKopieerbaar(veld)" mat-icon-button matTooltip="Kopieer {{ label(veld) }}">
-        <mat-icon (click)="copyToClipboard(waarde(veld))">content_copy</mat-icon>
-      </button>
-    </div>
+  <div *ngIf="afmeting">
+    <awv-kaart-info-veld [label]="'Afmeting'" [waarde]="afmeting" [veldType]="'string'"></awv-kaart-info-veld>
   </div>
 
-  <div class="velden" *ngFor="let veld of dateEigenschappen()">
-    <div class="veldnamen">
-      <div class="veldnaam">
-        {{ label(veld) }}
-      </div>
-    </div>
-    <div class="veldwaarden">
-      <div class="veldwaarde">{{dateWaarde(veld)}} <span *ngIf="!validDateWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum geïnterpreteerd worden">{{waarde(veld)}}</span></div>
-    </div>
-    <div class="veldicon">
-      <button *ngIf="isKopieerbaar(veld)" mat-icon-button matTooltip="Kopieer {{ label(veld) }}">
-        <mat-icon (click)="copyToClipboard(dateWaarde(veld))">content_copy</mat-icon>
-      </button>
-    </div>
+  <div *ngIf="lengte">
+    <awv-kaart-info-veld [label]="'Lengte'" [waarde]="lengte" [veldType]="'string'"></awv-kaart-info-veld>
   </div>
 
-  <div class="booleanwaarden" *ngFor="let veld of booleanEigenschappen()">
-    <div class="veldnamen">
-      <div class="veldnaam">
-        {{ label(veld) }}
-      </div>
-    </div>
-    <div class="veldwaarden">
-      <div class="veldwaarde">
-        <span class="positief" *ngIf="waarde(veld)">JA</span>
-        <span class="negatief" *ngIf="!waarde(veld)">NEE</span>
-      </div>
-    </div>
-    <div class="veldicon">
-      <button *ngIf="isKopieerbaar(veld)" mat-icon-button matTooltip="Kopieer {{ label(veld) }}">
-        <mat-icon (click)="copyToClipboard(waarde(veld))">content_copy</mat-icon>
-      </button>
-    </div>
+  <div *ngIf="breedte">
+    <awv-kaart-info-veld [label]="'Breedte'" [waarde]="breedte" [veldType]="'string'"></awv-kaart-info-veld>
+  </div>
+
+  <div *ngFor="let veld of basisEigenschappen()">
+    <awv-kaart-info-veld
+      [label]="label(veld)"
+      [waarde]="waarde(veld)"
+      [veldType]="veldType(veld)"
+      [displayFormat]="displayFormat(veld)"
+      [parseFormat]="parseFormat(veld)"
+      [isKopieerbaar]="isKopieerbaar(veld)"></awv-kaart-info-veld>
   </div>
 
   <div class="expand-line">
@@ -105,7 +52,7 @@
     </button>
   </div>
 
-  <span *ngIf="alleVeldenZichtbaar()">
+  <div *ngIf="alleVeldenZichtbaar()">
 
   <div class="velden" *ngFor="let veld of geavanceerdeLinkEigenschappen()">
     <div class="veldlinks">
@@ -114,56 +61,15 @@
   </div>
 
   <div class="velden" *ngFor="let veld of geavanceerdeEigenschappen()">
-    <div class="veldnamen">
-      <div class="veldnaam">
-        {{ label(veld) }}
-      </div>
-    </div>
-    <div class="veldwaarden">
-      <div [innerHTML]="waarde(veld)" class="veldwaarde"></div>
-    </div>
-    <div class="veldicon">
-      <button *ngIf="isKopieerbaar(veld)" mat-icon-button matTooltip="Kopieer {{ label(veld) }}">
-        <mat-icon (click)="copyToClipboard(waarde(veld))">content_copy</mat-icon>
-      </button>
-    </div>
+    <awv-kaart-info-veld
+      [label]="label(veld)"
+      [waarde]="waarde(veld)"
+      [veldType]="veldType(veld)"
+      [displayFormat]="displayFormat(veld)"
+      [parseFormat]="parseFormat(veld)"
+      [isKopieerbaar]="isKopieerbaar(veld)"></awv-kaart-info-veld>
   </div>
 
-  <div class="velden" *ngFor="let veld of geavanceerdeDateEigenschappen()">
-    <div class="veldnamen">
-      <div class="veldnaam">
-        {{ label(veld) }}
-      </div>
-    </div>
-    <div class="veldwaarden">
-      <div class="veldwaarde">{{dateWaarde(veld)}} <span *ngIf="!validDateWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum geïnterpreteerd worden">{{waarde(veld)}}</span></div>
-    </div>
-     <div class="veldicon">
-      <button *ngIf="isKopieerbaar(veld)" mat-icon-button matTooltip="Kopieer {{ label(veld) }}">
-        <mat-icon (click)="copyToClipboard(dateWaarde(veld))">content_copy</mat-icon>
-      </button>
-    </div>
-  </div>
-
-  <div class="booleanwaarden" *ngFor="let veld of geavanceerdeBooleanEigenschappen()">
-    <div class="veldnamen">
-      <div class="veldnaam">
-        {{ label(veld) }}
-      </div>
-    </div>
-    <div class="veldwaarden">
-      <div class="veldwaarde">
-        <span class="positief" *ngIf="waarde(veld)">JA</span>
-        <span class="negatief" *ngIf="!waarde(veld)">NEE</span>
-      </div>
-    </div>
-    <div class="veldicon">
-      <button *ngIf="isKopieerbaar(veld)" mat-icon-button matTooltip="Kopieer {{ label(veld) }}">
-        <mat-icon (click)="copyToClipboard(waarde(veld))">content_copy</mat-icon>
-      </button>
-    </div>
-  </div>
-
-</span>
+</div>
 
 </div>

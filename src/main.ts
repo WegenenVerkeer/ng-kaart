@@ -6,6 +6,8 @@ import { kaartLogger } from "projects/ng-kaart/src/lib/kaart/log";
 import { AppModule } from "./app/app.module";
 import { environment } from "./environments/environment";
 
+import "@awv/awv-weglocatie";
+
 if (environment.production) {
   enableProdMode();
 } else {

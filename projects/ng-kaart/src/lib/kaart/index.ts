@@ -1,6 +1,10 @@
 import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
-import { ModuleWithProviders, NgModule } from "@angular/core";
+import {
+  CUSTOM_ELEMENTS_SCHEMA,
+  ModuleWithProviders,
+  NgModule,
+} from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -34,6 +38,7 @@ import { KaartInfoBoodschapIdentifyComponent } from "./info-boodschappen/kaart-i
 import { KaartInfoBoodschapKaartBevragenComponent } from "./info-boodschappen/kaart-info-boodschap-kaart-bevragen.component";
 import { KaartInfoBoodschapMetenComponent } from "./info-boodschappen/kaart-info-boodschap-meten.component";
 import { KaartInfoBoodschapVeldinfoComponent } from "./info-boodschappen/kaart-info-boodschap-veldinfo.component";
+import { KaartInfoBoodschapVeldComponent } from "./info-boodschappen/kaart-info-boodschap-veld.component";
 import { KaartInfoBoodschapComponent } from "./info-boodschappen/kaart-info-boodschap.component";
 import { KaartInfoBoodschappenComponent } from "./info-boodschappen/kaart-info-boodschappen.component";
 import { KaartBevragenComponent } from "./kaart-bevragen/kaart-bevragen.component";
@@ -70,6 +75,7 @@ const components: any[] = [
   KaartInfoBoodschapMetenComponent,
   KaartInfoBoodschappenComponent,
   KaartInfoBoodschapVeldinfoComponent,
+  KaartInfoBoodschapVeldComponent,
   MarkeerKaartklikComponent,
   KaartLoadingComponent,
   KaartMetenComponent,
@@ -177,6 +183,7 @@ export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
     ReplaySubjectKaartCmdDispatcher,
     { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: myCustomTooltipDefaults },
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class KaartModule {
   static defaultConfig = defaultKaartConfig;

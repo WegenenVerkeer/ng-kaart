@@ -154,6 +154,22 @@ const veldInfoInter: json.Interpreter<ke.VeldInfo> = json.interpretUndefinedReco
     naam: json.field("naam", json.str),
     label: json.field("label", json.str),
     isBasisVeld: json.field("isBasisVeld", json.bool),
+    dataType: json.nullable(
+      json.field(
+        "type",
+        json.enu(
+          "ident8",
+          "refpunt",
+          "afstand",
+          "vanRefpunt",
+          "vanAfstand",
+          "totRefpunt",
+          "totAfstand",
+          "id",
+          "geometry"
+        )
+      )
+    ),
     constante: json.nullable(json.field("constante", json.str)),
     template: json.nullable(json.field("template", json.str)),
     html: json.nullable(json.field("html", json.str)),
@@ -163,12 +179,10 @@ const veldInfoInter: json.Interpreter<ke.VeldInfo> = json.interpretUndefinedReco
     parseFormat: json.nullable(json.field("parseFormat", json.str)),
     displayFormat: json.nullable(json.field("displayFormat", json.str)),
     sqlFormat: json.nullable(json.field("sqlFormat", json.str)),
-    isGeenLocatieVeld: json.nullable(
-      json.field("isGeenLocatieVeld", json.bool)
-    ),
     isKopieerbaar: json.nullable(json.field("isKopieerbaar", json.bool)),
   }
 );
+
 export const veldInfoArray: ParamGetter<ke.VeldInfo[]> = getParameter(
   json.arr(veldInfoInter)
 );

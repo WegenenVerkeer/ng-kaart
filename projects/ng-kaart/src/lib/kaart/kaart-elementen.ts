@@ -100,11 +100,37 @@ export type VeldType =
   | "json"
   | "url";
 
+export type LocatieTypes =
+  | "ident8"
+  | "refpunt"
+  | "afstand"
+  | "vanRefpunt"
+  | "vanAfstand"
+  | "totRefpunt"
+  | "totAfstand";
+
+export type AfmetingTypes = "lengte" | "breedte";
+
+export type DataType = LocatieTypes | AfmetingTypes | "id" | "geometry";
+
+export function isLocatie(dataType: string | undefined): boolean {
+  return [
+    "ident8",
+    "refpunt",
+    "afstand",
+    "vanRefpunt",
+    "vanAfstand",
+    "totRefpunt",
+    "totAfstand",
+  ].includes(dataType ? dataType : "");
+}
+
 export interface VeldInfo {
   readonly naam: string; // naam zoals gekend in de feature
   readonly label?: string; // titel om weer te geven in de UI
   readonly type: VeldType;
   readonly isBasisVeld: boolean;
+  readonly dataType?: DataType;
   readonly constante?: string;
   readonly template?: string;
   readonly html?: string;
@@ -112,7 +138,6 @@ export interface VeldInfo {
   readonly parseFormat?: string; // voor date. Alle formats zijn Luxon specs.
   readonly displayFormat?: string; // voor date
   readonly sqlFormat?: string; // voor date
-  readonly isGeenLocatieVeld?: boolean; // beschouw veld niet als deel van de weglocatie informatie
   readonly isKopieerbaar?: boolean; // toon kopieer knop in identify popup
 }
 

@@ -1,10 +1,16 @@
-import { ChangeDetectorRef, Component, Input, NgZone } from "@angular/core";
+import {
+  ChangeDetectorRef,
+  Component,
+  Input,
+  OnInit,
+  NgZone,
+  Output,
+} from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
 import { eq, map, option } from "fp-ts";
 import { map as rxmap } from "rxjs/operators";
 import { constTrue, Function1, Function2, Predicate } from "fp-ts/lib/function";
 import * as Mustache from "mustache";
-import * as arrays from "../../util/arrays";
 import {
   formateerDate,
   formateerDateTime,
@@ -12,36 +18,29 @@ import {
   parseDateTime,
 } from "../../util/date-time";
 import { KaartChildDirective } from "../kaart-child.directive";
-import { VeldInfo } from "../kaart-elementen";
+import { VeldInfo, VeldType, isLocatie } from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
 import { copyToClipboard } from "../../util/clipboard";
 import { ServiceNowOpties, ServiceNowUiSelector } from "./service-now-opties";
 import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
 
-const GEOMETRY = "geometry";
-const IDENT8 = "ident8";
-const IDENT8EN = "ident8en";
-const LOCATIE_IDENT8 = "locatie.ident8";
-const BEGIN_POSITIE = "locatie.begin.positie";
-const BEGIN_AFSTAND = "locatie.begin.afstand";
-const BEGIN_AFSTAND_ALT = "van_afstand";
-const BEGIN_OPSCHRIFT = "locatie.begin.opschrift";
-const BEGIN_OPSCHRIFT_ALT = "van_referentiepaal";
-const EIND_POSITIE = "locatie.eind.positie";
-const EIND_AFSTAND = "locatie.eind.afstand";
-const EIND_AFSTAND_ALT = "tot_afstand";
-const EIND_OPSCHRIFT = "locatie.eind.opschrift";
-const EIND_OPSCHRIFT_ALT = "tot_referentiepaal";
-const LENGTE = "lengte";
-const LOCATIE_GEOMETRY_LENGTE = "locatie.geometry.lengte";
-const LOCATIE_LENGTE = "locatie.lengte";
-const ZIJDERIJBAAN = "zijderijbaan";
-const AFSTANDRIJBAAN = "afstandrijbaan";
-const BREEDTE = "breedte";
-const HM = "hm";
-const OPSCHRIFT = "opschrift";
-const VERPL = "verpl";
-const AFSTAND = "afstand";
+interface PuntWeglocatie {
+  ident8: string;
+  opschrift: number;
+  afstand: number;
+}
+
+interface LijnWeglocatie {
+  ident8: string;
+  begin: {
+    opschrift: number;
+    afstand: number;
+  };
+  eind: {
+    opschrift: number;
+    afstand: number;
+  };
+}
 
 export type VeldinfoMap = Map<string, VeldInfo>;
 export interface Properties {
@@ -102,14 +101,13 @@ const hasVeld: Function2<VeldinfoMap, string, boolean> = hasVeldSatisfying(
   constTrue
 );
 
-const isType: Function1<string, Function2<VeldinfoMap, string, boolean>> = (
-  type
-) => hasVeldSatisfying((veldInfo) => veldInfo.type === type);
-
-const isBooleanVeld: Function2<VeldinfoMap, string, boolean> = isType(
-  "boolean"
+const heeftDataType: Function2<
+  VeldinfoMap,
+  string,
+  boolean
+> = hasVeldSatisfying((veldInfo) =>
+  option.fromNullable(veldInfo.dataType).isSome()
 );
-const isDateVeld: Function2<VeldinfoMap, string, boolean> = isType("date");
 
 // indien geen meta informatie functie, toon alle velden
 const isBasisVeld: Function2<VeldinfoMap, string, boolean> = hasVeldSatisfying(
@@ -121,40 +119,28 @@ const isBasisVeld: Function2<VeldinfoMap, string, boolean> = hasVeldSatisfying(
   templateUrl: "./kaart-info-boodschap-veldinfo.component.html",
   styleUrls: ["./kaart-info-boodschap-veldinfo.component.scss"],
 })
-export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
+export class KaartInfoBoodschapVeldinfoComponent
+  extends KaartChildDirective
+  implements OnInit {
   @Input()
   properties: Properties;
+
   @Input()
   veldbeschrijvingen: VeldinfoMap = new Map();
 
-  private _alleVeldenZichtbaar = false;
+  @Output()
+  weglocatie?: string;
 
-  teVerbergenProperties = [
-    IDENT8,
-    LOCATIE_IDENT8,
-    IDENT8EN,
-    GEOMETRY,
-    BEGIN_POSITIE,
-    BEGIN_AFSTAND,
-    BEGIN_AFSTAND_ALT,
-    BEGIN_OPSCHRIFT,
-    BEGIN_OPSCHRIFT_ALT,
-    EIND_POSITIE,
-    EIND_AFSTAND,
-    EIND_AFSTAND_ALT,
-    EIND_OPSCHRIFT,
-    EIND_OPSCHRIFT_ALT,
-    LENGTE,
-    LOCATIE_GEOMETRY_LENGTE,
-    LOCATIE_LENGTE,
-    AFSTANDRIJBAAN,
-    ZIJDERIJBAAN,
-    BREEDTE,
-    HM,
-    OPSCHRIFT,
-    VERPL,
-    AFSTAND,
-  ];
+  @Output()
+  afmeting?: string;
+
+  @Output()
+  lengte?: string;
+
+  @Output()
+  breedte?: string;
+
+  private _alleVeldenZichtbaar = false;
 
   // ServiceNow cases aanmaken actief of niet?
   // Default staat deze af. Kan geënabled worden door via ServiceNowOpties serviceNowCasesActief op true te zetten. Zal door Geoloket
@@ -179,8 +165,10 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       });
   }
 
-  heeftLocatieGegevensVoor(key: string) {
-    return hasValue(this.waarde(key)) && this.isLocatieVeld(key);
+  ngOnInit() {
+    super.ngOnInit();
+    // set weglocatie hier
+    // set afmeting hier
   }
 
   alleVeldenZichtbaar() {
@@ -192,130 +180,23 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     this.kaartInfoBoodschapComponent.scrollIntoView();
   }
 
-  lengte(): option.Option<number> {
-    return option
-      .fromNullable(this.waarde(LOCATIE_LENGTE))
-      .map(Math.round)
-      .orElse(() => option.fromNullable(this.waarde(LENGTE)).map(Math.round))
-      .orElse(() =>
-        option
-          .fromNullable(this.waarde(LOCATIE_GEOMETRY_LENGTE))
-          .map(Math.round)
-      );
-  }
-
-  breedte(): option.Option<string> {
-    return option.fromNullable(this.waarde(BREEDTE)).map((b) => b.toString());
-  }
-
-  heeftDimensies() {
-    return (
-      this.heeftLocatieGegevensVoor(LOCATIE_LENGTE) ||
-      this.heeftLocatieGegevensVoor(LOCATIE_LENGTE) ||
-      this.heeftLocatieGegevensVoor(LOCATIE_GEOMETRY_LENGTE) ||
-      this.heeftLocatieGegevensVoor(BREEDTE)
-    );
-  }
-
-  dimensies(): string {
-    return this.lengte().foldL(
-      () => this.breedte().fold("Geen dimensies", (breedte) => `${breedte}cm`),
-      (lengte) =>
-        this.breedte().foldL<string>(
-          () => `${lengte}m`,
-          (breedte) => `${lengte}m x ${breedte}cm`
-        )
-    );
-  }
-
-  zijderijbaan(): string {
-    switch (this.waarde(ZIJDERIJBAAN)) {
-      case "R":
-        return "Rechts";
-      case "L":
-        return "Links";
-      case "M":
-        return "Midden";
-      case "O":
-        return "Op";
-      default:
-        return option
-          .fromNullable(this.waarde(ZIJDERIJBAAN))
-          .map((b) => b.toString())
-          .getOrElse("");
-    }
-  }
-
-  heeftVanTot(): boolean {
-    return (
-      (this.heeftLocatieGegevensVoor(BEGIN_OPSCHRIFT) &&
-        this.heeftLocatieGegevensVoor(EIND_OPSCHRIFT)) ||
-      (this.heeftLocatieGegevensVoor(BEGIN_OPSCHRIFT_ALT) &&
-        this.heeftLocatieGegevensVoor(EIND_OPSCHRIFT_ALT))
-    );
-  }
-
-  heeftIdent8en(): boolean {
-    // TODO we ontbreken een string[] type
-    const waarde = this.waarde(IDENT8EN);
-    return arrays.isArray(waarde) && arrays.isNonEmpty(waarde);
-  }
-
-  ident8en() {
-    // TODO we ontbreken een string[] type
-    const waarde = this.waarde(IDENT8EN);
-    return option
-      .fromPredicate(arrays.isArray)(waarde)
-      .map((s) => s.join(", "))
-      .getOrElse("");
-  }
-
-  heeftIdent8(): boolean {
-    return (
-      this.heeftLocatieGegevensVoor(IDENT8) ||
-      this.heeftLocatieGegevensVoor(LOCATIE_IDENT8) ||
-      this.heeftLocatieGegevensVoor(IDENT8EN)
-    );
-  }
-
-  ident8() {
-    if (this.heeftIdent8en()) {
-      return this.ident8en();
-    } else {
-      return option
-        .fromNullable(this.waarde(IDENT8))
-        .orElse(() => option.fromNullable(this.waarde(LOCATIE_IDENT8)))
-        .getOrElse("");
-    }
-  }
-
-  van(): string {
-    return this.pos(BEGIN_OPSCHRIFT)
-      .alt(this.pos(BEGIN_OPSCHRIFT_ALT))
-      .getOrElse("");
-  }
-
-  tot(): string {
-    return this.pos(EIND_OPSCHRIFT)
-      .alt(this.pos(EIND_OPSCHRIFT_ALT))
-      .getOrElse("");
-  }
-
-  private afstand(afstandVeld: string): option.Option<string> {
-    return option.fromNullable(this.waarde(afstandVeld)).map(this.signed);
-  }
-
-  vanAfstand(): string {
-    return this.afstand(BEGIN_AFSTAND)
-      .alt(this.afstand(BEGIN_AFSTAND_ALT))
-      .getOrElse("");
-  }
-
-  totAfstand(): string {
-    return this.afstand(EIND_AFSTAND)
-      .alt(this.afstand(EIND_AFSTAND_ALT))
-      .getOrElse("");
-  }
+  // zijderijbaan(): string {
+  //   switch (this.waarde(ZIJDERIJBAAN)) {
+  //     case "R":
+  //       return "Rechts";
+  //     case "L":
+  //       return "Links";
+  //     case "M":
+  //       return "Midden";
+  //     case "O":
+  //       return "Op";
+  //     default:
+  //       return option
+  //         .fromNullable(this.waarde(ZIJDERIJBAAN))
+  //         .map((b) => b.toString())
+  //         .getOrElse("");
+  //   }
+  // }
 
   label(veld: string): string {
     return veldbeschrijving(veld, this.veldbeschrijvingen)
@@ -323,33 +204,12 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       .getOrElse(veld);
   }
 
-  zichtbareEigenschappen(): string[] {
+  basisEigenschappen(): string[] {
     return this.eigenschappen(
       (veldnaam) =>
         isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.isLinkVeld(veldnaam) &&
-        !isBooleanVeld(this.veldbeschrijvingen, veldnaam) &&
-        !isDateVeld(this.veldbeschrijvingen, veldnaam) &&
-        (!this.teVerbergenProperties.includes(veldnaam) ||
-          this.isGeenLocatieVeld(veldnaam))
-    );
-  }
-
-  booleanEigenschappen(): string[] {
-    return this.eigenschappen(
-      (veldnaam) =>
-        isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        isBooleanVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
-    );
-  }
-
-  dateEigenschappen(): string[] {
-    return this.eigenschappen(
-      (veldnaam) =>
-        isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        isDateVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
+        !heeftDataType(this.veldbeschrijvingen, veldnaam) &&
+        !this.isLinkVeld(veldnaam)
     );
   }
 
@@ -357,8 +217,8 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     return this.eigenschappen(
       (veldnaam) =>
         isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        this.isLinkVeld(veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
+        !heeftDataType(this.veldbeschrijvingen, veldnaam) &&
+        this.isLinkVeld(veldnaam)
     );
   }
 
@@ -370,28 +230,8 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     return this.eigenschappen(
       (veldnaam) =>
         !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        !isBooleanVeld(this.veldbeschrijvingen, veldnaam) &&
-        !isDateVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.isLinkVeld(veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
-    );
-  }
-
-  geavanceerdeBooleanEigenschappen(): string[] {
-    return this.eigenschappen(
-      (veldnaam) =>
-        !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        isBooleanVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
-    );
-  }
-
-  geavanceerdeDateEigenschappen(): string[] {
-    return this.eigenschappen(
-      (veldnaam) =>
-        !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        isDateVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
+        !heeftDataType(this.veldbeschrijvingen, veldnaam) &&
+        !this.isLinkVeld(veldnaam)
     );
   }
 
@@ -399,8 +239,8 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     return this.eigenschappen(
       (veldnaam) =>
         !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        this.isLinkVeld(veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
+        !heeftDataType(this.veldbeschrijvingen, veldnaam) &&
+        this.isLinkVeld(veldnaam)
     );
   }
 
@@ -423,42 +263,28 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     );
   }
 
-  parseFormat(veldnaam: string): option.Option<string> {
-    return veldbeschrijving(
-      veldnaam,
-      this.veldbeschrijvingen
-    ).chain((veldInfo) => option.fromNullable(veldInfo.parseFormat));
-  }
-
-  displayFormat(veldnaam: string): option.Option<string> {
-    return veldbeschrijving(
-      veldnaam,
-      this.veldbeschrijvingen
-    ).chain((veldInfo) =>
-      option
-        .fromNullable(veldInfo.displayFormat)
-        .orElse(() => option.fromNullable(veldInfo.parseFormat))
+  parseFormat(veldnaam: string): string | null {
+    return option.toNullable(
+      veldbeschrijving(veldnaam, this.veldbeschrijvingen).chain((veldInfo) =>
+        option.fromNullable(veldInfo.parseFormat)
+      )
     );
   }
 
-  isLocatieVeld(veldnaam: string): boolean {
-    return !this.isGeenLocatieVeld(veldnaam);
+  displayFormat(veldnaam: string): string | null {
+    return option.toNullable(
+      veldbeschrijving(veldnaam, this.veldbeschrijvingen).chain((veldInfo) =>
+        option
+          .fromNullable(veldInfo.displayFormat)
+          .orElse(() => option.fromNullable(veldInfo.parseFormat))
+      )
+    );
   }
 
   isKopieerbaar(veldnaam: string): boolean {
     return veldbeschrijving(veldnaam, this.veldbeschrijvingen)
       .chain((veldInfo) => option.fromNullable(veldInfo.isKopieerbaar))
       .getOrElse(false);
-  }
-
-  isGeenLocatieVeld(veldnaam: string): boolean {
-    return veldbeschrijving(veldnaam, this.veldbeschrijvingen)
-      .chain((veldInfo) => option.fromNullable(veldInfo.isGeenLocatieVeld))
-      .getOrElse(false);
-  }
-
-  copyToClipboard(toCopy: string | number) {
-    copyToClipboard(toCopy);
   }
 
   waarde(veldnaam: string): string | number {
@@ -468,12 +294,12 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       if (
         this.hasHtml(veldnaam) &&
         waarde &&
-        this.veldtype(veldnaam) !== "url"
+        this.veldType(veldnaam) !== "url"
       ) {
         return this.sanitizer.bypassSecurityTrustHtml(
           formateerJson(
             veldnaam,
-            this.veldtype(veldnaam),
+            this.veldType(veldnaam),
             waarde,
             this.html(veldnaam)
           )
@@ -481,7 +307,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       } else if (this.hasTemplate(veldnaam) && waarde) {
         return formateerJson(
           veldnaam,
-          this.veldtype(veldnaam),
+          this.veldType(veldnaam),
           waarde,
           this.template(veldnaam)
         );
@@ -489,79 +315,6 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
         return waarde;
       }
     });
-  }
-
-  private maybeDateWaarde(veldnaam: string): option.Option<string> {
-    return this.constante(veldnaam).orElse(() => {
-      const waarde = nestedPropertyValue(veldnaam, this.properties);
-      return option
-        .fromNullable(waarde)
-        .chain(parseDate(this.parseFormat(veldnaam)))
-        .map(formateerDate(this.displayFormat(veldnaam)));
-    });
-  }
-
-  dateWaarde(veldnaam: string): string {
-    return this.maybeDateWaarde(veldnaam).getOrElse("");
-  }
-
-  validDateWaarde(veldnaam: string): boolean {
-    return this.maybeDateWaarde(veldnaam).isSome();
-  }
-
-  private maybeDateTimeWaarde(veldnaam: string): option.Option<string> {
-    return this.constante(veldnaam).orElse(() => {
-      const waarde = nestedPropertyValue(veldnaam, this.properties);
-      return option
-        .fromNullable(waarde)
-        .chain(parseDateTime(this.parseFormat(veldnaam)))
-        .map(formateerDateTime(this.displayFormat(veldnaam)));
-    });
-  }
-
-  dateTimeWaarde(veldnaam: string): string {
-    return this.maybeDateTimeWaarde(veldnaam).getOrElse("");
-  }
-
-  validDateTimeWaarde(veldnaam: string): boolean {
-    return this.maybeDateTimeWaarde(veldnaam).isSome();
-  }
-
-  heeftOpschrift() {
-    return (
-      this.heeftLocatieGegevensVoor(HM) ||
-      this.heeftLocatieGegevensVoor(OPSCHRIFT)
-    );
-  }
-
-  opschrift(): string | number {
-    return option
-      .fromNullable(this.waarde(HM))
-      .alt(option.fromNullable(this.waarde(OPSCHRIFT)))
-      .getOrElse("");
-  }
-
-  verpl(): string {
-    return option
-      .fromNullable(this.waarde(VERPL))
-      .alt(option.fromNullable(this.waarde(AFSTAND)))
-      .map(this.signed)
-      .getOrElse("");
-  }
-
-  private pos(positieVeld: string): option.Option<string> {
-    return option
-      .fromNullable(this.waarde(positieVeld))
-      .filter((positie) => typeof positie === "number")
-      .map((positie) => `${Math.round((positie as number) * 10) / 10}`);
-  }
-
-  private signed(value: number): string {
-    if (value >= 0) {
-      return `+${value}`;
-    } else {
-      return `${value}`;
-    }
   }
 
   private eigenschappen(filter: Predicate<string>): string[] {
@@ -586,7 +339,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       veldbeschrijving(veld, this.veldbeschrijvingen) // indien 'constante' veld start met http
         .chain((veldInfo) => option.fromNullable(veldInfo.constante)) //
         .exists((constante) => constante.startsWith("http")) ||
-      this.veldtype(veld) === "url"
+      this.veldType(veld) === "url"
     );
   }
 
@@ -614,10 +367,10 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       .getOrElse("");
   }
 
-  private veldtype(veld: string): string {
+  veldType(veld: string): VeldType {
     return veldbeschrijving(veld, this.veldbeschrijvingen)
-      .map((veldInfo) => veldInfo.type.toString())
-      .getOrElse("");
+      .map((veldInfo) => veldInfo.type)
+      .getOrElse("string");
   }
 
   aanmakenCaseServiceNowMogelijk(): boolean {
@@ -625,5 +378,9 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       this.serviceNowActief &&
       hasVeld(this.veldbeschrijvingen, "installatieNaampad")
     );
+  }
+
+  copyToClipboard(toCopy: string | number) {
+    copyToClipboard(toCopy);
   }
 }

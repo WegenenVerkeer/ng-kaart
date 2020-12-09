@@ -44,6 +44,50 @@
   padding-bottom: 8px;
 }
 
+.velden {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  width: 100%;
+}
+
+.veldnamen {
+  order: 1;
+  margin-top: auto; /* align to bottom als toevallig hoger dan 1 lijn is */
+}
+
+.veldspacer {
+  order: 2;
+  flex-grow: 1;
+  border-bottom: dotted 1px rgba(0, 0, 0, 0.23);
+  margin-left: 3px;
+  margin-right: 4px;
+  margin-bottom: 5px;
+}
+
+.veldwaarden {
+  order: 3;
+  margin-right: 4px;
+}
+
+.veldicon {
+  order: 4;
+  max-width: 10%;
+
+  button {
+    float: right;
+    line-height: 18px;
+    height: 18px;
+    width: 24px;
+  }
+
+  .mat-icon {
+    @include mat-icon-size(16px);
+    vertical-align: top;
+    line-height: 18px;
+  }
+}
+
 .veldlinks {
   order: 1;
   flex-basis: 100%;
@@ -81,6 +125,12 @@
   color: rgba(0, 0, 0, 0.87);
 }
 
+.booleanwaarden {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+}
+
 .booleanwaarde {
   white-space: nowrap;
   flex-basis: 50%;
@@ -89,6 +139,14 @@
   font-size: 14px;
   font-weight: 300;
   color: rgba(0, 0, 0, 0.54);
+}
+
+.negatief {
+  color: rgba(242, 68, 61, 0.87);
+}
+
+.positief {
+  color: rgba(97, 186, 117, 0.87);
 }
 
 .mat-expand-button {
