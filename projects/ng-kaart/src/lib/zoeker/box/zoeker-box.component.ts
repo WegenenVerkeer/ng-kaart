@@ -162,10 +162,6 @@ export abstract class GetraptZoekerDirective extends KaartChildDirective {
     super(kaartComponent, zone);
   }
 
-  // fp-ts functions in html
-  option = option;
-  constant = constant;
-
   maakVeldenLeeg(vanafNiveau: number) {
     this.zoekerComponent.maakResultaatLeeg();
   }
@@ -339,6 +335,10 @@ export abstract class GetraptZoekerDirective extends KaartChildDirective {
 export class ZoekerBoxComponent
   extends KaartChildDirective
   implements OnInit, OnDestroy {
+  // fp-ts functions in html
+  option = option;
+  constant = constant;
+
   zoekVeld = new FormControl();
   @ViewChild("zoekVeldElement")
   zoekVeldElement: ElementRef;
