@@ -42,6 +42,7 @@
 
   <div class="expand-line">
     <div>Overige velden</div>
+
     <button mat-button class="mat-expand-button" (click)="setAlleVeldenZichtbaar(true)"
             *ngIf="!alleVeldenZichtbaar() && heeftGeavanceerdeEigenschappen()">
       <mat-icon>expand_more</mat-icon>
@@ -71,6 +72,6 @@
         [isKopieerbaar]="isKopieerbaar(veld)"></awv-kaart-info-veld>
     </div>
 
-</div>
+  </div>
 
 </div>
