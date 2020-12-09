@@ -1439,6 +1439,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       const selectionIconColor: ol.Color = [0, 51, 153, 0.7]; // TODO maak configureerbaar
 
       const selectionStyle = style.clone();
+      selectionStyle.setZIndex(Infinity); // geselecteerde/hover features altijd bovenaan tekenen
       if (selectionStyle.getStroke()) {
         selectionStyle.getStroke().setColor(selectionStrokeColor);
       }
