@@ -18,7 +18,7 @@ export class KaartInfoBoodschapVeldComponent extends KaartChildDirective {
   waarde: string | number | boolean;
 
   @Input()
-  veldType: VeldType;
+  veldType: VeldType = "string";
 
   @Input()
   isKopieerbaar = false;
@@ -29,7 +29,7 @@ export class KaartInfoBoodschapVeldComponent extends KaartChildDirective {
   @Input()
   parseFormat?: string;
 
-  copyToClipboard(toCopy: string | number) {
+  copyToClipboard(toCopy: string | number | boolean) {
     copyToClipboard(toCopy);
   }
 

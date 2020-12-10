@@ -1,8 +1,8 @@
 <mat-card>
   <mat-card-title>
-    <mat-icon class="titel-icon">{{ icon }}</mat-icon><span class="titel-text">{{ titel }}</span>
+    <span class="titel-text">{{ titel }}</span>
     <button mat-button *ngIf="isSluitbaar()" class="mat-titel-button" (click)="sluit()">
-      <mat-icon>close</mat-icon>
+      <mat-icon class="close-icon">close</mat-icon>
     </button>
   </mat-card-title>
   <mat-card-content>

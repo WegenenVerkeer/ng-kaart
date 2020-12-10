@@ -140,7 +140,7 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildDirectiv
       .fromNullable(boodschap.coordinaat)
       .map(lambert72ToWgs84)
       .map(switchVolgorde) // andere volgorde weergeven voor wgs84
-      .map(formatCoordinate(7))
+      .map(formatCoordinate(5))
       .getOrElse("");
     this.wegLocaties = array.sort(projectafstandOrd)(boodschap.weglocaties);
 

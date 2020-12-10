@@ -1,19 +1,7 @@
 <mat-card class="coordinaten-panel mat-elevation-z0">
    <mat-card-content>
-    <div class="velden">
-      <div class="veldnamen">Lambert 72</div>
-      <div class="veldwaarden">{{ coordinaatInformatieLambert72 }}</div>
-      <button mat-icon-button class="copy" matTooltip="Kopieer coördinaten">
-          <mat-icon (click)="copyToClipboard(coordinaatInformatieLambert72)">content_copy</mat-icon>
-      </button>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">WGS 84</div>
-      <div class="veldwaarden">{{ coordinaatInformatieWgs84 }}</div>
-      <button mat-icon-button class="copy" matTooltip="Kopieer coördinaten">
-        <mat-icon (click)="copyToClipboard(coordinaatInformatieWgs84)">content_copy</mat-icon>
-      </button>
-    </div>
+     <awv-kaart-info-veld [label]="'Lambert 72 coordinaten'" [waarde]="coordinaatInformatieLambert72" [isKopieerbaar]="true"></awv-kaart-info-veld>
+     <awv-kaart-info-veld [label]="'WGS 84 coordinaten'" [waarde]="coordinaatInformatieWgs84" [isKopieerbaar]="true"></awv-kaart-info-veld>
   </mat-card-content>
 </mat-card>
 
@@ -38,18 +26,11 @@
       </mat-panel-title>
     </mat-expansion-panel-header>
 
-    <div class="velden">
-      <div class="veldnamen">Straat</div><div class="veldwaarden">{{ adres.straat }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">Huisnummer</div><div class="veldwaarden">{{ adres.huisnummer }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">Postcode</div><div class="veldwaarden">{{ adres.postcode }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">Gemeente</div><div class="veldwaarden">{{ adres.gemeente }}</div>
-    </div>
+    <awv-kaart-info-veld [label]="'Straat'" [waarde]="adres.straat"></awv-kaart-info-veld>
+    <awv-kaart-info-veld [label]="'Huisnummer'" [waarde]="adres.huisnummer"></awv-kaart-info-veld>
+    <awv-kaart-info-veld [label]="'Postcode'" [waarde]="adres.postcode"></awv-kaart-info-veld>
+    <awv-kaart-info-veld [label]="'Gemeente'" [waarde]="adres.gemeente"></awv-kaart-info-veld>
+
   </mat-expansion-panel>
 
   <mat-expansion-panel class="mat-elevation-z0" *ngIf="perceel">
@@ -59,21 +40,12 @@
       </mat-panel-title>
     </mat-expansion-panel-header>
 
-    <div class="velden">
-      <div class="veldnamen">Gemeente</div><div class="veldwaarden">{{ perceel?.gemeente }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">Afdeling</div><div class="veldwaarden">{{ perceel?.afdeling }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">Sectie</div><div class="veldwaarden">{{ perceel?.sectie }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">Perceel</div><div class="veldwaarden">{{ perceel?.perceel }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">CaPaKey</div><div class="veldwaarden">{{ perceel?.capaKey }}</div>
-    </div>
+    <awv-kaart-info-veld [label]="'Gemeente'" [waarde]="perceel?.gemeente"></awv-kaart-info-veld>
+    <awv-kaart-info-veld [label]="'Afdeling'" [waarde]="perceel?.afdeling"></awv-kaart-info-veld>
+    <awv-kaart-info-veld [label]="'Sectie'" [waarde]="perceel?.sectie"></awv-kaart-info-veld>
+    <awv-kaart-info-veld [label]="'Perceel'" [waarde]="perceel?.perceel"></awv-kaart-info-veld>
+    <awv-kaart-info-veld [label]="'CaPaKey'" [waarde]="perceel?.capaKey"></awv-kaart-info-veld>
+
   </mat-expansion-panel>
 
   <ng-container *ngFor="let info of laagInfos">

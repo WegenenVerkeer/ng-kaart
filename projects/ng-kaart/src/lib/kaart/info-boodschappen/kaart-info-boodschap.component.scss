@@ -5,6 +5,11 @@ mat-card {
 mat-card-title {
   padding: 16px;
   margin-bottom: 0;
+  border-bottom: solid 1px rgba(0, 0, 0, 0.23);
+}
+
+.close-icon {
+  color: rgba(0, 0, 0, 0.54);
 }
 
 .mat-card-title {
@@ -18,13 +23,11 @@ mat-card-title {
   padding-right: 0;
   line-height: 16px;
   min-width: 24px;
-}
 
-.titel-icon {
-  padding-right: 8px;
 }
 
 .titel-text {
-  position: relative;
   top: -4px;
+  font-size: 14px;
+  text-decoration: none solid rgba(0, 0, 0, 0.87);
 }

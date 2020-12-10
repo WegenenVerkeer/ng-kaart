@@ -161,8 +161,17 @@ export class KaartInfoBoodschapVeldinfoComponent
 
   ngOnInit() {
     super.ngOnInit();
-    // set weglocatie hier
-    // set afmeting hier
+    this.weglocatie = JSON.stringify(this.maakWegLocatie());
+  }
+
+  maakWegLocatie(): PuntWeglocatie | LijnWeglocatie | null {
+    const weglocatie = {
+      ident8: "R0010001",
+      opschrift: 1.0,
+      afstand: 40,
+    };
+    return weglocatie;
+    // return weglocatie === {} ? null : weglocatie;
   }
 
   alleVeldenZichtbaar() {
@@ -193,7 +202,7 @@ export class KaartInfoBoodschapVeldinfoComponent
   // }
 
   label(veld: string): string {
-    return veldbeschrijving(veld, this.veldbeschrijvingen)
+    return this.veldInfo(veld)
       .map((veldInfo) => option.fromNullable(veldInfo.label).getOrElse(""))
       .getOrElse(veld);
   }
@@ -202,6 +211,7 @@ export class KaartInfoBoodschapVeldinfoComponent
     return this.eigenschappen(
       (veldnaam) =>
         isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
+        this.veldType(veldnaam) !== "geometry" &&
         !heeftDataType(this.veldbeschrijvingen, veldnaam) &&
         !this.isLinkVeld(veldnaam)
     );
@@ -224,6 +234,7 @@ export class KaartInfoBoodschapVeldinfoComponent
     return this.eigenschappen(
       (veldnaam) =>
         !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
+        this.veldType(veldnaam) !== "geometry" &&
         !heeftDataType(this.veldbeschrijvingen, veldnaam) &&
         !this.isLinkVeld(veldnaam)
     );
@@ -240,7 +251,7 @@ export class KaartInfoBoodschapVeldinfoComponent
 
   constante(veld: string): option.Option<string> {
     return (
-      veldbeschrijving(veld, this.veldbeschrijvingen)
+      this.veldInfo(veld)
         .chain((veldInfo) => option.fromNullable(veldInfo.constante))
         // vervang elke instantie van {id} in de waarde van 'constante' door de effectieve id :
         .map((waarde) =>
@@ -257,17 +268,17 @@ export class KaartInfoBoodschapVeldinfoComponent
     );
   }
 
-  parseFormat(veldnaam: string): string | null {
+  parseFormat(veld: string): string | null {
     return option.toNullable(
-      veldbeschrijving(veldnaam, this.veldbeschrijvingen).chain((veldInfo) =>
+      this.veldInfo(veld).chain((veldInfo) =>
         option.fromNullable(veldInfo.parseFormat)
       )
     );
   }
 
-  displayFormat(veldnaam: string): string | null {
+  displayFormat(veld: string): string | null {
     return option.toNullable(
-      veldbeschrijving(veldnaam, this.veldbeschrijvingen).chain((veldInfo) =>
+      this.veldInfo(veld).chain((veldInfo) =>
         option
           .fromNullable(veldInfo.displayFormat)
           .orElse(() => option.fromNullable(veldInfo.parseFormat))
@@ -275,8 +286,8 @@ export class KaartInfoBoodschapVeldinfoComponent
     );
   }
 
-  isKopieerbaar(veldnaam: string): boolean {
-    return veldbeschrijving(veldnaam, this.veldbeschrijvingen)
+  isKopieerbaar(veld: string): boolean {
+    return this.veldInfo(veld)
       .chain((veldInfo) => option.fromNullable(veldInfo.isKopieerbaar))
       .getOrElse(false);
   }
@@ -330,39 +341,43 @@ export class KaartInfoBoodschapVeldinfoComponent
         .fromNullable(this.waarde(veld)) // indien waarde van veld begint met http
         .filter((waarde) => typeof waarde === "string")
         .exists((waarde) => `${waarde}`.startsWith("http")) ||
-      veldbeschrijving(veld, this.veldbeschrijvingen) // indien 'constante' veld start met http
+      this.veldInfo(veld) // indien 'constante' veld start met http
         .chain((veldInfo) => option.fromNullable(veldInfo.constante)) //
         .exists((constante) => constante.startsWith("http")) ||
       this.veldType(veld) === "url"
     );
   }
 
+  private veldInfo(veld: string): option.Option<VeldInfo> {
+    return veldbeschrijving(veld, this.veldbeschrijvingen);
+  }
+
   private hasTemplate(veld: string): boolean {
-    return veldbeschrijving(veld, this.veldbeschrijvingen)
+    return this.veldInfo(veld)
       .chain((veldInfo) => option.fromNullable(veldInfo.template))
       .isSome();
   }
 
   private hasHtml(veld: string): boolean {
-    return veldbeschrijving(veld, this.veldbeschrijvingen)
+    return this.veldInfo(veld)
       .chain((veldInfo) => option.fromNullable(veldInfo.html))
       .isSome();
   }
 
   private template(veld: string): string {
-    return veldbeschrijving(veld, this.veldbeschrijvingen)
+    return this.veldInfo(veld)
       .chain((veldInfo) => option.fromNullable(veldInfo.template))
       .getOrElse("");
   }
 
   private html(veld: string): string {
-    return veldbeschrijving(veld, this.veldbeschrijvingen)
+    return this.veldInfo(veld)
       .chain((veldInfo) => option.fromNullable(veldInfo.html))
       .getOrElse("");
   }
 
   veldType(veld: string): VeldType {
-    return veldbeschrijving(veld, this.veldbeschrijvingen)
+    return this.veldInfo(veld)
       .map((veldInfo) => veldInfo.type)
       .getOrElse("string");
   }

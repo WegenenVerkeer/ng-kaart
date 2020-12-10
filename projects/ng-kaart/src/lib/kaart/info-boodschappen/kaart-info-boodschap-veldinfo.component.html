@@ -1,12 +1,13 @@
 <div class="card-content">
-  <awv-weglocatie *ngIf="weglocatie" attr.weglocatie="{{ weglocatie }}"></awv-weglocatie>
-
-  <div class="separator-na-locatie" *ngIf="weglocatie"></div>
 
   <div *ngIf="aanmakenCaseServiceNowMogelijk()">
     <awv-servicenow-maak-case [installatieId]="waarde('bronid')"></awv-servicenow-maak-case>
   </div>
   <div class="separator-na-locatie" *ngIf="aanmakenCaseServiceNowMogelijk()"></div>
+
+  <div class="weg-locatie">
+    <awv-weglocatie *ngIf="weglocatie" attr.weglocatie="{{ weglocatie }}"></awv-weglocatie>
+  </div>
 
   <div class="velden" *ngFor="let veld of linkEigenschappen()">
     <div class="veldlinks">
@@ -41,7 +42,7 @@
   </div>
 
   <div class="expand-line">
-    <div>Overige velden</div>
+    Overige velden
 
     <button mat-button class="mat-expand-button" (click)="setAlleVeldenZichtbaar(true)"
             *ngIf="!alleVeldenZichtbaar() && heeftGeavanceerdeEigenschappen()">

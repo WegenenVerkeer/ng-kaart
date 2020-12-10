@@ -74,8 +74,8 @@ const components: any[] = [
   KaartInfoBoodschapKaartBevragenComponent,
   KaartInfoBoodschapMetenComponent,
   KaartInfoBoodschappenComponent,
-  KaartInfoBoodschapVeldinfoComponent,
   KaartInfoBoodschapVeldComponent,
+  KaartInfoBoodschapVeldinfoComponent,
   MarkeerKaartklikComponent,
   KaartLoadingComponent,
   KaartMetenComponent,
@@ -218,6 +218,7 @@ export * from "./info-boodschappen/kaart-info-boodschap-identify.component";
 export * from "./info-boodschappen/kaart-info-boodschap-kaart-bevragen.component";
 export * from "./info-boodschappen/kaart-info-boodschap-meten.component";
 export * from "./info-boodschappen/kaart-info-boodschap-veldinfo.component";
+export * from "./info-boodschappen/kaart-info-boodschap-veld.component";
 export * from "./info-boodschappen/kaart-info-boodschap.component";
 export * from "./info-boodschappen/kaart-info-boodschappen.component";
 export * from "./info-boodschappen/service-now-opties";
