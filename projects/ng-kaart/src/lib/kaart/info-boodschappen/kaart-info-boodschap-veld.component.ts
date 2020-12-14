@@ -24,13 +24,19 @@ export class KaartInfoBoodschapVeldComponent extends KaartChildDirective {
   isKopieerbaar = false;
 
   @Input()
+  kopieerWaarde?: string | number | boolean;
+
+  @Input()
   displayFormat?: string;
 
   @Input()
   parseFormat?: string;
 
-  copyToClipboard(toCopy: string | number | boolean) {
-    copyToClipboard(toCopy);
+  copyToClipboard() {
+    option.fromNullable(this.kopieerWaarde).foldL(
+      () => copyToClipboard(this.waarde),
+      (waarde) => copyToClipboard(waarde)
+    );
   }
 
   dateWaarde(): string {
