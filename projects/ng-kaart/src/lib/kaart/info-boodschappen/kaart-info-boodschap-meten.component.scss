@@ -1,9 +1,5 @@
 @import "../../css/kaart.component-common.scss";
 
-.card-content {
-  padding: 0 16px 16px 24px;
-}
-
 .naam {
   color: rgba(0, 0, 0, 0.54);
 }
@@ -50,7 +46,29 @@
   min-width: 24px;
 }
 
-.mat-icon {
-  @include mat-icon-size(16px);
-  vertical-align: top;
+mat-card-content {
+  padding: 16px;
+}
+
+.close-icon {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.mat-card-title {
+  font-size: 16px;
+  line-height: 16px;
+}
+
+.mat-titel-button {
+  float: right;
+  padding-left: 0;
+  padding-right: 0;
+  line-height: 16px;
+  min-width: 24px;
+}
+
+.titel-text {
+  top: -4px;
+  font-size: 14px;
+  text-decoration: none solid rgba(0, 0, 0, 0.87);
 }

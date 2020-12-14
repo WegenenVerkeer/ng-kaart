@@ -1,3 +1,43 @@
+@import "../../css/kaart.component-common.scss";
+
 .card-content {
   padding: 16px;
+}
+
+mat-card-title {
+  display: flex;
+  flex-direction: row;
+}
+
+.title {
+  flex-grow: 1;
+}
+
+.close-icon {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.mat-card-title {
+  font-size: 16px;
+  line-height: 16px;
+}
+
+.mat-titel-button {
+  float: right;
+  padding-left: 0;
+  padding-right: 0;
+  line-height: 16px;
+  min-width: 24px;
+}
+
+.titel-text {
+  line-height: 24px;
+  font-size: 14px;
+  text-decoration: rgba(0, 0, 0, 0.87);
+}
+
+.sub-titel-text {
+  font-size: 12px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.54);
 }

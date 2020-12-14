@@ -2,10 +2,9 @@ import { Component, Input, NgZone } from "@angular/core";
 import { Function1, Function2 } from "fp-ts/lib/function";
 
 import { eqCoordinate } from "../../util";
-import { copyToClipboard } from "../../util/clipboard";
-import { KaartChildDirective } from "../kaart-child.directive";
 import { InfoBoodschapMeten } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
+import { KaartInfoBoodschapBaseDirective } from "./kaart-info-boodschap-base.component";
 
 const formatNumber: Function1<number, string> = (n) =>
   n.toLocaleString(["nl-BE"], {
@@ -77,7 +76,9 @@ const formatCoordinates: Function2<number[], boolean, string> = (
   templateUrl: "./kaart-info-boodschap-meten.component.html",
   styleUrls: ["./kaart-info-boodschap-meten.component.scss"],
 })
-export class KaartInfoBoodschapMetenComponent extends KaartChildDirective {
+export class KaartInfoBoodschapMetenComponent extends KaartInfoBoodschapBaseDirective<
+  InfoBoodschapMeten
+> {
   length?: string;
   area?: string;
   coordinates?: string;
@@ -87,6 +88,7 @@ export class KaartInfoBoodschapMetenComponent extends KaartChildDirective {
 
   @Input()
   set boodschap(bsch: InfoBoodschapMeten) {
+    super.boodschap = bsch;
     this.length = bsch.length.map(formatLength).toUndefined();
     this.lengthCopyInfo = bsch.length.map((l) => "" + l).toUndefined();
     this.area = bsch.area.map(formatArea).toUndefined();
@@ -101,11 +103,5 @@ export class KaartInfoBoodschapMetenComponent extends KaartChildDirective {
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
-  }
-
-  copyToClipboard(toCopy?: string) {
-    if (toCopy) {
-      copyToClipboard(toCopy);
-    }
   }
 }

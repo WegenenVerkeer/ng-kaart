@@ -59,10 +59,10 @@
 .veldspacer {
   order: 2;
   flex-grow: 1;
-  border-bottom: dotted 1px rgba(0, 0, 0, 0.23);
+  border-bottom: 1px dotted $awv-secondary-d3;
   margin-left: 3px;
   margin-right: 4px;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .veldwaarden {
@@ -76,7 +76,7 @@
 
   button {
     float: right;
-    line-height: 18px;
+    line-height: 20px;
     height: 18px;
     width: 24px;
   }
@@ -84,19 +84,19 @@
   .mat-icon {
     @include mat-icon-size(16px);
     vertical-align: top;
-    line-height: 18px;
+    line-height: 20px;
   }
 }
 
 .veldnaam {
-  line-height: 20px;
+  line-height: 22px;
   font-size: 12px;
   font-weight: 300;
   color: rgba(0, 0, 0, 0.54);
 }
 
 .veldwaarde {
-  line-height: 20px;
+  line-height: 22px;
   font-size: 14px;
   font-weight: 500;
   color: rgba(0, 0, 0, 0.87);

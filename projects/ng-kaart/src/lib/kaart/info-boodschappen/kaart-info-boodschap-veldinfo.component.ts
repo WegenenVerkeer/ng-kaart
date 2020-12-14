@@ -18,24 +18,6 @@ import { copyToClipboard } from "../../util/clipboard";
 import { ServiceNowOpties, ServiceNowUiSelector } from "./service-now-opties";
 import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
 
-interface PuntWeglocatie {
-  ident8: string;
-  opschrift: number;
-  afstand: number;
-}
-
-interface LijnWeglocatie {
-  ident8: string;
-  begin: {
-    opschrift: number;
-    afstand: number;
-  };
-  eind: {
-    opschrift: number;
-    afstand: number;
-  };
-}
-
 export type VeldinfoMap = Map<string, VeldInfo>;
 export interface Properties {
   readonly [key: string]: any;
@@ -123,9 +105,6 @@ export class KaartInfoBoodschapVeldinfoComponent
   veldbeschrijvingen: VeldinfoMap = new Map();
 
   @Output()
-  weglocatie?: string;
-
-  @Output()
   afmeting?: string;
 
   @Output()
@@ -161,17 +140,6 @@ export class KaartInfoBoodschapVeldinfoComponent
 
   ngOnInit() {
     super.ngOnInit();
-    this.weglocatie = JSON.stringify(this.maakWegLocatie());
-  }
-
-  maakWegLocatie(): PuntWeglocatie | LijnWeglocatie | null {
-    const weglocatie = {
-      ident8: "R0010001",
-      opschrift: 1.0,
-      afstand: 40,
-    };
-    return weglocatie;
-    // return weglocatie === {} ? null : weglocatie;
   }
 
   alleVeldenZichtbaar() {

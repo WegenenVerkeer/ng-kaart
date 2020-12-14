@@ -23,7 +23,6 @@ import {
   VeldinfoLaagLocationInfo,
   Veldwaarde,
 } from "../kaart-bevragen/laaginfo.model";
-import { KaartChildDirective } from "../kaart-child.directive";
 import { InfoBoodschapKaartBevragenProgress } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
@@ -31,6 +30,7 @@ import {
   Properties,
   VeldinfoMap,
 } from "./kaart-info-boodschap-veldinfo.component";
+import { KaartInfoBoodschapBaseDirective } from "./kaart-info-boodschap-base.component";
 
 // Een type om te gebruiken in de template. Makkelijkst met enkel native types.
 export interface LaagInfo {
@@ -102,9 +102,10 @@ const laagLocationInfoResultToLaagInfo: Function2<
   selector: "awv-kaart-info-boodschap-kaart-bevragen",
   templateUrl: "./kaart-info-boodschap-kaart-bevragen.component.html",
   styleUrls: ["./kaart-info-boodschap-kaart-bevragen.component.scss"],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildDirective {
+export class KaartInfoBoodschapKaartBevragenComponent extends KaartInfoBoodschapBaseDirective<
+  InfoBoodschapKaartBevragenProgress
+> {
   laagInfos: LaagInfo[];
   coordinaatInformatieLambert72: string;
   coordinaatInformatieWgs84: string;
@@ -114,6 +115,7 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildDirectiv
 
   @Input()
   set boodschap(boodschap: InfoBoodschapKaartBevragenProgress) {
+    super.boodschap = boodschap;
     // Deze waarden voor de template worden berekend op het moment dat er een nieuwe input is, niet elke
     // keer dat Angular denkt dat hij change detection moet laten lopen.
     const foldF: Function3<

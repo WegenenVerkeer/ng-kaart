@@ -1,5 +1,13 @@
-<div class="card-content">
-  <awv-kaart-info-veld *ngIf="length" [label]="'Lengte'" [waarde]="length" [isKopieerbaar]="true" [kopieerWaarde]="lengthCopyInfo"></awv-kaart-info-veld>
-  <awv-kaart-info-veld *ngIf="area" [label]="'Oppervlakte'" [waarde]="area" [isKopieerbaar]="true" [kopieerWaarde]="areaCopyInfo"></awv-kaart-info-veld>
-  <awv-kaart-info-veld *ngIf="area" [label]="'Coördinaten'" [waarde]="coordinates" [isKopieerbaar]="true" [kopieerWaarde]="coordinatesCopyInfo"></awv-kaart-info-veld>
-</div>
+<mat-card>
+  <mat-card-title>
+    <span class="titel-text">Meten</span>
+    <button mat-button *ngIf="isSluitbaar" class="mat-titel-button" (click)="sluit()">
+      <mat-icon class="close-icon">close</mat-icon>
+    </button>
+  </mat-card-title>
+  <mat-card-content>
+      <awv-kaart-info-veld *ngIf="length" [label]="'Lengte'" [waarde]="length" [isKopieerbaar]="true" [kopieerWaarde]="lengthCopyInfo"></awv-kaart-info-veld>
+      <awv-kaart-info-veld *ngIf="area" [label]="'Oppervlakte'" [waarde]="area" [isKopieerbaar]="true" [kopieerWaarde]="areaCopyInfo"></awv-kaart-info-veld>
+      <awv-kaart-info-veld *ngIf="area" [label]="'Coördinaten'" [waarde]="coordinates" [isKopieerbaar]="true" [kopieerWaarde]="coordinatesCopyInfo"></awv-kaart-info-veld>
+  </mat-card-content>
+</mat-card>

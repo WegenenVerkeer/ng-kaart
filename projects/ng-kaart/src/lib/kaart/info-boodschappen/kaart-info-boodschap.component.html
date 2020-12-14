@@ -1,16 +1,6 @@
-<mat-card>
-  <mat-card-title>
-    <span class="titel-text">{{ titel }}</span>
-    <button mat-button *ngIf="isSluitbaar()" class="mat-titel-button" (click)="sluit()">
-      <mat-icon class="close-icon">close</mat-icon>
-    </button>
-  </mat-card-title>
-  <mat-card-content>
-    <ng-container [ngSwitch]="kind">
-        <awv-kaart-info-boodschap-identify *ngSwitchCase="'InfoBoodschapIdentify'" [boodschap]="boodschap"></awv-kaart-info-boodschap-identify>
-        <awv-kaart-info-boodschap-alert *ngSwitchCase="'InfoBoodschapAlert'" [boodschap]="boodschap"></awv-kaart-info-boodschap-alert>
-        <awv-kaart-info-boodschap-meten *ngSwitchCase="'InfoBoodschapMeten'" [boodschap]="boodschap"></awv-kaart-info-boodschap-meten>
-        <awv-kaart-info-boodschap-kaart-bevragen *ngSwitchCase="'InfoBoodschapKaartBevragen'" [boodschap]="boodschap"></awv-kaart-info-boodschap-kaart-bevragen>
-      </ng-container>
-  </mat-card-content>
-</mat-card>
+<ng-container [ngSwitch]="kind">
+  <awv-kaart-info-boodschap-identify *ngSwitchCase="'InfoBoodschapIdentify'" [boodschap]="boodschap" [isSluitbaar]="isSluitbaar()"></awv-kaart-info-boodschap-identify>
+  <awv-kaart-info-boodschap-alert *ngSwitchCase="'InfoBoodschapAlert'" [boodschap]="boodschap" [isSluitbaar]="isSluitbaar()"></awv-kaart-info-boodschap-alert>
+  <awv-kaart-info-boodschap-meten *ngSwitchCase="'InfoBoodschapMeten'" [boodschap]="boodschap" [isSluitbaar]="isSluitbaar()"></awv-kaart-info-boodschap-meten>
+  <awv-kaart-info-boodschap-kaart-bevragen *ngSwitchCase="'InfoBoodschapKaartBevragen'" [boodschap]="boodschap" [isSluitbaar]="isSluitbaar()"></awv-kaart-info-boodschap-kaart-bevragen>
+</ng-container>

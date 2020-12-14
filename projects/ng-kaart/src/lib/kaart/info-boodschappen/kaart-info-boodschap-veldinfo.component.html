@@ -5,10 +5,6 @@
   </div>
   <div class="separator-na-locatie" *ngIf="aanmakenCaseServiceNowMogelijk()"></div>
 
-  <div class="weg-locatie">
-    <awv-weglocatie *ngIf="weglocatie" attr.weglocatie="{{ weglocatie }}"></awv-weglocatie>
-  </div>
-
   <div class="velden" *ngFor="let veld of linkEigenschappen()">
     <div class="veldlinks">
       <a href="{{ waarde(veld) }}" target="_blank">
@@ -16,8 +12,6 @@
         {{ label(veld) }}</a>
     </div>
   </div>
-
-  <div class="separator-na-locatie"></div>
 
   <div *ngIf="afmeting">
     <awv-kaart-info-veld [label]="'Afmeting'" [waarde]="afmeting" [veldType]="'string'"></awv-kaart-info-veld>
