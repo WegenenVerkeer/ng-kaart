@@ -1,0 +1,119 @@
+@import "../../css/kaart.component-common.scss";
+
+.card-content {
+  margin-bottom: 0;
+}
+
+.ident8 {
+  line-height: 26px;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(51, 51, 51, 0.87);
+}
+
+.vantot {
+  line-height: 24px;
+  font-weight: 600;
+  font-size: 15px;
+  color: rgba(51, 51, 51, 0.87);
+}
+
+.afstand {
+  line-height: 24px;
+  font-weight: 300;
+  font-size: 15px;
+  color: rgba(51, 51, 51, 0.87);
+}
+
+.dimensies {
+  line-height: 24px;
+  font-weight: 600;
+  font-size: 15px;
+  color: rgba(51, 51, 51, 0.87);
+}
+
+.dimensies-icon {
+  line-height: 32px;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.87);
+  width: 16px;
+  vertical-align: text-bottom;
+}
+
+.separator-na-locatie {
+  padding-bottom: 8px;
+}
+
+.velden {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  width: 100%;
+}
+
+.veldnamen {
+  order: 1;
+  margin-top: auto; /* align to bottom als toevallig hoger dan 1 lijn is */
+}
+
+.veldspacer {
+  order: 2;
+  flex-grow: 1;
+  border-bottom: 1px dotted $awv-secondary-d3;
+  margin-left: 3px;
+  margin-right: 4px;
+  margin-bottom: 4px;
+}
+
+.veldwaarden {
+  order: 3;
+  margin-right: 4px;
+}
+
+.veldicon {
+  order: 4;
+  max-width: 10%;
+
+  button {
+    float: right;
+    line-height: 20px;
+    height: 18px;
+    width: 24px;
+  }
+
+  .mat-icon {
+    @include mat-icon-size(16px);
+    vertical-align: top;
+    line-height: 20px;
+  }
+}
+
+.veldnaam {
+  line-height: 22px;
+  font-size: 12px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.veldwaarde {
+  line-height: 22px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.negatief {
+  color: rgba(242, 68, 61, 0.87);
+}
+
+.positief {
+  color: rgba(97, 186, 117, 0.87);
+}
+
+.badParse {
+  font: italic;
+}
+
+.badParse:after {
+  content: " *"
+}

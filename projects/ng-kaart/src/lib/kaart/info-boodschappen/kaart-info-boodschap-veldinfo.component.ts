@@ -1,47 +1,21 @@
-import { ChangeDetectorRef, Component, Input, NgZone } from "@angular/core";
+import {
+  ChangeDetectorRef,
+  Component,
+  Input,
+  OnInit,
+  NgZone,
+  Output,
+} from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
 import { eq, map, option } from "fp-ts";
 import { map as rxmap } from "rxjs/operators";
 import { constTrue, pipe, Predicate } from "fp-ts/lib/function";
 import * as Mustache from "mustache";
-import * as arrays from "../../util/arrays";
-import {
-  formateerDate,
-  formateerDateTime,
-  parseDate,
-  parseDateTime,
-} from "../../util/date-time";
 import { KaartChildDirective } from "../kaart-child.directive";
-import { VeldInfo } from "../kaart-elementen";
+import { VeldInfo, VeldType } from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
-import { copyToClipboard } from "../../util/clipboard";
 import { ServiceNowOpties, ServiceNowUiSelector } from "./service-now-opties";
 import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
-
-const GEOMETRY = "geometry";
-const IDENT8 = "ident8";
-const IDENT8EN = "ident8en";
-const LOCATIE_IDENT8 = "locatie.ident8";
-const BEGIN_POSITIE = "locatie.begin.positie";
-const BEGIN_AFSTAND = "locatie.begin.afstand";
-const BEGIN_AFSTAND_ALT = "van_afstand";
-const BEGIN_OPSCHRIFT = "locatie.begin.opschrift";
-const BEGIN_OPSCHRIFT_ALT = "van_referentiepaal";
-const EIND_POSITIE = "locatie.eind.positie";
-const EIND_AFSTAND = "locatie.eind.afstand";
-const EIND_AFSTAND_ALT = "tot_afstand";
-const EIND_OPSCHRIFT = "locatie.eind.opschrift";
-const EIND_OPSCHRIFT_ALT = "tot_referentiepaal";
-const LENGTE = "lengte";
-const LOCATIE_GEOMETRY_LENGTE = "locatie.geometry.lengte";
-const LOCATIE_LENGTE = "locatie.lengte";
-const ZIJDERIJBAAN = "zijderijbaan";
-const AFSTANDRIJBAAN = "afstandrijbaan";
-const BREEDTE = "breedte";
-const HM = "hm";
-const OPSCHRIFT = "opschrift";
-const VERPL = "verpl";
-const AFSTAND = "afstand";
 
 export type VeldinfoMap = Map<string, VeldInfo>;
 export interface Properties {
@@ -102,16 +76,13 @@ const hasVeld: (arg1: VeldinfoMap, arg2: string) => boolean = hasVeldSatisfying(
   constTrue
 );
 
-const isType: (arg: string) => (arg1: VeldinfoMap, arg2: string) => boolean = (
-  type
-) => hasVeldSatisfying((veldInfo) => veldInfo.type === type);
-
-const isBooleanVeld: (arg1: VeldinfoMap, arg2: string) => boolean = isType(
-  "boolean"
+const heeftDataType: (
+  arg1: VeldinfoMap,
+  arg2: string
+) => boolean = hasVeldSatisfying((veldInfo) =>
+  pipe(option.fromNullable(veldInfo.dataType), option.isSome)
 );
-const isDateVeld: (arg1: VeldinfoMap, arg2: string) => boolean = isType("date");
 
-// indien geen meta informatie functie, toon alle velden
 const isBasisVeld: (
   arg1: VeldinfoMap,
   arg2: string
@@ -122,40 +93,25 @@ const isBasisVeld: (
   templateUrl: "./kaart-info-boodschap-veldinfo.component.html",
   styleUrls: ["./kaart-info-boodschap-veldinfo.component.scss"],
 })
-export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
+export class KaartInfoBoodschapVeldinfoComponent
+  extends KaartChildDirective
+  implements OnInit {
   @Input()
   properties: Properties;
+
   @Input()
   veldbeschrijvingen: VeldinfoMap = new Map();
 
-  private _alleVeldenZichtbaar = false;
+  @Output()
+  afmeting?: string;
 
-  teVerbergenProperties = [
-    IDENT8,
-    LOCATIE_IDENT8,
-    IDENT8EN,
-    GEOMETRY,
-    BEGIN_POSITIE,
-    BEGIN_AFSTAND,
-    BEGIN_AFSTAND_ALT,
-    BEGIN_OPSCHRIFT,
-    BEGIN_OPSCHRIFT_ALT,
-    EIND_POSITIE,
-    EIND_AFSTAND,
-    EIND_AFSTAND_ALT,
-    EIND_OPSCHRIFT,
-    EIND_OPSCHRIFT_ALT,
-    LENGTE,
-    LOCATIE_GEOMETRY_LENGTE,
-    LOCATIE_LENGTE,
-    AFSTANDRIJBAAN,
-    ZIJDERIJBAAN,
-    BREEDTE,
-    HM,
-    OPSCHRIFT,
-    VERPL,
-    AFSTAND,
-  ];
+  @Output()
+  lengte?: string;
+
+  @Output()
+  breedte?: string;
+
+  private _alleVeldenZichtbaar = false;
 
   // ServiceNow cases aanmaken actief of niet?
   // Default staat deze af. Kan geënabled worden door via ServiceNowOpties serviceNowCasesActief op true te zetten. Zal door Geoloket
@@ -180,8 +136,8 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
       });
   }
 
-  heeftLocatieGegevensVoor(key: string) {
-    return hasValue(this.waarde(key)) && this.isLocatieVeld(key);
+  ngOnInit() {
+    super.ngOnInit();
   }
 
   alleVeldenZichtbaar() {
@@ -193,164 +149,23 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     this.kaartInfoBoodschapComponent.scrollIntoView();
   }
 
-  lengte(): option.Option<number> {
-    return pipe(
-      option.fromNullable(this.waarde(LOCATIE_LENGTE)),
-      option.map(Math.round),
-      option.alt(() =>
-        pipe(option.fromNullable(this.waarde(LENGTE)), option.map(Math.round))
-      ),
-      option.alt(() =>
-        pipe(
-          option.fromNullable(this.waarde(LOCATIE_GEOMETRY_LENGTE)),
-          option.map(Math.round)
-        )
-      )
-    );
-  }
-
-  breedte(): option.Option<string> {
-    return pipe(
-      option.fromNullable(this.waarde(BREEDTE)),
-      option.map((b) => b.toString())
-    );
-  }
-
-  heeftDimensies() {
-    return (
-      this.heeftLocatieGegevensVoor(LOCATIE_LENGTE) ||
-      this.heeftLocatieGegevensVoor(LOCATIE_LENGTE) ||
-      this.heeftLocatieGegevensVoor(LOCATIE_GEOMETRY_LENGTE) ||
-      this.heeftLocatieGegevensVoor(BREEDTE)
-    );
-  }
-
-  dimensies(): string {
-    return pipe(
-      this.lengte(),
-      option.fold(
-        () =>
-          pipe(
-            this.breedte(),
-            option.fold(
-              () => "Geen dimensies",
-              (breedte) => `${breedte}cm`
-            )
-          ),
-        (lengte) =>
-          pipe(
-            this.breedte(),
-            option.fold(
-              () => `${lengte}m`,
-              (breedte) => `${lengte}m x ${breedte}cm`
-            )
-          )
-      )
-    );
-  }
-
-  zijderijbaan(): string {
-    switch (this.waarde(ZIJDERIJBAAN)) {
-      case "R":
-        return "Rechts";
-      case "L":
-        return "Links";
-      case "M":
-        return "Midden";
-      case "O":
-        return "Op";
-      default:
-        return pipe(
-          option.fromNullable(this.waarde(ZIJDERIJBAAN)),
-          option.map((b) => b.toString()),
-          option.getOrElse(() => "")
-        );
-    }
-  }
-
-  heeftVanTot(): boolean {
-    return (
-      (this.heeftLocatieGegevensVoor(BEGIN_OPSCHRIFT) &&
-        this.heeftLocatieGegevensVoor(EIND_OPSCHRIFT)) ||
-      (this.heeftLocatieGegevensVoor(BEGIN_OPSCHRIFT_ALT) &&
-        this.heeftLocatieGegevensVoor(EIND_OPSCHRIFT_ALT))
-    );
-  }
-
-  heeftIdent8en(): boolean {
-    // TODO we ontbreken een string[] type
-    const waarde = this.waarde(IDENT8EN);
-    return arrays.isArray(waarde) && arrays.isNonEmpty(waarde);
-  }
-
-  ident8en() {
-    // TODO we ontbreken een string[] type
-    const waarde = this.waarde(IDENT8EN);
-    return pipe(
-      option.fromPredicate(arrays.isArray)(waarde),
-      option.map((s) => s.join(", ")),
-      option.getOrElse(() => "")
-    );
-  }
-
-  heeftIdent8(): boolean {
-    return (
-      this.heeftLocatieGegevensVoor(IDENT8) ||
-      this.heeftLocatieGegevensVoor(LOCATIE_IDENT8) ||
-      this.heeftLocatieGegevensVoor(IDENT8EN)
-    );
-  }
-
-  ident8() {
-    if (this.heeftIdent8en()) {
-      return this.ident8en();
-    } else {
-      return pipe(
-        option.fromNullable(this.waarde(IDENT8)),
-        option.alt(() => option.fromNullable(this.waarde(LOCATIE_IDENT8))),
-        option.getOrElse(() => "")
-      );
-    }
-  }
-
-  van(): string {
-    return pipe(
-      this.pos(BEGIN_OPSCHRIFT),
-      option.alt(() => this.pos(BEGIN_OPSCHRIFT_ALT)),
-      option.getOrElse(() => "")
-    );
-  }
-
-  tot(): string {
-    return pipe(
-      this.pos(EIND_OPSCHRIFT),
-      option.alt(() => this.pos(EIND_OPSCHRIFT_ALT)),
-      option.getOrElse(() => "")
-    );
-  }
-
-  private afstand(afstandVeld: string): option.Option<string> {
-    return pipe(
-      option.fromNullable(this.waarde(afstandVeld)),
-      option.map(this.signed)
-    );
-  }
-
-  vanAfstand(): string {
-    return pipe(
-      this.afstand(BEGIN_AFSTAND),
-      option.alt(() => this.afstand(BEGIN_AFSTAND_ALT)),
-      option.getOrElse(() => "")
-    );
-  }
-
-  totAfstand(): string {
-    return pipe(
-      this.afstand(EIND_AFSTAND),
-      option.alt(() => this.afstand(EIND_AFSTAND_ALT)),
-      option.getOrElse(() => "")
-    );
-  }
+  // zijderijbaan(): string {
+  //   switch (this.waarde(ZIJDERIJBAAN)) {
+  //     case "R":
+  //       return "Rechts";
+  //     case "L":
+  //       return "Links";
+  //     case "M":
+  //       return "Midden";
+  //     case "O":
+  //       return "Op";
+  //     default:
+  //       return option
+  //         .fromNullable(this.waarde(ZIJDERIJBAAN))
+  //         .map((b) => b.toString())
+  //         .getOrElse("");
+  //   }
+  // }
 
   label(veld: string): string {
     return pipe(
@@ -365,33 +180,13 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     );
   }
 
-  zichtbareEigenschappen(): string[] {
+  basisEigenschappen(): string[] {
     return this.eigenschappen(
       (veldnaam) =>
         isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.isLinkVeld(veldnaam) &&
-        !isBooleanVeld(this.veldbeschrijvingen, veldnaam) &&
-        !isDateVeld(this.veldbeschrijvingen, veldnaam) &&
-        (!this.teVerbergenProperties.includes(veldnaam) ||
-          this.isGeenLocatieVeld(veldnaam))
-    );
-  }
-
-  booleanEigenschappen(): string[] {
-    return this.eigenschappen(
-      (veldnaam) =>
-        isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        isBooleanVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
-    );
-  }
-
-  dateEigenschappen(): string[] {
-    return this.eigenschappen(
-      (veldnaam) =>
-        isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        isDateVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
+        this.veldType(veldnaam) !== "geometry" &&
+        !heeftDataType(this.veldbeschrijvingen, veldnaam) &&
+        !this.isLinkVeld(veldnaam)
     );
   }
 
@@ -399,8 +194,8 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     return this.eigenschappen(
       (veldnaam) =>
         isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        this.isLinkVeld(veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
+        !heeftDataType(this.veldbeschrijvingen, veldnaam) &&
+        this.isLinkVeld(veldnaam)
     );
   }
 
@@ -412,28 +207,9 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     return this.eigenschappen(
       (veldnaam) =>
         !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        !isBooleanVeld(this.veldbeschrijvingen, veldnaam) &&
-        !isDateVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.isLinkVeld(veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
-    );
-  }
-
-  geavanceerdeBooleanEigenschappen(): string[] {
-    return this.eigenschappen(
-      (veldnaam) =>
-        !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        isBooleanVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
-    );
-  }
-
-  geavanceerdeDateEigenschappen(): string[] {
-    return this.eigenschappen(
-      (veldnaam) =>
-        !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        isDateVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
+        this.veldType(veldnaam) !== "geometry" &&
+        !heeftDataType(this.veldbeschrijvingen, veldnaam) &&
+        !this.isLinkVeld(veldnaam)
     );
   }
 
@@ -441,8 +217,8 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     return this.eigenschappen(
       (veldnaam) =>
         !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        this.isLinkVeld(veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
+        !heeftDataType(this.veldbeschrijvingen, veldnaam) &&
+        this.isLinkVeld(veldnaam)
     );
   }
 
@@ -465,49 +241,33 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     );
   }
 
-  parseFormat(veldnaam: string): option.Option<string> {
+  parseFormat(veld: string): string | null {
     return pipe(
-      veldbeschrijving(veldnaam, this.veldbeschrijvingen),
-      option.chain((veldInfo) => option.fromNullable(veldInfo.parseFormat))
+      this.veldInfo(veld),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.parseFormat)),
+      option.toNullable
     );
   }
 
-  displayFormat(veldnaam: string): option.Option<string> {
+  displayFormat(veld: string): string | null {
     return pipe(
-      veldbeschrijving(veldnaam, this.veldbeschrijvingen),
+      this.veldInfo(veld),
       option.chain((veldInfo) =>
         pipe(
           option.fromNullable(veldInfo.displayFormat),
           option.alt(() => option.fromNullable(veldInfo.parseFormat))
         )
-      )
+      ),
+      option.toNullable
     );
   }
 
-  isLocatieVeld(veldnaam: string): boolean {
-    return !this.isGeenLocatieVeld(veldnaam);
-  }
-
-  isKopieerbaar(veldnaam: string): boolean {
+  isKopieerbaar(veld: string): boolean {
     return pipe(
-      veldbeschrijving(veldnaam, this.veldbeschrijvingen),
+      this.veldInfo(veld),
       option.chain((veldInfo) => option.fromNullable(veldInfo.isKopieerbaar)),
       option.getOrElse(() => false)
     );
-  }
-
-  isGeenLocatieVeld(veldnaam: string): boolean {
-    return pipe(
-      veldbeschrijving(veldnaam, this.veldbeschrijvingen),
-      option.chain((veldInfo) =>
-        option.fromNullable(veldInfo.isGeenLocatieVeld)
-      ),
-      option.getOrElse(() => false)
-    );
-  }
-
-  copyToClipboard(toCopy: string | number) {
-    copyToClipboard(toCopy);
   }
 
   waarde(veldnaam: string): string | number {
@@ -519,12 +279,12 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
         if (
           this.hasHtml(veldnaam) &&
           waarde &&
-          this.veldtype(veldnaam) !== "url"
+          this.veldType(veldnaam) !== "url"
         ) {
           return this.sanitizer.bypassSecurityTrustHtml(
             formateerJson(
               veldnaam,
-              this.veldtype(veldnaam),
+              this.veldType(veldnaam),
               waarde,
               this.html(veldnaam)
             )
@@ -532,7 +292,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
         } else if (this.hasTemplate(veldnaam) && waarde) {
           return formateerJson(
             veldnaam,
-            this.veldtype(veldnaam),
+            this.veldType(veldnaam),
             waarde,
             this.template(veldnaam)
           );
@@ -543,103 +303,13 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
     );
   }
 
-  private maybeDateWaarde(veldnaam: string): option.Option<string> {
-    return pipe(
-      this.constante(veldnaam),
-      option.alt(() => {
-        const waarde = nestedPropertyValue(veldnaam, this.properties);
-        return pipe(
-          option.fromNullable(waarde),
-          option.chain(parseDate(this.parseFormat(veldnaam))),
-          option.map(formateerDate(this.displayFormat(veldnaam)))
-        );
-      })
-    );
-  }
-
-  dateWaarde(veldnaam: string): string {
-    return pipe(
-      this.maybeDateWaarde(veldnaam),
-      option.getOrElse(() => "")
-    );
-  }
-
-  validDateWaarde(veldnaam: string): boolean {
-    return pipe(this.maybeDateWaarde(veldnaam), option.isSome);
-  }
-
-  private maybeDateTimeWaarde(veldnaam: string): option.Option<string> {
-    return pipe(
-      this.constante(veldnaam),
-      option.alt(() => {
-        const waarde = nestedPropertyValue(veldnaam, this.properties);
-        return pipe(
-          option.fromNullable(waarde),
-          option.chain(parseDateTime(this.parseFormat(veldnaam))),
-          option.map(formateerDateTime(this.displayFormat(veldnaam)))
-        );
-      })
-    );
-  }
-
-  dateTimeWaarde(veldnaam: string): string {
-    return pipe(
-      this.maybeDateTimeWaarde(veldnaam),
-      option.getOrElse(() => "")
-    );
-  }
-
-  validDateTimeWaarde(veldnaam: string): boolean {
-    return pipe(this.maybeDateTimeWaarde(veldnaam), option.isSome);
-  }
-
-  heeftOpschrift() {
-    return (
-      this.heeftLocatieGegevensVoor(HM) ||
-      this.heeftLocatieGegevensVoor(OPSCHRIFT)
-    );
-  }
-
-  opschrift(): string | number {
-    return pipe(
-      option.fromNullable(this.waarde(HM)),
-      option.alt(() => option.fromNullable(this.waarde(OPSCHRIFT))),
-      option.getOrElse(() => "")
-    );
-  }
-
-  verpl(): string {
-    return pipe(
-      option.fromNullable(this.waarde(VERPL)),
-      option.alt(() => option.fromNullable(this.waarde(AFSTAND))),
-      option.map(this.signed),
-      option.getOrElse(() => "")
-    );
-  }
-
-  private pos(positieVeld: string): option.Option<string> {
-    return pipe(
-      option.fromNullable(this.waarde(positieVeld)),
-      option.filter((positie) => typeof positie === "number"),
-      option.map((positie) => `${Math.round((positie as number) * 10) / 10}`)
-    );
-  }
-
-  private signed(value: number): string {
-    if (value >= 0) {
-      return `+${value}`;
-    } else {
-      return `${value}`;
-    }
-  }
-
   private eigenschappen(filter: Predicate<string>): string[] {
     return veldnamen(this.veldbeschrijvingen)
       .filter((veldNaam) => filter(veldNaam))
       .filter(
         (veldNaam) =>
           hasValue(nestedPropertyValue(veldNaam, this.properties)) ||
-          option.isSome(this.constante(veldNaam))
+          pipe(this.constante(veldNaam), option.isSome)
       )
       .filter(
         (veldNaam) => nestedPropertyValue(veldNaam, this.properties) !== ""
@@ -658,13 +328,17 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
         option.chain((veldInfo) => option.fromNullable(veldInfo.constante)), //
         option.exists((constante) => constante.startsWith("http"))
       ) ||
-      this.veldtype(veld) === "url"
+      this.veldType(veld) === "url"
     );
+  }
+
+  private veldInfo(veld: string): option.Option<VeldInfo> {
+    return veldbeschrijving(veld, this.veldbeschrijvingen);
   }
 
   private hasTemplate(veld: string): boolean {
     return pipe(
-      veldbeschrijving(veld, this.veldbeschrijvingen),
+      this.veldInfo(veld),
       option.chain((veldInfo) => option.fromNullable(veldInfo.template)),
       option.isSome
     );
@@ -672,7 +346,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
 
   private hasHtml(veld: string): boolean {
     return pipe(
-      veldbeschrijving(veld, this.veldbeschrijvingen),
+      this.veldInfo(veld),
       option.chain((veldInfo) => option.fromNullable(veldInfo.html)),
       option.isSome
     );
@@ -680,7 +354,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
 
   private template(veld: string): string {
     return pipe(
-      veldbeschrijving(veld, this.veldbeschrijvingen),
+      this.veldInfo(veld),
       option.chain((veldInfo) => option.fromNullable(veldInfo.template)),
       option.getOrElse(() => "")
     );
@@ -688,17 +362,17 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
 
   private html(veld: string): string {
     return pipe(
-      veldbeschrijving(veld, this.veldbeschrijvingen),
+      this.veldInfo(veld),
       option.chain((veldInfo) => option.fromNullable(veldInfo.html)),
       option.getOrElse(() => "")
     );
   }
 
-  private veldtype(veld: string): string {
+  veldType(veld: string): VeldType {
     return pipe(
-      veldbeschrijving(veld, this.veldbeschrijvingen),
-      option.map((veldInfo) => veldInfo.type.toString()),
-      option.getOrElse(() => "")
+      this.veldInfo(veld),
+      option.map((veldInfo) => veldInfo.type),
+      option.getOrElse(() => "string")
     );
   }
 

@@ -5,13 +5,7 @@ import {
   transition,
   trigger,
 } from "@angular/animations";
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Input,
-  NgZone,
-  OnInit,
-} from "@angular/core";
+import { Component, Input, NgZone, OnInit } from "@angular/core";
 import { option } from "fp-ts";
 import { pipe } from "fp-ts/lib/pipeable";
 import scrollIntoView from "scroll-into-view-if-needed";
@@ -33,7 +27,6 @@ import { KaartComponent } from "../kaart.component";
       transition(":leave", animate(0, style({ opacity: 0 }))),
     ]),
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KaartInfoBoodschapComponent
   extends KaartChildDirective

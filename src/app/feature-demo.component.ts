@@ -892,18 +892,14 @@ export class FeatureDemoComponent {
       label: "Ident8",
       naam: "locatie.ident8",
       type: "string",
+      dataType: "ident8",
     },
     {
       isBasisVeld: false,
-      label: "Opschrift",
+      label: "Refpunt",
       naam: "locatie.opschrift",
       type: "double",
-    },
-    {
-      isBasisVeld: true,
-      label: "Positie",
-      naam: "locatie.positie",
-      type: "double",
+      dataType: "refpunt",
     },
     {
       isBasisVeld: false,
@@ -1040,18 +1036,21 @@ export class FeatureDemoComponent {
       label: "Ident8",
       naam: "ident8",
       type: "string",
+      dataType: "ident8",
     },
     {
       isBasisVeld: true,
       label: "Van refpunt",
       naam: "locatie.begin.opschrift",
       type: "double",
+      dataType: "vanRefpunt",
     },
     {
       isBasisVeld: true,
       label: "Van afst",
       naam: "locatie.begin.afstand",
       type: "integer",
+      dataType: "vanAfstand",
     },
     {
       isBasisVeld: true,
@@ -1434,7 +1433,6 @@ export class FeatureDemoComponent {
       label: "Breedte",
       naam: "breedte",
       type: "double",
-      isGeenLocatieVeld: true,
     },
     { isBasisVeld: true, label: "Hoogte", naam: "hoogte", type: "double" },
   ];

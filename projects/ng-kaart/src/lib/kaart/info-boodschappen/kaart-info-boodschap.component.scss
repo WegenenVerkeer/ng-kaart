@@ -1,30 +1,12 @@
-mat-card {
-  padding: 0;
+@import "../../css/kaart.component-common.scss";
+
+::ng-deep mat-card {
+  padding: 0 !important;
+  margin-bottom: 8px;
 }
 
-mat-card-title {
+::ng-deep mat-card-title {
   padding: 16px;
   margin-bottom: 0;
-}
-
-.mat-card-title {
-  font-size: 16px;
-  line-height: 16px;
-}
-
-.mat-titel-button {
-  float: right;
-  padding-left: 0;
-  padding-right: 0;
-  line-height: 16px;
-  min-width: 24px;
-}
-
-.titel-icon {
-  padding-right: 8px;
-}
-
-.titel-text {
-  position: relative;
-  top: -4px;
+  border-bottom: 1px solid $awv-secondary-d3;
 }

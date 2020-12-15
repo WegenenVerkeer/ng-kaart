@@ -5,7 +5,7 @@ import {
   transition,
   trigger,
 } from "@angular/animations";
-import { ChangeDetectionStrategy, Component, NgZone } from "@angular/core";
+import { Component, NgZone } from "@angular/core";
 import * as rx from "rxjs";
 import { debounceTime, map } from "rxjs/operators";
 
@@ -32,7 +32,6 @@ import { KaartComponent } from "../kaart.component";
       transition(":leave", animate(0, style({ opacity: 0 }))),
     ]),
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KaartInfoBoodschappenComponent extends KaartChildDirective {
   infoBoodschappen$: rx.Observable<Array<InfoBoodschap>> = rx.EMPTY;

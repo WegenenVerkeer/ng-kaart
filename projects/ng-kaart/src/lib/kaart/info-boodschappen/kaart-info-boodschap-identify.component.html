@@ -1,3 +1,18 @@
-<div class="card-content">
-  <awv-kaart-info-boodschap-veldinfo [properties]="properties" [veldbeschrijvingen]="veldbeschrijvingen"></awv-kaart-info-boodschap-veldinfo>
-</div>
+<mat-card>
+  <mat-card-title>
+    <div class="title">
+      <div class="titel-text">{{ title }}</div>
+      <div class="sub-titel-text">
+        <awv-weglocatie *ngIf="weglocatie" attr.weglocatie="{{ weglocatie }}"></awv-weglocatie>
+      </div>
+    </div>
+    <button mat-button *ngIf="isSluitbaar" class="mat-titel-button" (click)="sluit()">
+      <mat-icon class="close-icon">close</mat-icon>
+    </button>
+  </mat-card-title>
+  <mat-card-content>
+    <div class="card-content">
+      <awv-kaart-info-boodschap-veldinfo [properties]="properties" [veldbeschrijvingen]="veldbeschrijvingen"></awv-kaart-info-boodschap-veldinfo>
+    </div>
+  </mat-card-content>
+</mat-card>

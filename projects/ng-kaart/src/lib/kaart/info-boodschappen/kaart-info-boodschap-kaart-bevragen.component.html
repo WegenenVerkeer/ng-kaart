@@ -1,124 +1,110 @@
-<mat-card class="coordinaten-panel mat-elevation-z0">
-   <mat-card-content>
-    <div class="velden">
-      <div class="veldnamen">Lambert 72</div>
-      <div class="veldwaarden">{{ coordinaatInformatieLambert72 }}</div>
-      <button mat-icon-button class="copy" matTooltip="Kopieer coördinaten">
-          <mat-icon (click)="copyToClipboard(coordinaatInformatieLambert72)">content_copy</mat-icon>
-      </button>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">WGS 84</div>
-      <div class="veldwaarden">{{ coordinaatInformatieWgs84 }}</div>
-      <button mat-icon-button class="copy" matTooltip="Kopieer coördinaten">
-        <mat-icon (click)="copyToClipboard(coordinaatInformatieWgs84)">content_copy</mat-icon>
-      </button>
-    </div>
+<mat-card>
+  <mat-card-title>
+    <span class="titel-text">Kaart bevragen</span>
+    <button mat-button *ngIf="isSluitbaar" class="mat-titel-button" (click)="sluit()">
+      <mat-icon class="close-icon">close</mat-icon>
+    </button>
+  </mat-card-title>
+  <mat-card-content>
+
+      <div class="coordinaten-panel mat-elevation-z0">
+          <awv-kaart-info-veld [label]="'Lambert 72 coordinaten'" [waarde]="coordinaatInformatieLambert72" [isKopieerbaar]="true"></awv-kaart-info-veld>
+          <awv-kaart-info-veld [label]="'WGS 84 coordinaten'" [waarde]="coordinaatInformatieWgs84" [isKopieerbaar]="true"></awv-kaart-info-veld>
+      </div>
+
+      <mat-accordion class="accordion">
+
+        <mat-expansion-panel class="mat-elevation-z0" *ngFor="let weglocatie of wegLocaties">
+          <mat-expansion-panel-header>
+            <mat-panel-title class="naam">
+              {{ weglocatie.ident8 }} op {{ weglocatie.hm }} {{ signed(weglocatie.afstand) }}
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="velden">
+            <div class="veldnamen">Wegbeheerder</div><div class="veldwaarden">{{ weglocatie.wegbeheerder }}</div>
+          </div>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel class="mat-elevation-z0" *ngFor="let adres of adressen">
+          <mat-expansion-panel-header>
+            <mat-panel-title class="naam">
+              {{ adres.straat }} {{ adres.huisnummer }}, {{ adres.gemeente }}
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <awv-kaart-info-veld [label]="'Straat'" [waarde]="adres.straat"></awv-kaart-info-veld>
+          <awv-kaart-info-veld [label]="'Huisnummer'" [waarde]="adres.huisnummer"></awv-kaart-info-veld>
+          <awv-kaart-info-veld [label]="'Postcode'" [waarde]="adres.postcode"></awv-kaart-info-veld>
+          <awv-kaart-info-veld [label]="'Gemeente'" [waarde]="adres.gemeente"></awv-kaart-info-veld>
+
+        </mat-expansion-panel>
+
+        <mat-expansion-panel class="mat-elevation-z0" *ngIf="perceel">
+          <mat-expansion-panel-header>
+            <mat-panel-title class="naam">
+              Kadastrale informatie
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <awv-kaart-info-veld [label]="'Gemeente'" [waarde]="perceel?.gemeente"></awv-kaart-info-veld>
+          <awv-kaart-info-veld [label]="'Afdeling'" [waarde]="perceel?.afdeling"></awv-kaart-info-veld>
+          <awv-kaart-info-veld [label]="'Sectie'" [waarde]="perceel?.sectie"></awv-kaart-info-veld>
+          <awv-kaart-info-veld [label]="'Perceel'" [waarde]="perceel?.perceel"></awv-kaart-info-veld>
+          <awv-kaart-info-veld [label]="'CaPaKey'" [waarde]="perceel?.capaKey"></awv-kaart-info-veld>
+
+        </mat-expansion-panel>
+
+        <ng-container *ngFor="let info of laagInfos">
+
+          <mat-expansion-panel class="mat-elevation-z0" hideToggle *ngIf="info.busy || info.timedout">
+            <mat-expansion-panel-header *ngIf="info.busy">
+              <mat-panel-title class="naam custom_icon">
+                {{ info.titel }}
+                <mat-spinner diameter="20"></mat-spinner>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <span *ngIf="info.busy">De data wordt opgevraagd</span>
+            <mat-expansion-panel-header *ngIf="info.timedout">
+              <mat-panel-title class="naam custom_icon">
+                {{ info.titel }}
+                <mat-icon aria-label="Het antwoord bleef te lang uit">timer_off</mat-icon>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <span *ngIf="info.timedout">Het antwoord van de WMS-server werd niet op tijd ontvangen</span>
+          </mat-expansion-panel>
+
+          <mat-expansion-panel class="mat-elevation-z0" *ngIf="info.text">
+            <mat-expansion-panel-header>
+              <mat-panel-title class="naam">
+                {{ info.titel }}
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <div class="verbatim" *ngIf="info.text">
+              <pre>{{ info.text }}</pre>
+            </div>
+          </mat-expansion-panel>
+
+          <mat-expansion-panel class="mat-elevation-z0" *ngIf="info.properties">
+            <mat-expansion-panel-header>
+              <mat-panel-title class="naam">
+                {{ info.titel }}
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div *ngIf="!heeftWaarden(info.properties)" class="foutboodschap">
+              Geen data op deze locatie
+            </div>
+            <awv-kaart-info-boodschap-veldinfo *ngIf="heeftWaarden(info.properties)" class="veld-info-card" [properties]="info.properties" [veldbeschrijvingen]="info.veldinfos">
+            </awv-kaart-info-boodschap-veldinfo>
+          </mat-expansion-panel>
+        </ng-container>
+
+      </mat-accordion>
+
+
   </mat-card-content>
 </mat-card>
 
-<mat-accordion class="accordion">
 
-  <mat-expansion-panel class="mat-elevation-z0" *ngFor="let weglocatie of wegLocaties">
-    <mat-expansion-panel-header>
-      <mat-panel-title class="naam">
-          {{ weglocatie.ident8 }} op {{ weglocatie.hm }} {{ signed(weglocatie.afstand) }}
-      </mat-panel-title>
-    </mat-expansion-panel-header>
 
-    <div class="velden">
-      <div class="veldnamen">Wegbeheerder</div><div class="veldwaarden">{{ weglocatie.wegbeheerder }}</div>
-    </div>
-  </mat-expansion-panel>
-
-  <mat-expansion-panel class="mat-elevation-z0" *ngFor="let adres of adressen">
-    <mat-expansion-panel-header>
-      <mat-panel-title class="naam">
-        {{ adres.straat }} {{ adres.huisnummer }}, {{ adres.gemeente }}
-      </mat-panel-title>
-    </mat-expansion-panel-header>
-
-    <div class="velden">
-      <div class="veldnamen">Straat</div><div class="veldwaarden">{{ adres.straat }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">Huisnummer</div><div class="veldwaarden">{{ adres.huisnummer }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">Postcode</div><div class="veldwaarden">{{ adres.postcode }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">Gemeente</div><div class="veldwaarden">{{ adres.gemeente }}</div>
-    </div>
-  </mat-expansion-panel>
-
-  <mat-expansion-panel class="mat-elevation-z0" *ngIf="perceel">
-    <mat-expansion-panel-header>
-      <mat-panel-title class="naam">
-        Kadastrale informatie
-      </mat-panel-title>
-    </mat-expansion-panel-header>
-
-    <div class="velden">
-      <div class="veldnamen">Gemeente</div><div class="veldwaarden">{{ perceel?.gemeente }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">Afdeling</div><div class="veldwaarden">{{ perceel?.afdeling }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">Sectie</div><div class="veldwaarden">{{ perceel?.sectie }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">Perceel</div><div class="veldwaarden">{{ perceel?.perceel }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">CaPaKey</div><div class="veldwaarden">{{ perceel?.capaKey }}</div>
-    </div>
-  </mat-expansion-panel>
-
-  <ng-container *ngFor="let info of laagInfos">
-
-    <mat-expansion-panel class="mat-elevation-z0" hideToggle *ngIf="info.busy || info.timedout">
-      <mat-expansion-panel-header *ngIf="info.busy">
-        <mat-panel-title class="naam custom_icon">
-          {{ info.titel }}
-          <mat-spinner diameter="20"></mat-spinner>
-        </mat-panel-title>
-      </mat-expansion-panel-header>
-      <span *ngIf="info.busy">De data wordt opgevraagd</span>
-      <mat-expansion-panel-header *ngIf="info.timedout">
-        <mat-panel-title class="naam custom_icon">
-          {{ info.titel }}
-          <mat-icon aria-label="Het antwoord bleef te lang uit">timer_off</mat-icon>
-        </mat-panel-title>
-      </mat-expansion-panel-header>
-      <span *ngIf="info.timedout">Het antwoord van de WMS-server werd niet op tijd ontvangen</span>
-    </mat-expansion-panel>
-
-    <mat-expansion-panel class="mat-elevation-z0" *ngIf="info.text">
-      <mat-expansion-panel-header>
-          <mat-panel-title class="naam">
-            {{ info.titel }}
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-
-      <div class="verbatim" *ngIf="info.text">
-        <pre>{{ info.text }}</pre>
-      </div>
-    </mat-expansion-panel>
-
-    <mat-expansion-panel class="mat-elevation-z0" *ngIf="info.properties">
-        <mat-expansion-panel-header>
-            <mat-panel-title class="naam">
-              {{ info.titel }}
-            </mat-panel-title>
-        </mat-expansion-panel-header>
-      <div *ngIf="!heeftWaarden(info.properties)" class="foutboodschap">
-         Geen data op deze locatie
-      </div>
-      <awv-kaart-info-boodschap-veldinfo *ngIf="heeftWaarden(info.properties)" class="veld-info-card" [properties]="info.properties" [veldbeschrijvingen]="info.veldinfos">
-      </awv-kaart-info-boodschap-veldinfo>
-    </mat-expansion-panel>
-  </ng-container>
-
-</mat-accordion>

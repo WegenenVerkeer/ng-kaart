@@ -1,0 +1,29 @@
+<div class="velden">
+  <div class="veldnamen">
+    <div class="veldnaam">{{ label }}</div>
+  </div>
+
+  <span class="veldspacer"></span>
+
+  <div class="veldwaarden" *ngIf="veldType !== 'boolean' && veldType !== 'date'">
+    <div [innerHTML]="waarde" class="veldwaarde"></div>
+  </div>
+
+  <div class="veldwaarden" *ngIf="veldType === 'date'">
+    <div class="veldwaarde">{{ dateWaarde() }} <span *ngIf="!validDateWaarde()" class="badParse" matTooltip="waarde kan niet als datum geïnterpreteerd worden">{{ waarde }}</span></div>
+  </div>
+
+  <div class="veldwaarden" *ngIf="veldType === 'boolean'">
+    <div class="veldwaarde">
+      <span class="positief" *ngIf="waarde">JA</span>
+      <span class="negatief" *ngIf="!waarde">NEE</span>
+    </div>
+  </div>
+
+  <div class="veldicon">
+    <button *ngIf="isKopieerbaar" mat-icon-button matTooltip="Kopieer {{ label }}">
+      <mat-icon (click)="copyToClipboard()">content_copy</mat-icon>
+    </button>
+  </div>
+
+</div>

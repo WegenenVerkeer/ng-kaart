@@ -3,10 +3,9 @@ import { option } from "fp-ts";
 import { pipe } from "fp-ts/lib/pipeable";
 
 import { eqCoordinate } from "../../util";
-import { copyToClipboard } from "../../util/clipboard";
-import { KaartChildDirective } from "../kaart-child.directive";
 import { InfoBoodschapMeten } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
+import { KaartInfoBoodschapBaseDirective } from "./kaart-info-boodschap-base.component";
 
 const formatNumber: (arg: number) => string = (n) =>
   n.toLocaleString(["nl-BE"], {
@@ -78,7 +77,9 @@ const formatCoordinates: (coords: number[], delimeter: boolean) => string = (
   templateUrl: "./kaart-info-boodschap-meten.component.html",
   styleUrls: ["./kaart-info-boodschap-meten.component.scss"],
 })
-export class KaartInfoBoodschapMetenComponent extends KaartChildDirective {
+export class KaartInfoBoodschapMetenComponent extends KaartInfoBoodschapBaseDirective<
+  InfoBoodschapMeten
+> {
   length?: string;
   area?: string;
   coordinates?: string;
@@ -88,6 +89,7 @@ export class KaartInfoBoodschapMetenComponent extends KaartChildDirective {
 
   @Input()
   set boodschap(bsch: InfoBoodschapMeten) {
+    super.boodschap = bsch;
     this.length = pipe(
       bsch.length,
       option.map(formatLength),
@@ -118,11 +120,5 @@ export class KaartInfoBoodschapMetenComponent extends KaartChildDirective {
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
-  }
-
-  copyToClipboard(toCopy?: string) {
-    if (toCopy) {
-      copyToClipboard(toCopy);
-    }
   }
 }

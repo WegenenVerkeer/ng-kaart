@@ -1,11 +1,17 @@
-import { Component, Input, NgZone } from "@angular/core";
+import { Component, Input, NgZone, OnInit } from "@angular/core";
 import { option } from "fp-ts";
 import { pipe } from "fp-ts/lib/pipeable";
 
+import {
+  animate,
+  state,
+  style,
+  transition,
+  trigger,
+} from "@angular/animations";
 import { matchGeometryType } from "../../util";
 import { isObject } from "../../util/object";
 import * as ol from "../../util/openlayers-compat";
-import { KaartChildDirective } from "../kaart-child.directive";
 import { InfoBoodschapIdentify } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
@@ -13,6 +19,25 @@ import {
   Properties,
   VeldinfoMap,
 } from "./kaart-info-boodschap-veldinfo.component";
+import { KaartInfoBoodschapBaseDirective } from "./kaart-info-boodschap-base.component";
+
+interface PuntWeglocatie {
+  ident8: string;
+  opschrift: number;
+  afstand: number;
+}
+
+interface LijnWeglocatie {
+  ident8: string;
+  begin: {
+    opschrift: number;
+    afstand: number;
+  };
+  eind: {
+    opschrift: number;
+    afstand: number;
+  };
+}
 
 const liftProperties: (f: ol.Feature) => Properties = (feature) => {
   const maybeOlProperties = option.fromNullable(feature.getProperties());
@@ -60,12 +85,18 @@ const liftProperties: (f: ol.Feature) => Properties = (feature) => {
   templateUrl: "./kaart-info-boodschap-identify.component.html",
   styleUrls: ["./kaart-info-boodschap-identify.component.scss"],
 })
-export class KaartInfoBoodschapIdentifyComponent extends KaartChildDirective {
+export class KaartInfoBoodschapIdentifyComponent
+  extends KaartInfoBoodschapBaseDirective<InfoBoodschapIdentify>
+  implements OnInit {
+  weglocatie?: string;
   properties: Properties;
+  title?: string;
   veldbeschrijvingen: VeldinfoMap = new Map();
 
   @Input()
   set boodschap(bsch: InfoBoodschapIdentify) {
+    super.boodschap = bsch;
+    this.title = bsch.titel;
     this.properties = liftProperties(bsch.feature);
     this.veldbeschrijvingen = pipe(
       bsch.laag,
@@ -76,5 +107,20 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildDirective {
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
+  }
+
+  ngOnInit() {
+    super.ngOnInit();
+    this.weglocatie = JSON.stringify(this.maakWegLocatie());
+  }
+
+  maakWegLocatie(): PuntWeglocatie | LijnWeglocatie | null {
+    const weglocatie = {
+      ident8: "R0010001",
+      opschrift: 1.0,
+      afstand: 40,
+    };
+    return weglocatie;
+    // return weglocatie === {} ? null : weglocatie;
   }
 }

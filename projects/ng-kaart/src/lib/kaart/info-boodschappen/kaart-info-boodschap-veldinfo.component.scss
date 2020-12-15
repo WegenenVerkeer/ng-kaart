@@ -4,81 +4,8 @@
   margin-bottom: 0;
 }
 
-.ident8 {
-  line-height: 26px;
-  font-size: 16px;
-  font-weight: 600;
-  color: rgba(51, 51, 51, 0.87);
-}
-
-.vantot {
-  line-height: 24px;
-  font-weight: 600;
-  font-size: 15px;
-  color: rgba(51, 51, 51, 0.87);
-}
-
-.afstand {
-  line-height: 24px;
-  font-weight: 300;
-  font-size: 15px;
-  color: rgba(51, 51, 51, 0.87);
-}
-
-.dimensies {
-  line-height: 24px;
-  font-weight: 600;
-  font-size: 15px;
-  color: rgba(51, 51, 51, 0.87);
-}
-
-.dimensies-icon {
-  line-height: 32px;
-  font-size: 16px;
-  color: rgba(0, 0, 0, 0.87);
-  width: 16px;
-  vertical-align: text-bottom;
-}
-
 .separator-na-locatie {
   padding-bottom: 8px;
-}
-
-.velden {
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: row;
-}
-
-.veldnamen {
-  order: 1;
-  flex-grow: 4;
-  max-width: 40%;
-}
-
-.veldwaarden {
-  order: 2;
-  flex-grow: 5;
-  max-width: 50%;
-}
-
-.veldicon {
-  order: 3;
-  flex-grow: 1;
-  max-width: 10%;
-
-  button {
-    float: right;
-    line-height: 18px;
-    height: 18px;
-    width: 24px;
-  }
-
-  .mat-icon {
-    @include mat-icon-size(16px);
-    vertical-align: top;
-    line-height: 18px;
-  }
 }
 
 .veldlinks {
@@ -104,50 +31,6 @@
   vertical-align: text-bottom;
 }
 
-.veldnaam {
-  line-height: 20px;
-  font-size: 14px;
-  font-weight: 300;
-  color: rgba(0, 0, 0, 0.54);
-}
-
-.veldwaarde {
-  line-height: 20px;
-  font-size: 14px;
-  font-weight: 300;
-  color: rgba(0, 0, 0, 0.87);
-}
-
-.booleanwaarden {
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: row;
-}
-
-.booleanwaarde {
-  white-space: nowrap;
-  flex-basis: 50%;
-  max-width: 50%;
-  line-height: 20px;
-  font-size: 14px;
-  font-weight: 300;
-  color: rgba(0, 0, 0, 0.54);
-}
-
-.boolean-icon {
-  line-height: 20px;
-  font-size: 14px;
-  font-weight: 300;
-}
-
-.negatief {
-  color: rgba(242, 68, 61, 0.87);
-}
-
-.positief {
-  color: rgba(97, 186, 117, 0.87);
-}
-
 .mat-expand-button {
   float: right;
   padding-left: 0;
@@ -157,13 +40,17 @@
 }
 
 .expand-line {
-  padding-bottom: 32px;
+  line-height: 24px;
+  font-size: 12px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.54);
+  padding-bottom: 16px;
+  padding-top: 8px;
 }
 
-.badParse {
-  font: italic;
-}
-
-.badParse:after {
-  content: " *"
+.weg-locatie {
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
 }
