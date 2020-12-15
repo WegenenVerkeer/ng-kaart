@@ -101,11 +101,10 @@ const getOptionalParameter: <A>(
 ) => OptionalParamGetter<A> = (interpreter) => (param) => {
   if (typeof param === "string") {
     return pipe(
-      parseJSON(param),
-      json.optional(interpreter),
-      either.getOrElse(
-        () => option.none // Dit kan niet omdat json.optional zelf al option.none returnt
-      )
+      validationChain(parseJSON(param), json.optional(interpreter)),
+      either.getOrElse(() => {
+        return option.none; // Dit kan niet omdat json.optional zelf al option.none returnt
+      })
     );
   } else {
     return option.fromNullable(param);
