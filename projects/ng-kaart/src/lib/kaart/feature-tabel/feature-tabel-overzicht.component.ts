@@ -6,7 +6,6 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { array, eq } from "fp-ts";
-import { Function1 } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import {
   delay,
@@ -74,12 +73,11 @@ export class FeatureTabelOverzichtComponent extends KaartChildDirective {
 
   // Voor de child components (Op DOM niveau. Access via Angular injection).
   public readonly tableModel$: rx.Observable<TableModel>;
-  public readonly laagModel$: Function1<string, rx.Observable<LaagModel>>;
+  public readonly laagModel$: (arg: string) => rx.Observable<LaagModel>;
   public readonly tableUpdater: Consumer1<TableModel.TableModelUpdate>;
-  public readonly laagUpdater: Function1<
-    string,
-    Consumer1<LaagModel.LaagModelUpdate>
-  >;
+  public readonly laagUpdater: (
+    arg: string
+  ) => Consumer1<LaagModel.LaagModelUpdate>;
 
   constructor(kaart: KaartComponent, ngZone: NgZone) {
     super(kaart, ngZone);
@@ -185,7 +183,7 @@ export class FeatureTabelOverzichtComponent extends KaartChildDirective {
     // verlies van DOM + state betekent.
     const laagTitles$ = this.tableModel$.pipe(
       map((model) => model.laagData.map(LaagModel.titelLens.get)),
-      distinctUntilChanged(array.getSetoid(eq.eqString).equals)
+      distinctUntilChanged(array.getEq(eq.eqString).equals)
     );
 
     const tabelVisible$ = this.modelChanges.tabelActiviteit$.pipe(

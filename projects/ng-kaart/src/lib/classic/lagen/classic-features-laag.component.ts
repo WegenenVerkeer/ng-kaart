@@ -47,7 +47,7 @@ const stdFeatureEquality = (feat1: ol.Feature, feat2: ol.Feature) => {
 };
 
 const featureEqualityToFeaturesSetoid = (eq: FeatureEqualityFn) =>
-  array.getSetoid({ equals: eq });
+  array.getEq({ equals: eq });
 
 @Component({
   selector: "awv-kaart-features-laag",

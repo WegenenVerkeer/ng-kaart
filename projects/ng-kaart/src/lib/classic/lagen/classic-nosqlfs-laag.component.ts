@@ -1,6 +1,6 @@
 import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
-import { option } from "fp-ts";
-import { identity } from "fp-ts/lib/function";
+import { either, option } from "fp-ts";
+import { pipe } from "fp-ts/function";
 import { switchMap } from "rxjs/operators";
 
 import { kaartLogger } from "../../kaart";
@@ -151,12 +151,15 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeDirective 
           )
         )
       )
-    ).subscribe((msg) => {
-      const lookup = msg.cacheLookupValidation.fold((fail) => {
-        const errMsg = fail.join(", ");
-        kaartLogger.error("Kon geen query object maken: ", errMsg);
-        return CachedFeatureLookup.fromFailureMessage(errMsg);
-      }, identity);
+    ).subscribe((msg: CachedFeaturesLookupReadyMsg) => {
+      const lookup: CachedFeatureLookup = either.fold(
+        (fail: string[]) => {
+          const errMsg = fail.join(", ");
+          kaartLogger.error("Kon geen query object maken: ", errMsg);
+          return CachedFeatureLookup.fromFailureMessage(errMsg);
+        },
+        (cfs: CachedFeatureLookup) => cfs
+      )(msg.cacheLookupValidation);
       this._cachedFeaturesProviderConsumer(lookup);
     });
   }
@@ -179,12 +182,14 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeDirective 
       clusterDistance: this._clusterDistance,
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
-      selectieStyleSelector: option
-        .fromNullable(this.selectieStyle)
-        .chain(ss.asStyleSelector),
-      hoverStyleSelector: option
-        .fromNullable(this.hoverStyle)
-        .chain(ss.asStyleSelector),
+      selectieStyleSelector: pipe(
+        option.fromNullable(this.selectieStyle),
+        option.chain(ss.asStyleSelector)
+      ),
+      hoverStyleSelector: pipe(
+        option.fromNullable(this.hoverStyle),
+        option.chain(ss.asStyleSelector)
+      ),
       selecteerbaar: this._selecteerbaar,
       hover: this._hover,
       minZoom: this._minZoom,

@@ -1,5 +1,5 @@
 import { array, option } from "fp-ts";
-import { Function1 } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import { supportedProjection } from "../coordinaten/coordinaten.service";
 import * as ol from "../util/openlayers-compat";
@@ -13,8 +13,11 @@ export function toOlLayer(
   kaart: KaartWithInfo,
   laag: ke.Laag
 ): option.Option<ol.layer.Base> {
-  const projection: Function1<string[], string> = (projections) =>
-    supportedProjection(projections).getOrElse(kaart.config.srs);
+  const projection: (projections: string[]) => string = (projections) =>
+    pipe(
+      supportedProjection(projections),
+      option.getOrElse(() => kaart.config.srs)
+    );
 
   function createdTileWms(l: ke.WmsLaag) {
     return new ol.layer.Tile({
@@ -27,18 +30,23 @@ export function toOlLayer(
         urls: l.urls,
         tileGrid: ol.tilegrid.createXYZ({
           extent: kaart.config.defaults.extent,
-          tileSize: l.tileSize.getOrElse(256),
+          tileSize: pipe(
+            l.tileSize,
+            option.getOrElse(() => 256)
+          ),
         }),
         tileLoadFunction: kaart.tileLoader.tileLoadFunction,
         params: {
           LAYERS: l.naam,
           TILED: true,
           SRS: projection(l.beschikbareProjecties),
-          VERSION: l.versie.getOrElse("1.3.0"),
-          FORMAT: l.format.getOrElse("image/png"),
-          ...l.cqlFilter.fold(
-            {},
-            (cqlFilter) => ({ CQL_FILTER: cqlFilter } as object)
+          VERSION: pipe(
+            l.versie,
+            option.getOrElse(() => "1.3.0")
+          ),
+          FORMAT: pipe(
+            l.format,
+            option.getOrElse(() => "image/png")
           ),
         },
       }),
@@ -54,19 +62,31 @@ export function toOlLayer(
       source = new ol.source.WMTS(config.wmtsOptions);
     } else {
       const config = l.config as ke.WmtsManualConfig;
-      extent = config.extent.getOrElse(kaart.config.defaults.extent);
+      extent = pipe(
+        config.extent,
+        option.getOrElse(() => kaart.config.defaults.extent)
+      );
       source = new ol.source.WMTS({
         projection: kaart.config.srs,
         urls: config.urls,
         tileGrid: new ol.tilegrid.WMTSTileGrid({
-          origin: config.origin.getOrElseL(() => ol.extent.getTopLeft(extent)),
+          origin: pipe(
+            config.origin,
+            option.getOrElse(() => ol.extent.getTopLeft(extent))
+          ),
           resolutions: kaart.config.defaults.resolutions,
           matrixIds: config.matrixIds,
         }),
         tileLoadFunction: kaart.tileLoader.tileLoadFunction,
         layer: l.naam,
-        style: config.style.getOrElse(""),
-        format: l.format.getOrElse("image/png"),
+        style: pipe(
+          config.style,
+          option.getOrElse(() => "")
+        ),
+        format: pipe(
+          l.format,
+          option.getOrElse(() => "image/png")
+        ),
         matrixSet: l.matrixSet,
       });
     }
@@ -85,8 +105,14 @@ export function toOlLayer(
         params: {
           LAYERS: l.naam,
           SRS: projection(l.beschikbareProjecties),
-          VERSION: l.versie.getOrElse("1.3.0"),
-          FORMAT: l.format.getOrElse("image/png"),
+          VERSION: pipe(
+            l.versie,
+            option.getOrElse(() => "1.3.0")
+          ),
+          FORMAT: pipe(
+            l.format,
+            option.getOrElse(() => "image/png")
+          ),
         },
         projection: projection(l.beschikbareProjecties),
         ratio: 1.1,
@@ -130,29 +156,34 @@ export function toOlLayer(
      */
 
     const vector = new ol.layer.Vector({
-      source: vectorlaag.clusterDistance.foldL(
+      source: option.fold(
         () => vectorlaag.source,
-        (distance) =>
+        (distance: number) =>
           new ol.source.Cluster({
             source: vectorlaag.source,
             distance: distance,
           })
-      ),
+      )(vectorlaag.clusterDistance),
       visible: true,
-      style: vectorlaag.styleSelector
-        .map(toStylish)
-        .getOrElse(kaart.config.defaults.style),
-      minResolution: array
-        .lookup(vectorlaag.maxZoom, kaart.config.defaults.resolutions)
-        .getOrElse(
-          kaart.config.defaults.resolutions[
-            kaart.config.defaults.resolutions.length - 1
-          ]
-        ),
-      maxResolution: array
-        .lookup(vectorlaag.minZoom, kaart.config.defaults.resolutions)
-        .map((maxResolutie) => maxResolutie + 0.0001) // max is exclusive, dus tel een fractie bij zodat deze inclusief wordt
-        .getOrElse(kaart.config.defaults.resolutions[0]),
+      style: pipe(
+        vectorlaag.styleSelector,
+        option.map(toStylish),
+        option.getOrElse(() => kaart.config.defaults.style)
+      ),
+      minResolution: pipe(
+        array.lookup(vectorlaag.maxZoom, kaart.config.defaults.resolutions),
+        option.getOrElse(
+          () =>
+            kaart.config.defaults.resolutions[
+              kaart.config.defaults.resolutions.length - 1
+            ]
+        )
+      ),
+      maxResolution: pipe(
+        array.lookup(vectorlaag.minZoom, kaart.config.defaults.resolutions),
+        option.map((maxResolutie) => maxResolutie + 0.0001), // max is exclusive, dus tel een fractie bij zodat deze inclusief wordt
+        option.getOrElse(() => kaart.config.defaults.resolutions[0])
+      ),
     });
 
     vector.set(ke.LayerProperties.Selecteerbaar, vectorlaag.selecteerbaar);

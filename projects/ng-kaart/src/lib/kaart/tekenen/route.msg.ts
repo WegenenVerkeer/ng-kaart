@@ -1,4 +1,5 @@
-import { option, strmap } from "fp-ts";
+import { option, record } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import * as ol from "../../util/openlayers-compat";
 
@@ -53,7 +54,13 @@ export function createRoute(
   const id = `${begin.id}_${end.id}`;
   return {
     id: id,
-    version: strmap.lookup(id, versions).fold(0, (n) => n + 1),
+    version: pipe(
+      record.lookup(id, versions),
+      option.fold(
+        () => 0,
+        (n) => n + 1
+      )
+    ),
     begin: begin,
     end: end,
   };

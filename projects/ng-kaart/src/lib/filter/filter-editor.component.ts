@@ -8,7 +8,7 @@ import {
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import { MatAutocompleteTrigger } from "@angular/material/autocomplete";
 import { apply, array, option, ord } from "fp-ts";
-import { and, Endomorphism, Function1, Refinement } from "fp-ts/lib/function";
+import { Endomorphism, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import { DateTime } from "luxon";
 import * as momentImported from "moment";
@@ -55,24 +55,21 @@ import setoidPropertyByRef = Filter.setoidPropertyByRef;
 
 const moment = momentImported;
 
-const autoCompleteSelectieVerplichtValidator: Function1<
-  FormControl,
-  ValidationErrors | null
-> = (control) => {
+const autoCompleteSelectieVerplichtValidator: (
+  arg: FormControl
+) => ValidationErrors | null = (control) => {
   if (typeof control.value === "string") {
     return { required: {} };
   }
   return null;
 };
 
-const ordPropertyByBaseField: Function1<
-  Map<string, ke.VeldInfo>,
-  ord.Ord<Filter.Property>
-> = (veldinfos) =>
-  ord.contramap(
-    (prop) => ke.VeldInfo.veldInfoOpNaam(prop.ref, veldinfos),
-    option.getOrd(ord.getDualOrd(ke.VeldInfo.ordVeldOpBasisVeld))
-  );
+const ordPropertyByBaseField: (
+  veldinfos: Map<string, ke.VeldInfo>
+) => ord.Ord<Filter.Property> = (veldinfos) =>
+  ord.contramap((prop: Filter.Property) =>
+    ke.VeldInfo.veldInfoOpNaam(prop.ref, veldinfos)
+  )(option.getOrd(ord.getDualOrd(ke.VeldInfo.ordVeldOpBasisVeld)));
 
 const enableDisabled = (...controls: FormControl[]): void => {
   controls.forEach((control) => {
@@ -104,10 +101,10 @@ interface Wrapped {
   readonly value: string;
 }
 
-const Wrapped: Function1<string, Wrapped> = (value) => ({ value });
+const Wrapped: (arg: string) => Wrapped = (value) => ({ value });
 const isWrapped: Refinement<any, Wrapped> = (obj): obj is Wrapped =>
   obj && obj.value && typeof obj.value === "string";
-const extractValue: Function1<Wrapped, string> = (wrapped) => wrapped.value;
+const extractValue: (arg: Wrapped) => string = (wrapped) => wrapped.value;
 
 type CheckboxState = "caseSensitive" | "activateKeyboard" | "none";
 type ActieveAutoComplete = "eigenschap" | "waarde";
@@ -266,7 +263,7 @@ export class FilterEditorComponent extends KaartChildDirective {
 
     const forEveryLaag = forEvery(laag$);
 
-    const forControlValue: Function1<FormControl, rx.Observable<any>> = (
+    const forControlValue: (arg: FormControl) => rx.Observable<any> = (
       formcontrol
     ) =>
       forEveryLaag(() =>
@@ -303,7 +300,12 @@ export class FilterEditorComponent extends KaartChildDirective {
       .pipe(
         debounceTime(100), // voor de snelle typers
         distinctUntilChanged(),
-        map((x) => option.fromNullable(x).filter((x) => x !== ""))
+        map((x) =>
+          pipe(
+            option.fromNullable(x),
+            option.filter((x: string) => x !== "")
+          )
+        )
       )
       .pipe(share());
 
@@ -335,13 +337,14 @@ export class FilterEditorComponent extends KaartChildDirective {
       .pipe(
         distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
         map((input) =>
-          option
-            .fromNullable(input)
-            .map((value) =>
+          pipe(
+            option.fromNullable(input),
+            option.map((value) =>
               FilterEditor.LiteralValue("string")(
                 sanitiseText(value.toString())
               )
             )
+          )
         )
       );
 
@@ -354,10 +357,10 @@ export class FilterEditorComponent extends KaartChildDirective {
         }
       }),
       map((input) =>
-        option
-          .fromNullable(input)
-          .filter(moment.isMoment)
-          .map((m) => {
+        pipe(
+          option.fromNullable(input),
+          option.filter(moment.isMoment),
+          option.map((m) => {
             // We hebben een probleem in de zin dat de date component verbergt wat de input is en enkel de geparste date
             // terug geeft. Daar komt dan nog bij dat de parsing niet strikt is (de setting die we daarvoor gebruiken
             // wordt blijkbaar genegeerd). Het gevolg is dat er bij manuele invoer datums gegenereerd worden die de
@@ -377,6 +380,7 @@ export class FilterEditorComponent extends KaartChildDirective {
               );
             }
           })
+        )
       )
     );
 
@@ -385,7 +389,10 @@ export class FilterEditorComponent extends KaartChildDirective {
     >> = forControlValue(this.integerWaardeControl).pipe(
       distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
       map((input) =>
-        parseInteger(input).map(FilterEditor.LiteralValue("integer"))
+        pipe(
+          parseInteger(input),
+          option.map(FilterEditor.LiteralValue("integer"))
+        )
       )
     );
     const gekozenDouble$: rx.Observable<option.Option<
@@ -393,7 +400,10 @@ export class FilterEditorComponent extends KaartChildDirective {
     >> = forControlValue(this.doubleWaardeControl).pipe(
       distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
       map((input) =>
-        parseDouble(input).map(FilterEditor.LiteralValue("double"))
+        pipe(
+          parseDouble(input),
+          option.map(FilterEditor.LiteralValue("double"))
+        )
       )
     );
 
@@ -408,7 +418,8 @@ export class FilterEditorComponent extends KaartChildDirective {
         forControlValue(this.rangeUnitWaardeControl).pipe(
           distinctUntilChanged(),
           map(option.fromNullable),
-          map(option.filter(and(isString, nonEmptyString)))
+          map(option.filter(isString)),
+          map(option.filter(nonEmptyString))
         )
       )
       .pipe(
@@ -530,10 +541,10 @@ export class FilterEditorComponent extends KaartChildDirective {
     ).subscribe(([expressionEditor, zichtbaar]) => {
       if (zichtbaar) {
         // zet control waarden bij aanpassen van expressionEditor
-        expressionEditor.name.foldL(
+        option.fold(
           () => this.naamControl.reset("", { emitEvent: false }),
           (name) => this.naamControl.setValue(name, { emitEvent: false })
-        );
+        )(expressionEditor.name);
         FilterEditor.matchTermEditor({
           Field: () => {
             disableEnabled(
@@ -633,26 +644,35 @@ export class FilterEditorComponent extends KaartChildDirective {
               },
               selection: () => {
                 this.autocompleteWaardeControl.reset(
-                  val.workingValue.fold("", (sv) => sv.value),
+                  option.fold(
+                    () => "",
+                    (sv: fed.SelectedValue) => sv.value
+                  )(val.workingValue),
                   { emitEvent: true }
                 );
                 this.dropdownWaardeControl.reset(
-                  val.workingValue.fold("", (sv) => sv.value),
+                  option.fold(
+                    () => "",
+                    (sv: fed.SelectedValue) => sv.value
+                  )(val.workingValue),
                   { emitEvent: true }
                 );
               },
               date: () => {
                 this.datumWaardeControl.reset(
-                  val.workingValue.fold("", (sv) => sv.value),
+                  option.fold(
+                    () => "",
+                    (sv: fed.SelectedValue) => sv.value
+                  )(val.workingValue),
                   { emitEvent: true }
                 );
               },
               range: () => {
                 this.rangeUnitWaardeControl.reset(
-                  val.workingValue.fold(
-                    "",
-                    (sv) => (sv.value as Filter.Range).unit
-                  ),
+                  option.fold(
+                    () => "",
+                    (sv: fed.SelectedValue) => (sv.value as Filter.Range).unit
+                  )(val.workingValue),
                   { emitEvent: true }
                 );
                 this.rangeMagnitudeWaardeControl.reset(1, { emitEvent: true });
@@ -771,13 +791,17 @@ export class FilterEditorComponent extends KaartChildDirective {
             map((waarde) =>
               typeof waarde === "string"
                 ? waarde
-                : option.fromNullable(waarde.label).getOrElse("")
+                : pipe(
+                    option.fromNullable(waarde.label),
+                    option.getOrElse(() => "")
+                  )
             ),
             map((getypt) =>
               properties.filter((veld) =>
-                option
-                  .fromNullable(veld.label)
-                  .getOrElse("")
+                pipe(
+                  option.fromNullable(veld.label),
+                  option.getOrElse(() => "")
+                )
                   .toLowerCase()
                   .startsWith(getypt.toLowerCase())
               )
@@ -819,11 +843,12 @@ export class FilterEditorComponent extends KaartChildDirective {
       ])
       .pipe(
         map(([typed, values]) =>
-          array
-            .filter(values, (value) =>
+          pipe(
+            array.filter((value: string) =>
               value.toLowerCase().startsWith(typed.toLowerCase())
-            )
-            .map((value) => Wrapped(value))
+            )(values),
+            array.map((value: string) => Wrapped(value))
+          )
         )
       );
 
@@ -933,16 +958,18 @@ export class FilterEditorComponent extends KaartChildDirective {
       this.filterEditor$.pipe(
         map(FilterEditor.toExpressionFilter),
         map((maybeExpFilter) =>
-          maybeExpFilter.map((expFilter) =>
+          option.map((expFilter: Filter.ExpressionFilter) =>
             prt.ZetFilter(laag.titel, expFilter, kaartLogOnlyWrapper)
-          )
+          )(maybeExpFilter)
         ),
         share()
       )
     );
 
     const geldigFilterCmd$ = maybeZetFilterCmd$.pipe(catOptions);
-    this.ongeldigeFilter$ = maybeZetFilterCmd$.pipe(map((cmd) => cmd.isNone()));
+    this.ongeldigeFilter$ = maybeZetFilterCmd$.pipe(
+      map((cmd) => option.isNone(cmd))
+    );
 
     const laagNietZichtbaar$ = laag$.pipe(
       switchMap((laag) =>

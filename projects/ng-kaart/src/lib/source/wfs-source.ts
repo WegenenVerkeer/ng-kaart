@@ -1,8 +1,10 @@
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/function";
 import { filter, map } from "rxjs/operators";
 
 import { toOlFeature } from "../util/feature";
 import { fetchObs$ } from "../util/fetch-with-timeout";
+import { FeatureCollection } from "../util/geojson-types";
 import * as ol from "../util/openlayers-compat";
 import { urlWithParams } from "../util/url";
 
@@ -24,9 +26,11 @@ export function wfsSource(
   cqlFilter: option.Option<string>,
   cors: boolean
 ): ol.source.Vector {
-  const maybeEncodedFilter = cqlFilter
-    .map((f) => ` AND (${f})`)
-    .map(encodeURIComponent);
+  const maybeEncodedFilter = pipe(
+    cqlFilter,
+    option.map((f) => ` AND (${f})`),
+    option.map(encodeURIComponent)
+  );
   const precalculatedUrl = urlWithParams(baseUrl, {
     srsname,
     version,
@@ -39,16 +43,16 @@ export function wfsSource(
     const extentUrl = `${precalculatedUrl}&cql_filter=bbox(${geomField},${extent.join(
       ","
     )})`;
-    const composedQueryUrl = maybeEncodedFilter.fold(
-      extentUrl,
+    const composedQueryUrl = option.fold(
+      () => extentUrl,
       (encodedFilter) => extentUrl + encodedFilter
-    );
+    )(maybeEncodedFilter);
     const features$ = fetchObs$(
       composedQueryUrl,
       cors ? getWithoutHeaders() : getWithCommonHeaders()
     ).pipe(
       split(featureDelimiter),
-      filter((lijn) => lijn.trim().length > 0),
+      filter((lijn: string) => lijn.trim().length > 0),
       mapToFeatureCollection,
       map((featureCollection) => featureCollection.features)
     );

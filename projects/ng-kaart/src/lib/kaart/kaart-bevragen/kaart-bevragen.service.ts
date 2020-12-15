@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { either, option } from "fp-ts";
-import { Function1 } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import { catchError, flatMap, map, switchMap } from "rxjs/operators";
 
@@ -179,16 +179,18 @@ export function XY2AdresResponseToEither(
 export function LsWegLocatiesResultToEither(
   response: LsWegLocaties
 ): WegLocatiesResult {
-  return either
-    .fromPredicate<BevragenErrorReason, LsWegLocaties>(
+  return pipe(
+    either.fromPredicate<BevragenErrorReason, LsWegLocaties>(
       (r) => r.items != null,
       (r) =>
-        option
-          .fromNullable(r.error)
-          .map<BevragenErrorReason>(() => "ServiceError")
-          .getOrElse("NoData")
-    )(response)
-    .map(toWegLocaties);
+        pipe(
+          option.fromNullable(r.error),
+          option.map<string, BevragenErrorReason>(() => "ServiceError"),
+          option.getOrElse(() => "NoData")
+        )
+    )(response),
+    either.map(toWegLocaties)
+  );
 }
 
 export function PerceelDetailsToEither(
@@ -197,10 +199,11 @@ export function PerceelDetailsToEither(
   return either.fromPredicate<BevragenErrorReason, PerceelDetails>(
     (r) => r.capakey != null,
     (r) =>
-      option
-        .fromNullable(r.error)
-        .map<BevragenErrorReason>(() => "ServiceError")
-        .getOrElse("NoData")
+      pipe(
+        option.fromNullable(r.error),
+        option.map<string, BevragenErrorReason>(() => "ServiceError"),
+        option.getOrElse(() => "NoData")
+      )
   )(response);
 }
 
@@ -289,7 +292,7 @@ export function withLaagLocationInfo(
   };
 }
 
-export const errorToReason: Function1<any, BevragenErrorReason> = (error) => {
+export const errorToReason: (arg: any) => BevragenErrorReason = (error) => {
   if (error instanceof HttpErrorResponse) {
     if (error.status === 404) {
       return "NoData";
@@ -338,20 +341,22 @@ export function enhancePerceelMetGemeenteEnAfdeling(
   afdelingen: Afdeling[]
 ): PerceelResult {
   return either.right({
-    gemeente: option
-      .fromNullable(
+    gemeente: pipe(
+      option.fromNullable(
         gemeenten.find(
           (gemeente) => gemeente.niscode.toString() === perceel.niscode
         )
-      )
-      .map((gemeente) => gemeente.naam)
-      .getOrElse(perceel.niscode),
-    afdeling: option
-      .fromNullable(
+      ),
+      option.map((gemeente) => gemeente.naam),
+      option.getOrElse(() => perceel.niscode)
+    ),
+    afdeling: pipe(
+      option.fromNullable(
         afdelingen.find((afdeling) => afdeling.code === perceel.afdelingcode)
-      )
-      .map((afdeling) => afdeling.naam)
-      .getOrElse(perceel.afdelingcode),
+      ),
+      option.map((afdeling) => afdeling.naam),
+      option.getOrElse(() => perceel.afdelingcode)
+    ),
     sectie: perceel.sectiecode,
     perceel: perceel.perceelsnummer,
     capaKey: perceel.capakey,
@@ -362,19 +367,26 @@ export function enhancePerceelMetGemeenteEnAfdeling$(
   maybePerceel: PerceelDetailsResult,
   zoekerPerceelService: ZoekerPerceelService
 ): rx.Observable<PerceelResult> {
-  return maybePerceel.fold(
-    (error) => rx.of(either.left<BevragenErrorReason, PerceelInfo>(error)),
-    (perceel) =>
-      rx
-        .zip(
-          zoekerPerceelService.getAlleGemeenten$(),
-          zoekerPerceelService.getAfdelingen$(parseInt(perceel.niscode, 10))
-        )
-        .pipe(
-          map(([gemeenten, afdelingen]) =>
-            enhancePerceelMetGemeenteEnAfdeling(perceel, gemeenten, afdelingen)
+  return pipe(
+    maybePerceel,
+    either.fold(
+      (error) => rx.of(either.left<BevragenErrorReason, PerceelInfo>(error)),
+      (perceel) =>
+        rx
+          .zip(
+            zoekerPerceelService.getAlleGemeenten$(),
+            zoekerPerceelService.getAfdelingen$(parseInt(perceel.niscode, 10))
           )
-        )
+          .pipe(
+            map(([gemeenten, afdelingen]) =>
+              enhancePerceelMetGemeenteEnAfdeling(
+                perceel,
+                gemeenten,
+                afdelingen
+              )
+            )
+          )
+    )
   );
 }
 

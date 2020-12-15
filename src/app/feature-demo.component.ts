@@ -1,5 +1,7 @@
 /* eslint-disable max-len */
 
+import { pipe } from "fp-ts/lib/pipeable";
+import { either } from "fp-ts";
 import { animate, style, transition, trigger } from "@angular/animations";
 import scrollIntoView from "scroll-into-view-if-needed";
 import {
@@ -12,7 +14,6 @@ import {
 import { AwvV0DynamicStyleSpec } from "@wegenenverkeer/ng-kaart";
 import { array } from "fp-ts";
 import { option } from "fp-ts";
-import { Function1 } from "fp-ts/lib/function";
 import { CachedFeatureLookup } from "projects/ng-kaart/src/lib/kaart/cache/lookup";
 import * as ol from "projects/ng-kaart/src/lib/util/openlayers-compat";
 import { urlWithParams } from "projects/ng-kaart/src/lib/util/url";
@@ -571,106 +572,131 @@ export class FeatureDemoComponent {
 
   configuratorMiddelpunt = [160000, 170000];
 
-  readonly districtStyle: ol.style.Style = definitieToStyle(
-    "json",
-    '{"version": "awv-v0", "definition": {"stroke": {"color": "rgba(0,127,255,0.8)", "width": 1.5}}}'
-  ).getOrElseL((msg) => {
-    throw new Error(`slecht formaat ${join(",")(msg)}`);
-  });
+  readonly districtStyle: ol.style.Style = pipe(
+    definitieToStyle(
+      "json",
+      '{"version": "awv-v0", "definition": {"stroke": {"color": "rgba(0,127,255,0.8)", "width": 1.5}}}'
+    ),
+    either.getOrElse((msg) => {
+      throw new Error(`slecht formaat ${join(",")(msg)}`);
+    })
+  );
 
-  readonly bordStyle: ol.style.Style = definitieToStyle(
-    "json",
-    // tslint:disable-next-line:max-line-length
-    '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "#7D3C98", "width": 1.5}, "fill": {"color": "#D7BDE2"}, "radius": 6}}}'
-  ).getOrElseL((msg) => {
-    throw new Error(`slecht formaat ${join(",")(msg)}`);
-  });
+  readonly bordStyle: ol.style.Style = pipe(
+    definitieToStyle(
+      "json",
+      // tslint:disable-next-line:max-line-length
+      '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "#7D3C98", "width": 1.5}, "fill": {"color": "#D7BDE2"}, "radius": 6}}}'
+    ),
+    either.getOrElse((msg) => {
+      throw new Error(`slecht formaat ${join(",")(msg)}`);
+    })
+  );
 
-  readonly kolkStyle: ol.style.Style = definitieToStyle(
-    "json",
-    // tslint:disable-next-line:max-line-length
-    '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "navy", "width": 1.5}, "fill": {"color": "dodgerblue"}, "radius": 6}}}'
-  ).getOrElseL((msg) => {
-    throw new Error(`slecht formaat ${join(",")(msg)}`);
-  });
+  readonly kolkStyle: ol.style.Style = pipe(
+    definitieToStyle(
+      "json",
+      // tslint:disable-next-line:max-line-length
+      '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "navy", "width": 1.5}, "fill": {"color": "dodgerblue"}, "radius": 6}}}'
+    ),
+    either.getOrElse((msg) => {
+      throw new Error(`slecht formaat ${join(",")(msg)}`);
+    })
+  );
 
-  readonly fietspadStyle: ol.style.StyleFunction = validateAwvV0RuleDefintion(
-    this.fietspadStijlDef
-  ).getOrElse((msg) => {
-    throw new Error(`slecht formaat ${msg}`);
-  });
+  readonly fietspadStyle: ol.style.StyleFunction = pipe(
+    validateAwvV0RuleDefintion(this.fietspadStijlDef),
+    either.getOrElse((msg) => {
+      throw new Error(`slecht formaat ${msg}`);
+    })
+  );
 
-  readonly afgeleideSnelheidsRegimesStyle: ol.style.StyleFunction = validateAwvV0RuleDefintion(
-    this.afgeleideSnelheidsRegimesStijlDef
-  ).getOrElse((msg) => {
-    throw new Error(`slecht formaat ${msg}`);
-  });
+  readonly afgeleideSnelheidsRegimesStyle: ol.style.StyleFunction = pipe(
+    validateAwvV0RuleDefintion(this.afgeleideSnelheidsRegimesStijlDef),
+    either.getOrElse((msg) => {
+      throw new Error(`slecht formaat ${msg}`);
+    })
+  );
 
   // resolutions: [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125],
   // minZoom 9 = resolutions[9] => 2.0
-  readonly elisaVerkeersbordenStyle = definitieToStyleFunction(
-    "json",
-    JSON.stringify({
-      version: "awv-v0",
-      definition: {
-        rules: [
-          {
-            condition: {
-              kind: "<=",
-              left: { kind: "Environment", type: "number", ref: "resolution" },
-              right: { kind: "Literal", value: 2.0 },
-            },
-            style: {
-              definition: {
-                circle: {
-                  radius: 5,
-                  fill: {
-                    color: "rgb(144, 202, 249)",
+  readonly elisaVerkeersbordenStyle = pipe(
+    definitieToStyleFunction(
+      "json",
+      JSON.stringify({
+        version: "awv-v0",
+        definition: {
+          rules: [
+            {
+              condition: {
+                kind: "<=",
+                left: {
+                  kind: "Environment",
+                  type: "number",
+                  ref: "resolution",
+                },
+                right: { kind: "Literal", value: 2.0 },
+              },
+              style: {
+                definition: {
+                  circle: {
+                    radius: 5,
+                    fill: {
+                      color: "rgb(144, 202, 249)",
+                    },
                   },
                 },
               },
             },
-          },
-        ],
-      },
+          ],
+        },
+      })
+    ),
+    either.getOrElse((msg) => {
+      throw new Error(`slecht formaat ${join(",")(msg)}`);
     })
-  ).getOrElseL((msg) => {
-    throw new Error(`slecht formaat ${join(",")(msg)}`);
-  });
+  );
 
-  readonly elisaVerkeersbordenSelectedStyle = definitieToStyleFunction(
-    "json",
-    JSON.stringify({
-      version: "awv-v0",
-      definition: {
-        rules: [
-          {
-            condition: {
-              kind: "<=",
-              left: { kind: "Environment", type: "number", ref: "resolution" },
-              right: { kind: "Literal", value: 2.0 },
-            },
-            style: {
-              definition: {
-                circle: {
-                  radius: 5,
-                  fill: {
-                    color: "rgb(255, 0, 0)",
-                  },
-                  stroke: {
-                    color: "rgba(255, 0, 0, 0.15)",
-                    width: 100,
+  readonly elisaVerkeersbordenSelectedStyle = pipe(
+    definitieToStyleFunction(
+      "json",
+      JSON.stringify({
+        version: "awv-v0",
+        definition: {
+          rules: [
+            {
+              condition: {
+                kind: "<=",
+                left: {
+                  kind: "Environment",
+                  type: "number",
+                  ref: "resolution",
+                },
+                right: { kind: "Literal", value: 2.0 },
+              },
+              style: {
+                definition: {
+                  circle: {
+                    radius: 5,
+                    fill: {
+                      color: "rgb(255, 0, 0)",
+                    },
+                    stroke: {
+                      color: "rgba(255, 0, 0, 0.15)",
+                      width: 100,
+                    },
                   },
                 },
               },
             },
-          },
-        ],
-      },
+          ],
+        },
+      })
+    ),
+    either.getOrElse((msg) => {
+      throw new Error(`slecht formaat ${join(",")(msg)}`);
     })
-  ).getOrElseL((msg) => {
-    throw new Error(`slecht formaat ${join(",")(msg)}`);
-  });
+  );
 
   readonly verkeersbordenStyleFunction = verkeersbordenStyleFunction(false);
   readonly verkeersbordenSelectieStyleFunction = verkeersbordenStyleFunction(
@@ -1698,7 +1724,9 @@ export class FeatureDemoComponent {
   readonly cachedFeaturesProviderConsumer = (cfpc: CachedFeatureLookup) =>
     (this.cachedFeaturesProvider = option.some(cfpc));
 
-  readonly percelenQueryUrl: Function1<ol.Coordinate, string> = (location) => {
+  readonly percelenQueryUrl: (location: ol.Coordinate) => string = (
+    location
+  ) => {
     const params = {
       service: "WMS",
       request: "GetFeatureInfo",
@@ -1723,7 +1751,7 @@ export class FeatureDemoComponent {
     // tslint:disable-next-line:semicolon
   };
 
-  readonly percelenWmsParser: Function1<string, Veldwaarde[]> = (resp) => {
+  readonly percelenWmsParser: (resp: string) => Veldwaarde[] = (resp) => {
     // Dit is maar een vb van een parser
     // vb:
     // tslint:disable-next-line:max-line-length
@@ -1735,7 +1763,7 @@ export class FeatureDemoComponent {
     const withoutWMSName = resp.replace(/@\w+\s/, "");
     // Ik ga er van uit dat de headers geen ; bevatten
     const fragments = withoutWMSName.split(";");
-    const headerNames = array.take(numHeaders, fragments);
+    const headerNames = array.takeLeft(numHeaders)(fragments);
     const header = headerNames.join(";");
     const valueLine = withoutWMSName.substring(
       header.length + 1,

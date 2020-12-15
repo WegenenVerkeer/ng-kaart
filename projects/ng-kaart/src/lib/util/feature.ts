@@ -1,5 +1,5 @@
 import { array, eq, option, traversable } from "fp-ts";
-import { Curried2, FunctionN, Refinement } from "fp-ts/lib/function";
+import { FunctionN, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 
 import { kaartLogger } from "../kaart/log";
@@ -17,9 +17,9 @@ import * as ol from "./openlayers-compat";
 // De GeoJSON ziet er thread safe uit (volgens de Openlayers source code)
 const format = new ol.format.GeoJSON();
 
-export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = (
-  laagnaam
-) => (geojson) => {
+export const toOlFeature: (
+  laagnaam: string
+) => (geojson: GeoJsonCore) => ol.Feature = (laagnaam) => (geojson) => {
   // id moet uniek zijn over lagen heen , anders krijg je problemen als deze gemengd worden in de selection layer
   // de "echte" id van de geojson feature blijft staan in de properties van de feature
   // Feature.id mag dus niet meer gebruikt worden door clients, maar alleen intern door ng-kaart en openlayers
@@ -40,9 +40,9 @@ export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = (
 };
 
 // o.a. voor gebruik bij stijlen en identify
-export const modifyWithLaagnaam: Curried2<string, ol.Feature, ol.Feature> = (
-  laagnaam
-) => (feature) => {
+export const modifyWithLaagnaam: (
+  laagnaam: string
+) => (feature: ol.Feature) => ol.Feature = (laagnaam) => (feature) => {
   feature.set("laagnaam", laagnaam); // Opgelet: side-effect!
   return feature;
 };
@@ -67,18 +67,18 @@ const singleFeatureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeature> = (
     )
   );
 
-const multipleFeatureToGeoJson: Curried2<
-  ol.Feature,
-  ol.Feature[],
-  option.Option<GeoJsonFeatureCollection>
-> = (feature) => (features) => {
+const multipleFeatureToGeoJson: (
+  feature: ol.Feature
+) => (features: ol.Feature[]) => option.Option<GeoJsonFeatureCollection> = (
+  feature
+) => (features) => {
   return pipe(
     option.fromNullable(feature.getGeometry()),
     option.chain((geometry) =>
       option.tryCatch(() => ({
         type: "FeatureCollection" as "FeatureCollection",
         geometry: format.writeFeaturesObject(features),
-        features: array.mapOption(features, singleFeatureToGeoJson),
+        features: array.filterMap(singleFeatureToGeoJson)(features),
       }))
     )
   );
@@ -88,19 +88,19 @@ export const featureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeatures> = (
   feature
 ) => {
   const features = option.fromNullable(feature.get("features"));
-  return features
-    .filter(arrays.isArray)
-    .chain<GeoJsonFeatureCollection | GeoJsonFeature>(
-      multipleFeatureToGeoJson(feature)
-    )
-    .orElse(() => singleFeatureToGeoJson(feature));
+  return pipe(
+    features,
+    option.filter(arrays.isArray),
+    option.chain<any[], GeoJsonFeatures>(multipleFeatureToGeoJson(feature)),
+    option.alt(() => singleFeatureToGeoJson(feature))
+  );
 };
 
 export const clusterFeaturesToGeoJson: PartialFunction1<
   ol.Feature[],
   GeoJsonFeatures[]
 > = (features) =>
-  traversable.traverse(option.option, array.array)(features, featureToGeoJson);
+  array.array.traverse(option.option)(features, featureToGeoJson);
 
 // Een type dat onze features encapsuleert. Die hebben in 99% van de gevallen een id en een laagnaam.
 export interface FeatureWithIdAndLaagnaam {
@@ -112,12 +112,16 @@ export interface FeatureWithIdAndLaagnaam {
 export namespace Feature {
   // geef de "echte" id van een Feature terug indien aanwezig, dus niet de technische sleutel die we hebben gezet in olToFeature
   export const propertyId: PartialFunction1<ol.Feature, string> = (feature) =>
-    option
-      .fromNullable(feature.getProperties()["id"])
-      .map((id) => id.toString());
+    pipe(
+      option.fromNullable(feature.getProperties()["id"]),
+      option.map((id) => id.toString())
+    );
 
   export const technicalId: PartialFunction1<ol.Feature, string> = (feature) =>
-    option.fromNullable(feature.getId()).map((id) => id.toString());
+    pipe(
+      option.fromNullable(feature.getId()),
+      option.map((id) => id.toString())
+    );
 
   export const properties: FunctionN<[ol.Feature], any> = (feature) =>
     feature.getProperties().properties;
@@ -144,12 +148,13 @@ export namespace Feature {
   export const getLaagnaam: PartialFunction1<ol.Feature, string> = (
     feature
   ) => {
-    const singleFeature = option
-      .fromNullable(feature.get("features"))
-      .filter(arrays.isArray)
-      .filter(arrays.isNonEmpty)
-      .chain((features) => option.fromNullable(features[0]))
-      .getOrElse(feature);
+    const singleFeature = pipe(
+      option.fromNullable(feature.get("features")),
+      option.filter(arrays.isArray),
+      option.filter(arrays.isNonEmpty),
+      option.chain((features) => option.fromNullable(features[0])),
+      option.getOrElse(() => feature)
+    );
     return option.fromNullable(singleFeature.get("laagnaam").toString());
   };
 

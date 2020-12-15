@@ -1,4 +1,5 @@
-import { Function1, pipe } from "fp-ts/lib/function";
+import { either } from "fp-ts";
+import { flow } from "fp-ts/lib/function";
 
 import { CachedFeatureLookup } from "../kaart/cache/lookup";
 import { KaartLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
@@ -296,10 +297,9 @@ export const MiddelpuntAangepastMsg: (
   middelpunt: middelpunt,
 });
 
-export const PublishedKaartLocatiesMsg: Function1<
-  KaartLocaties,
-  PublishedKaartLocatiesMsg
-> = (locaties) => ({
+export const PublishedKaartLocatiesMsg: (
+  locaties: KaartLocaties
+) => PublishedKaartLocatiesMsg = (locaties) => ({
   type: "PublishedKaartLocaties",
   locaties: locaties,
 });
@@ -315,10 +315,9 @@ export const VectorLagenAangepastMsg: (
   lagen: lgn,
 });
 
-export const CachedFeaturesLookupReadyMsg: Function1<
-  prt.KaartCmdValidation<CachedFeatureLookup>,
-  CachedFeaturesLookupReadyMsg
-> = (cacheLookupValidation) => ({
+export const CachedFeaturesLookupReadyMsg: (
+  cacheLookupValidation: prt.KaartCmdValidation<CachedFeatureLookup>
+) => CachedFeaturesLookupReadyMsg = (cacheLookupValidation) => ({
   type: "CachedFeaturesLookupReady",
   cacheLookupValidation: cacheLookupValidation,
 });
@@ -340,8 +339,8 @@ export const view: (_: ViewAangepastMsg) => prt.Viewinstellingen = (msg) =>
 export const logOnlyWrapper: prt.ValidationWrapper<any, KaartClassicMsg> = (
   v: prt.KaartCmdValidation<any>
 ) => {
-  if (v.isFailure()) {
-    classicLogger.error("Een classic command gaf een fout", v.value);
+  if (either.isLeft(v)) {
+    classicLogger.error("Een classic command gaf een fout", v.left);
   }
   return KaartClassicMsg({ type: "Dummy" });
 };
@@ -349,4 +348,4 @@ export const logOnlyWrapper: prt.ValidationWrapper<any, KaartClassicMsg> = (
 export const cachedFeaturesLookupReadyMsg: prt.ValidationWrapper<
   CachedFeatureLookup,
   KaartClassicMsg
-> = pipe(CachedFeaturesLookupReadyMsg, KaartClassicMsg);
+> = flow(CachedFeaturesLookupReadyMsg, KaartClassicMsg);

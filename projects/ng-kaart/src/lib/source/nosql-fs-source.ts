@@ -1,5 +1,6 @@
 import { array, eq, option } from "fp-ts";
-import { concat, Function1, not, Refinement } from "fp-ts/lib/function";
+import { not, Refinement } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import {
   bufferCount,
@@ -81,9 +82,9 @@ export interface PagingSpec {
 
 export namespace PagingSpec {
   export type SortDirection = "ASC" | "DESC";
-  export const toQueryParams = (spec: PagingSpec) => {
+  export const toQueryParams = (spec: PagingSpec): any => {
     const [sort, sortDirection] = array.unzip(
-      array.zip(spec.sortFields, spec.sortDirections)
+      pipe(spec.sortFields, array.zip(spec.sortDirections))
     );
     if (arrays.isNonEmpty(sort)) {
       return {
@@ -131,20 +132,22 @@ interface SplitterState {
   readonly output: string[];
 }
 
-const splitter: Function1<string, ReduceFunction<SplitterState, string>> = (
+const splitter: (delimeter: string) => ReduceFunction<SplitterState, string> = (
   delimiter
 ) => (state, line) => {
   const allData = state.seen + line; // neem de gegevens mee die de vorige keer niet verwerkt zijn
   const parts = allData.split(delimiter);
   // foldr doet niks meer dan het laatste element van de array nemen ermee rekenening houdende dat de array leeg kan zijn
-  return array.foldr(
+  return pipe(
     parts,
-    { seen: "", output: [] }, // als er niks was, dan ook geen output (enkel als allData en delimiter leeg zijn)
-    (init, last) => ({ seen: last, output: init }) // steek alle volledig stukken en output en onthoudt de overschot in seen
+    array.foldRight(
+      () => ({ seen: "", output: [] }), // als er niks was, dan ook geen output (enkel als allData en delimiter leeg zijn)
+      (init, last) => ({ seen: last, output: init }) // steek alle volledig stukken en output en onthoudt de overschot in seen
+    )
   );
 };
 
-export const split: Function1<string, Pipeable<string, string>> = (
+export const split: (delimeter: string) => Pipeable<string, string> = (
   delimiter
 ) => (obs) => {
   const splitterState$: rx.Observable<SplitterState> = obs.pipe(
@@ -169,9 +172,10 @@ const mapToGeoJson: Pipeable<string, GeoJsonLike> = (obs) =>
         const geojson = JSON.parse(lijn) as GeoJsonLike;
         // Tijdelijk work-around voor fake featureserver die geen bbox genereert.
         // Meer permanent moeten we er rekening mee houden dat bbox niet verplicht is.
-        const bbox = option
-          .fromNullable(geojson.geometry.bbox)
-          .getOrElse([0, 0, 0, 0]);
+        const bbox = pipe(
+          option.fromNullable(geojson.geometry.bbox),
+          option.getOrElse(() => [0, 0, 0, 0])
+        );
         return {
           ...geojson,
           metadata: {
@@ -262,7 +266,7 @@ function featuresFromServer(
   );
   const cacheWriter$ = gebruikCache
     ? batchedFeatures$.pipe(
-        reduce<GeoJsonLike[], GeoJsonLike[]>(concat, []), // alles in  1 grote array steken
+        reduce<GeoJsonLike[], GeoJsonLike[]>((as, bs) => as.concat(bs), []), // alles in  1 grote array steken
         switchMap((allFeatures) =>
           // dan de oude gecachte features in de extent verwijderen
           geojsonStore.deleteFeatures(laagnaam, extent).pipe(
@@ -351,12 +355,12 @@ export class NosqlFsSource extends ol.source.Vector {
             // oude request niet meer toe te voegen
             // Zelfde met filter: als de filter is gewijzigd, dan zijn wij niet meer geïnteresseerd in de oude waarden
             if (
-              array
-                .last(source.outstandingRequestExtents)
-                .contains(array.getSetoid(eq.eqNumber), extent) ||
-              array
-                .last(source.outstandingQueries)
-                .contains(eq.eqString, queryUrlVoorExtent)
+              pipe(array.last(source.outstandingRequestExtents), (ma) => (ma) =>
+                option.elem(array.getEq(eq.eqNumber))(extent, ma)
+              ) ||
+              pipe(array.last(source.outstandingQueries), (ma) =>
+                option.elem(eq.eqString)(queryUrlVoorExtent, ma)
+              )
             ) {
               source.addFeatures([...newFeatures.values()]);
             }
@@ -383,11 +387,14 @@ export class NosqlFsSource extends ol.source.Vector {
             // de start van de loader (dat gebeurt wel in de goede volgorde) en gebruiken we die extent om features van
             // te behouden.
             if (allFeatures.length > memCacheSize && source.busyCount === 0) {
-              const featuresOutsideExtent = array
-                .last(source.outstandingRequestExtents)
-                .fold([], (lastExtent) =>
-                  array.filter(allFeatures, Feature.notInExtent(lastExtent))
-                );
+              const featuresOutsideExtent = pipe(
+                array.last(source.outstandingRequestExtents),
+                option.fold(
+                  () => [],
+                  (lastExtent) =>
+                    array.filter(Feature.notInExtent(lastExtent))(allFeatures)
+                )
+              );
 
               kaartLogger.debug("Te verwijderen", featuresOutsideExtent.length);
               try {
@@ -420,12 +427,24 @@ export class NosqlFsSource extends ol.source.Vector {
 
   private viewAndFilterParams(respectUserFilterActivity = true) {
     return {
-      ...this.view.fold<any>({}, (v) => ({
-        "with-view": encodeURIComponent(v),
-      })),
-      ...this.composedFilter(respectUserFilterActivity).fold<any>({}, (f) => ({
-        query: encodeURIComponent(f),
-      })),
+      ...pipe(
+        this.view,
+        option.fold(
+          () => ({}),
+          (v) => ({
+            "with-view": encodeURIComponent(v),
+          })
+        )
+      ),
+      ...pipe(
+        this.composedFilter(respectUserFilterActivity),
+        option.fold(
+          () => ({}),
+          (f) => ({
+            query: encodeURIComponent(f),
+          })
+        )
+      ),
     };
   }
 
@@ -434,8 +453,19 @@ export class NosqlFsSource extends ol.source.Vector {
     pagingSpec: option.Option<PagingSpec>
   ) {
     const params = {
-      ...extent.map(Extent.toQueryValue).fold<any>({}, (bbox) => ({ bbox })),
-      ...pagingSpec.map<any>(PagingSpec.toQueryParams).getOrElse({}),
+      ...pipe(
+        extent,
+        option.map(Extent.toQueryValue),
+        option.fold(
+          () => ({}),
+          (bbox) => ({ bbox })
+        )
+      ),
+      ...pipe(
+        pagingSpec,
+        option.map(PagingSpec.toQueryParams),
+        option.getOrElse(() => ({}))
+      ),
       ...this.viewAndFilterParams(),
     };
 
@@ -459,10 +489,22 @@ export class NosqlFsSource extends ol.source.Vector {
       filename: filename,
       sort: sortFields.join(","),
       "sort-direction": sortDirections.join(","),
-      ...extent.map(Extent.toQueryValue).fold<any>({}, (bbox) => ({ bbox })),
-      ...overruleFilter
-        .alt(this.composedFilter(true))
-        .fold<any>({}, (f) => ({ query: encodeURIComponent(f) })),
+      ...pipe(
+        extent,
+        option.map(Extent.toQueryValue),
+        option.fold(
+          () => ({}),
+          (bbox) => ({ bbox })
+        )
+      ),
+      ...pipe(
+        overruleFilter,
+        option.alt(() => this.composedFilter(true)),
+        option.fold(
+          () => ({}),
+          (f) => ({ query: encodeURIComponent(f) })
+        )
+      ),
     };
 
     return `${this.url}/api/databases/${this.database}/${
@@ -494,20 +536,28 @@ export class NosqlFsSource extends ol.source.Vector {
     respectUserFilterActivity: boolean
   ): option.Option<string> {
     const userFilter = this.applicableUserFilter(respectUserFilterActivity);
-    return this.baseFilter.foldL(
-      () => userFilter, //
-      (basisFilter) =>
-        userFilter
-          .map((extraFilter) => `(${basisFilter}) AND (${extraFilter})`)
-          .alt(this.baseFilter)
+    return pipe(
+      this.baseFilter,
+      option.fold(
+        () => userFilter, //
+        (basisFilter) =>
+          pipe(
+            userFilter,
+            option.map(
+              (extraFilter) => `(${basisFilter}) AND (${extraFilter})`
+            ),
+            option.alt(() => this.baseFilter)
+          )
+      )
     );
   }
 
   private applicableUserFilter(
     respectUserFilterActivity: boolean
   ): option.Option<string> {
-    return this.userFilter.filter(
-      () => !respectUserFilterActivity || this.userFilterActive
+    return pipe(
+      this.userFilter,
+      option.filter(() => !respectUserFilterActivity || this.userFilterActive)
     );
   }
 

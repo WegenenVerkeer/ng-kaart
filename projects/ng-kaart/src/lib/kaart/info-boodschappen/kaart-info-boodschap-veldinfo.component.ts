@@ -9,12 +9,11 @@ import {
 import { DomSanitizer } from "@angular/platform-browser";
 import { eq, map, option } from "fp-ts";
 import { map as rxmap } from "rxjs/operators";
-import { constTrue, Function1, Function2, Predicate } from "fp-ts/lib/function";
+import { constTrue, pipe, Predicate } from "fp-ts/lib/function";
 import * as Mustache from "mustache";
 import { KaartChildDirective } from "../kaart-child.directive";
 import { VeldInfo, VeldType } from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
-import { copyToClipboard } from "../../util/clipboard";
 import { ServiceNowOpties, ServiceNowUiSelector } from "./service-now-opties";
 import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
 
@@ -26,7 +25,7 @@ export interface Properties {
 const hasValue: Predicate<any> = (value) =>
   value !== undefined && value !== null;
 
-const nestedPropertyValue: Function2<string, Object, any> = (
+const nestedPropertyValue: (arg1: string, arg2: Object) => any = (
   propertyKey,
   object
 ) =>
@@ -56,39 +55,38 @@ const formateerJson = (
   return Mustache.render(formatString, jsonObject);
 };
 
-const veldnamen: Function1<VeldinfoMap, string[]> = (veldbeschrijvingen) => [
+const veldnamen: (arg: VeldinfoMap) => string[] = (veldbeschrijvingen) => [
   ...veldbeschrijvingen.keys(),
 ];
 
-const veldbeschrijving: Function2<
-  string,
-  VeldinfoMap,
-  option.Option<VeldInfo>
-> = (veld, veldbeschrijvingen) =>
+const veldbeschrijving: (
+  arg1: string,
+  arg2: VeldinfoMap
+) => option.Option<VeldInfo> = (veld, veldbeschrijvingen) =>
   map.lookup(eq.eqString)(veld, veldbeschrijvingen);
 
-const hasVeldSatisfying: Function1<
-  Predicate<VeldInfo>,
-  Function2<VeldinfoMap, string, boolean>
-> = (test) => (veldbeschrijvingen, veld) =>
-  veldbeschrijving(veld, veldbeschrijvingen).exists(test);
+const hasVeldSatisfying: (
+  arg: Predicate<VeldInfo>
+) => (arg1: VeldinfoMap, arg2: string) => boolean = (test) => (
+  veldbeschrijvingen,
+  veld
+) => pipe(veldbeschrijving(veld, veldbeschrijvingen), option.exists(test));
 
-const hasVeld: Function2<VeldinfoMap, string, boolean> = hasVeldSatisfying(
+const hasVeld: (arg1: VeldinfoMap, arg2: string) => boolean = hasVeldSatisfying(
   constTrue
 );
 
-const heeftDataType: Function2<
-  VeldinfoMap,
-  string,
-  boolean
-> = hasVeldSatisfying((veldInfo) =>
-  option.fromNullable(veldInfo.dataType).isSome()
+const heeftDataType: (
+  arg1: VeldinfoMap,
+  arg2: string
+) => boolean = hasVeldSatisfying((veldInfo) =>
+  pipe(option.fromNullable(veldInfo.dataType), option.isSome)
 );
 
-// indien geen meta informatie functie, toon alle velden
-const isBasisVeld: Function2<VeldinfoMap, string, boolean> = hasVeldSatisfying(
-  (veldInfo) => veldInfo.isBasisVeld
-);
+const isBasisVeld: (
+  arg1: VeldinfoMap,
+  arg2: string
+) => boolean = hasVeldSatisfying((veldInfo) => veldInfo.isBasisVeld);
 
 @Component({
   selector: "awv-kaart-info-boodschap-veldinfo",
@@ -170,9 +168,16 @@ export class KaartInfoBoodschapVeldinfoComponent
   // }
 
   label(veld: string): string {
-    return this.veldInfo(veld)
-      .map((veldInfo) => option.fromNullable(veldInfo.label).getOrElse(""))
-      .getOrElse(veld);
+    return pipe(
+      veldbeschrijving(veld, this.veldbeschrijvingen),
+      option.map((veldInfo) =>
+        pipe(
+          option.fromNullable(veldInfo.label),
+          option.getOrElse(() => "")
+        )
+      ),
+      option.getOrElse(() => veld)
+    );
   }
 
   basisEigenschappen(): string[] {
@@ -218,76 +223,84 @@ export class KaartInfoBoodschapVeldinfoComponent
   }
 
   constante(veld: string): option.Option<string> {
-    return (
-      this.veldInfo(veld)
-        .chain((veldInfo) => option.fromNullable(veldInfo.constante))
-        // vervang elke instantie van {id} in de waarde van 'constante' door de effectieve id :
-        .map((waarde) =>
-          veldnamen(this.veldbeschrijvingen).reduce((result, eigenschap) => {
-            const token = `{${eigenschap}}`;
-            // vervang _alle_ tokens met de waarde uit het record
-            return result.includes(token)
-              ? result
-                  .split(token)
-                  .join(`${nestedPropertyValue(eigenschap, this.properties)}`)
-              : result;
-          }, waarde)
-        )
+    return pipe(
+      veldbeschrijving(veld, this.veldbeschrijvingen),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.constante)),
+      // vervang elke instantie van {id} in de waarde van 'constante' door de effectieve id :
+      option.map((waarde) =>
+        veldnamen(this.veldbeschrijvingen).reduce((result, eigenschap) => {
+          const token = `{${eigenschap}}`;
+          // vervang _alle_ tokens met de waarde uit het record
+          return result.includes(token)
+            ? result
+                .split(token)
+                .join(`${nestedPropertyValue(eigenschap, this.properties)}`)
+            : result;
+        }, waarde)
+      )
     );
   }
 
   parseFormat(veld: string): string | null {
-    return option.toNullable(
-      this.veldInfo(veld).chain((veldInfo) =>
-        option.fromNullable(veldInfo.parseFormat)
-      )
+    return pipe(
+      this.veldInfo(veld),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.parseFormat)),
+      option.toNullable
     );
   }
 
   displayFormat(veld: string): string | null {
-    return option.toNullable(
-      this.veldInfo(veld).chain((veldInfo) =>
-        option
-          .fromNullable(veldInfo.displayFormat)
-          .orElse(() => option.fromNullable(veldInfo.parseFormat))
-      )
+    return pipe(
+      this.veldInfo(veld),
+      option.chain((veldInfo) =>
+        pipe(
+          option.fromNullable(veldInfo.displayFormat),
+          option.alt(() => option.fromNullable(veldInfo.parseFormat))
+        )
+      ),
+      option.toNullable
     );
   }
 
   isKopieerbaar(veld: string): boolean {
-    return this.veldInfo(veld)
-      .chain((veldInfo) => option.fromNullable(veldInfo.isKopieerbaar))
-      .getOrElse(false);
+    return pipe(
+      this.veldInfo(veld),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.isKopieerbaar)),
+      option.getOrElse(() => false)
+    );
   }
 
   waarde(veldnaam: string): string | number {
     // indien er een 'constante' object in de definitie is, geef dat terug, anders geef de waarde in het veld terug
-    return this.constante(veldnaam).getOrElseL(() => {
-      const waarde = nestedPropertyValue(veldnaam, this.properties);
-      if (
-        this.hasHtml(veldnaam) &&
-        waarde &&
-        this.veldType(veldnaam) !== "url"
-      ) {
-        return this.sanitizer.bypassSecurityTrustHtml(
-          formateerJson(
+    return pipe(
+      this.constante(veldnaam),
+      option.getOrElse(() => {
+        const waarde = nestedPropertyValue(veldnaam, this.properties);
+        if (
+          this.hasHtml(veldnaam) &&
+          waarde &&
+          this.veldType(veldnaam) !== "url"
+        ) {
+          return this.sanitizer.bypassSecurityTrustHtml(
+            formateerJson(
+              veldnaam,
+              this.veldType(veldnaam),
+              waarde,
+              this.html(veldnaam)
+            )
+          );
+        } else if (this.hasTemplate(veldnaam) && waarde) {
+          return formateerJson(
             veldnaam,
             this.veldType(veldnaam),
             waarde,
-            this.html(veldnaam)
-          )
-        );
-      } else if (this.hasTemplate(veldnaam) && waarde) {
-        return formateerJson(
-          veldnaam,
-          this.veldType(veldnaam),
-          waarde,
-          this.template(veldnaam)
-        );
-      } else {
-        return waarde;
-      }
-    });
+            this.template(veldnaam)
+          );
+        } else {
+          return waarde;
+        }
+      })
+    );
   }
 
   private eigenschappen(filter: Predicate<string>): string[] {
@@ -296,7 +309,7 @@ export class KaartInfoBoodschapVeldinfoComponent
       .filter(
         (veldNaam) =>
           hasValue(nestedPropertyValue(veldNaam, this.properties)) ||
-          this.constante(veldNaam).isSome()
+          pipe(this.constante(veldNaam), option.isSome)
       )
       .filter(
         (veldNaam) => nestedPropertyValue(veldNaam, this.properties) !== ""
@@ -305,13 +318,16 @@ export class KaartInfoBoodschapVeldinfoComponent
 
   private isLinkVeld(veld: string): boolean {
     return (
-      option
-        .fromNullable(this.waarde(veld)) // indien waarde van veld begint met http
-        .filter((waarde) => typeof waarde === "string")
-        .exists((waarde) => `${waarde}`.startsWith("http")) ||
-      this.veldInfo(veld) // indien 'constante' veld start met http
-        .chain((veldInfo) => option.fromNullable(veldInfo.constante)) //
-        .exists((constante) => constante.startsWith("http")) ||
+      pipe(
+        option.fromNullable(this.waarde(veld)), // indien waarde van veld begint met http
+        option.filter((waarde) => typeof waarde === "string"),
+        option.exists((waarde) => `${waarde}`.startsWith("http"))
+      ) ||
+      pipe(
+        veldbeschrijving(veld, this.veldbeschrijvingen), // indien 'constante' veld start met http
+        option.chain((veldInfo) => option.fromNullable(veldInfo.constante)), //
+        option.exists((constante) => constante.startsWith("http"))
+      ) ||
       this.veldType(veld) === "url"
     );
   }
@@ -321,33 +337,43 @@ export class KaartInfoBoodschapVeldinfoComponent
   }
 
   private hasTemplate(veld: string): boolean {
-    return this.veldInfo(veld)
-      .chain((veldInfo) => option.fromNullable(veldInfo.template))
-      .isSome();
+    return pipe(
+      this.veldInfo(veld),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.template)),
+      option.isSome
+    );
   }
 
   private hasHtml(veld: string): boolean {
-    return this.veldInfo(veld)
-      .chain((veldInfo) => option.fromNullable(veldInfo.html))
-      .isSome();
+    return pipe(
+      this.veldInfo(veld),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.html)),
+      option.isSome
+    );
   }
 
   private template(veld: string): string {
-    return this.veldInfo(veld)
-      .chain((veldInfo) => option.fromNullable(veldInfo.template))
-      .getOrElse("");
+    return pipe(
+      this.veldInfo(veld),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.template)),
+      option.getOrElse(() => "")
+    );
   }
 
   private html(veld: string): string {
-    return this.veldInfo(veld)
-      .chain((veldInfo) => option.fromNullable(veldInfo.html))
-      .getOrElse("");
+    return pipe(
+      this.veldInfo(veld),
+      option.chain((veldInfo) => option.fromNullable(veldInfo.html)),
+      option.getOrElse(() => "")
+    );
   }
 
   veldType(veld: string): VeldType {
-    return this.veldInfo(veld)
-      .map((veldInfo) => veldInfo.type)
-      .getOrElse("string");
+    return pipe(
+      this.veldInfo(veld),
+      option.map((veldInfo) => veldInfo.type),
+      option.getOrElse(() => "string")
+    );
   }
 
   aanmakenCaseServiceNowMogelijk(): boolean {
@@ -355,9 +381,5 @@ export class KaartInfoBoodschapVeldinfoComponent
       this.serviceNowActief &&
       hasVeld(this.veldbeschrijvingen, "installatieNaampad")
     );
-  }
-
-  copyToClipboard(toCopy: string | number) {
-    copyToClipboard(toCopy);
   }
 }

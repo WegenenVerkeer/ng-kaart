@@ -60,7 +60,7 @@
     <ng-template #legende>
       <div *ngFor="let laag of (lagenMetLegende$ | async)" class="legende">
         <div class="laag-naam">{{laag.titel}}</div>
-        <div *ngFor="let item of laag.legende.toUndefined().items" class="legende-item">
+        <div *ngFor="let item of getLegendeItems(laag)" class="legende-item">
           <span class="legende-icoon" [innerHtml]="icoon(item)"></span>
           <span class="legende-naam">{{item.beschrijving}}</span>
         </div>

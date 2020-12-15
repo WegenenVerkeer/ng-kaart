@@ -1,3 +1,5 @@
+import { either } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 import { Filter as fltr } from "./filter-model";
 import { definitieToFilter, filterToDefinitie } from "./filter-persistence";
 
@@ -10,7 +12,12 @@ describe("De filterinterpreter", () => {
       definitie.filterDefinitie
     );
 
-    expect(result.isSuccess()).toBe(true);
-    expect(result.getOrElse(undefined)).toEqual(filter);
+    expect(either.isRight(result)).toBe(true);
+    expect(
+      pipe(
+        result,
+        either.getOrElse(() => undefined)
+      )
+    ).toEqual(filter);
   });
 });

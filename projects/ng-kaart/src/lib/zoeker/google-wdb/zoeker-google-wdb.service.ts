@@ -2,6 +2,7 @@
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import { combineLatest, Observable, Observer, timer } from "rxjs";
 import {
@@ -76,14 +77,15 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
       highlightStyle: highlightStyle,
     });
     this.omschrijving = locatie.omschrijving;
-    this.extraOmschrijving = option
-      .fromNullable(locatie.extraOmschrijving)
-      .orElse(() =>
+    this.extraOmschrijving = pipe(
+      option.fromNullable(locatie.extraOmschrijving),
+      option.alt(() =>
         fromNullablePredicate<string>(
           () => locatie.omschrijving !== locatie.formatted_address,
           locatie.formatted_address
         )
-      );
+      )
+    );
     this.bron = locatie.bron;
     this.preferredPointZoomLevel = isWdbBron(this.bron)
       ? option.some(12)

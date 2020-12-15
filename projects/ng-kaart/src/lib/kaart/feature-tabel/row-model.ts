@@ -1,5 +1,6 @@
 import { array, option } from "fp-ts";
-import { Curried2, Endomorphism, FunctionN, not } from "fp-ts/lib/function";
+import { Endomorphism, FunctionN, not } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import { DateTime } from "luxon";
 import { Lens } from "monocle-ts";
 
@@ -46,17 +47,22 @@ export namespace Field {
   ): Field => {
     return {
       maybeValue: maybeValue,
-      maybeLink: maybeLink.alt(
-        maybeValue
-          .filter(isString)
-          .map((value) => value as string)
-          .filter(isUrl)
+      maybeLink: pipe(
+        maybeLink,
+        option.alt(() =>
+          pipe(
+            maybeValue,
+            option.filter(isString),
+            option.map((value) => value as string),
+            option.filter(isUrl)
+          )
+        )
       ),
     };
   };
 
   export const modify = (f: Endomorphism<ValueType>) => (field: Field): Field =>
-    Field.create(field.maybeValue.map(f), field.maybeLink);
+    Field.create(pipe(field.maybeValue, option.map(f)), field.maybeLink);
 }
 
 export namespace Row {
@@ -121,27 +127,38 @@ export namespace Row {
     path: string[],
     veldinfo: ke.VeldInfo
   ): option.Option<ValueType> =>
-    array.fold(path, option.none, (head, tail) =>
-      arrays.isEmpty(tail)
-        ? option
-            .fromNullable(properties)
-            .chain((props) =>
-              option
-                .fromNullable(props[head])
-                .chain((value) => matchingTypeValue(value, veldinfo))
-            )
-        : typeof properties[head] === "object"
-        ? nestedPropertyValue(properties[head] as Properties, tail, veldinfo)
-        : option.none
+    pipe(
+      path,
+      array.foldLeft(
+        () => option.none,
+        (head, tail) =>
+          arrays.isEmpty(tail)
+            ? pipe(
+                option.fromNullable(properties),
+                option.chain((props) =>
+                  pipe(
+                    option.fromNullable(props[head]),
+                    option.chain((value) => matchingTypeValue(value, veldinfo))
+                  )
+                )
+              )
+            : typeof properties[head] === "object"
+            ? nestedPropertyValue(
+                properties[head] as Properties,
+                tail,
+                veldinfo
+              )
+            : option.none
+      )
     );
 
   // haal alle mogelijke tokens die in de constante kunnen zitten
   // bvb "constante": "http://localhost/werf/schermen/werf/{werfid};werf=werf%2Fapi%2Fwerf%2F{werfid}" naar
   // "constante": "http://localhost/werf/schermen/werf/123123;werf=werf%2Fapi%2Fwerf%2F123123"
   const replaceTokens = (input: string, properties: Properties): string =>
-    option
-      .fromNullable(input.match(/{(.*?)}/g))
-      .map((tokens) =>
+    pipe(
+      option.fromNullable(input.match(/{(.*?)}/g)),
+      option.map((tokens) =>
         tokens.reduce(
           (result, token) =>
             // token gevonden. eigenschap wordt 'werfId', vervang ze door de waarde van het veld
@@ -151,8 +168,9 @@ export namespace Row {
             ),
           input
         )
-      )
-      .getOrElse(input);
+      ),
+      option.getOrElse(() => input)
+    );
 
   const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (
     properties,
@@ -160,39 +178,47 @@ export namespace Row {
   ) => {
     // extraheer veldwaarde, rekening houdend met 'constante' veld in veldinfo indien aanwezig, krijgt properiteit over veldwaarde zelf
     // bij tonen in tabel
-    const veldWaarde = option
-      .fromNullable(veldinfo.constante)
-      .foldL<option.Option<ValueType>>(
+    const veldWaarde = pipe(
+      option.fromNullable(veldinfo.constante),
+      option.fold(
         () =>
           nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo),
         (html) => option.some(replaceTokens(html, properties))
-      );
+      )
+    );
 
     // als er een html veld aanwezig is in veldinfo wordt dit gebruikt om te tonen in de tabel. De waarde zelf wordt als link meegegeven
     // indien dit een link is. Voor velden als type url wordt er enkel een waarde getoond indien er een url is
-    return option.fromNullable(veldinfo.html).foldL<Field>(
-      () => Field.create(veldWaarde, option.none),
-      (html) =>
-        veldinfo.type === "url"
-          ? veldWaarde
-              .filter(isString)
-              .map((value) => value as string)
-              .filter(isUrl)
-              .foldL(
-                () => Field.create(option.none, option.none),
-                (url) =>
-                  Field.create(
-                    option.some(replaceTokens(html, properties)),
-                    option.some(url)
-                  )
+    return pipe(
+      option.fromNullable(veldinfo.html),
+      option.fold(
+        () => Field.create(veldWaarde, option.none),
+        (html) =>
+          veldinfo.type === "url"
+            ? pipe(
+                veldWaarde,
+                option.filter(isString),
+                option.map((value) => value as string),
+                option.filter(isUrl),
+                option.fold(
+                  () => Field.create(option.none, option.none),
+                  (url) =>
+                    Field.create(
+                      option.some(replaceTokens(html, properties)),
+                      option.some(url)
+                    )
+                )
               )
-          : Field.create(
-              option.some(replaceTokens(html, properties)),
-              veldWaarde
-                .filter(isString)
-                .map((value) => value as string)
-                .filter(isUrl)
-            )
+            : Field.create(
+                option.some(replaceTokens(html, properties)),
+                pipe(
+                  veldWaarde,
+                  option.filter(isString),
+                  option.map((value) => value as string),
+                  option.filter(isUrl)
+                )
+              )
+      )
     );
   };
 
@@ -202,11 +228,9 @@ export namespace Row {
   ): option.Option<ValueType> =>
     nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo);
 
-  export const featureToFields: Curried2<
-    ke.VeldInfo[],
-    FeatureWithIdAndLaagnaam,
-    Fields
-  > = (veldInfos) => (feature) => {
+  export const featureToFields: (
+    veldInfos: ke.VeldInfo[]
+  ) => (FeatureWithIdAndLaagnaam) => Fields = (veldInfos) => (feature) => {
     const propertiesWithId = Feature.properties(feature.feature);
     const velden = veldInfos.reduce((veld, vi) => {
       veld[vi.naam] = extractField(propertiesWithId, vi);

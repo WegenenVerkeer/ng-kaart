@@ -1,3 +1,5 @@
+import { either } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 import { kaartLogger } from "../kaart/log";
 import { Feature } from "../util/feature";
 import * as ol from "../util/openlayers-compat";
@@ -18,28 +20,37 @@ import { definitieToStyle } from "./stijl-static";
 
 const format = new ol.format.GeoJSON();
 
-const basisOpstellingStyle: ol.style.Style = definitieToStyle(
-  "json",
-  // eslint-disable-next-line max-len
-  '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "black", "width": 1.5}, "fill": {"color": "black"}, "radius": 3}}}'
-).getOrElseL((msg) => {
-  throw new Error(`slecht formaat ${join(",")(msg)}`);
-});
+const basisOpstellingStyle: ol.style.Style = pipe(
+  definitieToStyle(
+    "json",
+    // eslint-disable-next-line max-len
+    '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "black", "width": 1.5}, "fill": {"color": "black"}, "radius": 3}}}'
+  ),
+  either.getOrElse((msg) => {
+    throw new Error(`slecht formaat ${join(",")(msg)}`);
+  })
+);
 
-const basisOpstellingGeselecteerdStyle: ol.style.Style = definitieToStyle(
-  "json",
-  // eslint-disable-next-line max-len
-  '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "#25FFFF", "width": 1.5}, "fill": {"color": "#25FFFF"}, "radius": 3}}}'
-).getOrElseL((msg) => {
-  throw new Error(`slecht formaat ${join(",")(msg)}`);
-});
+const basisOpstellingGeselecteerdStyle: ol.style.Style = pipe(
+  definitieToStyle(
+    "json",
+    // eslint-disable-next-line max-len
+    '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "#25FFFF", "width": 1.5}, "fill": {"color": "#25FFFF"}, "radius": 3}}}'
+  ),
+  either.getOrElse((msg) => {
+    throw new Error(`slecht formaat ${join(",")(msg)}`);
+  })
+);
 
-const basisVerbindingsLijnStyle: ol.style.Style = definitieToStyle(
-  "json",
-  '{"version": "awv-v0", "definition": {"stroke": {"color": "black", "width": 2}}}'
-).getOrElseL((msg) => {
-  throw new Error(`slecht formaat ${join(",")(msg)}`);
-});
+const basisVerbindingsLijnStyle: ol.style.Style = pipe(
+  definitieToStyle(
+    "json",
+    '{"version": "awv-v0", "definition": {"stroke": {"color": "black", "width": 2}}}'
+  ),
+  either.getOrElse((msg) => {
+    throw new Error(`slecht formaat ${join(",")(msg)}`);
+  })
+);
 
 basisOpstellingStyle.setZIndex(0);
 basisVerbindingsLijnStyle.setZIndex(-1);

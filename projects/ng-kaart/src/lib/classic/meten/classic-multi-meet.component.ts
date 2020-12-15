@@ -6,6 +6,8 @@ import {
   Output,
 } from "@angular/core";
 
+import { pipe } from "fp-ts/lib/pipeable";
+import { option } from "fp-ts";
 import * as clr from "../../stijl/colour";
 
 import {
@@ -76,9 +78,10 @@ export class ClassicMultiMetenComponent extends ClassicUIElementSelectorDirectiv
 
   protected opties(): MultiMetenOpties {
     return {
-      markColour: clr
-        .toKleur("naam", this._tekenKleurCode)
-        .getOrElse(clr.zwartig),
+      markColour: pipe(
+        clr.toKleur("naam", this._tekenKleurCode),
+        option.getOrElse(() => clr.zwartig)
+      ),
       useRouting: this._metRouting,
       showInfoMessage: this._toonInfoBoodschap,
       connectionSelectable: this._keuzemogelijkheidTonen,

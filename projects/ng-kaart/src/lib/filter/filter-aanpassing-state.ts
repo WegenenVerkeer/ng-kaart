@@ -1,4 +1,4 @@
-import { Function1, Refinement } from "fp-ts/lib/function";
+import { Refinement } from "fp-ts/lib/function";
 
 import * as ke from "../kaart/kaart-elementen";
 
@@ -15,10 +15,9 @@ export interface GeenFilterAanpassingBezig {
   readonly type: "GeenFilterAanpassingBezig";
 }
 
-export const FilterAanpassend: Function1<
-  ke.ToegevoegdeVectorLaag,
-  FilterAanpassingBezig
-> = (tvlg) => ({
+export const FilterAanpassend: (
+  tvlg: ke.ToegevoegdeVectorLaag
+) => FilterAanpassingBezig = (tvlg) => ({
   type: "FilterAanpassingBezig",
   laag: tvlg,
 });

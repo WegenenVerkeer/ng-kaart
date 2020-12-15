@@ -10,7 +10,7 @@ import { MatIconRegistry } from "@angular/material/icon";
 import { MatMenuTrigger } from "@angular/material/menu";
 import { DomSanitizer } from "@angular/platform-browser";
 import { array, option } from "fp-ts";
-import { Function2 } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import {
   distinctUntilChanged,
@@ -132,19 +132,21 @@ export class LaagmanipulatieComponent extends KaartChildDirective {
     );
     this.kanStijlAanpassen$ = lagenkiezer.opties$.pipe(
       map((o) =>
-        ke
-          .asToegevoegdeVectorLaag(this.laag)
-          .map((vlg) => o.stijlbareVectorlagen(vlg.titel))
-          .getOrElse(false)
+        pipe(
+          ke.asToegevoegdeVectorLaag(this.laag),
+          option.map((vlg) => o.stijlbareVectorlagen(vlg.titel)),
+          option.getOrElse(() => false)
+        )
       ),
       shareReplay(1)
     );
     this.kanFilteren$ = lagenkiezer.opties$.pipe(
       map((o) =>
-        ke
-          .asToegevoegdeNosqlVectorLaag(this.laag)
-          .map(() => o.filterbareLagen)
-          .getOrElse(false)
+        pipe(
+          ke.asToegevoegdeNosqlVectorLaag(this.laag),
+          option.map(() => o.filterbareLagen),
+          option.getOrElse(() => false)
+        )
       ),
       shareReplay(1)
     );
@@ -153,14 +155,15 @@ export class LaagmanipulatieComponent extends KaartChildDirective {
       shareReplay(1)
     );
 
-    const findLaagOpTitel: Function2<
-      string,
-      ke.ToegevoegdeLaag[],
-      option.Option<ke.ToegevoegdeVectorLaag>
-    > = (titel, lgn) =>
-      array
-        .findFirst(lgn, (lg) => lg.titel === titel)
-        .filter(ke.isToegevoegdeVectorLaag);
+    const findLaagOpTitel: (
+      titel: string,
+      lgn: ke.ToegevoegdeLaag[]
+    ) => option.Option<ke.ToegevoegdeVectorLaag> = (titel, lgn) =>
+      pipe(
+        lgn,
+        array.findFirst((lg) => lg.titel === titel),
+        option.filter(ke.isToegevoegdeVectorLaag)
+      );
 
     const voorgrondlaag$ = this.modelChanges.lagenOpGroep[
       "Voorgrond.Hoog"
@@ -178,7 +181,7 @@ export class LaagmanipulatieComponent extends KaartChildDirective {
         verwijderd: this.laag.bron.verwijderd,
         styleClass: this.laag.bron.verwijderd
           ? "verwijderd"
-          : this.laag.stijlInLagenKiezer.getOrElse(""),
+          : option.getOrElse(() => "")(this.laag.stijlInLagenKiezer),
       })),
       shareReplay(1)
     );
@@ -273,7 +276,7 @@ export class LaagmanipulatieComponent extends KaartChildDirective {
   get stijlInKiezer() {
     return this.laag.bron.verwijderd
       ? "verwijderd"
-      : this.laag.stijlInLagenKiezer.getOrElse("");
+      : option.getOrElse(() => "")(this.laag.stijlInLagenKiezer);
   }
 
   toggleGekozen() {

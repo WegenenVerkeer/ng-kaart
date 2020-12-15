@@ -1,5 +1,4 @@
 import { record } from "fp-ts";
-import { Function1 } from "fp-ts/lib/function";
 import { DateTime } from "luxon";
 
 import { formateerDateAsDefaultDate } from "../util/date-time";
@@ -9,7 +8,7 @@ import { Filter as fltr } from "./filter-model";
 // Serialiseer een filter naar een string
 
 export namespace FilterText {
-  export type Generator<A> = Function1<A, string>;
+  export type Generator<A> = (a: A) => string;
 
   const propertyText: Generator<fltr.Property> = (property) => property.ref;
   const literalText: Generator<fltr.Literal> = fltr.matchLiteral({
@@ -49,7 +48,7 @@ export namespace FilterText {
 }
 
 export namespace FilterAwv0Json {
-  type Encoder<A> = Function1<A, object>;
+  type Encoder<A> = (a: A) => object;
 
   const encodeProperty: Encoder<fltr.Property> = (property) => ({
     kind: property.kind,
@@ -141,6 +140,6 @@ export namespace FilterAwv0Json {
     ExpressionFilter: encodeExpressionFilter,
   });
 
-  export const encode: Function1<fltr.Filter, string> = (filter) =>
+  export const encode: (filter: fltr.Filter) => string = (filter) =>
     JSON.stringify({ version: "awv-v0", definition: encodeFilter(filter) });
 }

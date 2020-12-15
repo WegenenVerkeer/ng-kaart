@@ -3,7 +3,6 @@ import {
   constant,
   Endomorphism,
   flow,
-  Function1,
   identity,
   Predicate,
 } from "fp-ts/lib/function";
@@ -11,7 +10,7 @@ import * as rx from "rxjs";
 import { map } from "rxjs/operators";
 
 export type SyncUpdate<A> = Endomorphism<A>;
-export type AsyncUpdate<A> = Function1<A, rx.Observable<SyncUpdate<A>>>;
+export type AsyncUpdate<A> = (A) => rx.Observable<SyncUpdate<A>>;
 
 export interface Update<A> {
   readonly syncUpdate: SyncUpdate<A>;
@@ -75,11 +74,11 @@ export namespace Update {
 
   // Vormt een Update<A> om naar een Update<B>
   export const liftUpdate: <A, B>(
-    extract: Function1<B, option.Option<A>>,
-    lift: Function1<Endomorphism<A>, Endomorphism<B>>
+    extract: (arg: B) => option.Option<A>,
+    lift: (arg: Endomorphism<A>) => Endomorphism<B>
   ) => (ua: Update<A>) => Update<B> = <A, B>(
-    extract: Function1<B, option.Option<A>>,
-    lift: Function1<Endomorphism<A>, Endomorphism<B>>
+    extract: (arg: B) => option.Option<A>,
+    lift: (arg: Endomorphism<A>) => Endomorphism<B>
   ) => (ua: Update<A>) => ({
     syncUpdate: lift(ua.syncUpdate),
     asyncUpdate: flow(

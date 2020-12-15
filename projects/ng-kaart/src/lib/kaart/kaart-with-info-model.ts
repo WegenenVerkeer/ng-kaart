@@ -1,5 +1,4 @@
 import { either, option } from "fp-ts";
-import { Function1 } from "fp-ts/lib/function";
 
 import * as ol from "../util/openlayers-compat";
 import { Progress } from "../util/progress";
@@ -60,10 +59,10 @@ export interface InfoBoodschapKaartBevragenProgress extends InfoBoodschapBase {
 }
 
 export const foldInfoBoodschap = (boodschap: InfoBoodschap) => <A>(
-  ifAlert: Function1<InfoBoodschapAlert, A>,
-  ifIdentify: Function1<InfoBoodschapIdentify, A>,
-  ifKaartBevragen: Function1<InfoBoodschapKaartBevragenProgress, A>,
-  ifMeten: Function1<InfoBoodschapMeten, A>
+  ifAlert: (i: InfoBoodschapAlert) => A,
+  ifIdentify: (i: InfoBoodschapIdentify) => A,
+  ifKaartBevragen: (i: InfoBoodschapKaartBevragenProgress) => A,
+  ifMeten: (i: InfoBoodschapMeten) => A
 ) => {
   switch (boodschap.type) {
     case "InfoBoodschapAlert":

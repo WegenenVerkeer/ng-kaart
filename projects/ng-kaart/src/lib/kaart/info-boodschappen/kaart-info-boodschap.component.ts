@@ -7,6 +7,7 @@ import {
 } from "@angular/animations";
 import { Component, Input, NgZone, OnInit } from "@angular/core";
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 import scrollIntoView from "scroll-into-view-if-needed";
 
 import { forEach } from "../../util";
@@ -41,7 +42,11 @@ export class KaartInfoBoodschapComponent
     this.titel = bsch.titel;
     this.kind = bsch.type;
     this.icon = foldInfoBoodschap(this.boodschap)(
-      (alert) => alert.iconName.getOrElse("priority_high"), //
+      (alert) =>
+        pipe(
+          alert.iconName,
+          option.getOrElse(() => "priority_high")
+        ), //
       () => "description",
       () => "location_on",
       () => "straighten"

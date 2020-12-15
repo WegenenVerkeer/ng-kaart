@@ -8,6 +8,7 @@ import {
   OnInit,
 } from "@angular/core";
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import { Laag, Laaggroep } from "../../kaart/kaart-elementen";
 import { Legende } from "../../kaart/kaart-legende";
@@ -76,19 +77,21 @@ export abstract class ClassicLaagDirective
 
   @Input()
   set transparantie(param: number) {
-    this._transparantie = val
-      .optNum(param)
-      .chain(Transparantie.fromNumber)
-      .getOrElse(this._transparantie);
+    this._transparantie = pipe(
+      val.optNum(param),
+      option.chain(Transparantie.fromNumber),
+      option.getOrElse(() => this._transparantie)
+    );
   }
 
   @Input()
   set opacity(param: number) {
-    this._transparantie = val
-      .optNum(param)
-      .chain(Opaciteit.fromNumber)
-      .map(Opaciteit.toTransparantie)
-      .getOrElse(this._transparantie);
+    this._transparantie = pipe(
+      val.optNum(param),
+      option.chain(Opaciteit.fromNumber),
+      option.map(Opaciteit.toTransparantie),
+      option.getOrElse(() => this._transparantie)
+    );
   }
 
   constructor(injector: Injector) {
@@ -155,7 +158,7 @@ export abstract class ClassicLaagDirective
   }
 
   protected gekozenLaagGroep(): Laaggroep {
-    return this._groep.getOrElse(this.laaggroep());
+    return option.getOrElse(() => this.laaggroep())(this._groep);
   }
 
   protected dispatch(evt: prt.Command<KaartClassicMsg>) {

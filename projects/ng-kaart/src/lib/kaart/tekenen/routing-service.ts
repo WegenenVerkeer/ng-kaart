@@ -1,5 +1,6 @@
 import { HttpClient } from "@angular/common/http";
-import { Function1 } from "fp-ts/lib/function";
+import { either } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 import { Observable } from "rxjs";
 import * as rx from "rxjs";
 import { catchError, map } from "rxjs/operators";
@@ -56,10 +57,9 @@ export interface RoutingService {
   resolve(protoRoute: ProtoRoute): Observable<GeometryRoute>;
 }
 
-const protoRouteToFallbackGeometryRoute: Function1<
-  ProtoRoute,
-  GeometryRoute
-> = (protoRoute) => ({
+const protoRouteToFallbackGeometryRoute: (arg: ProtoRoute) => GeometryRoute = (
+  protoRoute
+) => ({
   ...protoRoute,
   geometry: new ol.geom.LineString([
     protoRoute.begin.location,
@@ -89,12 +89,15 @@ export class VerfijndeRoutingService implements RoutingService {
     return this.http.get<object>(url).pipe(
       map((edges) => {
         const vldtn = toWegEdges(edges) as Validation<WegEdge[]>;
-        const wegEdges = vldtn.getOrElseL((errs) => {
-          kaartLogger.error(
-            `Onverwacht antwoordformaat van routeservice: ${errs}. We gaan verder zonder dit antwoord.`
-          );
-          throw errs;
-        });
+        const wegEdges: WegEdge[] = pipe(
+          vldtn,
+          either.getOrElse((errs) => {
+            kaartLogger.error(
+              `Onverwacht antwoordformaat van routeservice: ${errs}. We gaan verder zonder dit antwoord.`
+            );
+            throw errs;
+          })
+        );
         return {
           id: protoRoute.id,
           version: protoRoute.version,

@@ -13,6 +13,7 @@ import {
   switchMap,
   timeoutWith,
 } from "rxjs/operators";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import { ZoekerPerceelService } from "../../zoeker/perceel/zoeker-perceel.service";
 import * as arrays from "../../util/arrays";
@@ -206,13 +207,7 @@ export class KaartBevragenComponent
                           ) //
                             .pipe(
                               scan(srv.merge),
-                              map(
-                                (locatieInfo) =>
-                                  new tuple.Tuple<
-                                    srv.LocatieInfo,
-                                    BevraagKaartOpties
-                                  >(locatieInfo, options)
-                              )
+                              map((locatieInfo) => [locatieInfo, options])
                             )
                         )
                       )
@@ -225,9 +220,9 @@ export class KaartBevragenComponent
         ),
         observeOnAngular(this.zone)
       )
-    ).subscribe((tuple) => {
-      const msg = tuple.fst;
-      const options = tuple.snd;
+    ).subscribe((t: [srv.LocatieInfo, BevraagKaartOpties]) => {
+      const msg = tuple.fst(t);
+      const options = tuple.snd(t);
       const adres = msg.adres;
       const wegLocaties = msg.weglocaties;
       const perceel = msg.perceel;
@@ -266,12 +261,18 @@ export class KaartBevragenComponent
         sluit: "DOOR_APPLICATIE",
         bron: option.none,
         coordinaat: coordinaat,
-        adres: progress.toOption(maybeAdres).chain(option.fromEither),
+        adres: pipe(
+          progress.toOption(maybeAdres),
+          option.chain(option.fromEither)
+        ),
         // We moeten een Progress<Either<A, B[]>> omzetten naar een B[]
         weglocaties: arrays.fromOption(
-          progress.toOption(wegLocaties).map(arrays.fromEither)
+          pipe(progress.toOption(wegLocaties), option.map(arrays.fromEither))
         ),
-        perceel: progress.toOption(maybePerceel).chain(option.fromEither),
+        perceel: pipe(
+          progress.toOption(maybePerceel),
+          option.chain(option.fromEither)
+        ),
         laagLocatieInfoOpTitel: lagenLocatieInfo,
         verbergMsgGen: () => option.none,
       })

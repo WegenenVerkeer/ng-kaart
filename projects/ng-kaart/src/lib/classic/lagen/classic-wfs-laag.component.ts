@@ -1,5 +1,6 @@
 import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as ss from "../../kaart/stijl-selector";
@@ -29,7 +30,10 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeDirective {
 
   @Input()
   set url(param: string) {
-    this._url = option.fromNullable(param).getOrElse(this._url);
+    this._url = pipe(
+      option.fromNullable(param),
+      option.getOrElse(() => this._url)
+    );
   }
 
   @Input()
@@ -39,12 +43,18 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeDirective {
 
   @Input()
   set version(param: string) {
-    this._version = option.fromNullable(param).getOrElse(this._version);
+    this._version = pipe(
+      option.fromNullable(param),
+      option.getOrElse(() => this._version)
+    );
   }
 
   @Input()
   set srsName(param: string) {
-    this._srsName = option.fromNullable(param).getOrElse(this._srsName);
+    this._srsName = pipe(
+      option.fromNullable(param),
+      option.getOrElse(() => this._srsName)
+    );
   }
 
   @Input()
@@ -59,7 +69,10 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeDirective {
 
   @Input()
   set geom(param: string) {
-    this._geom = option.fromNullable(param).getOrElse(this._geom);
+    this._geom = pipe(
+      option.fromNullable(param),
+      option.getOrElse(() => this._geom)
+    );
   }
 
   /**
@@ -69,7 +82,10 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeDirective {
    */
   @Input()
   set cors(cors: boolean) {
-    this._cors = option.fromNullable(cors).getOrElse(this._cors);
+    this._cors = pipe(
+      option.fromNullable(cors),
+      option.getOrElse(() => this._cors)
+    );
   }
 
   createLayer(): ke.VectorLaag {
@@ -80,11 +96,14 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeDirective {
         this._titel,
         this._srsName,
         this._version,
-        this._typeNames.getOrElseL(() => {
-          throw new Error(
-            "Een WFS laag moet verplicht een waarde voor typenames hebben"
-          );
-        }),
+        pipe(
+          this._typeNames,
+          option.getOrElse(() => {
+            throw new Error(
+              "Een WFS laag moet verplicht een waarde voor typenames hebben"
+            );
+          })
+        ),
         this._url,
         this._geom,
         this._cqlFilter,
@@ -93,12 +112,14 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeDirective {
       clusterDistance: this._clusterDistance,
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
-      selectieStyleSelector: option
-        .fromNullable(this.selectieStyle)
-        .chain(ss.asStyleSelector),
-      hoverStyleSelector: option
-        .fromNullable(this.hoverStyle)
-        .chain(ss.asStyleSelector),
+      selectieStyleSelector: pipe(
+        option.fromNullable(this.selectieStyle),
+        option.chain(ss.asStyleSelector)
+      ),
+      hoverStyleSelector: pipe(
+        option.fromNullable(this.hoverStyle),
+        option.chain(ss.asStyleSelector)
+      ),
       selecteerbaar: this._selecteerbaar,
       hover: this._hover,
       minZoom: this._minZoom,

@@ -10,14 +10,7 @@ import {
 import { FormControl } from "@angular/forms";
 import { MatTabChangeEvent } from "@angular/material/tabs";
 import { array, eq, option } from "fp-ts";
-import {
-  Curried2,
-  Function1,
-  Function2,
-  Predicate,
-  Refinement,
-  tuple,
-} from "fp-ts/lib/function";
+import { Predicate, Refinement, pipe, tuple } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import {
   delay,
@@ -70,22 +63,26 @@ import {
   veldenMetUniekeWaarden,
 } from "./stijl-manip";
 
-const enkeleKleurStijlEnLegende: Curried2<
-  ke.ToegevoegdeLaag,
-  EnkeleKleur,
-  [AwvV0StyleSpec, Legende]
-> = (laag) => expand2(enkeleKleurToStijlSpec, enkeleKleurToLegende(laag.titel));
+const enkeleKleurStijlEnLegende: (
+  arg1: ke.ToegevoegdeLaag
+) => (arg2: EnkeleKleur) => [AwvV0StyleSpec, Legende] = (laag) =>
+  expand2(enkeleKleurToStijlSpec, enkeleKleurToLegende(laag.titel));
 
-const opVeldWaardeStijlEnLegende: Function1<
-  KleurPerVeldwaarde,
-  [AwvV0StyleSpec, Legende]
-> = expand2(kleurPerVeldWaardeToStijlSpec, kleurPerVeldwaardeToLegende);
+const opVeldWaardeStijlEnLegende: (
+  arg: KleurPerVeldwaarde
+) => [AwvV0StyleSpec, Legende] = expand2(
+  kleurPerVeldWaardeToStijlSpec,
+  kleurPerVeldwaardeToLegende
+);
 
-const stijlCmdVoorLaag: Curried2<
-  ke.ToegevoegdeVectorLaag,
-  [AwvV0StyleSpec, Legende],
-  prt.ZetStijlSpecVoorLaagCmd<KaartInternalMsg>
-> = (laag) => ([stijl, legende]) =>
+const stijlCmdVoorLaag: (
+  laag: ke.ToegevoegdeVectorLaag
+) => (
+  arg: [AwvV0StyleSpec, Legende]
+) => prt.ZetStijlSpecVoorLaagCmd<KaartInternalMsg> = (laag) => ([
+  stijl,
+  legende,
+]) =>
   prt.ZetStijlSpecVoorLaagCmd(laag.titel, stijl, legende, kaartLogOnlyWrapper);
 
 const enum StijlMode {
@@ -118,11 +115,9 @@ interface KleurWijzigTarget extends TargetCtx {
   afgeleid: boolean;
 }
 
-const enkeleKleurToTargetCtx: Curried2<
-  ke.ToegevoegdeLaag,
-  EnkeleKleur,
-  KleurWijzigTarget[]
-> = (laag) => (uk) => [
+const enkeleKleurToTargetCtx: (
+  arg1: ke.ToegevoegdeLaag
+) => (arg2: EnkeleKleur) => KleurWijzigTarget[] = (laag) => (uk) => [
   {
     kleur: uk.kleur,
     label: laag.titel,
@@ -131,10 +126,9 @@ const enkeleKleurToTargetCtx: Curried2<
   },
 ];
 
-const kleurPerVeldwaardeToTargetCtx: Function1<
-  KleurPerVeldwaarde,
-  KleurWijzigTarget[]
-> = (kpv) =>
+const kleurPerVeldwaardeToTargetCtx: (
+  arg: KleurPerVeldwaarde
+) => KleurWijzigTarget[] = (kpv) =>
   array.snoc(
     kpv.waardekleuren.map(
       (wk) =>
@@ -250,14 +244,14 @@ export class LaagstijleditorComponent extends KaartChildDirective {
         }
       });
 
-    const findLaagOpTitel: Function2<
-      string,
-      ke.ToegevoegdeLaag[],
-      option.Option<ke.ToegevoegdeVectorLaag>
-    > = (titel, lgn) =>
-      array.findFirst(
-        lgn.filter((lg) => lg.titel === titel),
-        ke.isToegevoegdeVectorLaag
+    const findLaagOpTitel: (
+      titel: string,
+      lgn: ke.ToegevoegdeLaag[]
+    ) => option.Option<ke.ToegevoegdeVectorLaag> = (titel, lgn) =>
+      pipe(
+        lgn,
+        array.filter((lg) => lg.titel === titel),
+        array.findFirst(ke.isToegevoegdeVectorLaag)
       );
     const laag$: rx.Observable<ke.ToegevoegdeVectorLaag> = forEvery(
       aanpassing$
@@ -323,7 +317,7 @@ export class LaagstijleditorComponent extends KaartChildDirective {
     ); // Beter berekingen doen in component dan in UI
 
     // We willen dat de veld dropdown opgevuld wordt met de waarde die voorheen gekozen was (als die er is)
-    const isStillAvailable: Function1<string[], Predicate<string>> = (
+    const isStillAvailable: (arg: string[]) => Predicate<string> = (
       bechikbareVeldnamen
     ) => (veldnaam) => array.elem(eq.eqString)(veldnaam, bechikbareVeldnamen);
     this.bindToLifeCycle(
@@ -335,13 +329,13 @@ export class LaagstijleditorComponent extends KaartChildDirective {
         )
         .pipe(
           map(([maybeVeldnaam, bechikbareVeldinfos]) =>
-            maybeVeldnaam.filter(
+            option.filter(
               isStillAvailable(bechikbareVeldinfos.map((vi) => vi.naam))
-            )
+            )(maybeVeldnaam)
           )
         )
     ).subscribe((maybeVeldnaam) =>
-      this.veldControl.setValue(maybeVeldnaam.toUndefined())
+      this.veldControl.setValue(option.toUndefined(maybeVeldnaam))
     );
 
     // We willen ook weten welk veld de gebruiker aangeduid heeft
@@ -432,9 +426,9 @@ export class LaagstijleditorComponent extends KaartChildDirective {
       "wijzigKleur",
       isKleurWijzigClick
     );
-    const markeerKleur: Curried2<KleurWijzigTarget, clr.Kleur, ClickContext> = (
-      kwt
-    ) => (paletKleur) => ({
+    const markeerKleur: (
+      kwt: KleurWijzigTarget
+    ) => (paletKleur: clr.Kleur) => ClickContext = (kwt) => (paletKleur) => ({
       ...kwt,
       kleur: paletKleur,
       gekozen: clr.setoidKleurOpCode.equals(kwt.kleur, paletKleur),

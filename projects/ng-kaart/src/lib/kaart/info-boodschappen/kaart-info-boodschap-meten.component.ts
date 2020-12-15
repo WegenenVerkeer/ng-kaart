@@ -1,19 +1,20 @@
 import { Component, Input, NgZone } from "@angular/core";
-import { Function1, Function2 } from "fp-ts/lib/function";
+import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import { eqCoordinate } from "../../util";
 import { InfoBoodschapMeten } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 import { KaartInfoBoodschapBaseDirective } from "./kaart-info-boodschap-base.component";
 
-const formatNumber: Function1<number, string> = (n) =>
+const formatNumber: (arg: number) => string = (n) =>
   n.toLocaleString(["nl-BE"], {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
     useGrouping: true,
   });
 
-const formatArea: Function1<number, string> = (area) => {
+const formatArea: (arg: number) => string = (area) => {
   if (area > 1000000) {
     return `${formatNumber(area / 1000000)} km²`;
   } else if (area > 10000) {
@@ -25,7 +26,7 @@ const formatArea: Function1<number, string> = (area) => {
   }
 };
 
-const formatLength: Function1<number, string> = (length) => {
+const formatLength: (arg: number) => string = (length) => {
   if (length > 1000) {
     return `${formatNumber(length / 1000)} km`;
   } else {
@@ -35,7 +36,7 @@ const formatLength: Function1<number, string> = (length) => {
 
 // Coordinaten voor multilines bevatten duplicates voor de eind waarde van de vorige lijn en begin van de volgende. Die zijn niet
 // relevant voor de gebruiker, dus filteren we ze weg.
-const removeDuplicates: Function1<number[], number[]> = (coordinates) =>
+const removeDuplicates: (coordinates: number[]) => number[] = (coordinates) =>
   coordinates.reduce((acc, coord, idx, coords) => {
     // enkel x values als start bekijken
     if (idx % 2 === 0) {
@@ -56,7 +57,7 @@ const removeDuplicates: Function1<number[], number[]> = (coordinates) =>
     }
   }, [] as number[]);
 
-const formatCoordinates: Function2<number[], boolean, string> = (
+const formatCoordinates: (coords: number[], delimeter: boolean) => string = (
   coords,
   delimiter
 ) =>
@@ -89,16 +90,32 @@ export class KaartInfoBoodschapMetenComponent extends KaartInfoBoodschapBaseDire
   @Input()
   set boodschap(bsch: InfoBoodschapMeten) {
     super.boodschap = bsch;
-    this.length = bsch.length.map(formatLength).toUndefined();
-    this.lengthCopyInfo = bsch.length.map((l) => "" + l).toUndefined();
-    this.area = bsch.area.map(formatArea).toUndefined();
-    this.areaCopyInfo = bsch.area.map((a) => "" + a).toUndefined();
-    this.coordinates = bsch.coordinates
-      .map((c) => formatCoordinates(removeDuplicates(c), false))
-      .toUndefined();
-    this.coordinatesCopyInfo = bsch.coordinates
-      .map((c) => formatCoordinates(removeDuplicates(c), true))
-      .toUndefined();
+    this.length = pipe(
+      bsch.length,
+      option.map(formatLength),
+      option.toUndefined
+    );
+    this.lengthCopyInfo = pipe(
+      bsch.length,
+      option.map((l) => "" + l),
+      option.toUndefined
+    );
+    this.area = pipe(bsch.area, option.map(formatArea), option.toUndefined);
+    this.areaCopyInfo = pipe(
+      bsch.area,
+      option.map((a) => "" + a),
+      option.toUndefined
+    );
+    this.coordinates = pipe(
+      bsch.coordinates,
+      option.map((c) => formatCoordinates(removeDuplicates(c), false)),
+      option.toUndefined
+    );
+    this.coordinatesCopyInfo = pipe(
+      bsch.coordinates,
+      option.map((c) => formatCoordinates(removeDuplicates(c), true)),
+      option.toUndefined
+    );
   }
 
   constructor(parent: KaartComponent, zone: NgZone) {

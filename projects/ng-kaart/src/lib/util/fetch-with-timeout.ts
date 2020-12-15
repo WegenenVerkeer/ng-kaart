@@ -1,4 +1,3 @@
-import { Function1, Function2, Function3 } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { map, switchMap, timeoutWith } from "rxjs/operators";
 
@@ -30,21 +29,19 @@ const responseToReader: Pipeable<Response, ReadableStreamReader> = (obs) =>
     })
   );
 
-export const fetchObs$: Function2<
-  string,
-  RequestInit,
-  rx.Observable<string>
-> = (url, options) =>
+export const fetchObs$: (
+  url: string,
+  options: RequestInit
+) => rx.Observable<string> = (url, options) =>
   rx
     .from(fetch(url, options))
     .pipe(responseToReader, switchMap(readerToObservable), byteToText);
 
-export const fetchWithTimeoutObs$: Function3<
-  string,
-  RequestInit,
-  number,
-  rx.Observable<string>
-> = (url, options, timeout) =>
+export const fetchWithTimeoutObs$: (
+  url: string,
+  options: RequestInit,
+  timeout: number
+) => rx.Observable<string> = (url, options, timeout) =>
   rx
     .from(fetch(url, options))
     .pipe(
@@ -57,10 +54,9 @@ export const fetchWithTimeoutObs$: Function3<
       )
     );
 
-const readerToObservable: Function1<
-  ReadableStreamReader,
-  rx.Observable<Uint8Array>
-> = (reader) =>
+const readerToObservable: (
+  reader: ReadableStreamReader
+) => rx.Observable<Uint8Array> = (reader) =>
   new rx.Observable((observable) => {
     const push = () =>
       reader

@@ -1,4 +1,3 @@
-import { Curried2, Function1, Function2, Function3 } from "fp-ts/lib/function";
 import { Lens, Prism } from "monocle-ts";
 
 import { AwvV0StaticStyle } from "./stijl-static-types";
@@ -16,7 +15,9 @@ export interface RuleConfig {
   readonly rules: Rule[];
 }
 
-export const rulesLens: Lens<RuleConfig, Rule[]> = Lens.fromProp("rules");
+export const rulesLens: Lens<RuleConfig, Rule[]> = Lens.fromProp<RuleConfig>()(
+  "rules"
+);
 
 // Rules worden beschreven adhv expressies die een boolean opleveren en een beschrijving van de stijl.
 export interface Rule {
@@ -102,69 +103,71 @@ export interface Between {
 /// ///////////////////
 // Record constructors
 //
-export const RuleConfig: Function1<Rule[], RuleConfig> = (rules) => ({
+export const RuleConfig: (rules: Rule[]) => RuleConfig = (rules) => ({
   rules: rules,
 });
-export const Rule: Function2<Expression, AwvV0StaticStyle, Rule> = (
+export const Rule: (expression: Expression, style: AwvV0StaticStyle) => Rule = (
   expression,
   style
 ) => ({
   condition: expression,
   style: { definition: style },
 });
-export const Literal: Function1<ValueType, Literal> = (value) => ({
+export const Literal: (vaulue: ValueType) => Literal = (value) => ({
   kind: "Literal",
   value: value,
 });
-export const PropertyExtraction: Function2<
-  TypeType,
-  string,
-  PropertyExtraction
-> = (typeName, ref) => ({
+export const PropertyExtraction: (
+  typeName: TypeType,
+  ref: string
+) => PropertyExtraction = (typeName, ref) => ({
   kind: "Property",
   type: typeName,
   ref: ref,
 });
-export const EnvironmentExtraction: Function2<
-  TypeType,
-  string,
-  EnvironmentExtraction
-> = (typeName, ref) => ({
+export const EnvironmentExtraction: (
+  typeName: TypeType,
+  ref: string
+) => EnvironmentExtraction = (typeName, ref) => ({
   kind: "Environment",
   type: typeName,
   ref: ref,
 });
-export const Exists: Curried2<ExistsOperator, string, Exists> = (kind) => (
-  ref
-) => ({
+export const Exists: (kind: ExistsOperator) => (ref: string) => Exists = (
+  kind
+) => (ref) => ({
   kind: kind,
   ref: ref,
 });
-export const Comparison: Function1<
-  ComparisonOperator,
-  Function2<Expression, Expression, Comparison>
-> = (kind) => (left, right) => ({
+export const Comparison: (
+  kind: ComparisonOperator
+) => (left: Expression, right: Expression) => Comparison = (kind) => (
+  left,
+  right
+) => ({
   kind: kind,
   left: left,
   right: right,
 });
-export const Combination: Function1<
-  CombinationOperator,
-  Function2<Expression, Expression, Combination>
-> = (kind) => (left, right) => ({
+export const Combination: (
+  kind: CombinationOperator
+) => (left: Expression, right: Expression) => Combination = (kind) => (
+  left,
+  right
+) => ({
   kind: kind,
   left: left,
   right: right,
 });
-export const Negation: Function1<Expression, Negation> = (expression) => ({
+export const Negation: (expression: Expression) => Negation = (expression) => ({
   kind: "!",
   expression: expression,
 });
-export const Between: Function3<Expression, Expression, Expression, Between> = (
-  value,
-  lower,
-  upper
-) => ({
+export const Between: (
+  value: Expression,
+  lower: Expression,
+  upper: Expression
+) => Between = (value, lower, upper) => ({
   kind: "<=>",
   value: value,
   lower: lower,

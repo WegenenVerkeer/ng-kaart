@@ -1,4 +1,5 @@
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import { kaartLogger } from "../kaart/log";
 import * as ol from "../util/openlayers-compat";
@@ -41,16 +42,20 @@ export function offsetStyleFunction(
       (!(feature.getGeometry() instanceof ol.geom.LineString) &&
         !(feature.getGeometry() instanceof ol.geom.MultiLineString)) ||
       !style ||
-      (!rijrichtingIsDigitalisatieZin && getValue(feature, ident8Veld).isNone())
+      (!rijrichtingIsDigitalisatieZin &&
+        option.isNone(getValue(feature, ident8Veld)))
     ) {
       return style;
     }
 
     const direction: Direction = rijrichtingIsDigitalisatieZin
       ? Up
-      : getValue(feature, ident8Veld).foldL(
-          () => Up,
-          (ident8) => getDirection(ident8)
+      : pipe(
+          getValue(feature, ident8Veld),
+          option.fold(
+            () => Up,
+            (ident8) => getDirection(ident8)
+          )
         );
 
     function setGeometryOnStyle(s: ol.style.Style) {
@@ -58,7 +63,10 @@ export function offsetStyleFunction(
         direction,
         // Niet alle lijntypes hebben expliciet een offsetzijde. Indien geen zijderijbaan waarde gevonden,
         // veronderstellen we rechter zijde
-        getValue(feature, zijderijbaanVeld).getOrElse("r"),
+        pipe(
+          getValue(feature, zijderijbaanVeld),
+          option.getOrElse(() => "r")
+        ),
         positie * (s.getStroke().getWidth() || 1),
         resolution
       );
@@ -80,9 +88,10 @@ export function offsetStyleFunction(
 }
 
 function getValue(feature: ol.Feature, field: string): option.Option<string> {
-  return option
-    .fromNullable(feature.get("properties"))
-    .chain((properties) => option.fromNullable(properties[field]));
+  return pipe(
+    option.fromNullable(feature.get("properties")),
+    option.chain((properties) => option.fromNullable(properties[field]))
+  );
 }
 
 /**

@@ -1,5 +1,6 @@
 import { Component, Input } from "@angular/core";
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/function";
 import { KaartChildDirective } from "../kaart-child.directive";
 import { copyToClipboard } from "../../util/clipboard";
 import { VeldType } from "../kaart-elementen";
@@ -33,24 +34,31 @@ export class KaartInfoBoodschapVeldComponent extends KaartChildDirective {
   parseFormat?: string;
 
   copyToClipboard() {
-    option.fromNullable(this.kopieerWaarde).foldL(
-      () => copyToClipboard(this.waarde),
-      (waarde) => copyToClipboard(waarde)
+    pipe(
+      option.fromNullable(this.kopieerWaarde),
+      option.fold(
+        () => copyToClipboard(this.waarde),
+        (waarde) => copyToClipboard(waarde)
+      )
     );
   }
 
   dateWaarde(): string {
-    return this.maybeDateWaarde().getOrElse("");
+    return pipe(
+      this.maybeDateWaarde(),
+      option.getOrElse(() => "")
+    );
   }
 
   validDateWaarde(): boolean {
-    return this.maybeDateWaarde().isSome();
+    return pipe(this.maybeDateWaarde(), option.isSome);
   }
 
   private maybeDateWaarde(): option.Option<string> {
-    return option
-      .fromNullable(this.waarde)
-      .chain(parseDate(option.fromNullable(this.parseFormat)))
-      .map(formateerDate(option.fromNullable(this.displayFormat)));
+    return pipe(
+      option.fromNullable(this.waarde),
+      option.chain(parseDate(option.fromNullable(this.parseFormat))),
+      option.map(formateerDate(option.fromNullable(this.displayFormat)))
+    );
   }
 }

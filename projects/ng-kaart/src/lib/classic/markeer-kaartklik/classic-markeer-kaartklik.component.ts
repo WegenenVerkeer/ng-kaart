@@ -1,4 +1,6 @@
 import { Component, Injector, Input } from "@angular/core";
+import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import {
   defaultMarkerStyle as defaultClickMarkerStyle,
@@ -39,11 +41,12 @@ export class ClassicMarkeerKaartklikComponent extends ClassicUIElementSelectorDi
   /** Zet de stijl van de markeerfeature als een Stijlspec */
   @Input()
   set markeerStijlSpec(stijlSpec: ss.AwvV0StyleSpec) {
-    this._markerStyle = val
-      .optStyleSpec(stijlSpec)
-      .map((stijlSpec) => ss.validateAwvV0StyleSpec(stijlSpec))
-      .chain((validation) => toOption(validation))
-      .getOrElse(this._markerStyle);
+    this._markerStyle = pipe(
+      val.optStyleSpec(stijlSpec),
+      option.map((stijlSpec) => ss.validateAwvV0StyleSpec(stijlSpec)),
+      option.chain((validation) => toOption(validation)),
+      option.getOrElse(() => this._markerStyle)
+    );
   }
 
   /** Zet de stijl van de markeerfeature direct als een openlayer stijl. Niet bruikbaar op een web element*/

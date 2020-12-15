@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
-import { array, option, strmap, tuple } from "fp-ts";
-import { concat, Function1, Function2 } from "fp-ts/lib/function";
+import { array, option, record } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import { map, mergeMap } from "rxjs/operators";
 
@@ -30,14 +30,14 @@ import {
   WaypointOperation,
 } from "./waypoint.msg";
 
-export type Versions = strmap.StrMap<number>;
+export type Versions = Record<string, number>;
 
 function updateVersions(
   versions: Versions,
   protoRoutes: Array<ProtoRoute>
 ): Versions {
   return protoRoutes.reduce(
-    (acc, pr) => strmap.insert(pr.id, pr.version, acc),
+    (acc, pr) => record.insertAt(pr.id, pr.version)(acc),
     versions
   );
 }
@@ -54,7 +54,7 @@ export interface RouteChanges {
 
 export const emptyRouteState: RouteState = {
   waypoints: [],
-  versions: new strmap.StrMap<number>({}),
+  versions: {},
 };
 
 export const emptyRouteChanges: RouteChanges = {
@@ -65,7 +65,7 @@ export const emptyRouteChanges: RouteChanges = {
 export function removeWaypoint(
   routeState: RouteState,
   RemoveWaypoint: RemoveWaypoint
-): tuple.Tuple<RouteState, RouteChanges> {
+): [RouteState, RouteChanges] {
   const id = RemoveWaypoint.waypoint.id;
 
   const maybePreviousWaypoint = arrays.previousElement(routeState.waypoints)(
@@ -75,111 +75,119 @@ export function removeWaypoint(
     (wp) => wp.id === id
   );
 
-  const maybeBeginRoute = maybePreviousWaypoint.map((begin) =>
+  const maybeBeginRoute = option.map((begin: Waypoint) =>
     createRoute(begin, RemoveWaypoint.waypoint, routeState.versions)
-  );
-  const maybeEndRoute = maybeNextWaypoint.map((end) =>
+  )(maybePreviousWaypoint);
+  const maybeEndRoute = option.map((end: Waypoint) =>
     createRoute(RemoveWaypoint.waypoint, end, routeState.versions)
-  );
+  )(maybeNextWaypoint);
 
-  const routesRemoved = concat(
-    toArray(maybeEndRoute),
-    toArray(maybeBeginRoute)
-  );
-  const routeAdded = maybePreviousWaypoint.chain((pwp) =>
-    maybeNextWaypoint.map((nwp) => createRoute(pwp, nwp, routeState.versions))
-  );
+  const routesRemoved = toArray(maybeEndRoute).concat(toArray(maybeBeginRoute));
+  const routeAdded = option.chain((pwp: Waypoint) =>
+    option.map((nwp: Waypoint) => createRoute(pwp, nwp, routeState.versions))(
+      maybeNextWaypoint
+    )
+  )(maybePreviousWaypoint);
   const routesAdded = toArray(routeAdded);
 
-  return new tuple.Tuple(
+  return [
     {
-      waypoints: arrays
-        .deleteFirst(routeState.waypoints)(
+      waypoints: pipe(
+        arrays.deleteFirst(routeState.waypoints)(
           (wp) => wp.id === RemoveWaypoint.waypoint.id
-        )
-        .getOrElse(routeState.waypoints),
+        ),
+        option.getOrElse(() => routeState.waypoints)
+      ),
       versions: updateVersions(
         routeState.versions,
-        concat(routesRemoved, routesAdded)
+        routesRemoved.concat(routesAdded)
       ),
     },
     {
       routesAdded: routesAdded,
       routesRemoved: routesRemoved,
-    }
-  );
+    },
+  ];
 }
 
 export function addWaypoint(
   routeState: RouteState,
   addWaypoint: AddWaypoint
-): tuple.Tuple<RouteState, RouteChanges> {
-  return addWaypoint.previous.foldL(
+): [RouteState, RouteChanges] {
+  return option.fold(
     () => {
-      const routesAdded = toArray(
-        array
-          .head(routeState.waypoints)
-          .map((e) => createRoute(addWaypoint.waypoint, e, routeState.versions))
+      const routesAdded: ProtoRoute[] = toArray(
+        pipe(
+          array.head(routeState.waypoints),
+          option.map((e) =>
+            createRoute(addWaypoint.waypoint, e, routeState.versions)
+          )
+        )
       );
 
-      return new tuple.Tuple(
-        {
-          waypoints: [addWaypoint.waypoint].concat(routeState.waypoints),
-          versions: updateVersions(routeState.versions, routesAdded),
-        },
-        {
-          routesAdded: routesAdded,
-          routesRemoved: [],
-        }
-      );
+      const newRouteState: RouteState = {
+        waypoints: [addWaypoint.waypoint].concat(routeState.waypoints),
+        versions: updateVersions(routeState.versions, routesAdded),
+      };
+
+      const routeChanges: RouteChanges = {
+        routesAdded: routesAdded,
+        routesRemoved: [],
+      };
+
+      const res: [RouteState, RouteChanges] = [newRouteState, routeChanges];
+      return res;
     },
-    (previous) => {
+    (previous: Waypoint) => {
       const maybeOldNextWaypoint = arrays.nextElement(routeState.waypoints)(
-        (wp) => wp.id === previous.id
+        (wp: Waypoint) => wp.id === previous.id
       );
-      const maybeRouteToRemove = maybeOldNextWaypoint.map((end) =>
+      const maybeRouteToRemove = option.map((end: Waypoint) =>
         createRoute(previous, end, routeState.versions)
-      );
+      )(maybeOldNextWaypoint);
 
       const routeAdded = createRoute(
         previous,
         addWaypoint.waypoint,
         routeState.versions
       );
-      const routesAdded = toArray(
-        maybeOldNextWaypoint.map((end) =>
+      const routesAdded: ProtoRoute[] = toArray(
+        option.map((end: Waypoint) =>
           createRoute(addWaypoint.waypoint, end, routeState.versions)
-        )
+        )(maybeOldNextWaypoint)
       );
       routesAdded.push(routeAdded);
 
-      const routesRemoved = toArray(maybeRouteToRemove);
+      const routesRemoved: ProtoRoute[] = toArray(maybeRouteToRemove);
 
-      return new tuple.Tuple(
-        {
-          waypoints: arrays
-            .insertAfter(routeState.waypoints)((wp) => wp.id === previous.id)(
-              addWaypoint.waypoint
-            )
-            .getOrElse(routeState.waypoints),
-          versions: updateVersions(
-            routeState.versions,
-            concat(routesRemoved, routesAdded)
-          ),
-        },
-        {
-          routesAdded: routesAdded,
-          routesRemoved: toArray(maybeRouteToRemove),
-        }
-      );
+      const newRouteState: RouteState = {
+        waypoints: pipe(
+          arrays.insertAfter(routeState.waypoints)(
+            (wp) => wp.id === previous.id
+          )(addWaypoint.waypoint),
+          option.getOrElse(() => routeState.waypoints)
+        ),
+        versions: updateVersions(
+          routeState.versions,
+          routesRemoved.concat(routesAdded)
+        ),
+      };
+
+      const routeChanges: RouteChanges = {
+        routesAdded: routesAdded,
+        routesRemoved: toArray(maybeRouteToRemove),
+      };
+
+      const res: [RouteState, RouteChanges] = [newRouteState, routeChanges];
+      return res;
     }
-  );
+  )(addWaypoint.previous);
 }
 
 function nextRouteStateChanges(
   previousRouteState: RouteState,
   waypointOps: WaypointOperation
-): tuple.Tuple<RouteState, RouteChanges> {
+): [RouteState, RouteChanges] {
   switch (waypointOps.type) {
     case "RemoveWaypoint":
       return removeWaypoint(previousRouteState, waypointOps);
@@ -215,19 +223,19 @@ export function customRoutes(
   );
 }
 
-const ifDifferentLocation: Function2<
-  ol.Coordinate,
-  Waypoint,
-  option.Option<Waypoint>
-> = (l, w) =>
+const ifDifferentLocation: (
+  l: ol.Coordinate,
+  w: Waypoint
+) => option.Option<Waypoint> = (l, w) =>
   Coordinates.equalTo(w.location)(l)
     ? option.none
     : option.some(Waypoint(w.id, l));
 
-const waypointOpsToRouteOperation: Function1<
-  RoutingService,
-  Pipeable<WaypointOperation, RouteEvent>
-> = (routingService) => (waypointOpss) => {
+const waypointOpsToRouteOperation: (
+  arg: RoutingService
+) => Pipeable<WaypointOperation, RouteEvent> = (routingService) => (
+  waypointOpss
+) => {
   const routeChangesObs: rx.Observable<RouteChanges> = scanState(
     waypointOpss,
     nextRouteStateChanges,
@@ -258,33 +266,29 @@ const waypointOpsToRouteOperation: Function1<
   );
 
   return catOptions(
-    scanState(
-      routeEventObs,
-      filterRouteEvent,
-      new strmap.StrMap<number>({}),
-      option.none
-    )
+    scanState(routeEventObs, filterRouteEvent, {}, option.none)
   );
 };
 
 function filterRouteEvent(
   versions: Versions,
   routeEvent: RouteEvent
-): tuple.Tuple<Versions, option.Option<RouteEvent>> {
-  return strmap
-    .lookup(routeEvent.id, versions)
-    .fold(
-      new tuple.Tuple(
-        strmap.insert(routeEvent.id, routeEvent.version, versions),
-        option.some(routeEvent)
-      ),
+): [Versions, option.Option<RouteEvent>] {
+  return pipe(
+    record.lookup(routeEvent.id, versions),
+    option.fold(
+      () => [
+        record.insertAt(routeEvent.id, routeEvent.version)(versions),
+        option.some(routeEvent),
+      ],
       (previousVersion) => {
         return previousVersion > routeEvent.version
-          ? new tuple.Tuple(versions, option.none)
-          : new tuple.Tuple(
-              strmap.insert(routeEvent.id, routeEvent.version, versions),
-              option.some(routeEvent)
-            );
+          ? [versions, option.none]
+          : [
+              record.insertAt(routeEvent.id, routeEvent.version)(versions),
+              option.some(routeEvent),
+            ];
       }
-    );
+    )
+  );
 }

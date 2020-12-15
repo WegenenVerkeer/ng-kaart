@@ -6,6 +6,7 @@ import {
   SimpleChanges,
 } from "@angular/core";
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 
 import { forChangedValue } from "../../kaart/kaart-base.directive";
@@ -46,7 +47,7 @@ export abstract class ClassicVectorLaagLikeDirective
   set refreshTrigger(obs: rx.Observable<void>) {
     this.refreshTriggerSub.unsubscribe();
     this.refreshTriggerSub = this.bindToLifeCycle(obs).subscribe(() => {
-      forEach(this.laag.chain(ke.asVectorLaag), (laag) => {
+      forEach(pipe(this.laag, option.chain(ke.asVectorLaag)), (laag) => {
         forEach(ke.asNosqlSource(laag.source), (source) =>
           source.clearPrevExtent()
         );
@@ -82,37 +83,42 @@ export abstract class ClassicVectorLaagLikeDirective
 
   @Input()
   set clusterMinSize(param: number) {
-    this._clusterMinSize = option
-      .fromNullable(param)
-      .getOrElse(this._clusterMinSize);
+    this._clusterMinSize = pipe(
+      option.fromNullable(param),
+      option.getOrElse(() => this._clusterMinSize)
+    );
   }
 
   @Input()
   set clusterSizeFactor(param: number) {
-    this._clusterSizeFactor = option
-      .fromNullable(param)
-      .getOrElse(this._clusterSizeFactor);
+    this._clusterSizeFactor = pipe(
+      option.fromNullable(param),
+      option.getOrElse(() => this._clusterSizeFactor)
+    );
   }
 
   @Input()
   set clusterTextColor(param: string) {
-    this._clusterTextColor = option
-      .fromNullable(param)
-      .getOrElse(this._clusterTextColor);
+    this._clusterTextColor = pipe(
+      option.fromNullable(param),
+      option.getOrElse(() => this._clusterTextColor)
+    );
   }
 
   @Input()
   set clusterCircleColor(param: string) {
-    this._clusterCircleColor = option
-      .fromNullable(param)
-      .getOrElse(this._clusterCircleColor);
+    this._clusterCircleColor = pipe(
+      option.fromNullable(param),
+      option.getOrElse(() => this._clusterCircleColor)
+    );
   }
 
   @Input()
   set clusterCircleStrokeColor(param: string) {
-    this._clusterCircleStrokeColor = option
-      .fromNullable(param)
-      .getOrElse(this._clusterCircleStrokeColor);
+    this._clusterCircleStrokeColor = pipe(
+      option.fromNullable(param),
+      option.getOrElse(() => this._clusterCircleStrokeColor)
+    );
   }
 
   @Input()
@@ -148,25 +154,39 @@ export abstract class ClassicVectorLaagLikeDirective
   }
 
   protected getMaybeStyleSelector(): option.Option<ss.StyleSelector> {
-    return option
-      .fromNullable(this.clusterStyleFunction)
-      .map(ss.DynamicStyle)
-      .orElse(() => {
-        const maybeUnclusteredStyleSelector = this._stijlSpec
-          .chain((spec) => fromValidation(ss.validateAwvV0StyleSpec(spec)))
-          .orElse(() => option.fromNullable(this.style))
-          .orElse(() => option.fromNullable(this.styleFunction))
-          .chain(ss.asStyleSelector);
+    return pipe(
+      option.fromNullable(this.clusterStyleFunction),
+      option.map(ss.DynamicStyle),
+      option.alt(() => {
+        const maybeUnclusteredStyleSelector = pipe(
+          this._stijlSpec,
+          option.chain<ss.AwvV0StaticStyleSpec, ss.Stylish>((spec) =>
+            fromValidation(ss.validateAwvV0StyleSpec(spec))
+          ),
+          option.alt(() => option.fromNullable(this.style)),
+          option.alt<ss.Stylish>(() =>
+            pipe(this.styleFunction, option.fromNullable)
+          ),
+          option.chain(ss.asStyleSelector)
+        );
 
-        const maybeClusterStyleSelector = this._clusterDistance.chain((_) =>
-          maybeUnclusteredStyleSelector.map((unclusteredStylish) =>
-            ss.DynamicStyle(this.clusterStyle(unclusteredStylish))
+        const maybeClusterStyleSelector = pipe(
+          this._clusterDistance,
+          option.chain((_) =>
+            pipe(
+              maybeUnclusteredStyleSelector,
+              option.map((unclusteredStylish) =>
+                ss.DynamicStyle(this.clusterStyle(unclusteredStylish))
+              )
+            )
           )
         );
-        return maybeClusterStyleSelector.orElse(
-          () => maybeUnclusteredStyleSelector
+        return pipe(
+          maybeClusterStyleSelector,
+          option.alt(() => maybeUnclusteredStyleSelector)
         );
-      });
+      })
+    );
   }
 
   /** @ignore */
@@ -201,11 +221,11 @@ export abstract class ClassicVectorLaagLikeDirective
 
   clusterStyle(defaultStyleSelector: ss.StyleSelector): ol.style.StyleFunction {
     return (feature, resolution) => {
-      return option
-        .fromNullable(feature.get("features"))
-        .filter(arrays.isArray)
-        .filter(arrays.isNonEmpty)
-        .map((features) => {
+      return pipe(
+        option.fromNullable(feature.get("features")),
+        option.filter(arrays.isArray),
+        option.filter(arrays.isNonEmpty),
+        option.map((features: ol.FeatureLike[]) => {
           const size = features.length;
 
           if (size > 1) {
@@ -237,12 +257,13 @@ export abstract class ClassicVectorLaagLikeDirective
               (s) => s.styles
             )(defaultStyleSelector);
           }
-        })
-        .getOrElseL(() => {
+        }),
+        option.getOrElse(() => {
           throw new Error(
             "Voor cluster stijl hebben we geclusterde features nodig"
           );
-        });
+        })
+      );
     };
   }
 
@@ -254,7 +275,10 @@ export abstract class ClassicVectorLaagLikeDirective
         prt.ZetStijlVoorLaagCmd(
           this._titel,
           styleselector,
-          option.fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
+          pipe(
+            option.fromNullable(this.selectieStyle),
+            option.chain(ss.asStyleSelector)
+          ),
           logOnlyWrapper
         )
       );

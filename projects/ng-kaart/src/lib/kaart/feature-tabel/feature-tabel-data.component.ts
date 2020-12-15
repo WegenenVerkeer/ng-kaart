@@ -7,7 +7,7 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { array, option } from "fp-ts";
-import { flow, Function1, Refinement } from "fp-ts/lib/function";
+import { constant, flow, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import {
@@ -60,7 +60,7 @@ interface ColumnHeaders {
 }
 
 namespace ColumnHeaders {
-  const create: Function1<FieldSelection[], ColumnHeaders> = (
+  const create: (arg: FieldSelection[]) => ColumnHeaders = (
     fieldSelections
   ) => ({
     headers: fieldSelections,
@@ -74,10 +74,12 @@ namespace ColumnHeaders {
     ),
   });
 
-  export const createFromFieldSelection: Function1<
-    FieldSelection[],
-    ColumnHeaders
-  > = flow(array.filter(FieldSelection.selectedLens.get), create);
+  export const createFromFieldSelection: (
+    arg: FieldSelection[]
+  ) => ColumnHeaders = flow(
+    array.filter(FieldSelection.selectedLens.get),
+    create
+  );
 }
 
 const neededZoom: PartialFunction2<ol.Map, ol.Extent, number> = (map, extent) =>
@@ -132,6 +134,10 @@ export class FeatureTabelDataComponent extends KaartChildDirective {
   public readonly rows$: rx.Observable<Row[]>;
   // Voor child components
   public readonly laag$: rx.Observable<LaagModel>;
+
+  // fp-ts functions in html
+  option = option;
+  constant = constant;
 
   @Input()
   laagTitel: string;
@@ -203,9 +209,10 @@ export class FeatureTabelDataComponent extends KaartChildDirective {
             const showOnlySelectedFeatures =
               LaagModel.selectionViewModeGetter.get(laagModel) ===
               "SelectedOnly";
-            const maybeRows = LaagModel.pageGetter
-              .get(laagModel)
-              .map(Page.rowsLens.get);
+            const maybeRows = pipe(
+              LaagModel.pageGetter.get(laagModel),
+              option.map(Page.rowsLens.get)
+            );
             const rows = option.toUndefined(maybeRows); // -> handiger in template
             const allRowsSelected =
               showOnlySelectedFeatures ||
@@ -249,7 +256,11 @@ export class FeatureTabelDataComponent extends KaartChildDirective {
 
     this.rows$ = this.laag$.pipe(
       map((laag) =>
-        LaagModel.pageGetter.get(laag).map(Page.rowsLens.get).getOrElse([])
+        pipe(
+          LaagModel.pageGetter.get(laag),
+          option.map(Page.rowsLens.get),
+          option.getOrElse(() => [])
+        )
       )
     );
 
@@ -455,9 +466,8 @@ export class FeatureTabelDataComponent extends KaartChildDirective {
         )
       );
 
-    const sortings: Function1<FieldSelection[], Veldsortering[]> = (
-      selections
-    ) => pipe(selections, array.filterMap(fieldSelectionToVeldsortering));
+    const sortings: (arg: FieldSelection[]) => Veldsortering[] = (selections) =>
+      pipe(selections, array.filterMap(fieldSelectionToVeldsortering));
 
     // Dit laat het globaal model ook weten dat er wijzingen zijn aan de FieldSelection. Op die manier kan Geoloket daar
     // naar luisteren en die informatie in zijn view opslaan en desgewenst opslaan. Er is een probleem wanneer de

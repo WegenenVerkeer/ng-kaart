@@ -1,10 +1,4 @@
-import {
-  Curried2,
-  Function1,
-  Lazy,
-  Predicate,
-  Refinement,
-} from "fp-ts/lib/function";
+import { Lazy, Predicate, Refinement } from "fp-ts/lib/function";
 
 import * as matchers from "../util/matchers";
 
@@ -34,7 +28,7 @@ export interface TotaalOphalenMislukt {
   readonly foutmelding: string;
 }
 
-export const teVeelData: Function1<number, FilterTotaal> = (
+export const teVeelData: (collectionTotaal: number) => FilterTotaal = (
   collectionTotaal
 ) => ({
   kind: "TeVeelData",
@@ -45,17 +39,17 @@ export const totaalOpTeHalen: Lazy<FilterTotaal> = () => ({
   kind: "TotaalOpTeHalen",
 });
 
-export const totaalOpgehaald: Curried2<number, number, FilterTotaal> = (
-  collectionTotaal
-) => (totaal) => ({
+export const totaalOpgehaald: (
+  collectionTotaal: number
+) => (totaal: number) => FilterTotaal = (collectionTotaal) => (totaal) => ({
   kind: "TotaalOpgehaald",
   collectionTotaal: collectionTotaal,
   totaal: totaal,
 });
 
-export const totaalOphalenMislukt: Function1<string, TotaalOphalenMislukt> = (
-  foutmelding
-) => ({
+export const totaalOphalenMislukt: (
+  foutmelding: string
+) => TotaalOphalenMislukt = (foutmelding) => ({
   kind: "TotaalOphalenMislukt",
   foutmelding: foutmelding,
 });
@@ -80,4 +74,4 @@ export const isTotaalMislukt: Refinement<FilterTotaal, TotaalOphalenMislukt> = (
 
 export const match: <A>(
   _: matchers.FullKindMatcher<FilterTotaal, A>
-) => Function1<FilterTotaal, A> = matchers.matchKind;
+) => (ft: FilterTotaal) => A = matchers.matchKind;

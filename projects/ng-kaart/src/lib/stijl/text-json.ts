@@ -1,5 +1,3 @@
-import { Function2 } from "fp-ts/lib/function";
-
 import { Validator } from "../util/validation";
 
 import * as oi from "./json-object-interpreting";
@@ -19,11 +17,10 @@ export const textToJson: Validator<string, object> = (text) => {
   }
 };
 
-export const properlyJsonDeclaredText: Function2<
-  string,
-  string,
-  oi.Validation<string>
-> = (encoding, text) =>
+export const properlyJsonDeclaredText: (
+  encoding: string,
+  text: string
+) => oi.Validation<string> = (encoding, text) =>
   encoding === "json"
     ? oi.ok(text)
     : oi.fail(`Encoding '${encoding}' wordt niet ondersteund`);

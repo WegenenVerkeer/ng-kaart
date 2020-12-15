@@ -88,7 +88,7 @@ export class KaartLoadingComponent extends KaartChildDirective {
       dlEvt.type === "LoadStart" || dlEvt.type === "PartReceived";
     // Als tenminste 1 (= niet 0) van de events een busy event is, dan wordt er nog op data gewacht
     const waitingForMoreData: Predicate<DataLoadEvent[]> = not((dlEvts) =>
-      array.isEmpty(array.filter(dlEvts, isBusyEvent))
+      array.isEmpty(array.filter(isBusyEvent)(dlEvts))
     );
 
     const dataloadBusy$: rx.Observable<boolean> = toegevoegdeLagenEvts$$.pipe(

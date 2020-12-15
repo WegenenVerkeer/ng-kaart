@@ -1,5 +1,5 @@
 import { array, option } from "fp-ts";
-import { BinaryOperation, Function1 } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import { PartialFunction1 } from "../util/function";
 import * as ol from "../util/openlayers-compat";
@@ -15,7 +15,7 @@ export namespace Extent {
    * @param extent1 De rechthoek die afgesneden wordt.
    * @param extent2 De rechthoek waarmee gesneden wordt.
    */
-  export const difference: BinaryOperation<Extent, Extent[]> = (
+  export const difference: (extent1: Extent, extent2: Extent) => Extent[] = (
     extent1,
     extent2
   ) => {
@@ -58,20 +58,22 @@ export namespace Extent {
         isValidLeftRight([h2, top1, h3, btm1]),
         isValidLeftRight([h3, top1, h4, btm1]),
       ];
-      const [middleTop, middleBottom] = middle
-        .map(([lftm, topm, rghtm, botmm]) => {
+      const [middleTop, middleBottom] = pipe(
+        middle,
+        option.map(([lftm, topm, rghtm, botmm]) => {
           return top2 >= botmm || btm2 <= topm // Is er enige verticale overlap? We zijn al zeker van horizontale.
             ? [option.none, option.none]
             : [
                 isValidTopBottom([lftm, topm, rghtm, top2]),
                 isValidTopBottom([lftm, btm2, rghtm, botmm]),
               ];
-        })
-        .getOrElse([option.none, option.none]);
-      return array.catOptions([left, right, middleTop, middleBottom]);
+        }),
+        option.getOrElse(() => [option.none, option.none])
+      );
+      return array.compact([left, right, middleTop, middleBottom]);
     }
   };
 
-  export const toQueryValue: Function1<Extent, string> = (extent) =>
+  export const toQueryValue: (arg: Extent) => string = (extent) =>
     extent.join(",");
 }

@@ -1,5 +1,6 @@
 import { array, option } from "fp-ts";
 import { Predicate } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import { fromTraversable, Lens, Optional, Prism, Traversal } from "monocle-ts";
 
 /**
@@ -53,12 +54,15 @@ export const numberMapLens: <V>(
     (map) => option.fromNullable(map[k]),
     (mv) => (map) => {
       const cloned = { ...map }; // een ondiepe clone is goed genoeg als V immutable is
-      mv.foldL(
-        () => delete cloned[k],
-        (v) => {
-          cloned[k] = v;
-          return true;
-        }
+      pipe(
+        mv,
+        option.fold(
+          () => delete cloned[k],
+          (v) => {
+            cloned[k] = v;
+            return true;
+          }
+        )
       );
       return cloned;
     }
@@ -92,12 +96,15 @@ export const stringMapLens: <V>(
     (map) => option.fromNullable(map[k]),
     (mv) => (map) => {
       const cloned = { ...map }; // een ondiepe clone is goed genoeg als V immutable is
-      mv.foldL(
-        () => delete cloned[k],
-        (v) => {
-          cloned[k] = v;
-          return true;
-        }
+      pipe(
+        mv,
+        option.fold(
+          () => delete cloned[k],
+          (v) => {
+            cloned[k] = v;
+            return true;
+          }
+        )
       );
       return cloned;
     }

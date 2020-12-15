@@ -1,3 +1,5 @@
+import { either } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "../util/openlayers-compat";
 
 import { definitieToStyleFunction } from "./stijl-function";
@@ -39,9 +41,13 @@ describe("de stijl functie", () => {
           },
         })
       );
-      expect(result.isSuccess()).toBe(true);
+      expect(either.isRight(result)).toBe(true);
       expect(
-        result.map((f) => f(feature, resolution)).getOrElse(undefined)
+        pipe(
+          result,
+          either.map((f) => f(feature, resolution)),
+          either.getOrElse(() => undefined)
+        )
       ).toEqual(new ol.style.Style());
     });
     it("moet een stijl selecteren adhv een regel zonder conditie", () => {
@@ -60,9 +66,13 @@ describe("de stijl functie", () => {
           },
         })
       );
-      expect(result.isSuccess()).toBe(true);
+      expect(either.isRight(result)).toBe(true);
       expect(
-        result.map((f) => f(feature, resolution)).getOrElse(undefined)
+        pipe(
+          result,
+          either.map((f) => f(feature, resolution)),
+          either.getOrElse(() => undefined)
+        )
       ).toEqual(new ol.style.Style());
     });
 
@@ -109,9 +119,13 @@ describe("de stijl functie", () => {
           },
         })
       );
-      expect(result.isSuccess()).toBe(true);
+      expect(either.isRight(result)).toBe(true);
       expect(
-        result.map((f) => f(feature, resolution)).getOrElse(undefined)
+        pipe(
+          result,
+          either.map((f) => f(feature, resolution)),
+          either.getOrElse(() => undefined)
+        )
       ).toEqual(
         new ol.style.Style({
           stroke: new ol.style.Stroke({ width: 5, color: "#FFFF00" }),
@@ -138,9 +152,13 @@ describe("de stijl functie", () => {
           },
         })
       );
-      expect(result.isSuccess()).toBe(true);
+      expect(either.isRight(result)).toBe(true);
       expect(
-        result.map((f) => f(feature, resolution)).getOrElse(undefined)
+        pipe(
+          result,
+          either.map((f) => f(feature, resolution)),
+          either.getOrElse(() => undefined)
+        )
       ).toEqual(
         new ol.style.Style({ stroke: new ol.style.Stroke({ color: "green" }) })
       );
@@ -171,27 +189,39 @@ describe("de stijl functie", () => {
         "json",
         inBetweenStanza(1, 0, 10)
       );
-      expect(resultInside.isSuccess()).toBe(true);
+      expect(either.isRight(resultInside)).toBe(true);
       expect(
-        resultInside.map((f) => f(feature, resolution)).getOrElse(undefined)
+        pipe(
+          resultInside,
+          either.map((f) => f(feature, resolution)),
+          either.getOrElse(() => undefined)
+        )
       ).toEqual(new ol.style.Style());
 
       const resultBelow = definitieToStyleFunction(
         "json",
         inBetweenStanza(-1, 0, 10)
       );
-      expect(resultBelow.isSuccess()).toBe(true);
+      expect(either.isRight(resultBelow)).toBe(true);
       expect(
-        resultBelow.map((f) => f(feature, resolution)).getOrElse(undefined)
+        pipe(
+          resultBelow,
+          either.map((f) => f(feature, resolution)),
+          either.getOrElse(() => undefined)
+        )
       ).toEqual(undefined);
 
       const resultAbove = definitieToStyleFunction(
         "json",
         inBetweenStanza(11, 0, 10)
       );
-      expect(resultAbove.isSuccess()).toBe(true);
+      expect(either.isRight(resultAbove)).toBe(true);
       expect(
-        resultAbove.map((f) => f(feature, resolution)).getOrElse(undefined)
+        pipe(
+          resultAbove,
+          either.map((f) => f(feature, resolution)),
+          either.getOrElse(() => undefined)
+        )
       ).toEqual(undefined);
     });
 
@@ -219,27 +249,39 @@ describe("de stijl functie", () => {
         "json",
         lowercaseStanza("Abc", "abc")
       );
-      expect(resultLeftUpper.isSuccess()).toBe(true);
+      expect(either.isRight(resultLeftUpper)).toBe(true);
       expect(
-        resultLeftUpper.map((f) => f(feature, resolution)).getOrElse(undefined)
+        pipe(
+          resultLeftUpper,
+          either.map((f) => f(feature, resolution)),
+          either.getOrElse(() => undefined)
+        )
       ).toEqual(new ol.style.Style());
 
       const resultRightUpper = definitieToStyleFunction(
         "json",
         lowercaseStanza("abc", "Abc")
       ); // enkel lowercase van left
-      expect(resultRightUpper.isSuccess()).toBe(true);
+      expect(either.isRight(resultRightUpper)).toBe(true);
       expect(
-        resultRightUpper.map((f) => f(feature, resolution)).getOrElse(undefined)
+        pipe(
+          resultRightUpper,
+          either.map((f) => f(feature, resolution)),
+          either.getOrElse(() => undefined)
+        )
       ).toEqual(undefined);
 
       const resultBothUpper = definitieToStyleFunction(
         "json",
         lowercaseStanza("Abc", "Abc")
       ); // right moet lowercase zijn
-      expect(resultBothUpper.isSuccess()).toBe(true);
+      expect(either.isRight(resultBothUpper)).toBe(true);
       expect(
-        resultBothUpper.map((f) => f(feature, resolution)).getOrElse(undefined)
+        pipe(
+          resultBothUpper,
+          either.map((f) => f(feature, resolution)),
+          either.getOrElse(() => undefined)
+        )
       ).toEqual(undefined);
     });
 
@@ -270,9 +312,13 @@ describe("de stijl functie", () => {
           })
         );
 
-        expect(result.isSuccess()).toBe(true);
+        expect(either.isRight(result)).toBe(true);
         expect(
-          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+          pipe(
+            result,
+            either.map((f) => f(feature, resolution)),
+            either.getOrElse(() => undefined)
+          )
         ).toEqual(new ol.style.Style({}));
       });
 
@@ -302,9 +348,13 @@ describe("de stijl functie", () => {
           })
         );
 
-        expect(result.isSuccess()).toBe(true);
+        expect(either.isRight(result)).toBe(true);
         expect(
-          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+          pipe(
+            result,
+            either.map((f) => f(feature, resolution)),
+            either.getOrElse(() => undefined)
+          )
         ).toEqual(new ol.style.Style({}));
       });
 
@@ -334,9 +384,13 @@ describe("de stijl functie", () => {
           })
         );
 
-        expect(result.isSuccess()).toBe(true);
+        expect(either.isRight(result)).toBe(true);
         expect(
-          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+          pipe(
+            result,
+            either.map((f) => f(feature, resolution)),
+            either.getOrElse(() => undefined)
+          )
         ).toEqual(undefined);
       });
 
@@ -366,9 +420,13 @@ describe("de stijl functie", () => {
           })
         );
 
-        expect(result.isSuccess()).toBe(true);
+        expect(either.isRight(result)).toBe(true);
         expect(
-          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+          pipe(
+            result,
+            either.map((f) => f(feature, resolution)),
+            either.getOrElse(() => undefined)
+          )
         ).toEqual(undefined);
       });
 
@@ -394,9 +452,13 @@ describe("de stijl functie", () => {
           })
         );
 
-        expect(result.isSuccess()).toBe(true);
+        expect(either.isRight(result)).toBe(true);
         expect(
-          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+          pipe(
+            result,
+            either.map((f) => f(feature, resolution)),
+            either.getOrElse(() => undefined)
+          )
         ).toEqual(undefined);
       });
 
@@ -426,9 +488,13 @@ describe("de stijl functie", () => {
           })
         );
 
-        expect(result.isSuccess()).toBe(true);
+        expect(either.isRight(result)).toBe(true);
         expect(
-          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+          pipe(
+            result,
+            either.map((f) => f(feature, resolution)),
+            either.getOrElse(() => undefined)
+          )
         ).toEqual(undefined);
       });
 
@@ -457,9 +523,13 @@ describe("de stijl functie", () => {
             },
           })
         );
-        expect(result.isSuccess()).toBe(true);
+        expect(either.isRight(result)).toBe(true);
         expect(
-          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+          pipe(
+            result,
+            either.map((f) => f(feature, resolution)),
+            either.getOrElse(() => undefined)
+          )
         ).toEqual(new ol.style.Style({}));
       });
 
@@ -488,9 +558,13 @@ describe("de stijl functie", () => {
             },
           })
         );
-        expect(result.isSuccess()).toBe(true);
+        expect(either.isRight(result)).toBe(true);
         expect(
-          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+          pipe(
+            result,
+            either.map((f) => f(feature, resolution)),
+            either.getOrElse(() => undefined)
+          )
         ).toEqual(new ol.style.Style({}));
       });
 
@@ -516,9 +590,13 @@ describe("de stijl functie", () => {
           })
         );
 
-        expect(result.isSuccess()).toBe(true);
+        expect(either.isRight(result)).toBe(true);
         expect(
-          result.map((f) => f(feature, resolution)).getOrElse(undefined)
+          pipe(
+            result,
+            either.map((f) => f(feature, resolution)),
+            either.getOrElse(() => undefined)
+          )
         ).toEqual(undefined);
       });
     });
@@ -541,7 +619,7 @@ describe("de stijl functie", () => {
             },
           })
         );
-        expect(result.isSuccess()).toBe(true);
+        expect(either.isRight(result)).toBe(true);
       });
     });
 
@@ -561,14 +639,18 @@ describe("de stijl functie", () => {
             },
           })
         );
-        expect(result.isFailure()).toBe(true);
-        expect(result.value[0]).toContain("'awv-v314' wordt niet ondersteund");
+        expect(either.isLeft(result)).toBe(true);
+        expect((result as either.Left<[string]>).left[0]).toContain(
+          "'awv-v314' wordt niet ondersteund"
+        );
       });
 
       it("moet een ongeldige JSON detecteren", () => {
         const result = definitieToStyleFunction("json", "dit is geen JSON");
-        expect(result.isFailure()).toBe(true);
-        expect(result.value[0]).toContain("geen geldige JSON");
+        expect(either.isLeft(result)).toBe(true);
+        expect((result as either.Left<[string]>).left[0]).toContain(
+          "geen geldige JSON"
+        );
       });
 
       it("mag enkel boolean resultaten toelaten", () => {
@@ -586,9 +668,13 @@ describe("de stijl functie", () => {
             },
           })
         );
-        expect(result.isFailure()).toBe(true);
-        expect(result.value[0]).toContain("typecontrole:");
-        expect(result.value[0]).toContain("moet een 'boolean' opleveren");
+        expect(either.isLeft(result)).toBe(true);
+        expect((result as either.Left<[string]>).left[0]).toContain(
+          "typecontrole:"
+        );
+        expect((result as either.Left<[string]>).left[0]).toContain(
+          "moet een 'boolean' opleveren"
+        );
       });
 
       it("mag enkel een vergelijking met 2 argumenten toelaten", () => {
@@ -609,9 +695,13 @@ describe("de stijl functie", () => {
             },
           })
         );
-        expect(result.isFailure()).toBe(true);
-        expect(result.value[0]).toContain("syntaxcontrole:");
-        expect(result.value[0]).toContain("heeft geen veld 'right'");
+        expect(either.isLeft(result)).toBe(true);
+        expect((result as either.Left<[string]>).left[0]).toContain(
+          "syntaxcontrole:"
+        );
+        expect((result as either.Left<[string]>).left[0]).toContain(
+          "heeft geen veld 'right'"
+        );
       });
       it("mag enkel een groottevergelijking met 2 numerieke argumenten toelaten", () => {
         const result = definitieToStyleFunction(
@@ -632,9 +722,11 @@ describe("de stijl functie", () => {
             },
           })
         );
-        expect(result.isFailure()).toBe(true);
-        expect(result.value[0]).toContain("typecontrole:");
-        expect(result.value[0]).toContain(
+        expect(either.isLeft(result)).toBe(true);
+        expect((result as either.Left<[string]>).left[0]).toContain(
+          "typecontrole:"
+        );
+        expect((result as either.Left<[string]>).left[0]).toContain(
           "'string' en 'string' gevonden, maar telkens 'number' verwacht"
         );
       });
@@ -657,9 +749,11 @@ describe("de stijl functie", () => {
             },
           })
         );
-        expect(result.isFailure()).toBe(true);
-        expect(result.value[0]).toContain("typecontrole:");
-        expect(result.value[0]).toContain(
+        expect(either.isLeft(result)).toBe(true);
+        expect((result as either.Left<[string]>).left[0]).toContain(
+          "typecontrole:"
+        );
+        expect((result as either.Left<[string]>).left[0]).toContain(
           "verwacht dat 'string' en 'number' gelijk zijn"
         );
       });

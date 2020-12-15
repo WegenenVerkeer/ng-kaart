@@ -1,5 +1,5 @@
-import { array, eq, option, ord, setoid } from "fp-ts";
-import { Endomorphism, flow, Function1, Predicate } from "fp-ts/lib/function";
+import { array, eq, option, ord } from "fp-ts";
+import { Endomorphism, flow, Predicate } from "fp-ts/lib/function";
 import { Getter, Lens } from "monocle-ts";
 
 import * as arrays from "../../util/arrays";
@@ -53,11 +53,10 @@ export namespace FieldSelection {
     fallback: () => false,
   });
 
-  export const fieldsFromVeldinfo: Function1<
-    ke.VeldInfo[],
-    FieldSelection[]
-  > = flow(
-    array.sortBy1(basisVeldOrd, []),
+  export const fieldsFromVeldinfo: (
+    arg: ke.VeldInfo[]
+  ) => FieldSelection[] = flow(
+    array.sortBy<ke.VeldInfo>([basisVeldOrd]),
     array.filter(hasSupportedType),
     array.map((vi) => ({
       name: vi.naam,
@@ -81,7 +80,7 @@ export namespace FieldSelection {
     FieldSelection
   >().modify(selectedLens.set(true));
 
-  export const selectedVeldnamen: Function1<FieldSelection[], string[]> = flow(
+  export const selectedVeldnamen: (arg: FieldSelection[]) => string[] = flow(
     array.filter(selectedLens.get),
     array.map(nameLens.get)
   );
@@ -89,13 +88,12 @@ export namespace FieldSelection {
   export const setoidFieldSelection: eq.Eq<FieldSelection> = eq.getStructEq({
     name: eq.eqString,
     selected: eq.eqBoolean,
-    sortDirection: option.getSetoid(SortDirection.setoidSortDirection),
+    sortDirection: option.getEq(SortDirection.setoidSortDirection),
   });
 
-  export const setoidFieldSelectionByKey: eq.Eq<FieldSelection> = setoid.contramap(
-    nameLens.get,
-    eq.eqString
-  );
+  export const setoidFieldSelectionByKey: eq.Eq<FieldSelection> = eq.contramap(
+    nameLens.get
+  )(eq.eqString);
 
   export const selectFirstField: Endomorphism<
     FieldSelection[]
@@ -106,20 +104,19 @@ export namespace FieldSelection {
   export const selectOnlyFirstAndSortedField: Endomorphism<
     FieldSelection[]
   > = array.mapWithIndex<FieldSelection, FieldSelection>((i, field) =>
-    selectedLens.set(i === 0 || field.sortDirection.isSome())(field)
+    selectedLens.set(i === 0 || option.isSome(field.sortDirection))(field)
   );
 
-  const sortingsForFieldSelection: Function1<FieldSelection, FieldSorting[]> = (
+  const sortingsForFieldSelection: (arg: FieldSelection) => FieldSorting[] = (
     fs
   ) =>
-    fs.sortDirection.foldL(
+    option.fold(
       () => [],
       (direction) =>
         fs.contributingVeldinfos.map(FieldSorting.create(direction))
-    );
+    )(fs.sortDirection);
 
-  export const maintainFieldSortings: Function1<
-    FieldSelection[],
-    FieldSorting[]
-  > = array.chain(sortingsForFieldSelection);
+  export const maintainFieldSortings: (
+    arg: FieldSelection[]
+  ) => FieldSorting[] = array.chain(sortingsForFieldSelection);
 }

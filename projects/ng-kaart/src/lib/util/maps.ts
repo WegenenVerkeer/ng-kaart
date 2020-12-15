@@ -1,11 +1,5 @@
 import { option } from "fp-ts";
-import {
-  Endomorphism,
-  Function1,
-  Function3,
-  identity,
-  Predicate,
-} from "fp-ts/lib/function";
+import { Endomorphism, identity, Predicate } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 
 export const isOfSize: (_: number) => <K, V>(_: Map<K, V>) => boolean = (
@@ -84,10 +78,7 @@ export function remove<K, V>(kvs: Map<K, V>, key: K): Map<K, V> {
   return copy;
 }
 
-export function mapValues<K, A, B>(
-  kvs: Map<K, A>,
-  f: Function1<A, B>
-): Map<K, B> {
+export function mapValues<K, A, B>(kvs: Map<K, A>, f: (a: A) => B): Map<K, B> {
   return new Map<K, B>(
     Array.from(kvs.entries()).map((e) => [e[0], f(e[1])] as [K, B])
   );
@@ -103,13 +94,15 @@ export const concat: <K, V>(_: Map<K, V>) => (_: Map<K, V>) => Map<K, V> = (
 
 export const fold: <K, V>(
   _: Map<K, V>
-) => <B>(_: Function3<K, V, B, B>) => (_: B) => B = (mp) => (foldF) => (init) =>
+) => <B>(_: (k: K, v: V, b: B) => B) => (_: B) => B = (mp) => (foldF) => (
+  init
+) =>
   Array.from(mp.entries()).reduce((acc, kv) => foldF(kv[0], kv[1], acc), init);
 
 export function toMapByKeyAndValue<A, K, V>(
   array: ReadonlyArray<A>,
-  keyExtractor: Function1<A, K>,
-  valueExtractor: Function1<A, V>
+  keyExtractor: (a: A) => K,
+  valueExtractor: (a: A) => V
 ): Map<K, V> {
   return new Map<K, V>(
     array.map((a) => [keyExtractor(a), valueExtractor(a)] as [K, V])
@@ -118,14 +111,14 @@ export function toMapByKeyAndValue<A, K, V>(
 
 export function toMapByKey<K, V>(
   array: ReadonlyArray<V>,
-  extractor: Function1<V, K>
+  extractor: (v: V) => K
 ): Map<K, V> {
   return toMapByKeyAndValue(array, extractor, identity);
 }
 
-export const map: <A, B>(
-  _: Function1<A, B>
-) => <K>(_: Map<K, A>) => Map<K, B> = (f) => (mp) =>
+export const map: <A, B>(_: (a: A) => B) => <K>(_: Map<K, A>) => Map<K, B> = (
+  f
+) => (mp) =>
   toMapByKeyAndValue(
     Array.from(mp.entries()),
     (e) => e[0],
