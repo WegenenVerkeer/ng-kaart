@@ -1,5 +1,5 @@
 import { either, eq, option } from "fp-ts";
-import { Curried2, Function1, Predicate } from "fp-ts/lib/function";
+import { Predicate } from "fp-ts/lib/function";
 import { Lens } from "monocle-ts";
 
 import { FeatureWithIdAndLaagnaam } from "../util/feature";
@@ -126,7 +126,7 @@ export interface HoverFeature {
   hover: either.Either<ol.Feature, ol.Feature>; // left = unhover, right = hover
 }
 
-export type MsgGen<Input, Msg> = Function1<Input, Msg>;
+export type MsgGen<Input, Msg> = (i: Input) => Msg;
 
 export interface ViewinstellingenSubscription<Msg> {
   readonly type: "Viewinstellingen";
@@ -309,29 +309,29 @@ export function GeselecteerdeFeaturesSubscription<Msg>(
 }
 
 export namespace FeatureSelection {
-  export const isSelected: Curried2<
-    GeselecteerdeFeatures,
-    FeatureWithIdAndLaagnaam,
-    boolean
-  > = (featureSelection) => (feature) => {
+  export const isSelected: (
+    featureSelection: GeselecteerdeFeatures
+  ) => (feature: FeatureWithIdAndLaagnaam) => boolean = (featureSelection) => (
+    feature
+  ) => {
     const idsInLaag = featureSelection.featuresPerLaag.get(feature.laagnaam);
     return idsInLaag !== undefined && idsInLaag.has(feature.id);
   };
 
-  export const selectedFeaturesInLaagSize: Curried2<
-    string,
-    GeselecteerdeFeatures,
-    number
-  > = (laagnaam) => (featureSelection) => {
+  export const selectedFeaturesInLaagSize: (
+    laagnaam: string
+  ) => (featureSelection: GeselecteerdeFeatures) => number = (laagnaam) => (
+    featureSelection
+  ) => {
     const selectedInLaag = featureSelection.featuresPerLaag.get(laagnaam);
     return selectedInLaag ? selectedInLaag.size : 0;
   };
 
-  export const getGeselecteerdeFeaturesInLaag: Curried2<
-    string,
-    GeselecteerdeFeatures,
-    ol.Feature[]
-  > = (laagnaam) => (featureSelection) => {
+  export const getGeselecteerdeFeaturesInLaag: (
+    laagnaam: string
+  ) => (featureSelection: GeselecteerdeFeatures) => ol.Feature[] = (
+    laagnaam
+  ) => (featureSelection) => {
     const featuresInLaag = featureSelection.featuresPerLaag.get(laagnaam);
     return (
       (featuresInLaag &&

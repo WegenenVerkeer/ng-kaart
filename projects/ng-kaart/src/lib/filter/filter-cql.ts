@@ -1,14 +1,5 @@
 import { option } from "fp-ts";
-import {
-  constant,
-  Curried2,
-  Endomorphism,
-  flow,
-  Function1,
-  Function2,
-  Function3,
-  Function4,
-} from "fp-ts/lib/function";
+import { constant, Endomorphism, flow } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 
 import { Filter as fltr } from "../filter/filter-model";
@@ -16,14 +7,12 @@ import { formateerDateAsDefaultDate } from "../util/date-time";
 import { PartialFunction1 } from "../util/function";
 
 export namespace FilterCql {
-  type Generator<A> = Function1<A, option.Option<string>>;
-  type Generator2<A> = Curried2<
-    option.Option<string>,
-    A,
-    option.Option<string>
-  >;
+  type Generator<A> = (arg: A) => option.Option<string>;
+  type Generator2<A> = (
+    os: option.Option<string>
+  ) => (A) => option.Option<string>;
 
-  const like: Function1<boolean, string> = (caseSensitive) =>
+  const like: (caseSensitive: boolean) => string = (caseSensitive) =>
     caseSensitive ? "like" : "ilike";
 
   // % en ' moeten escaped worden
@@ -39,16 +28,24 @@ export namespace FilterCql {
   const quoteString: Endomorphism<string> = (text) => `'${text}'`;
 
   const stringGenerator: Generator<fltr.Literal> = (literal) =>
-    fltr.stringValue(literal.value).map(escapeText).map(quoteString);
+    pipe(
+      fltr.stringValue(literal.value),
+      option.map(escapeText),
+      option.map(quoteString)
+    );
 
   const integerGenerator: Generator<fltr.Literal> = (literal) =>
-    fltr
-      .numberValue(literal.value)
-      .filter(Number.isInteger)
-      .map((value) => value.toString());
+    pipe(
+      fltr.numberValue(literal.value),
+      option.filter(Number.isInteger),
+      option.map((value: number) => value.toString())
+    );
 
   const doubleGenerator: Generator<fltr.Literal> = (literal) =>
-    fltr.numberValue(literal.value).map((value) => value.toString());
+    pipe(
+      fltr.numberValue(literal.value),
+      option.map((value) => value.toString())
+    );
 
   const dateTimeGenerator: Generator<fltr.Literal> = flow(
     fltr.literalValueGetter.get,
@@ -60,12 +57,15 @@ export namespace FilterCql {
   // het even wat zijn (voor zover het in een shape file past). We verwachten dat de gebruikers geen "rare" kolomnamen
   // gebruiken. We filteren aan de bron properties weg die toch vreemde kolommen gebruiken. De featureserver laat ons
   // immers niet toe om kolomnamen te quoten zoals dat wel kan bij ruwe SQL.
-  const propertyRef: Function1<fltr.Property, String> = (property) =>
+  const propertyRef: (arg: fltr.Property) => String = (property) =>
     `properties.${property.ref}`;
 
   const literalCql: Generator<fltr.Literal> = fltr.matchLiteral({
     boolean: (literal) =>
-      fltr.boolValue(literal.value).map((value) => (value ? "true" : "false")),
+      pipe(
+        fltr.boolValue(literal.value),
+        option.map((value) => (value ? "true" : "false"))
+      ),
     string: stringGenerator,
     integer: integerGenerator,
     double: doubleGenerator,
@@ -73,13 +73,12 @@ export namespace FilterCql {
     range: () => option.none,
   });
 
-  const stringBinaryOperator: Function4<
-    fltr.Property,
-    fltr.BinaryComparisonOperator,
-    fltr.Literal,
-    boolean,
-    option.Option<string>
-  > = (property, operator, literal, caseSensitive) =>
+  const stringBinaryOperator: (
+    property: fltr.Property,
+    operator: fltr.BinaryComparisonOperator,
+    literal: fltr.Literal,
+    caseSensitive: boolean
+  ) => option.Option<string> = (property, operator, literal, caseSensitive) =>
     fltr.matchBinaryComparisonOperatorWithFallback({
       equality: () =>
         option.some(
@@ -113,16 +112,16 @@ export namespace FilterCql {
     literal: fltr.Literal
   ): option.Option<string> => {
     const dateTerm = () =>
-      property.sqlFormat.foldL(
+      option.fold(
         () => `${propertyRef(property)}`, // geen sqlFormat, we gaan er van uit dat veld al date is, mogelijk bij flat tables in nosqlfs
         (sqlFormat) => `to_date(${propertyRef(property)}, '${sqlFormat}')`
-      );
+      )(property.sqlFormat);
 
     return fltr.matchBinaryComparisonOperatorWithFallback({
       within: () =>
         pipe(
-          literal.value,
-          option.fromRefinement(fltr.Range.isRelativeDateRange),
+          option.some(literal.value),
+          option.filter(fltr.Range.isRelativeDateRange),
           option.chain(fltr.Range.withinValueToDuration),
           option.map(formateerDateAsDefaultDate),
           option.map(
@@ -163,33 +162,36 @@ export namespace FilterCql {
     operator: fltr.BinaryComparisonOperator,
     literal: fltr.Literal
   ): option.Option<string> =>
-    option
-      .fromNullable(numberBinaryOperatorSymbols[operator])
-      .chain((symbol) =>
-        literalCql(literal).map(
-          (value) => `${propertyRef(property)} ${symbol} ${value}`
+    pipe(
+      option.fromNullable(numberBinaryOperatorSymbols[operator]),
+      option.chain((symbol) =>
+        pipe(
+          literalCql(literal),
+          option.map((value) => `${propertyRef(property)} ${symbol} ${value}`)
         )
-      );
-
-  const both: Function3<
-    option.Option<string>,
-    option.Option<string>,
-    string,
-    option.Option<string>
-  > = (maybeLeft, maybeRight, separator) =>
-    maybeLeft.fold(
-      maybeRight, //
-      (left) =>
-        option.some(
-          maybeRight.fold(left, (right) => `(${left} ${separator} ${right})`)
-        )
+      )
     );
 
-  const unaryOperator: Function2<
-    fltr.Property,
-    fltr.UnaryComparisonOperator,
-    option.Option<string>
-  > = (property, operator) =>
+  const both: (
+    maybeLeft: option.Option<string>,
+    maybeRight: option.Option<string>,
+    separator: string
+  ) => option.Option<string> = (maybeLeft, maybeRight, separator) =>
+    option.fold(
+      () => maybeRight, //
+      (left: string) =>
+        option.some(
+          option.fold(
+            () => left,
+            (right) => `(${left} ${separator} ${right})`
+          )(maybeRight)
+        )
+    )(maybeLeft);
+
+  const unaryOperator: (
+    property: fltr.Property,
+    operator: fltr.UnaryComparisonOperator
+  ) => option.Option<string> = (property, operator) =>
     fltr.matchUnaryComparisonOperator({
       isEmpty: () => option.some(`${propertyRef(property)} is null`),
       isNotEmpty: () => option.some(`${propertyRef(property)} is not null`),
@@ -222,10 +224,9 @@ export namespace FilterCql {
     UnaryComparison: (expr) => unaryOperator(expr.property, expr.operator),
   });
 
-  export const cql: Function1<
-    fltr.Filter,
-    option.Option<string>
-  > = fltr.matchFilter({
+  export const cql: (
+    arg: fltr.Filter
+  ) => option.Option<string> = fltr.matchFilter({
     EmptyFilter: constant(option.none),
     ExpressionFilter: (expr) => expressionCql(expr.expression),
   });

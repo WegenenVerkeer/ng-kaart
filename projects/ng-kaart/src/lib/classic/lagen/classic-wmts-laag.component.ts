@@ -121,7 +121,7 @@ export class ClassicWmtsLaagComponent
     }
     if (
       !(
-        this._capUrl.isSome() ||
+        option.isSome(this._capUrl) ||
         (arrays.isNonEmpty(this._urls) && arrays.isNonEmpty(this._matrixIds))
       )
     ) {
@@ -131,7 +131,7 @@ export class ClassicWmtsLaagComponent
   }
 
   createLayer(): ke.Laag {
-    return this._capUrl.foldL(
+    return option.fold(
       () => {
         const config: ke.WmtsManualConfig = {
           type: "Manual",
@@ -143,7 +143,7 @@ export class ClassicWmtsLaagComponent
         };
         return this.createLayerFromConfig(config) as ke.Laag;
       },
-      (capUrl) => {
+      (capUrl: string) => {
         this.vervangLaagWithCapabilitiesAsync(capUrl);
         return {
           type: ke.BlancoType,
@@ -154,7 +154,7 @@ export class ClassicWmtsLaagComponent
           verwijderd: false,
         } as ke.Laag;
       }
-    );
+    )(this._capUrl);
   }
 
   private createLayerFromConfig(
@@ -183,7 +183,7 @@ export class ClassicWmtsLaagComponent
     if (config.type === "Manual") {
       return urlWithParams(this._urls[0], {
         layer: this._laagNaam,
-        style: config.style.getOrElse(""),
+        style: option.getOrElse(() => "")(config.style),
         tilematrixset: this._matrixSet,
         Service: "WMTS",
         Request: "GetTile",
@@ -197,9 +197,9 @@ export class ClassicWmtsLaagComponent
       });
     } else {
       // TODO: bepalen op basis van de echte parameters. Rekening houden met config.
-      return urlWithParams(this._capUrl.toNullable()!, {
+      return urlWithParams(option.toNullable(this._capUrl)!, {
         layer: this._laagNaam,
-        style: this._style.getOrElse(""),
+        style: option.getOrElse(() => "")(this._style),
         tilematrixset: this._matrixSet,
         Service: "WMTS",
         Request: "GetTile",

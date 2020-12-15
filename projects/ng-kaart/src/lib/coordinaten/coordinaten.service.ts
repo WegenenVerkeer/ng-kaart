@@ -1,10 +1,5 @@
 import { array, eq, option, set } from "fp-ts";
-import {
-  Endomorphism,
-  Function1,
-  Function2,
-  Predicate,
-} from "fp-ts/lib/function";
+import { Endomorphism, Predicate } from "fp-ts/lib/function";
 
 import proj4 from "proj4";
 
@@ -39,21 +34,19 @@ export function lambert72ToWgs84(coordinate: ol.Coordinate): ol.Coordinate {
   return ol.proj.transform(coordinate, Epsg.Lambert72, Epsg.Wgs84);
 }
 
-export const reprojectLambert72: Function1<
-  string,
-  Endomorphism<ol.Coordinate>
-> = (projection) => (coordinate) =>
+export const reprojectLambert72: (
+  projection: string
+) => Endomorphism<ol.Coordinate> = (projection) => (coordinate) =>
   ol.proj.transform(coordinate, Epsg.Lambert72, projection);
 
 export function switchVolgorde(coordinate: ol.Coordinate): ol.Coordinate {
   return [coordinate[1], coordinate[0]];
 }
 
-export const roundCoordinate: Function2<
-  ol.Coordinate,
-  number,
-  ol.Coordinate
-> = (coordinate, decimals) => {
+export const roundCoordinate: (
+  coordinate: ol.Coordinate,
+  decimals: number
+) => ol.Coordinate = (coordinate, decimals) => {
   const pow = Math.pow(10, decimals);
   return [
     Math.round(coordinate[0] * pow) / pow,
@@ -82,9 +75,8 @@ const supportedProjections = new Set(Epsg.all);
 
 const stringIntersector = set.intersection(eq.eqString);
 
-const first: Function1<Set<string>, option.Option<string>> = (
-  xs: Set<string>
-) => (xs.size > 0 ? option.some(xs.values().next().value) : option.none);
+const first: (xs: Set<string>) => option.Option<string> = (xs: Set<string>) =>
+  xs.size > 0 ? option.some(xs.values().next().value) : option.none;
 
 export const supportedProjection: PartialFunction1<string[], string> = (
   projections
@@ -137,11 +129,11 @@ updateExtent(Epsg.Wgs84);
 
 export namespace Coordinates {
   export const setoid: eq.Eq<ol.Coordinate> = array.getEq(eq.eqNumber);
-  export const equalTo: Function1<ol.Coordinate, Predicate<ol.Coordinate>> = (
+  export const equalTo: (coord1: ol.Coordinate) => Predicate<ol.Coordinate> = (
     coord1
   ) => (coord2) => setoid.equals(coord1, coord2);
-  export const equal: Function2<ol.Coordinate, ol.Coordinate, boolean> = (
-    coord1,
-    coord2
-  ) => setoid.equals(coord1, coord2);
+  export const equal: (
+    coord1: ol.Coordinate,
+    coord2: ol.Coordinate
+  ) => boolean = (coord1, coord2) => setoid.equals(coord1, coord2);
 }

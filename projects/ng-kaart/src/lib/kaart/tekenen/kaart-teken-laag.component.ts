@@ -6,6 +6,7 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 import { Subject } from "rxjs";
 import { distinctUntilChanged, map, skipWhile } from "rxjs/operators";
 import * as uuid from "uuid";
@@ -125,13 +126,13 @@ export class KaartTekenLaagComponent
       this.kaartModel$.pipe(
         map((kwi) => kwi.tekenSettingsSubj.getValue()), //
         distinctUntilChanged(),
-        skipWhile((settings) => settings.isNone()) // De eerste keer willen we startMetTekenen emitten
+        skipWhile((settings) => option.isNone(settings)) // De eerste keer willen we startMetTekenen emitten
       )
     ).subscribe((settings) => {
-      settings.foldL(
+      option.fold(
         () => this.stopMetTekenen(), //
-        (ts) => this.startMetTekenen(ts) //
-      );
+        (ts: ke.TekenSettings) => this.startMetTekenen(ts) //
+      )(settings);
     });
   }
 
@@ -145,14 +146,14 @@ export class KaartTekenLaagComponent
       this.stopMetTekenen();
     }
 
-    this.source = tekenSettings.geometry.fold<ol.source.Vector>(
-      new ol.source.Vector(),
-      (geom) => {
+    this.source = option.fold(
+      () => new ol.source.Vector(),
+      (geom: ol.geom.Geometry) => {
         const source = new ol.source.Vector();
         source.addFeature(new ol.Feature(geom));
         return source;
       }
-    );
+    )(tekenSettings.geometry);
     this.dispatch({
       type: "VoegLaagToe",
       positie: 0,
@@ -202,8 +203,9 @@ export class KaartTekenLaagComponent
       titel: TekenLaagNaam,
       source: source,
       clusterDistance: option.none,
-      styleSelector: tekenSettings.laagStyle.orElse(() =>
-        asStyleSelector(defaultlaagStyle)
+      styleSelector: pipe(
+        tekenSettings.laagStyle,
+        option.alt(() => asStyleSelector(defaultlaagStyle))
       ),
       styleSelectorBron: option.none,
       selectieStyleSelector: option.none,
@@ -272,7 +274,11 @@ export class KaartTekenLaagComponent
     const draw = new ol.interaction.Draw({
       source: source,
       type: tekenSettings.geometryType,
-      style: tekenSettings.drawStyle.map(toStylish).getOrElse(defaultDrawStyle),
+      style: pipe(
+        tekenSettings.drawStyle,
+        option.map(toStylish),
+        option.getOrElse(() => defaultDrawStyle)
+      ),
     });
 
     source.forEachFeature((feature) =>
@@ -306,8 +312,8 @@ export class KaartTekenLaagComponent
     const maxVolgNummer = this.source
       .getFeatures()
       .map((feature) => option.fromNullable(feature.get("volgnummer")))
-      .filter((optional) => optional.isSome())
-      .map((optional) => optional.toNullable())
+      .filter((optional) => option.isSome(optional))
+      .map((optional) => option.toNullable(optional))
       .reduce(
         (maxVolgNummer: number, volgNummer: number) =>
           Math.max(maxVolgNummer, volgNummer),

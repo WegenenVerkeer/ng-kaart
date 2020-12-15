@@ -1,4 +1,5 @@
 import { eq, option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import {
   kleurcode,
@@ -48,28 +49,32 @@ describe("Een kleur", () => {
       describe("op de 'veilige' manier", () => {
         const gefaaldRood = toKleur("rood", "ff0000");
         it("moet none opleveren", () => {
-          expect(gefaaldRood.isNone()).toEqual(true);
+          expect(option.isNone(gefaaldRood)).toEqual(true);
         });
       });
     });
     describe("op de veilige manier met geldige argument", () => {
       const blauw = toKleur("blauw", "#0000ffff");
       it("moet een 'some' opleveren", () => {
-        expect(blauw.isSome()).toEqual(true);
+        expect(option.isSome(blauw)).toEqual(true);
       });
       it("moet de componenten omvatten", () => {
         expect(
-          blauw.map(kleurnaamValue).contains(eq.eqString, "blauw")
+          pipe(blauw, option.map(kleurnaamValue), (o) =>
+            option.elem(eq.eqString)("blauw", o)
+          )
         ).toEqual(true);
         expect(
-          blauw.map(kleurcodeValue).contains(eq.eqString, "#0000ffff")
+          pipe(blauw, option.map(kleurcodeValue), (o) =>
+            option.elem(eq.eqString)("#0000ffff", o)
+          )
         ).toEqual(true);
       });
     });
     describe("op basis van een lege naam", () => {
       it("moet falen", () => {
         const slechteNaam = toKleur("", "#ff0000");
-        expect(slechteNaam.isNone()).toEqual(true);
+        expect(option.isNone(slechteNaam)).toEqual(true);
       });
     });
   });

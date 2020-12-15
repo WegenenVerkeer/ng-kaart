@@ -1,9 +1,7 @@
-import { array, eq, map as fptsmap, option, ord, validation } from "fp-ts";
+import { array, either, eq, map as fptsmap, option, ord } from "fp-ts";
 import {
   Endomorphism,
   flow,
-  Function1,
-  Function2,
   identity,
   not,
   Predicate,
@@ -21,6 +19,7 @@ import {
 } from "rxjs/operators";
 
 import { v4 as uuidV4 } from "uuid";
+import { pipe } from "fp-ts/lib/pipeable";
 import {
   FilterAanpassend,
   GeenFilterAanpassingBezig,
@@ -48,6 +47,7 @@ import {
 } from "../util/subject-update";
 import {
   allOf,
+  failure,
   fromBoolean,
   fromOption,
   fromPredicate,
@@ -155,11 +155,22 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return {
         // Als alles ok is, het nieuwe model nemen, anders het oude
-        model: resultValidation.map((v) => v.model).getOrElse(model),
+        model: pipe(
+          resultValidation,
+          either.map((v) => v.model),
+          either.getOrElse(() => model)
+        ),
         // Als alles ok is, dan is de message de value van KaartCmdResult, anders de foutboodschappen
-        message: resultValidation.fold(
-          (fail) => option.some(wrapper(validation.failure(fail))),
-          (v) => v.value.map((x) => wrapper(success(x)))
+        message: pipe(
+          resultValidation,
+          either.fold(
+            (fail) => option.some(wrapper(either.left(fail))),
+            (v) =>
+              pipe(
+                v.value,
+                option.map((x) => wrapper(success(x)))
+              )
+          )
         ),
       };
     }
@@ -189,9 +200,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       titel: string
     ): prt.KaartCmdValidation<ke.ToegevoegdeVectorLaag> {
       return fromOption(
-        fptsmap
-          .lookup(eq.eqString)(titel, model.toegevoegdeLagenOpTitel)
-          .filter(ke.isToegevoegdeVectorLaag),
+        pipe(
+          fptsmap.lookup(eq.eqString)(titel, model.toegevoegdeLagenOpTitel),
+          option.filter(ke.isToegevoegdeVectorLaag)
+        ),
         `Een vectorlaag met titel ${titel} bestaat niet`
       );
     }
@@ -201,10 +213,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): prt.KaartCmdValidation<ol.layer.Vector> {
       return chain(valideerToegevoegdeLaagBestaat(titel), (laag) =>
         laag.layer["setStyle"]
-          ? validation.success(laag.layer as ol.layer.Vector)
-          : validation.failure([
-              `De laag met titel ${titel} is geen vectorlaag`,
-            ])
+          ? success(laag.layer as ol.layer.Vector)
+          : failure(`De laag met titel ${titel} is geen vectorlaag`)
       );
     }
 
@@ -249,7 +259,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return fromPredicate(
         model,
         (mdl: Model) =>
-          zoekerMetNaam(naam)(mdl.zoekersMetPrioriteiten).isNone(),
+          option.isNone(zoekerMetNaam(naam)(mdl.zoekersMetPrioriteiten)),
         `Een zoeker met naam ${naam} bestaat al`
       );
     }
@@ -260,7 +270,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return fromPredicate(
         model,
         (mdl: Model) =>
-          zoekerMetNaam(naam)(mdl.zoekersMetPrioriteiten).isSome(),
+          option.isSome(zoekerMetNaam(naam)(mdl.zoekersMetPrioriteiten)),
         `Een zoeker met naam ${naam} bestaat niet`
       );
     }
@@ -273,19 +283,17 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    const valideerIsAchtergrondLaag: Function1<
-      string,
-      prt.KaartCmdValidation<{}>
-    > = (titel) =>
+    const valideerIsAchtergrondLaag: (
+      arg: string
+    ) => prt.KaartCmdValidation<{}> = (titel) =>
       fromBoolean(
         model.groepOpTitel.get(titel) === "Achtergrond",
         "De laag is geen achtergrondlaag"
       );
 
-    const valideerIsVoorgrondlaag: Function1<
-      ke.ToegevoegdeLaag,
-      prt.KaartCmdValidation<ke.ToegevoegdeLaag>
-    > = (laag) =>
+    const valideerIsVoorgrondlaag: (
+      arg: ke.ToegevoegdeLaag
+    ) => prt.KaartCmdValidation<ke.ToegevoegdeLaag> = (laag) =>
       fromPredicate(
         laag,
         (lg: ke.ToegevoegdeLaag) =>
@@ -294,24 +302,21 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         "De laag is geen voorgrondlaag"
       );
 
-    const valideerAlsLayer: Function1<
-      ke.Laag,
-      prt.KaartCmdValidation<ol.layer.Base>
-    > = (laag) =>
+    const valideerAlsLayer: (
+      arg: ke.Laag
+    ) => prt.KaartCmdValidation<ol.layer.Base> = (laag) =>
       fromOption(
         toOlLayer(model, laag),
         "De laagbeschrijving kon niet naar een openlayers laag omgezet worden"
       );
 
-    const valideerAlsStijlSpec: Function1<
-      AwvV0StyleSpec,
-      prt.KaartCmdValidation<ss.Stylish>
-    > = ss.validateAwvV0StyleSpec;
+    const valideerAlsStijlSpec: (
+      arg: AwvV0StyleSpec
+    ) => prt.KaartCmdValidation<ss.Stylish> = ss.validateAwvV0StyleSpec;
 
-    const pasLaagPositieAan: Function1<
-      number,
-      Endomorphism<ke.ToegevoegdeLaag>
-    > = (positieAanpassing) => (laag) => {
+    const pasLaagPositieAan: (
+      arg: number
+    ) => Endomorphism<ke.ToegevoegdeLaag> = (positieAanpassing) => (laag) => {
       const positie = laag.positieInGroep + positieAanpassing;
       zetLayerIndex(laag.layer, positie, laag.laaggroep);
       return { ...laag, positieInGroep: positie };
@@ -321,20 +326,24 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       laag
     ) => {
       // Er moet een stijl zijn voor het tekenen van de features op de kaart
-      const featureStyleSelector = laag.stijlSel.getOrElse(
-        getDefaultStyleSelector()
+      const featureStyleSelector = pipe(
+        laag.stijlSel,
+        option.getOrElse(() => getDefaultStyleSelector())
       );
       // Maar er moet geen specifieke stijl zijn voor het selecteren van een feature. Als er geen is, dan wordt er teruggevallen
       // op een gemodificeerde stijl tijdens het tekenen van selectie.
-      const toOffset: Endomorphism<ss.StyleSelector> = laag.bron.offsetveld.fold(
-        identity, // als er geen offsetveld is, dan hoeven we niks te doen
-        (offsetveld) =>
-          ss.offsetStyleSelector(
-            "ident8",
-            offsetveld,
-            laag.stijlPositie,
-            laag.bron.rijrichtingIsDigitalisatieZin
-          )
+      const toOffset: Endomorphism<ss.StyleSelector> = pipe(
+        laag.bron.offsetveld,
+        option.fold(
+          () => identity, // als er geen offsetveld is, dan hoeven we niks te doen
+          (offsetveld) =>
+            ss.offsetStyleSelector(
+              "ident8",
+              offsetveld,
+              laag.stijlPositie,
+              laag.bron.rijrichtingIsDigitalisatieZin
+            )
+        )
       );
       const offsetFeatureStyleSelector = toOffset(featureStyleSelector);
 
@@ -348,20 +357,22 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       setSelectionStyleSelector(
         model.map,
         laag.titel,
-        laag.selectiestijlSel.map(toOffset)
+        option.map(toOffset)(laag.selectiestijlSel)
       );
       setHoverStyleSelector(
         model.map,
         laag.titel,
-        laag.hoverstijlSel.map(toOffset)
+        option.map(toOffset)(laag.hoverstijlSel)
       );
     };
 
-    const pasVectorLaagStijlAan: Function2<
-      option.Option<ss.StyleSelector>,
-      option.Option<ss.StyleSelector>,
-      Endomorphism<ke.ToegevoegdeVectorLaag>
-    > = (maybeStijlSel, maybeSelectieStijlSel) => (laag) => {
+    const pasVectorLaagStijlAan: (
+      maybeStijlSel: option.Option<ss.StyleSelector>,
+      maybeSelectieStijlSel: option.Option<ss.StyleSelector>
+    ) => Endomorphism<ke.ToegevoegdeVectorLaag> = (
+      maybeStijlSel,
+      maybeSelectieStijlSel
+    ) => (laag) => {
       const updatedLaag = {
         ...laag,
         stijlSel: maybeStijlSel,
@@ -373,19 +384,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     // Bij de vectorlagen moeten we ook de (mogelijk aanwezige) stylefuncties aanpassen
     // De manier waarop de stijlpositie aangepast wordt is niet correct als er in de groep ook lagen zitten die geen vectorlaag zijn!
-    const pasVectorLaagStijlPositieAan: Function1<
-      number,
-      Endomorphism<ke.ToegevoegdeLaag>
-    > = (positieAanpassing) => (laag) => {
-      return ke
-        .asToegevoegdeVectorLaag(laag)
-        .map<ke.ToegevoegdeLaag>((tvl) =>
+    const pasVectorLaagStijlPositieAan: (
+      arg: number
+    ) => Endomorphism<ke.ToegevoegdeLaag> = (positieAanpassing) => (laag) => {
+      return pipe(
+        ke.asToegevoegdeVectorLaag(laag),
+        option.map((tvl) =>
           pasVectorLaagStijlAan(
             tvl.stijlSel,
             tvl.selectiestijlSel
           )({ ...tvl, stijlPositie: tvl.stijlPositie + positieAanpassing })
-        )
-        .getOrElse(laag);
+        ),
+        option.getOrElse(() => laag)
+      );
     };
 
     /**
@@ -481,20 +492,20 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         groep,
         mdl.titelsOpGroep
       );
-      const maybeLagen: option.Option<
-        ke.ToegevoegdeLaag[]
-      > = maybeTitels.chain((titels) =>
-        array.array.traverse(option.option)(titels, (titel) =>
-          fptsmap.lookup(eq.eqString)(titel, mdl.toegevoegdeLagenOpTitel)
+      const maybeLagen: option.Option<ke.ToegevoegdeLaag[]> = pipe(
+        maybeTitels,
+        option.chain((titels) =>
+          array.array.traverse(option.option)(titels, (titel) =>
+            fptsmap.lookup(eq.eqString)(titel, mdl.toegevoegdeLagenOpTitel)
+          )
         )
       );
       return arrays.fromOption(maybeLagen);
     }
 
     const ordToegevoegdeLaag: ord.Ord<ke.ToegevoegdeLaag> = ord.contramap(
-      (laag) => -laag!.layer.getZIndex(),
-      ord.ordNumber
-    );
+      (laag: ke.ToegevoegdeLaag) => -laag!.layer.getZIndex()
+    )(ord.ordNumber);
 
     function zendLagenInGroep(mdl: Model, groep: ke.Laaggroep): void {
       modelChanger.lagenOpGroepSubj[groep].next(
@@ -559,116 +570,130 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function voegLaagToeCmd(
       cmnd: prt.VoegLaagToeCmd<Msg>
     ): ModelWithResult<Msg> {
-      return option
-        .fromNullable(model.toegevoegdeLagenOpTitel.get(cmnd.laag.titel))
-        .foldL(
+      return pipe(
+        option.fromNullable(model.toegevoegdeLagenOpTitel.get(cmnd.laag.titel)),
+        option.fold(
           () => {
             return toModelWithValueResult(
               cmnd.wrapper,
-              valideerAlsLayer(cmnd.laag).map((layer) => {
-                const titel = cmnd.laag.titel;
-                const groep = cmnd.laaggroep;
-                const groepPositie = limitPosition(cmnd.positie, groep);
-                const modelMetAangepasteLagen = pasLaagPositiesAan(
-                  1,
-                  groepPositie,
-                  maxIndexInGroep(groep),
-                  groep
-                );
-                const toegevoegdeLaagCommon: ke.ToegevoegdeLaag = {
-                  bron: cmnd.laag,
-                  layer: layer,
-                  titel: cmnd.laag.titel,
-                  laaggroep: groep,
-                  positieInGroep: groepPositie,
-                  magGetoondWorden: cmnd.magGetoondWorden,
-                  transparantie: cmnd.transparantie,
-                  legende: cmnd.legende,
-                  stijlInLagenKiezer: cmnd.stijlInLagenKiezer,
-                };
-                const toegevoegdeVectorLaagCommon: ke.ToegevoegdeLaag = ke
-                  .asVectorLaag(cmnd.laag)
-                  .fold(
-                    toegevoegdeLaagCommon, //
-                    (vlg) => ({
-                      ...toegevoegdeLaagCommon,
-                      bron: vlg,
-                      layer: layer as ol.layer.Vector, // veilig omdat laag een VectorLaag is
-                      stijlPositie: vectorLaagPositie(groepPositie, groep),
-                      stijlSel: vlg.styleSelector,
-                      stijlSelBron: vlg.styleSelectorBron,
-                      selectiestijlSel: vlg.selectieStyleSelector,
-                      hoverstijlSel: vlg.hoverStyleSelector,
-                      filterinstellingen: cmnd.filterinstellingen.getOrElse(
-                        ke.stdLaagfilterinstellingen
-                      ),
-                      tabelLaagInstellingen: cmnd.laagtabelinstellingen,
-                    })
-                  );
-                const toegevoegdeLaag: ke.ToegevoegdeLaag = ke
-                  .asToegevoegdeNosqlVectorLaag(toegevoegdeVectorLaagCommon)
-                  .fold(
-                    toegevoegdeVectorLaagCommon, //
-                    (tgnslg) => {
-                      const [filter, actief] = cmnd.filterinstellingen.fold<
-                        [fltr.Filter, boolean]
-                      >([fltr.empty(), false], (fi) => [fi.spec, fi.actief]);
-                      // NosqlFsSource is mutable
-                      const source = ke.underlyingSource(tgnslg.layer);
-                      (source as NosqlFsSource).setUserFilter(filter, actief);
-                      return tgnslg;
-                    }
-                  );
-                layer.set(ke.LayerProperties.Titel, titel);
-                layer.setVisible(
-                  cmnd.magGetoondWorden && !cmnd.laag.verwijderd
-                ); // achtergrondlagen expliciet zichtbaar maken!
-                layer.setOpacity(
-                  flow(
-                    Transparantie.toOpaciteit,
-                    Opaciteit.toNumber
-                  )(cmnd.transparantie)
-                );
-                // met positie hoeven we nog geen rekening te houden
-                forEach(
-                  ke.asToegevoegdeVectorLaag(toegevoegdeLaag),
-                  pasVectorLaagStijlToe
-                );
-                zetLayerIndex(layer, groepPositie, groep);
-                forEach(
-                  ke
-                    .asToegevoegdeNosqlVectorLaag(toegevoegdeLaag)
-                    .filter((tnl) => tnl.filterinstellingen.actief),
-                  zendFilterwijziging
-                );
-                forEach(
-                  ke
-                    .asToegevoegdeNosqlVectorLaag(toegevoegdeLaag)
-                    .filter((tnl) =>
-                      fltr.isDefined(tnl.filterinstellingen.spec)
-                    ),
-                  berekenFilterTotalen
-                );
-
-                model.map.addLayer(layer);
-                const updatedModel = {
-                  ...modelMetAangepasteLagen,
-                  toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.set(
-                    titel,
-                    toegevoegdeLaag
-                  ), // TODO immutable!
-                  titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(
-                    groep,
-                    model.titelsOpGroep.get(groep)!.concat([titel])
-                  ),
-                  groepOpTitel: modelMetAangepasteLagen.groepOpTitel.set(
-                    titel,
+              pipe(
+                valideerAlsLayer(cmnd.laag),
+                either.map((layer) => {
+                  const titel = cmnd.laag.titel;
+                  const groep = cmnd.laaggroep;
+                  const groepPositie = limitPosition(cmnd.positie, groep);
+                  const modelMetAangepasteLagen = pasLaagPositiesAan(
+                    1,
+                    groepPositie,
+                    maxIndexInGroep(groep),
                     groep
-                  ),
-                };
-                zendLagenInGroep(updatedModel, cmnd.laaggroep);
-                return ModelAndEmptyResult(updatedModel);
-              })
+                  );
+                  const toegevoegdeLaagCommon: ke.ToegevoegdeLaag = {
+                    bron: cmnd.laag,
+                    layer: layer,
+                    titel: cmnd.laag.titel,
+                    laaggroep: groep,
+                    positieInGroep: groepPositie,
+                    magGetoondWorden: cmnd.magGetoondWorden,
+                    transparantie: cmnd.transparantie,
+                    legende: cmnd.legende,
+                    stijlInLagenKiezer: cmnd.stijlInLagenKiezer,
+                  };
+                  const toegevoegdeVectorLaagCommon: ke.ToegevoegdeLaag = pipe(
+                    ke.asVectorLaag(cmnd.laag),
+                    option.fold(
+                      () => toegevoegdeLaagCommon, //
+                      (vlg) => ({
+                        ...toegevoegdeLaagCommon,
+                        bron: vlg,
+                        layer: layer as ol.layer.Vector, // veilig omdat laag een VectorLaag is
+                        stijlPositie: vectorLaagPositie(groepPositie, groep),
+                        stijlSel: vlg.styleSelector,
+                        stijlSelBron: vlg.styleSelectorBron,
+                        selectiestijlSel: vlg.selectieStyleSelector,
+                        hoverstijlSel: vlg.hoverStyleSelector,
+                        filterinstellingen: pipe(
+                          cmnd.filterinstellingen,
+                          option.getOrElse(() => ke.stdLaagfilterinstellingen)
+                        ),
+                        tabelLaagInstellingen: cmnd.laagtabelinstellingen,
+                      })
+                    )
+                  );
+                  const toegevoegdeLaag: ke.ToegevoegdeLaag = pipe(
+                    ke.asToegevoegdeNosqlVectorLaag(
+                      toegevoegdeVectorLaagCommon
+                    ),
+                    option.fold(
+                      () => toegevoegdeVectorLaagCommon, //
+                      (tgnslg) => {
+                        const [filter, actief] = pipe(
+                          cmnd.filterinstellingen,
+                          option.fold(
+                            () => [fltr.empty(), false],
+                            (fi) => [fi.spec, fi.actief]
+                          )
+                        );
+                        // NosqlFsSource is mutable
+                        const source = ke.underlyingSource(tgnslg.layer);
+                        (source as NosqlFsSource).setUserFilter(filter, actief);
+                        return tgnslg;
+                      }
+                    )
+                  );
+                  layer.set(ke.LayerProperties.Titel, titel);
+                  layer.setVisible(
+                    cmnd.magGetoondWorden && !cmnd.laag.verwijderd
+                  ); // achtergrondlagen expliciet zichtbaar maken!
+                  layer.setOpacity(
+                    flow(
+                      Transparantie.toOpaciteit,
+                      Opaciteit.toNumber
+                    )(cmnd.transparantie)
+                  );
+                  // met positie hoeven we nog geen rekening te houden
+                  forEach(
+                    ke.asToegevoegdeVectorLaag(toegevoegdeLaag),
+                    pasVectorLaagStijlToe
+                  );
+                  zetLayerIndex(layer, groepPositie, groep);
+                  forEach(
+                    pipe(
+                      ke.asToegevoegdeNosqlVectorLaag(toegevoegdeLaag),
+                      option.filter((tnl) => tnl.filterinstellingen.actief)
+                    ),
+                    zendFilterwijziging
+                  );
+                  forEach(
+                    pipe(
+                      ke.asToegevoegdeNosqlVectorLaag(toegevoegdeLaag),
+                      option.filter((tnl) =>
+                        fltr.isDefined(tnl.filterinstellingen.spec)
+                      )
+                    ),
+                    berekenFilterTotalen
+                  );
+
+                  model.map.addLayer(layer);
+                  const updatedModel = {
+                    ...modelMetAangepasteLagen,
+                    toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.set(
+                      titel,
+                      toegevoegdeLaag
+                    ), // TODO immutable!
+                    titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(
+                      groep,
+                      model.titelsOpGroep.get(groep)!.concat([titel])
+                    ),
+                    groepOpTitel: modelMetAangepasteLagen.groepOpTitel.set(
+                      titel,
+                      groep
+                    ),
+                  };
+                  zendLagenInGroep(updatedModel, cmnd.laaggroep);
+                  return ModelAndEmptyResult(updatedModel);
+                })
+              )
             );
           },
           (bestaandeLaag) => {
@@ -680,7 +705,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               );
             }
           }
-        );
+        )
+      );
     }
 
     function verwijderGeselecteerdeFeaturesVanLaag(laagnaam: string) {
@@ -688,7 +714,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       const teVerwijderenGeselecteerdeFeatures = model.geselecteerdeFeatures
         .getArray()
         .filter((feature) =>
-          Feature.getLaagnaam(feature).exists((ln) => ln === laagnaam)
+          pipe(
+            Feature.getLaagnaam(feature),
+            option.exists((ln) => ln === laagnaam)
+          )
         );
       teVerwijderenGeselecteerdeFeatures.forEach((feature) =>
         model.geselecteerdeFeatures.remove(feature)
@@ -703,92 +732,102 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerToegevoegdeLaagBestaat(cmnd.titel).map((laag) => {
-          const layer = laag.layer;
-          model.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
-          verwijderGeselecteerdeFeaturesVanLaag(cmnd.titel);
-          const titel = cmnd.titel;
-          const groep = laag.laaggroep;
-          const modelMetAangepasteLagen = pasLaagPositiesAan(
-            -1,
-            layerIndexNaarGroepIndex(layer, groep) + 1,
-            maxIndexInGroep(groep),
-            groep
-          );
-          const updatedModel = {
-            ...modelMetAangepasteLagen,
-            toegevoegdeLagenOpTitel: fptsmap.remove(eq.eqString)(
-              titel,
-              modelMetAangepasteLagen.toegevoegdeLagenOpTitel
-            ),
-            titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(
-              groep,
-              modelMetAangepasteLagen.titelsOpGroep
-                .get(groep)!
-                .filter((t) => t !== titel)
-            ),
-            groepOpTitel: fptsmap.remove(eq.eqString)(
-              titel,
-              modelMetAangepasteLagen.groepOpTitel
-            ),
-          };
-          zendLagenInGroep(updatedModel, groep);
-          modelChanger.laagVerwijderdSubj.next(laag);
-          ss.clearFeatureStyleSelector(model.map, laag.titel);
-          return ModelAndEmptyResult(updatedModel);
-        })
+        pipe(
+          valideerToegevoegdeLaagBestaat(cmnd.titel),
+          either.map((laag) => {
+            const layer = laag.layer;
+            model.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
+            verwijderGeselecteerdeFeaturesVanLaag(cmnd.titel);
+            const titel = cmnd.titel;
+            const groep = laag.laaggroep;
+            const modelMetAangepasteLagen = pasLaagPositiesAan(
+              -1,
+              layerIndexNaarGroepIndex(layer, groep) + 1,
+              maxIndexInGroep(groep),
+              groep
+            );
+            const updatedModel = {
+              ...modelMetAangepasteLagen,
+              toegevoegdeLagenOpTitel: pipe(
+                modelMetAangepasteLagen.toegevoegdeLagenOpTitel,
+                fptsmap.deleteAt(eq.eqString)(titel)
+              ),
+              titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(
+                groep,
+                modelMetAangepasteLagen.titelsOpGroep
+                  .get(groep)!
+                  .filter((t) => t !== titel)
+              ),
+              groepOpTitel: pipe(
+                modelMetAangepasteLagen.groepOpTitel,
+                fptsmap.deleteAt(eq.eqString)(titel)
+              ),
+            };
+            zendLagenInGroep(updatedModel, groep);
+            modelChanger.laagVerwijderdSubj.next(laag);
+            ss.clearFeatureStyleSelector(model.map, laag.titel);
+            return ModelAndEmptyResult(updatedModel);
+          })
+        )
       );
     }
 
     function vervangLaag(cmnd: prt.VervangLaagCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        chain(valideerToegevoegdeLaagBestaat(cmnd.laag.titel), (laag) =>
-          valideerAlsLayer(cmnd.laag).map((layer) => [laag, layer])
-        ).map(([laag, layer]: [ke.ToegevoegdeLaag, ol.layer.Base]) => {
-          const toegevoegdeLaagCommon: ke.ToegevoegdeLaag = {
-            bron: cmnd.laag,
-            layer: layer,
-            titel: laag.titel,
-            laaggroep: laag.laaggroep,
-            positieInGroep: laag.positieInGroep,
-            magGetoondWorden: laag.magGetoondWorden,
-            transparantie: laag.transparantie,
-            legende: laag.legende,
-            stijlInLagenKiezer: laag.stijlInLagenKiezer,
-          };
-          const toegevoegdeLaag = ke
-            .asVectorLaag(cmnd.laag)
-            .map<ke.ToegevoegdeLaag>((vlg) => ({
-              ...toegevoegdeLaagCommon,
-              stijlPositie: vectorLaagPositie(
-                laag.positieInGroep,
-                laag.laaggroep
-              ),
-              stijlSel: vlg.styleSelector,
-              selectiestijlSel: vlg.selectieStyleSelector,
-              hoverstijlSel: vlg.hoverStyleSelector,
-              filterinstellingen: ke.stdLaagfilterinstellingen,
-            }))
-            .getOrElse(toegevoegdeLaagCommon);
-          const oldLayer = laag.layer;
-          layer.set(
-            ke.LayerProperties.Titel,
-            oldLayer.get(ke.LayerProperties.Titel)
-          );
-          layer.setVisible(oldLayer.getVisible());
-          layer.setOpacity(oldLayer.getOpacity());
-          forEach(
-            ke.asToegevoegdeVectorLaag(toegevoegdeLaag),
-            pasVectorLaagStijlToe
-          );
-          zetLayerIndex(layer, laag.positieInGroep, laag.laaggroep);
-          model.map.addLayer(layer);
-          model.map.removeLayer(oldLayer);
-          const updatedModel = pasLaagInModelAan(model)(toegevoegdeLaag);
-          zendLagenInGroep(updatedModel, toegevoegdeLaag.laaggroep);
-          return ModelAndEmptyResult(updatedModel);
-        })
+        pipe(
+          chain(valideerToegevoegdeLaagBestaat(cmnd.laag.titel), (laag) =>
+            pipe(
+              valideerAlsLayer(cmnd.laag),
+              either.map((layer) => [laag, layer])
+            )
+          ),
+          either.map(([laag, layer]: [ke.ToegevoegdeLaag, ol.layer.Base]) => {
+            const toegevoegdeLaagCommon: ke.ToegevoegdeLaag = {
+              bron: cmnd.laag,
+              layer: layer,
+              titel: laag.titel,
+              laaggroep: laag.laaggroep,
+              positieInGroep: laag.positieInGroep,
+              magGetoondWorden: laag.magGetoondWorden,
+              transparantie: laag.transparantie,
+              legende: laag.legende,
+              stijlInLagenKiezer: laag.stijlInLagenKiezer,
+            };
+            const toegevoegdeLaag = pipe(
+              ke.asVectorLaag(cmnd.laag),
+              option.map((vlg) => ({
+                ...toegevoegdeLaagCommon,
+                stijlPositie: vectorLaagPositie(
+                  laag.positieInGroep,
+                  laag.laaggroep
+                ),
+                stijlSel: vlg.styleSelector,
+                selectiestijlSel: vlg.selectieStyleSelector,
+                hoverstijlSel: vlg.hoverStyleSelector,
+                filterinstellingen: ke.stdLaagfilterinstellingen,
+              })),
+              option.getOrElse(() => toegevoegdeLaagCommon)
+            );
+            const oldLayer = laag.layer;
+            layer.set(
+              ke.LayerProperties.Titel,
+              oldLayer.get(ke.LayerProperties.Titel)
+            );
+            layer.setVisible(oldLayer.getVisible());
+            layer.setOpacity(oldLayer.getOpacity());
+            forEach(
+              ke.asToegevoegdeVectorLaag(toegevoegdeLaag),
+              pasVectorLaagStijlToe
+            );
+            zetLayerIndex(layer, laag.positieInGroep, laag.laaggroep);
+            model.map.addLayer(layer);
+            model.map.removeLayer(oldLayer);
+            const updatedModel = pasLaagInModelAan(model)(toegevoegdeLaag);
+            zendLagenInGroep(updatedModel, toegevoegdeLaag.laaggroep);
+            return ModelAndEmptyResult(updatedModel);
+          })
+        )
       );
     }
 
@@ -797,15 +836,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerToegevoegdeLaagBestaat(cmnd.titel).map((laag) => {
-          const laagMetLegende = {
-            ...laag,
-            legende: option.some(cmnd.legende),
-          };
-          const updatedModel = pasLaagInModelAan(model)(laagMetLegende);
-          zendLagenInGroep(updatedModel, laagMetLegende.laaggroep);
-          return ModelAndEmptyResult(updatedModel);
-        })
+        pipe(
+          valideerToegevoegdeLaagBestaat(cmnd.titel),
+          either.map((laag) => {
+            const laagMetLegende = {
+              ...laag,
+              legende: option.some(cmnd.legende),
+            };
+            const updatedModel = pasLaagInModelAan(model)(laagMetLegende);
+            zendLagenInGroep(updatedModel, laagMetLegende.laaggroep);
+            return ModelAndEmptyResult(updatedModel);
+          })
+        )
       );
     }
 
@@ -814,38 +856,41 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        chain(
-          valideerToegevoegdeLaagBestaat(cmnd.titel), //
-          valideerIsVoorgrondlaag // enkel zinvol om voorgrondlagen te verplaatsen
-        ).map((laag) => {
-          const titel = cmnd.titel;
-          const groep = model.groepOpTitel.get(titel)!;
-          const vanPositie = layerIndexNaarGroepIndex(laag.layer, groep);
-          const naarPositie = limitPosition(cmnd.naarPositie, groep); // uitgedrukt in z-index waarden
-          // Afhankelijk of we van onder naar boven of van boven naar onder verschuiven, moeten de tussenliggende lagen
-          // naar onder, resp. naar boven verschoven worden.
-          const modelMetAangepasteLagen =
-            vanPositie < naarPositie
-              ? pasLaagPositiesAan(-1, vanPositie + 1, naarPositie, groep)
-              : pasLaagPositiesAan(1, naarPositie, vanPositie - 1, groep);
+        pipe(
+          chain(
+            valideerToegevoegdeLaagBestaat(cmnd.titel), //
+            valideerIsVoorgrondlaag // enkel zinvol om voorgrondlagen te verplaatsen
+          ),
+          either.map((laag) => {
+            const titel = cmnd.titel;
+            const groep = model.groepOpTitel.get(titel)!;
+            const vanPositie = layerIndexNaarGroepIndex(laag.layer, groep);
+            const naarPositie = limitPosition(cmnd.naarPositie, groep); // uitgedrukt in z-index waarden
+            // Afhankelijk of we van onder naar boven of van boven naar onder verschuiven, moeten de tussenliggende lagen
+            // naar onder, resp. naar boven verschoven worden.
+            const modelMetAangepasteLagen =
+              vanPositie < naarPositie
+                ? pasLaagPositiesAan(-1, vanPositie + 1, naarPositie, groep)
+                : pasLaagPositiesAan(1, naarPositie, vanPositie - 1, groep);
 
-          // En ook de te verplaatsen laag moet een andere positie krijgen uiteraard
-          const updatedModel = flow(
-            pasVectorLaagStijlPositieAan(naarPositie - vanPositie),
-            pasLaagPositieAan(naarPositie - vanPositie),
-            pasLaagInModelAan(modelMetAangepasteLagen)
-          )(laag);
+            // En ook de te verplaatsen laag moet een andere positie krijgen uiteraard
+            const updatedModel = flow(
+              pasVectorLaagStijlPositieAan(naarPositie - vanPositie),
+              pasLaagPositieAan(naarPositie - vanPositie),
+              pasLaagInModelAan(modelMetAangepasteLagen)
+            )(laag);
 
-          // Deselect en selecteer alle features om terug een correcte offset rendering te krijgen
-          // Indien OL geupgrade kunnen we dit eleganter doen door de stijl van de features op de overlay laag aan te passen, zie:
-          // https://openlayers.org/en/latest/apidoc/module-ol_interaction_Select-Select.html#getOverlay
-          const geselecteerd = [...model.geselecteerdeFeatures.getArray()];
-          model.geselecteerdeFeatures.clear();
-          model.geselecteerdeFeatures.extend(geselecteerd);
+            // Deselect en selecteer alle features om terug een correcte offset rendering te krijgen
+            // Indien OL geupgrade kunnen we dit eleganter doen door de stijl van de features op de overlay laag aan te passen, zie:
+            // https://openlayers.org/en/latest/apidoc/module-ol_interaction_Select-Select.html#getOverlay
+            const geselecteerd = [...model.geselecteerdeFeatures.getArray()];
+            model.geselecteerdeFeatures.clear();
+            model.geselecteerdeFeatures.extend(geselecteerd);
 
-          zendLagenInGroep(updatedModel, groep);
-          return ModelAndEmptyResult(updatedModel);
-        })
+            zendLagenInGroep(updatedModel, groep);
+            return ModelAndEmptyResult(updatedModel);
+          })
+        )
       );
     }
 
@@ -855,11 +900,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       modelChanger.uiElementSelectieSubj.next({ naam: "Schaal", aan: true });
       return toModelWithValueResult(
         cmnd.wrapper,
-        fromPredicate(
-          model.schaal,
-          option.isNone,
-          "De schaal is al toegevoegd"
-        ).map(() => ModelAndEmptyResult({ ...model }))
+        pipe(
+          fromPredicate(
+            model.schaal,
+            option.isNone,
+            "De schaal is al toegevoegd"
+          ),
+          either.map(() => ModelAndEmptyResult({ ...model }))
+        )
       );
     }
 
@@ -868,26 +916,34 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        fromPredicate(
-          model.schaal,
-          option.isNone,
-          "De schaal is al toegevoegd"
-        ).map(() => {
-          const schaal = cmnd.target
-            .map(
-              (t) =>
-                new ol.control.ScaleLine({
-                  className: "awv-schaal",
-                  target: t as HTMLElement,
-                  minWidth: 40,
-                })
-            )
-            .getOrElseL(
-              () => new ol.control.ScaleLine({ className: "awv-schaal" })
+        pipe(
+          fromPredicate(
+            model.schaal,
+            option.isNone,
+            "De schaal is al toegevoegd"
+          ),
+          either.map(() => {
+            const schaal = pipe(
+              cmnd.target,
+              option.map(
+                (t) =>
+                  new ol.control.ScaleLine({
+                    className: "awv-schaal",
+                    target: t as HTMLElement,
+                    minWidth: 40,
+                  })
+              ),
+              option.getOrElse(
+                () => new ol.control.ScaleLine({ className: "awv-schaal" })
+              )
             );
-          model.map.addControl(schaal);
-          return ModelAndEmptyResult({ ...model, schaal: option.some(schaal) });
-        })
+            model.map.addControl(schaal);
+            return ModelAndEmptyResult({
+              ...model,
+              schaal: option.some(schaal),
+            });
+          })
+        )
       );
     }
 
@@ -896,11 +952,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        fromOption(model.schaal, "De schaal is nog niet toegevoegd").map(
-          (schaal: ol.control.Control) => {
+        pipe(
+          fromOption(model.schaal, "De schaal is nog niet toegevoegd"),
+          either.map((schaal: ol.control.Control) => {
             model.map.removeControl(schaal);
             return ModelAndEmptyResult({ ...model, schaal: option.none });
-          }
+          })
         )
       );
     }
@@ -910,18 +967,21 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        fromPredicate(
-          model.fullScreen,
-          option.isNone,
-          "De volledig scherm knop is al toegevoegd"
-        ).map(() => {
-          const fullScreen = new ol.control.FullScreen();
-          model.map.addControl(fullScreen);
-          return ModelAndEmptyResult({
-            ...model,
-            fullScreen: option.some(fullScreen),
-          });
-        })
+        pipe(
+          fromPredicate(
+            model.fullScreen,
+            option.isNone,
+            "De volledig scherm knop is al toegevoegd"
+          ),
+          either.map(() => {
+            const fullScreen = new ol.control.FullScreen();
+            model.map.addControl(fullScreen);
+            return ModelAndEmptyResult({
+              ...model,
+              fullScreen: option.some(fullScreen),
+            });
+          })
+        )
       );
     }
 
@@ -930,13 +990,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        fromOption(
-          model.fullScreen,
-          "De volledig scherm knop is nog niet toegevoegd"
-        ).map((fullScreen: ol.control.Control) => {
-          model.map.removeControl(fullScreen);
-          return ModelAndEmptyResult({ ...model, fullScreen: option.none });
-        })
+        pipe(
+          fromOption(
+            model.fullScreen,
+            "De volledig scherm knop is nog niet toegevoegd"
+          ),
+          either.map((fullScreen: ol.control.Control) => {
+            model.map.removeControl(fullScreen);
+            return ModelAndEmptyResult({ ...model, fullScreen: option.none });
+          })
+        )
       );
     }
 
@@ -945,36 +1008,43 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        fromPredicate(
-          model.stdInteracties,
-          array.isEmpty,
-          "De standaard interacties zijn al ingesteld"
-        ).map(() => {
-          const stdInteracties: ol.interaction.Interaction[] = ol.interaction
-            .defaults()
-            .getArray()
-            .filter(
-              (interaction) =>
-                !(
-                  (!cmnd.rotatie &&
-                    interaction instanceof ol.interaction.DragRotate) ||
-                  (!cmnd.rotatie &&
-                    interaction instanceof ol.interaction.PinchRotate) ||
-                  interaction instanceof ol.interaction.MouseWheelZoom
-                ) // we willen zelf de opties op MouseWheelZoom zetten
-            )
-            .concat(
-              [new ol.interaction.MouseWheelZoom({ constrainResolution: true })] // Geen fractionele resoluties!
-            );
-          stdInteracties.forEach((i) => model.map.addInteraction(i!)); // side effects :-(
-          const newModel: Model = {
-            ...model,
-            stdInteracties: stdInteracties,
-            scrollZoomOnFocus: cmnd.scrollZoomOnFocus,
-          };
-          activateMouseWheelZoomIfAllowed(!cmnd.scrollZoomOnFocus, newModel);
-          return ModelAndEmptyResult(newModel);
-        })
+        pipe(
+          fromPredicate(
+            model.stdInteracties,
+            array.isEmpty,
+            "De standaard interacties zijn al ingesteld"
+          ),
+          either.map(() => {
+            const stdInteracties: ol.interaction.Interaction[] = ol.interaction
+              .defaults()
+              .getArray()
+              .filter(
+                (interaction) =>
+                  !(
+                    (!cmnd.rotatie &&
+                      interaction instanceof ol.interaction.DragRotate) ||
+                    (!cmnd.rotatie &&
+                      interaction instanceof ol.interaction.PinchRotate) ||
+                    interaction instanceof ol.interaction.MouseWheelZoom
+                  ) // we willen zelf de opties op MouseWheelZoom zetten
+              )
+              .concat(
+                [
+                  new ol.interaction.MouseWheelZoom({
+                    constrainResolution: true,
+                  }),
+                ] // Geen fractionele resoluties!
+              );
+            stdInteracties.forEach((i) => model.map.addInteraction(i!)); // side effects :-(
+            const newModel: Model = {
+              ...model,
+              stdInteracties: stdInteracties,
+              scrollZoomOnFocus: cmnd.scrollZoomOnFocus,
+            };
+            activateMouseWheelZoomIfAllowed(!cmnd.scrollZoomOnFocus, newModel);
+            return ModelAndEmptyResult(newModel);
+          })
+        )
       );
     }
 
@@ -983,14 +1053,17 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        fromPredicate(
-          model.stdInteracties,
-          not(array.isEmpty),
-          "De standaard interacties zijn niet aanwezig"
-        ).map((stdInteracties: Array<ol.interaction.Interaction>) => {
-          stdInteracties.forEach((i) => model.map.removeInteraction(i!));
-          return ModelAndEmptyResult({ ...model, stdInteracties: [] });
-        })
+        pipe(
+          fromPredicate(
+            model.stdInteracties,
+            not(array.isEmpty),
+            "De standaard interacties zijn niet aanwezig"
+          ),
+          either.map((stdInteracties: Array<ol.interaction.Interaction>) => {
+            stdInteracties.forEach((i) => model.map.removeInteraction(i!));
+            return ModelAndEmptyResult({ ...model, stdInteracties: [] });
+          })
+        )
       );
     }
 
@@ -999,7 +1072,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       model.map.getView().animate({
         center: cmnd.coordinate,
-        duration: cmnd.animationDuration.getOrElse(0),
+        duration: pipe(
+          cmnd.animationDuration,
+          option.getOrElse(() => 0)
+        ),
       });
       return ModelWithResult(model);
     }
@@ -1009,10 +1085,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        success(cmnd.zoom).map((zoom) => {
-          model.map.getView().setZoom(zoom);
-          return ModelAndEmptyResult(model);
-        })
+        pipe(
+          success(cmnd.zoom),
+          either.map((zoom) => {
+            model.map.getView().setZoom(zoom);
+            return ModelAndEmptyResult(model);
+          })
+        )
       );
     }
 
@@ -1021,7 +1100,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       model.map.getView().animate({
         rotation: cmnd.rotatie,
-        duration: cmnd.animationDuration.getOrElse(0),
+        duration: pipe(
+          cmnd.animationDuration,
+          option.getOrElse(() => 0)
+        ),
       });
       return ModelWithResult(model);
     }
@@ -1090,13 +1172,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerVectorLayerBestaat(cmnd.titel).map((layer) => {
-          model.highlightedFeatures.clear();
-          model.highlightedFeatures.extend(
-            layer.getSource().getFeatures().filter(cmnd.selector)
-          );
-          return ModelAndEmptyResult(model);
-        })
+        pipe(
+          valideerVectorLayerBestaat(cmnd.titel),
+          either.map((layer) => {
+            model.highlightedFeatures.clear();
+            model.highlightedFeatures.extend(
+              layer.getSource().getFeatures().filter(cmnd.selector)
+            );
+            return ModelAndEmptyResult(model);
+          })
+        )
       );
     }
 
@@ -1105,24 +1190,27 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerVectorLayerBestaat(cmnd.titel).map((layer) => {
-          const layerSource = layer.getSource();
-          const source =
-            layerSource instanceof ol.source.Cluster
-              ? layerSource.getSource()
-              : layerSource;
-          if (!arrays.isEmpty(source.getFeatures())) {
-            // Zit binnen een conditie omdat we onnodigie OL events willen voorkomen
-            source.clear(false);
-          }
-          if (!arrays.isEmpty(cmnd.features)) {
-            // Zit binnen een conditie omdat we onnodigie OL events willen voorkomen
-            source.addFeatures(
-              cmnd.features.map(modifyWithLaagnaam(cmnd.titel))
-            );
-          }
-          return ModelAndEmptyResult(model);
-        })
+        pipe(
+          valideerVectorLayerBestaat(cmnd.titel),
+          either.map((layer) => {
+            const layerSource = layer.getSource();
+            const source =
+              layerSource instanceof ol.source.Cluster
+                ? layerSource.getSource()
+                : layerSource;
+            if (!arrays.isEmpty(source.getFeatures())) {
+              // Zit binnen een conditie omdat we onnodigie OL events willen voorkomen
+              source.clear(false);
+            }
+            if (!arrays.isEmpty(cmnd.features)) {
+              // Zit binnen een conditie omdat we onnodigie OL events willen voorkomen
+              source.addFeatures(
+                cmnd.features.map(modifyWithLaagnaam(cmnd.titel))
+              );
+            }
+            return ModelAndEmptyResult(model);
+          })
+        )
       );
     }
 
@@ -1141,9 +1229,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       actief: boolean,
       totaal: FilterTotaal
     ) => Endomorphism<ke.ToegevoegdeVectorLaag> = (spec, actief, totaal) =>
-      Lens.fromProp<ke.ToegevoegdeVectorLaag, "filterinstellingen">(
-        "filterinstellingen"
-      ).set(ke.Laagfilterinstellingen(spec, actief, totaal));
+      Lens.fromProp<ke.ToegevoegdeVectorLaag>()("filterinstellingen").set(
+        ke.Laagfilterinstellingen(spec, actief, totaal)
+      );
 
     // Uiteraard is het *nooit* de bedoeling om de titel van een laag aan te passen.
     const pasLaagInModelAan: (
@@ -1162,47 +1250,53 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       const achtergrondTitels = model.titelsOpGroep.get("Achtergrond")!;
       return toModelWithValueResult(
         cmnd.wrapper,
-        allOf([
-          fromBoolean(
-            !model.showBackgroundSelector,
-            "De achtergrondkeuze is al actief"
-          ),
-          fromBoolean(
-            !array.isEmpty(achtergrondTitels),
-            "Er moet minstens 1 achtergrondlaag zijn"
-          ),
-        ]).map(() => {
-          const achtergrondLagen: Array<ke.ToegevoegdeLaag> = model.titelsOpGroep
-            .get("Achtergrond")!
-            .map((titel) => model.toegevoegdeLagenOpTitel.get(titel!)!); // de titels bestaan bij constructie
-          const geselecteerdeLaag = option.fromNullable(
-            achtergrondLagen.find((laag) => laag!.magGetoondWorden)
-          );
-          const teSelecterenLaag = geselecteerdeLaag.getOrElseL(
-            () => achtergrondLagen[0]
-          ); // er is er minstens 1 wegens validatie
+        pipe(
+          allOf([
+            fromBoolean(
+              !model.showBackgroundSelector,
+              "De achtergrondkeuze is al actief"
+            ),
+            fromBoolean(
+              !array.isEmpty(achtergrondTitels),
+              "Er moet minstens 1 achtergrondlaag zijn"
+            ),
+          ]),
+          either.map(() => {
+            const achtergrondLagen: Array<ke.ToegevoegdeLaag> = model.titelsOpGroep
+              .get("Achtergrond")!
+              .map((titel) => model.toegevoegdeLagenOpTitel.get(titel!)!); // de titels bestaan bij constructie
+            const geselecteerdeLaag = option.fromNullable(
+              achtergrondLagen.find((laag) => laag!.magGetoondWorden)
+            );
+            const teSelecterenLaag = pipe(
+              geselecteerdeLaag,
+              option.getOrElse(() => achtergrondLagen[0])
+            ); // er is er minstens 1 wegens validatie
 
-          // Zorg ervoor dat er juist 1 achtergrondlaag zichtbaar is
-          const modelMetAangepasteLagen = achtergrondLagen.reduce(
-            (mdl, laag) =>
-              flow(
-                pasLaagZichtbaarheidAan(laag!.titel === teSelecterenLaag.titel),
-                pasLaagInModelAan(mdl!)
-              )(laag!),
-            model
-          );
+            // Zorg ervoor dat er juist 1 achtergrondlaag zichtbaar is
+            const modelMetAangepasteLagen = achtergrondLagen.reduce(
+              (mdl, laag) =>
+                flow(
+                  pasLaagZichtbaarheidAan(
+                    laag!.titel === teSelecterenLaag.titel
+                  ),
+                  pasLaagInModelAan(mdl!)
+                )(laag!),
+              model
+            );
 
-          model.achtergrondlaagtitelSubj.next(teSelecterenLaag.titel);
-          modelChanger.uiElementSelectieSubj.next({
-            naam: "Achtergrondkeuze",
-            aan: true,
-          });
-          zendLagenInGroep(modelMetAangepasteLagen, "Achtergrond");
-          return ModelAndEmptyResult({
-            ...modelMetAangepasteLagen,
-            showBackgroundSelector: true,
-          });
-        })
+            model.achtergrondlaagtitelSubj.next(teSelecterenLaag.titel);
+            modelChanger.uiElementSelectieSubj.next({
+              naam: "Achtergrondkeuze",
+              aan: true,
+            });
+            zendLagenInGroep(modelMetAangepasteLagen, "Achtergrond");
+            return ModelAndEmptyResult({
+              ...modelMetAangepasteLagen,
+              showBackgroundSelector: true,
+            });
+          })
+        )
       );
     }
 
@@ -1211,11 +1305,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        fromBoolean(
-          model.showBackgroundSelector,
-          "De achtergrondkeuze is niet actief"
-        ) //
-          .map(() => {
+        pipe(
+          fromBoolean(
+            model.showBackgroundSelector,
+            "De achtergrondkeuze is niet actief"
+          ),
+          either.map(() => {
             modelChanger.uiElementSelectieSubj.next({
               naam: "Achtergrondkeuze",
               aan: false,
@@ -1225,6 +1320,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               showBackgroundSelector: false,
             });
           })
+        )
       );
     }
 
@@ -1233,33 +1329,40 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        chain(
-          valideerIsAchtergrondLaag(cmnd.titel), //
-          () => valideerToegevoegdeLaagBestaat(cmnd.titel)
-        ).map((nieuweAchtergrond: ke.ToegevoegdeLaag) => {
-          model.achtergrondlaagtitelSubj.next(cmnd.titel);
-          const maybeVorigeAchtergrond = maps.findFirst(
-            model.toegevoegdeLagenOpTitel,
-            (laag) =>
-              laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden
-          );
-          const modelMetNieuweZichtbaarheid = flow(
-            pasLaagZichtbaarheidAan(true),
-            pasLaagInModelAan(model)
-          )(nieuweAchtergrond);
-          const modelMetNieuweEnOudeZichtbaarheid = maybeVorigeAchtergrond
-            .filter((vorige) => vorige.titel !== nieuweAchtergrond.titel) // enkel onzichtbaar maken als verschillend
-            .fold(
-              modelMetNieuweZichtbaarheid, //
-              (vorigeAchtergrond) =>
-                flow(
-                  pasLaagZichtbaarheidAan(false),
-                  pasLaagInModelAan(modelMetNieuweZichtbaarheid)
-                )(vorigeAchtergrond)
+        pipe(
+          chain(
+            valideerIsAchtergrondLaag(cmnd.titel), //
+            () => valideerToegevoegdeLaagBestaat(cmnd.titel)
+          ),
+          either.map((nieuweAchtergrond: ke.ToegevoegdeLaag) => {
+            model.achtergrondlaagtitelSubj.next(cmnd.titel);
+            const maybeVorigeAchtergrond = maps.findFirst(
+              model.toegevoegdeLagenOpTitel,
+              (laag) =>
+                laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden
             );
-          zendLagenInGroep(modelMetNieuweEnOudeZichtbaarheid, "Achtergrond");
-          return ModelAndEmptyResult(modelMetNieuweEnOudeZichtbaarheid);
-        })
+            const modelMetNieuweZichtbaarheid = flow(
+              pasLaagZichtbaarheidAan(true),
+              pasLaagInModelAan(model)
+            )(nieuweAchtergrond);
+            const modelMetNieuweEnOudeZichtbaarheid = pipe(
+              maybeVorigeAchtergrond,
+              option.filter(
+                (vorige) => vorige.titel !== nieuweAchtergrond.titel
+              ), // enkel onzichtbaar maken als verschillend
+              option.fold(
+                () => modelMetNieuweZichtbaarheid, //
+                (vorigeAchtergrond) =>
+                  flow(
+                    pasLaagZichtbaarheidAan(false),
+                    pasLaagInModelAan(modelMetNieuweZichtbaarheid)
+                  )(vorigeAchtergrond)
+              )
+            );
+            zendLagenInGroep(modelMetNieuweEnOudeZichtbaarheid, "Achtergrond");
+            return ModelAndEmptyResult(modelMetNieuweEnOudeZichtbaarheid);
+          })
+        )
       );
     }
 
@@ -1283,14 +1386,17 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         wrapper,
-        valideerToegevoegdeLaagBestaat(titel).map((laag) => {
-          const aangepastModel = flow(
-            pasLaagZichtbaarheidAan(magGetoondWorden),
-            pasLaagInModelAan(model)
-          )(laag);
-          zendLagenInGroep(aangepastModel, laag.laaggroep);
-          return ModelAndEmptyResult(aangepastModel);
-        })
+        pipe(
+          valideerToegevoegdeLaagBestaat(titel),
+          either.map((laag) => {
+            const aangepastModel = flow(
+              pasLaagZichtbaarheidAan(magGetoondWorden),
+              pasLaagInModelAan(model)
+            )(laag);
+            zendLagenInGroep(aangepastModel, laag.laaggroep);
+            return ModelAndEmptyResult(aangepastModel);
+          })
+        )
       );
     }
 
@@ -1304,10 +1410,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       // ke.LayerProperties.Selecteerbaar zetten op een laag onmiddellijk effect heeft.
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerToegevoegdeVectorLaagBestaat(cmnd.titel).map((laag) => {
-          laag.layer.set(ke.LayerProperties.Selecteerbaar, cmnd.selecteerbaar);
-          return ModelAndEmptyResult(model);
-        })
+        pipe(
+          valideerToegevoegdeVectorLaagBestaat(cmnd.titel),
+          either.map((laag) => {
+            laag.layer.set(
+              ke.LayerProperties.Selecteerbaar,
+              cmnd.selecteerbaar
+            );
+            return ModelAndEmptyResult(model);
+          })
+        )
       );
     }
 
@@ -1392,11 +1504,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     const noStyle: FeatureStyle = [];
 
-    type StyleSelectorFn = Function2<
-      ol.Map,
-      LaagTitel,
-      option.Option<StyleSelector>
-    >;
+    type StyleSelectorFn = (
+      olmap: ol.Map,
+      titel: LaagTitel
+    ) => option.Option<StyleSelector>;
 
     const createSelectionStyleFn = function (
       styleSelectorFn: StyleSelectorFn
@@ -1410,33 +1521,40 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           (s: ss.Styles) => s.styles
         );
 
-        return Feature.getLaagnaam(feature).foldL(
-          () => {
-            kaartLogger.warn("Geen laagnaam gevonden voor: ", feature);
-            return noStyle;
-          },
-          (laagnaam) =>
-            styleSelectorFn(model.map, laagnaam).foldL(
-              () => {
-                kaartLogger.debug(
-                  "Geen hover/selectiestijl gevonden voor:",
-                  feature
-                );
-                return getFeatureStyleSelector(model.map, laagnaam).foldL<
-                  FeatureStyle
-                >(
+        return pipe(
+          Feature.getLaagnaam(feature),
+          option.fold(
+            () => {
+              kaartLogger.warn("Geen laagnaam gevonden voor: ", feature);
+              return noStyle;
+            },
+            (laagnaam) =>
+              pipe(
+                styleSelectorFn(model.map, laagnaam),
+                option.fold(
                   () => {
-                    kaartLogger.error(
-                      "Geen stijlselector gevonden voor:",
+                    kaartLogger.debug(
+                      "Geen hover/selectiestijl gevonden voor:",
                       feature
                     );
-                    return noStyle;
+                    return pipe(
+                      getFeatureStyleSelector(model.map, laagnaam),
+                      option.fold<StyleSelector, FeatureStyle>(
+                        () => {
+                          kaartLogger.error(
+                            "Geen stijlselector gevonden voor:",
+                            feature
+                          );
+                          return noStyle;
+                        },
+                        flow(executeStyleSelector, applySelectionColor) // we vallen terug op feature stijl met custom kleurtje
+                      )
+                    );
                   },
-                  flow(executeStyleSelector, applySelectionColor) // we vallen terug op feature stijl met custom kleurtje
-                );
-              },
-              executeStyleSelector // dit is het perfecte geval: evalueer de selectiestijl selector
-            )
+                  executeStyleSelector // dit is het perfecte geval: evalueer de selectiestijl selector
+                )
+              )
+          )
         );
       };
     };
@@ -1506,67 +1624,74 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       const newSelectInteracties = arrays.fromOption(
-        getSelectInteractionOptions(cmnd.selectieModus).map((selectOption) => {
-          const selectInteraction = new ol.interaction.Select(selectOption);
+        pipe(
+          getSelectInteractionOptions(cmnd.selectieModus),
+          option.map((selectOption) => {
+            const selectInteraction = new ol.interaction.Select(selectOption);
 
-          if (cmnd.selectieModus === "single") {
-            selectInteraction.on("select", (s: ol.interaction.SelectEvent) => {
-              const selectedFeaturesCollection = s.target.getFeatures();
-              const selectedFeatures = selectedFeaturesCollection.getArray();
-              if (arrays.isNonEmpty(selectedFeatures)) {
-                const maybeClosest = findClosest(
-                  selectedFeatures,
-                  s.mapBrowserEvent.coordinate
-                );
-                selectedFeaturesCollection.clear();
-                forEach(maybeClosest, (closest) =>
-                  selectedFeaturesCollection.extend([closest])
-                );
-              }
-            });
-          }
-
-          // Voeg een extra selectie interactie toe om te klikken op een cluster om daar op in te zoomen.
-          const clusterSelect = new ol.interaction.Select({
-            condition: ol.events.condition.click,
-            multi: false,
-            hitTolerance: hitTolerance,
-            style: undefined,
-            layers: (layer) => layer.get(ke.LayerProperties.Selecteerbaar),
-            filter: not(filterClusters),
-          });
-          clusterSelect.addEventListener(
-            "select",
-            (event: ol.interaction.SelectEvent) => {
-              if (event.selected && event.selected.length > 0) {
-                const cluster = event.selected[0];
-                // zet middelpunt en zoom 1 niveau in.
-                model.map.getView().animate({
-                  zoom: option
-                    .fromNullable(model.map.getView().getZoom())
-                    .map((zoom) =>
-                      Math.min(zoom + 1, model.map.getView().getMaxZoom())
-                    )
-                    .toUndefined(),
-                  center: ol.extent.getCenter(
-                    cluster.getGeometry()!.getExtent()
-                  ),
-                  duration: 500,
-                });
-              }
-              return true;
+            if (cmnd.selectieModus === "single") {
+              selectInteraction.on(
+                "select",
+                (s: ol.interaction.SelectEvent) => {
+                  const selectedFeaturesCollection = s.target.getFeatures();
+                  const selectedFeatures = selectedFeaturesCollection.getArray();
+                  if (arrays.isNonEmpty(selectedFeatures)) {
+                    const maybeClosest = findClosest(
+                      selectedFeatures,
+                      s.mapBrowserEvent.coordinate
+                    );
+                    selectedFeaturesCollection.clear();
+                    forEach(maybeClosest, (closest) =>
+                      selectedFeaturesCollection.extend([closest])
+                    );
+                  }
+                }
+              );
             }
-          );
 
-          return [
-            selectInteraction,
-            clusterSelect,
-            new ol.interaction.DragBox({
-              condition: ol.events.condition.platformModifierKeyOnly,
-              onBoxEnd: () => {},
-            }),
-          ];
-        })
+            // Voeg een extra selectie interactie toe om te klikken op een cluster om daar op in te zoomen.
+            const clusterSelect = new ol.interaction.Select({
+              condition: ol.events.condition.click,
+              multi: false,
+              hitTolerance: hitTolerance,
+              style: undefined,
+              layers: (layer) => layer.get(ke.LayerProperties.Selecteerbaar),
+              filter: not(filterClusters),
+            });
+            clusterSelect.addEventListener(
+              "select",
+              (event: ol.interaction.SelectEvent) => {
+                if (event.selected && event.selected.length > 0) {
+                  const cluster = event.selected[0];
+                  // zet middelpunt en zoom 1 niveau in.
+                  model.map.getView().animate({
+                    zoom: pipe(
+                      option.fromNullable(model.map.getView().getZoom()),
+                      option.map((zoom) =>
+                        Math.min(zoom + 1, model.map.getView().getMaxZoom())
+                      ),
+                      option.toUndefined
+                    ),
+                    center: ol.extent.getCenter(
+                      cluster.getGeometry()!.getExtent()
+                    ),
+                    duration: 500,
+                  });
+                }
+                return true;
+              }
+            );
+
+            return [
+              selectInteraction,
+              clusterSelect,
+              new ol.interaction.DragBox({
+                condition: ol.events.condition.platformModifierKeyOnly,
+                onBoxEnd: () => {},
+              }),
+            ];
+          })
+        )
       );
 
       model.selectInteracties.forEach((i) => model.map.removeInteraction(i));
@@ -1611,8 +1736,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         }
       }
 
-      const newHoverInteractie = getHoverInteraction(cmnd.hoverModus).map(
-        (selectOption) => new ol.interaction.Select(selectOption)
+      const newHoverInteractie = pipe(
+        getHoverInteraction(cmnd.hoverModus),
+        option.map((selectOption) => new ol.interaction.Select(selectOption))
       );
 
       forEach(model.hoverInteractie, (interactie) =>
@@ -1643,9 +1769,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         }
       }
 
-      const newHighlightInteractie = getHighlightInteraction(
-        cmnd.highlightModus
-      ).map((selectOption) => new ol.interaction.Select(selectOption));
+      const newHighlightInteractie = pipe(
+        getHighlightInteraction(cmnd.highlightModus),
+        option.map((selectOption) => new ol.interaction.Select(selectOption))
+      );
 
       forEach(model.highlightInteractie, (interactie) =>
         model.map.removeInteraction(interactie)
@@ -1665,34 +1792,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerToegevoegdeVectorLaagBestaat(cmnd.titel).map((laag) => {
-          const updatedLaag = pasVectorLaagStijlAan(
-            option.some(cmnd.stijl),
-            cmnd.selectieStijl
-          )(laag);
-          const updatedModel = pasLaagInModelAan(model)(updatedLaag);
-          zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
-          zendStijlwijziging(updatedLaag);
-          return ModelAndEmptyResult(updatedModel);
-        })
-      );
-    }
-
-    function zetStijlSpecVoorLaagCmd(
-      cmnd: prt.ZetStijlSpecVoorLaagCmd<Msg>
-    ): ModelWithResult<Msg> {
-      return toModelWithValueResult(
-        cmnd.wrapper,
-        chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), (laag) =>
-          valideerAlsStijlSpec(cmnd.stijlSpec).map((stijl) => {
-            const updatedLaag = {
-              ...pasVectorLaagStijlAan(
-                ss.asStyleSelector(stijl),
-                laag.selectiestijlSel
-              )(laag),
-              stijlSelBron: option.some(cmnd.stijlSpec),
-              legende: option.some(cmnd.legende),
-            };
+        pipe(
+          valideerToegevoegdeVectorLaagBestaat(cmnd.titel),
+          either.map((laag) => {
+            const updatedLaag = pasVectorLaagStijlAan(
+              option.some(cmnd.stijl),
+              cmnd.selectieStijl
+            )(laag);
             const updatedModel = pasLaagInModelAan(model)(updatedLaag);
             zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
             zendStijlwijziging(updatedLaag);
@@ -1702,18 +1808,48 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function zetStijlSpecVoorLaagCmd(
+      cmnd: prt.ZetStijlSpecVoorLaagCmd<Msg>
+    ): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), (laag) =>
+          pipe(
+            valideerAlsStijlSpec(cmnd.stijlSpec),
+            either.map((stijl) => {
+              const updatedLaag = {
+                ...pasVectorLaagStijlAan(
+                  ss.asStyleSelector(stijl),
+                  laag.selectiestijlSel
+                )(laag),
+                stijlSelBron: option.some(cmnd.stijlSpec),
+                legende: option.some(cmnd.legende),
+              };
+              const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+              zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+              zendStijlwijziging(updatedLaag);
+              return ModelAndEmptyResult(updatedModel);
+            })
+          )
+        )
+      );
+    }
+
     function toonInfoBoodschap(
       cmnd: prt.ToonInfoBoodschapCmd
     ): ModelWithResult<Msg> {
       const boodschap = {
         ...cmnd.boodschap,
-        laag: option
-          .fromNullable(model.toegevoegdeLagenOpTitel.get(cmnd.boodschap.titel))
-          .filter((laag) => laag.bron.type === ke.VectorType)
-          .map((laag) => laag.bron as ke.VectorLaag),
+        laag: pipe(
+          option.fromNullable(
+            model.toegevoegdeLagenOpTitel.get(cmnd.boodschap.titel)
+          ),
+          option.filter((laag) => laag.bron.type === ke.VectorType),
+          option.map((laag) => laag.bron as ke.VectorLaag)
+        ),
       };
       updateBehaviorSubject(model.infoBoodschappenSubj, (bsch) =>
-        fptsmap.insert(eq.eqString)(boodschap.id, boodschap, bsch)
+        pipe(bsch, fptsmap.insertAt(eq.eqString)(boodschap.id, boodschap))
       );
       return ModelWithResult(model);
     }
@@ -1729,7 +1865,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       cmnd: prt.VerbergInfoBoodschapCmd
     ): ModelWithResult<Msg> {
       updateBehaviorSubject(model.infoBoodschappenSubj, (bsch) =>
-        fptsmap.remove(eq.eqString)(cmnd.id, bsch)
+        pipe(bsch, fptsmap.deleteAt(eq.eqString)(cmnd.id))
       );
       return ModelWithResult(model);
     }
@@ -1788,22 +1924,25 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       const sluitBox = () =>
         updateBehaviorSubject(model.infoBoodschappenSubj, (bsch) =>
-          fptsmap.remove(eq.eqString)(cmnd.id, bsch)
+          pipe(bsch, fptsmap.deleteAt(eq.eqString)(cmnd.id))
         );
       const maybeMsg = cmnd.msgGen() as option.Option<Msg>;
-      return maybeMsg.foldL(
-        () => {
-          // geen message uit functie, sluit de info boodschap zelf
-          sluitBox();
-          return ModelWithResult(model);
-        },
-        (msg) => {
-          // stuur sluit message door
-          if (cmnd.sluit) {
+      return pipe(
+        maybeMsg,
+        option.fold(
+          () => {
+            // geen message uit functie, sluit de info boodschap zelf
             sluitBox();
+            return ModelWithResult(model);
+          },
+          (msg) => {
+            // stuur sluit message door
+            if (cmnd.sluit) {
+              sluitBox();
+            }
+            return ModelWithResult(model, option.some(msg));
           }
-          return ModelWithResult(model, option.some(msg));
-        }
+        )
       );
     }
 
@@ -1817,21 +1956,24 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerZoekerIsNietGeregistreerd(
-          cmnd.zoekerPrioriteit.zoeker.naam()
-        ).map(() => {
-          const updatedModel = {
-            ...model,
-            zoekersMetPrioriteiten: array.snoc(
-              model.zoekersMetPrioriteiten,
-              cmnd.zoekerPrioriteit
-            ),
-          };
-          model.changer.zoekerServicesSubj.next(
-            updatedModel.zoekersMetPrioriteiten
-          );
-          return ModelAndEmptyResult(updatedModel);
-        })
+        pipe(
+          valideerZoekerIsNietGeregistreerd(
+            cmnd.zoekerPrioriteit.zoeker.naam()
+          ),
+          either.map(() => {
+            const updatedModel = {
+              ...model,
+              zoekersMetPrioriteiten: array.snoc(
+                model.zoekersMetPrioriteiten,
+                cmnd.zoekerPrioriteit
+              ),
+            };
+            model.changer.zoekerServicesSubj.next(
+              updatedModel.zoekersMetPrioriteiten
+            );
+            return ModelAndEmptyResult(updatedModel);
+          })
+        )
       );
     }
 
@@ -1840,29 +1982,35 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerZoekerIsGeregistreerd(cmnd.zoekerNaam).map(() => {
-          const updatedModel = {
-            ...model,
-            zoekersMetPrioriteiten: array.filter(
-              model.zoekersMetPrioriteiten,
-              (zmp) => zmp.zoeker.naam() !== cmnd.zoekerNaam
-            ),
-          };
-          model.changer.zoekerServicesSubj.next(
-            updatedModel.zoekersMetPrioriteiten
-          );
-          return ModelAndEmptyResult(updatedModel);
-        })
+        pipe(
+          valideerZoekerIsGeregistreerd(cmnd.zoekerNaam),
+          either.map(() => {
+            const updatedModel = {
+              ...model,
+              zoekersMetPrioriteiten: pipe(
+                model.zoekersMetPrioriteiten,
+                array.filter((zmp) => zmp.zoeker.naam() !== cmnd.zoekerNaam)
+              ),
+            };
+            model.changer.zoekerServicesSubj.next(
+              updatedModel.zoekersMetPrioriteiten
+            );
+            return ModelAndEmptyResult(updatedModel);
+          })
+        )
       );
     }
 
     function zoek(cmnd: prt.ZoekCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerMinstens1ZoekerGeregistreerd().map(() => {
-          modelChanger.zoekopdrachtSubj.next(cmnd.opdracht);
-          return ModelAndEmptyResult(model);
-        })
+        pipe(
+          valideerMinstens1ZoekerGeregistreerd(),
+          either.map(() => {
+            modelChanger.zoekopdrachtSubj.next(cmnd.opdracht);
+            return ModelAndEmptyResult(model);
+          })
+        )
       );
     }
 
@@ -2007,13 +2155,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.msgGen,
-        valideerToegevoegdeLaagBestaat(cmnd.titel).map((laag) => {
-          const updatedLaag = { ...laag, transparantie: cmnd.transparantie };
-          const updatedModel = pasLaagInModelAan(model)(updatedLaag);
-          laag.layer.setOpacity(1 - Transparantie.toNumber(cmnd.transparantie));
-          zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
-          return ModelAndEmptyResult(updatedModel);
-        })
+        pipe(
+          valideerToegevoegdeLaagBestaat(cmnd.titel),
+          either.map((laag) => {
+            const updatedLaag = { ...laag, transparantie: cmnd.transparantie };
+            const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+            laag.layer.setOpacity(
+              1 - Transparantie.toNumber(cmnd.transparantie)
+            );
+            zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+            return ModelAndEmptyResult(updatedModel);
+          })
+        )
       );
     }
 
@@ -2064,17 +2217,23 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerToegevoegdeLaagBestaat(cmnd.titel).map((laag) => {
-          ke.asTiledWmsLaag(laag.bron).map((tiledWms) =>
-            tiledWms.urls.map((url) =>
-              serviceworker.registreerRoute(
-                cmnd.titel,
-                `${url}.*${tiledWms.naam}.*`
+        pipe(
+          valideerToegevoegdeLaagBestaat(cmnd.titel),
+          either.map((laag) => {
+            pipe(
+              ke.asTiledWmsLaag(laag.bron),
+              option.map((tiledWms) =>
+                tiledWms.urls.map((url) =>
+                  serviceworker.registreerRoute(
+                    cmnd.titel,
+                    `${url}.*${tiledWms.naam}.*`
+                  )
+                )
               )
-            )
-          );
-          return ModelAndEmptyResult(model);
-        })
+            );
+            return ModelAndEmptyResult(model);
+          })
+        )
       );
     }
 
@@ -2083,45 +2242,48 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerTiledWmsBestaat(cmnd.titel).map((tiledWms) => {
-          refreshTiles(
-            cmnd.titel,
-            tiledWms.getSource() as ol.source.UrlTile,
-            cmnd.startZoom,
-            cmnd.eindZoom,
-            cmnd.wkt,
-            cmnd.startMetLegeCache
-          )
-            // We willen niet meer dan 1/sec progress sturen, maar de laatste willen we zeker
-            .pipe(
-              throttleTime(1000, undefined, { leading: true, trailing: true })
+        pipe(
+          valideerTiledWmsBestaat(cmnd.titel),
+          either.map((tiledWms) => {
+            refreshTiles(
+              cmnd.titel,
+              tiledWms.getSource() as ol.source.UrlTile,
+              cmnd.startZoom,
+              cmnd.eindZoom,
+              cmnd.wkt,
+              cmnd.startMetLegeCache
             )
-            .subscribe((progress) => {
-              if (progress.percentage === 100) {
-                metaDataDb.write(cmnd.titel, progress.started).subscribe(() =>
-                  updateBehaviorSubject(
-                    modelChanger.laatsteCacheRefreshSubj,
-                    (laatsteCacheRefresh) => {
-                      return {
-                        ...laatsteCacheRefresh,
-                        [cmnd.titel]: progress.started,
-                      };
-                    }
-                  )
-                );
-              }
-              updateBehaviorSubject(
-                modelChanger.precacheProgressSubj,
-                (precacheLaagProgress) => {
-                  return {
-                    ...precacheLaagProgress,
-                    [cmnd.titel]: progress.percentage,
-                  };
+              // We willen niet meer dan 1/sec progress sturen, maar de laatste willen we zeker
+              .pipe(
+                throttleTime(1000, undefined, { leading: true, trailing: true })
+              )
+              .subscribe((progress) => {
+                if (progress.percentage === 100) {
+                  metaDataDb.write(cmnd.titel, progress.started).subscribe(() =>
+                    updateBehaviorSubject(
+                      modelChanger.laatsteCacheRefreshSubj,
+                      (laatsteCacheRefresh) => {
+                        return {
+                          ...laatsteCacheRefresh,
+                          [cmnd.titel]: progress.started,
+                        };
+                      }
+                    )
+                  );
                 }
-              );
-            });
-          return ModelAndEmptyResult(model);
-        })
+                updateBehaviorSubject(
+                  modelChanger.precacheProgressSubj,
+                  (precacheLaagProgress) => {
+                    return {
+                      ...precacheLaagProgress,
+                      [cmnd.titel]: progress.percentage,
+                    };
+                  }
+                );
+              });
+            return ModelAndEmptyResult(model);
+          })
+        )
       );
     }
 
@@ -2130,28 +2292,31 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerNoSqlFsSourceBestaat(cmnd.titel).map((noSqlSource) => {
-          (cmnd.startMetLegeCache
-            ? featureStore.clear(cmnd.titel)
-            : rx.of(undefined)
-          )
-            .pipe(
-              switchMap(() =>
-                noSqlSource.fetchFeaturesByWkt$(cmnd.wkt).pipe(
-                  bufferCount(1000),
-                  switchMap((features) =>
-                    featureStore.writeFeatures(cmnd.titel, features)
+        pipe(
+          valideerNoSqlFsSourceBestaat(cmnd.titel),
+          either.map((noSqlSource) => {
+            (cmnd.startMetLegeCache
+              ? featureStore.clear(cmnd.titel)
+              : rx.of(undefined)
+            )
+              .pipe(
+                switchMap(() =>
+                  noSqlSource.fetchFeaturesByWkt$(cmnd.wkt).pipe(
+                    bufferCount(1000),
+                    switchMap((features) =>
+                      featureStore.writeFeatures(cmnd.titel, features)
+                    )
                   )
                 )
               )
-            )
-            .subscribe(
-              (aantal) =>
-                kaartLogger.debug(`${aantal} features in cache bewaard`),
-              (error) => kaartLogger.error(error)
-            );
-          return ModelAndEmptyResult(model);
-        })
+              .subscribe(
+                (aantal) =>
+                  kaartLogger.debug(`${aantal} features in cache bewaard`),
+                (error) => kaartLogger.error(error)
+              );
+            return ModelAndEmptyResult(model);
+          })
+        )
       );
     }
 
@@ -2166,28 +2331,31 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function zetFilter(cmnd: prt.ZetFilter<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), (laag) =>
-          valideerNoSqlFsSourceBestaat(cmnd.titel).map((noSqlFsSource) => [
-            laag,
-            noSqlFsSource,
-          ])
-        ).map(
-          ([laag, noSqlFsSource]: [
-            ke.ToegevoegdeVectorLaag,
-            NosqlFsSource
-          ]) => {
-            activeerFilterOpSource(noSqlFsSource, cmnd.filter, true);
-            const updatedLaag = pasLaagFilterAan(
-              cmnd.filter,
-              true,
-              laag.filterinstellingen.totaal
-            )(laag);
-            const updatedModel = pasLaagInModelAan(model)(updatedLaag);
-            zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
-            zendFilterwijziging(updatedLaag);
-            berekenFilterTotalen(updatedLaag);
-            return ModelAndEmptyResult(updatedModel);
-          }
+        pipe(
+          chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), (laag) =>
+            pipe(
+              valideerNoSqlFsSourceBestaat(cmnd.titel),
+              either.map((noSqlFsSource) => [laag, noSqlFsSource])
+            )
+          ),
+          either.map(
+            ([laag, noSqlFsSource]: [
+              ke.ToegevoegdeVectorLaag,
+              NosqlFsSource
+            ]) => {
+              activeerFilterOpSource(noSqlFsSource, cmnd.filter, true);
+              const updatedLaag = pasLaagFilterAan(
+                cmnd.filter,
+                true,
+                laag.filterinstellingen.totaal
+              )(laag);
+              const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+              zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+              zendFilterwijziging(updatedLaag);
+              berekenFilterTotalen(updatedLaag);
+              return ModelAndEmptyResult(updatedModel);
+            }
+          )
         )
       );
     }
@@ -2197,31 +2365,34 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), (laag) =>
-          valideerNoSqlFsSourceBestaat(cmnd.titel).map((noSqlFsSource) => [
-            laag,
-            noSqlFsSource,
-          ])
-        ).map(
-          ([laag, noSqlFsSource]: [
-            ke.ToegevoegdeVectorLaag,
-            NosqlFsSource
-          ]) => {
-            activeerFilterOpSource(
-              noSqlFsSource,
-              laag.filterinstellingen.spec,
-              cmnd.actief
-            );
-            const updatedLaag = pasLaagFilterAan(
-              laag.filterinstellingen.spec,
-              cmnd.actief,
-              laag.filterinstellingen.totaal
-            )(laag);
-            const updatedModel = pasLaagInModelAan(model)(updatedLaag);
-            zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
-            zendFilterwijziging(updatedLaag);
-            return ModelAndEmptyResult(updatedModel);
-          }
+        pipe(
+          chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), (laag) =>
+            pipe(
+              valideerNoSqlFsSourceBestaat(cmnd.titel),
+              either.map((noSqlFsSource) => [laag, noSqlFsSource])
+            )
+          ),
+          either.map(
+            ([laag, noSqlFsSource]: [
+              ke.ToegevoegdeVectorLaag,
+              NosqlFsSource
+            ]) => {
+              activeerFilterOpSource(
+                noSqlFsSource,
+                laag.filterinstellingen.spec,
+                cmnd.actief
+              );
+              const updatedLaag = pasLaagFilterAan(
+                laag.filterinstellingen.spec,
+                cmnd.actief,
+                laag.filterinstellingen.totaal
+              )(laag);
+              const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+              zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+              zendFilterwijziging(updatedLaag);
+              return ModelAndEmptyResult(updatedModel);
+            }
+          )
         )
       );
     }
@@ -2248,29 +2419,35 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerToegevoegdeVectorLaagBestaat(cmnd.titel).map((laag) => {
-          berekenFilterTotalen(laag);
+        pipe(
+          valideerToegevoegdeVectorLaagBestaat(cmnd.titel),
+          either.map((laag) => {
+            berekenFilterTotalen(laag);
 
-          const updatedLaag = pasLaagFilterAan(
-            laag.filterinstellingen.spec,
-            laag.filterinstellingen.actief,
-            totaalOpTeHalen()
-          )(laag);
-          const updatedModel = pasLaagInModelAan(model)(updatedLaag);
-          zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
-          zendFilterwijziging(updatedLaag);
-          return ModelAndEmptyResult(updatedModel);
-        })
+            const updatedLaag = pasLaagFilterAan(
+              laag.filterinstellingen.spec,
+              laag.filterinstellingen.actief,
+              totaalOpTeHalen()
+            )(laag);
+            const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+            zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+            zendFilterwijziging(updatedLaag);
+            return ModelAndEmptyResult(updatedModel);
+          })
+        )
       );
     }
 
     function zetOffline(cmnd: prt.ZetOffline<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerNoSqlFsSourceBestaat(cmnd.titel).map((noSqlFsSource) => {
-          noSqlFsSource.setOffline(cmnd.offline);
-          return ModelAndEmptyResult(model);
-        })
+        pipe(
+          valideerNoSqlFsSourceBestaat(cmnd.titel),
+          either.map((noSqlFsSource) => {
+            noSqlFsSource.setOffline(cmnd.offline);
+            return ModelAndEmptyResult(model);
+          })
+        )
       );
     }
 
@@ -2279,12 +2456,15 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     ): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmd.msgGen,
-        valideerNoSqlFsSourceBestaat(cmd.titel).map((noSqlFsSource) =>
-          ModelAndValue(
-            model,
-            CachedFeatureLookup.fromObjectStore(
-              noSqlFsSource.cacheStoreName(),
-              cmd.titel
+        pipe(
+          valideerNoSqlFsSourceBestaat(cmd.titel),
+          either.map((noSqlFsSource) =>
+            ModelAndValue(
+              model,
+              CachedFeatureLookup.fromObjectStore(
+                noSqlFsSource.cacheStoreName(),
+                cmd.titel
+              )
             )
           )
         )
@@ -2816,16 +2996,22 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         model.subscriptionsOpHandle,
         cmnd.subscriptionResult.subscriptionHandle
       );
-      const updatedModel = maybeSubscription.fold(model, (subscription) => {
-        subscription.unsubscribe();
-        return {
-          ...model,
-          subscriptionsOpHandle: maps.remove(
-            model.subscriptionsOpHandle,
-            cmnd.subscriptionResult.subscriptionHandle
-          ),
-        };
-      });
+      const updatedModel = pipe(
+        maybeSubscription,
+        option.fold(
+          () => model,
+          (subscription) => {
+            subscription.unsubscribe();
+            return {
+              ...model,
+              subscriptionsOpHandle: maps.remove(
+                model.subscriptionsOpHandle,
+                cmnd.subscriptionResult.subscriptionHandle
+              ),
+            };
+          }
+        )
+      );
       return ModelWithResult(updatedModel);
     }
 

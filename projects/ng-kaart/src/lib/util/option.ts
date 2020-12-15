@@ -1,34 +1,40 @@
-import { eq, option, record, validation } from "fp-ts";
+import { either, eq, option, record } from "fp-ts";
 import { Predicate } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import { isNotNullOrUndefined } from "./null";
 
 export function forEach<T>(anOption: option.Option<T>, f: (t: T) => any): void {
-  anOption.map(f);
-}
-
-export function containsText(
-  anOption: option.Option<String>,
-  text: string
-): boolean {
-  return anOption.contains(eq.eqString, text);
+  pipe(anOption, option.map(f));
 }
 
 export function fromValidation<L, A>(
-  validation: validation.Validation<L, A>
+  validation: either.Either<L, A>
 ): option.Option<A> {
-  return validation.fold(() => option.none, option.some);
+  return pipe(
+    validation,
+    either.fold(() => option.none, option.some)
+  );
 }
 
 export function fromNullablePredicate<A>(
   predicate: Predicate<A>,
   a: A
 ): option.Option<A> {
-  return option.fromPredicate(predicate)(a).chain(option.fromNullable);
+  return pipe(
+    option.fromPredicate(predicate)(a),
+    option.chain(option.fromNullable)
+  );
 }
 
 export function toArray<A>(maybeA: option.Option<A>): A[] {
-  return maybeA.fold([], (a) => [a]);
+  return pipe(
+    maybeA,
+    option.fold(
+      () => [],
+      (a) => [a]
+    )
+  );
 }
 
 export type NoOption<A> = A extends option.Option<infer B> ? B | undefined : A;

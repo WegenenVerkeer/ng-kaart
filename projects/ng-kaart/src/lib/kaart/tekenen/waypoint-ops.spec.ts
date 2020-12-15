@@ -1,4 +1,5 @@
-import { array, option } from "fp-ts";
+import { array, option, tuple } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import { addWaypoint, emptyRouteState, removeWaypoint } from "./waypoint-ops";
 import { AddWaypoint, RemoveWaypoint, Waypoint } from "./waypoint.msg";
@@ -12,11 +13,11 @@ describe("Route Changes bij sequentieel toevoegen:", () => {
         AddWaypoint(option.none, waypoint0)
       );
 
-      expect(transition1.snd.routesRemoved.length).toBe(0);
-      expect(transition1.snd.routesAdded.length).toBe(0);
+      expect(tuple.snd(transition1).routesRemoved.length).toBe(0);
+      expect(tuple.snd(transition1).routesAdded.length).toBe(0);
 
-      expect(transition1.fst.waypoints.length).toBe(1);
-      expect(transition1.fst.waypoints[0]).toBe(waypoint0);
+      expect(tuple.fst(transition1).waypoints.length).toBe(1);
+      expect(tuple.fst(transition1).waypoints[0]).toBe(waypoint0);
     });
   });
 
@@ -29,18 +30,18 @@ describe("Route Changes bij sequentieel toevoegen:", () => {
       );
       const waypoint1 = Waypoint(1, [1, 1]);
       const transition2 = addWaypoint(
-        transition1.fst,
+        tuple.fst(transition1),
         AddWaypoint(option.none, waypoint1)
       );
 
-      expect(transition2.snd.routesRemoved.length).toBe(0);
-      expect(transition2.snd.routesAdded.length).toBe(1);
-      const routeAdded = transition2.snd.routesAdded[0];
+      expect(tuple.snd(transition2).routesRemoved.length).toBe(0);
+      expect(tuple.snd(transition2).routesAdded.length).toBe(1);
+      const routeAdded = tuple.snd(transition2).routesAdded[0];
       expect(routeAdded.begin).toBe(waypoint1);
       expect(routeAdded.end).toBe(waypoint0);
 
-      expect(transition2.fst.waypoints.length).toBe(2);
-      expect(transition2.fst.waypoints[0]).toBe(waypoint1);
+      expect(tuple.fst(transition2).waypoints.length).toBe(2);
+      expect(tuple.fst(transition2).waypoints[0]).toBe(waypoint1);
     });
   });
 
@@ -53,19 +54,19 @@ describe("Route Changes bij sequentieel toevoegen:", () => {
       );
       const waypoint1 = Waypoint(1, [1, 1]);
       const transition2 = addWaypoint(
-        transition1.fst,
+        tuple.fst(transition1),
         AddWaypoint(option.some(waypoint0), waypoint1)
       );
 
-      expect(transition2.snd.routesRemoved.length).toBe(0);
-      expect(transition2.snd.routesAdded.length).toBe(1);
-      const routeAdded = transition2.snd.routesAdded[0];
+      expect(tuple.snd(transition2).routesRemoved.length).toBe(0);
+      expect(tuple.snd(transition2).routesAdded.length).toBe(1);
+      const routeAdded = tuple.snd(transition2).routesAdded[0];
       expect(routeAdded.begin).toBe(waypoint0);
       expect(routeAdded.end).toBe(waypoint1);
 
-      expect(transition2.fst.waypoints.length).toBe(2);
-      expect(transition2.fst.waypoints[0]).toBe(waypoint0);
-      expect(transition2.fst.waypoints[1]).toBe(waypoint1);
+      expect(tuple.fst(transition2).waypoints.length).toBe(2);
+      expect(tuple.fst(transition2).waypoints[0]).toBe(waypoint0);
+      expect(tuple.fst(transition2).waypoints[1]).toBe(waypoint1);
     });
   });
 
@@ -78,25 +79,25 @@ describe("Route Changes bij sequentieel toevoegen:", () => {
       );
       const waypoint1 = Waypoint(1, [1, 1]);
       const transition2 = addWaypoint(
-        transition1.fst,
+        tuple.fst(transition1),
         AddWaypoint(option.some(waypoint0), waypoint1)
       );
       const waypoint2 = Waypoint(2, [2, 2]);
       const transition3 = addWaypoint(
-        transition2.fst,
+        tuple.fst(transition2),
         AddWaypoint(option.some(waypoint1), waypoint2)
       );
 
-      expect(transition3.snd.routesRemoved.length).toBe(0);
-      expect(transition3.snd.routesAdded.length).toBe(1);
-      const routeAdded = transition3.snd.routesAdded[0];
+      expect(tuple.snd(transition3).routesRemoved.length).toBe(0);
+      expect(tuple.snd(transition3).routesAdded.length).toBe(1);
+      const routeAdded = tuple.snd(transition3).routesAdded[0];
       expect(routeAdded.begin).toBe(waypoint1);
       expect(routeAdded.end).toBe(waypoint2);
 
-      expect(transition3.fst.waypoints.length).toBe(3);
-      expect(transition3.fst.waypoints[0]).toBe(waypoint0);
-      expect(transition3.fst.waypoints[1]).toBe(waypoint1);
-      expect(transition3.fst.waypoints[2]).toBe(waypoint2);
+      expect(tuple.fst(transition3).waypoints.length).toBe(3);
+      expect(tuple.fst(transition3).waypoints[0]).toBe(waypoint0);
+      expect(tuple.fst(transition3).waypoints[1]).toBe(waypoint1);
+      expect(tuple.fst(transition3).waypoints[2]).toBe(waypoint2);
     });
   });
 });
@@ -110,14 +111,14 @@ describe("Route Changes bij verwijderen:", () => {
         AddWaypoint(option.none, waypoint0)
       );
       const transition2 = removeWaypoint(
-        transition1.fst,
+        tuple.fst(transition1),
         RemoveWaypoint(waypoint0)
       );
 
-      expect(transition2.snd.routesAdded.length).toBe(0);
-      expect(transition2.snd.routesRemoved.length).toBe(0);
+      expect(tuple.snd(transition2).routesAdded.length).toBe(0);
+      expect(tuple.snd(transition2).routesRemoved.length).toBe(0);
 
-      expect(transition2.fst.waypoints.length).toBe(0);
+      expect(tuple.fst(transition2).waypoints.length).toBe(0);
     });
   });
   describe("Wanneer het begin waypoint verwijderd wordt", () => {
@@ -129,21 +130,21 @@ describe("Route Changes bij verwijderen:", () => {
       );
       const waypoint1 = Waypoint(1, [1, 1]);
       const transition2 = addWaypoint(
-        transition1.fst,
+        tuple.fst(transition1),
         AddWaypoint(option.some(waypoint0), waypoint1)
       );
       const transition3 = removeWaypoint(
-        transition2.fst,
+        tuple.fst(transition2),
         RemoveWaypoint(waypoint0)
       );
 
-      expect(transition3.snd.routesAdded.length).toBe(0);
-      expect(transition3.snd.routesRemoved.length).toBe(1);
-      expect(transition3.snd.routesRemoved[0].begin).toBe(waypoint0);
-      expect(transition3.snd.routesRemoved[0].end).toBe(waypoint1);
+      expect(tuple.snd(transition3).routesAdded.length).toBe(0);
+      expect(tuple.snd(transition3).routesRemoved.length).toBe(1);
+      expect(tuple.snd(transition3).routesRemoved[0].begin).toBe(waypoint0);
+      expect(tuple.snd(transition3).routesRemoved[0].end).toBe(waypoint1);
 
-      expect(transition3.fst.waypoints.length).toBe(1);
-      expect(transition3.fst.waypoints[0]).toBe(waypoint1);
+      expect(tuple.fst(transition3).waypoints.length).toBe(1);
+      expect(tuple.fst(transition3).waypoints[0]).toBe(waypoint1);
     });
   });
   describe("Wanneer het einde waypoint verwijderd wordt", () => {
@@ -155,21 +156,21 @@ describe("Route Changes bij verwijderen:", () => {
       );
       const waypoint1 = Waypoint(1, [1, 1]);
       const transition2 = addWaypoint(
-        transition1.fst,
+        tuple.fst(transition1),
         AddWaypoint(option.some(waypoint0), waypoint1)
       );
       const transition3 = removeWaypoint(
-        transition2.fst,
+        tuple.fst(transition2),
         RemoveWaypoint(waypoint1)
       );
 
-      expect(transition3.snd.routesAdded.length).toBe(0);
-      expect(transition3.snd.routesRemoved.length).toBe(1);
-      expect(transition3.snd.routesRemoved[0].begin).toBe(waypoint0);
-      expect(transition3.snd.routesRemoved[0].end).toBe(waypoint1);
+      expect(tuple.snd(transition3).routesAdded.length).toBe(0);
+      expect(tuple.snd(transition3).routesRemoved.length).toBe(1);
+      expect(tuple.snd(transition3).routesRemoved[0].begin).toBe(waypoint0);
+      expect(tuple.snd(transition3).routesRemoved[0].end).toBe(waypoint1);
 
-      expect(transition3.fst.waypoints.length).toBe(1);
-      expect(transition3.fst.waypoints[0]).toBe(waypoint0);
+      expect(tuple.fst(transition3).waypoints.length).toBe(1);
+      expect(tuple.fst(transition3).waypoints[0]).toBe(waypoint0);
     });
   });
   describe("Wanneer een midden waypoint verwijderd wordt", () => {
@@ -181,39 +182,40 @@ describe("Route Changes bij verwijderen:", () => {
       );
       const waypoint1 = Waypoint(1, [1, 1]);
       const transition2 = addWaypoint(
-        transition1.fst,
+        tuple.fst(transition1),
         AddWaypoint(option.some(waypoint0), waypoint1)
       );
       const waypoint2 = Waypoint(2, [2, 2]);
       const transition3 = addWaypoint(
-        transition2.fst,
+        tuple.fst(transition2),
         AddWaypoint(option.some(waypoint1), waypoint2)
       );
       const transition4 = removeWaypoint(
-        transition3.fst,
+        tuple.fst(transition3),
         RemoveWaypoint(waypoint1)
       );
 
-      expect(transition4.snd.routesAdded.length).toBe(1);
-      const routeAdded = transition4.snd.routesAdded[0];
+      expect(tuple.snd(transition4).routesAdded.length).toBe(1);
+      const routeAdded = tuple.snd(transition4).routesAdded[0];
       expect(routeAdded.begin).toBe(waypoint0);
       expect(routeAdded.end).toBe(waypoint2);
-      expect(transition4.snd.routesRemoved.length).toBe(2);
-      const removed1 = array
-        .findFirst(
-          transition4.snd.routesRemoved,
-          (pr) => pr.begin === waypoint0
-        )
-        .toNullable();
+      expect(tuple.snd(transition4).routesRemoved.length).toBe(2);
+      const removed1 = pipe(
+        tuple.snd(transition4).routesRemoved,
+        array.findFirst((pr) => pr.begin === waypoint0),
+        option.toNullable
+      );
       expect(removed1.end).toBe(waypoint1);
-      const removed2 = array
-        .findFirst(transition4.snd.routesRemoved, (pr) => pr.end === waypoint2)
-        .toNullable();
+      const removed2 = pipe(
+        tuple.snd(transition4).routesRemoved,
+        array.findFirst((pr) => pr.end === waypoint2),
+        option.toNullable
+      );
       expect(removed2.begin).toBe(waypoint1);
 
-      expect(transition4.fst.waypoints.length).toBe(2);
-      expect(transition4.fst.waypoints[0]).toBe(waypoint0);
-      expect(transition4.fst.waypoints[1]).toBe(waypoint2);
+      expect(tuple.fst(transition4).waypoints.length).toBe(2);
+      expect(tuple.fst(transition4).waypoints[0]).toBe(waypoint0);
+      expect(tuple.fst(transition4).waypoints[1]).toBe(waypoint2);
     });
   });
 });
@@ -228,33 +230,37 @@ describe("Route Changes bij toevoegen in het midden:", () => {
       );
       const waypoint1 = Waypoint(1, [1, 1]);
       const transition2 = addWaypoint(
-        transition1.fst,
+        tuple.fst(transition1),
         AddWaypoint(option.some(waypoint0), waypoint1)
       );
       const waypoint2 = Waypoint(2, [2, 2]);
       const transition3 = addWaypoint(
-        transition2.fst,
+        tuple.fst(transition2),
         AddWaypoint(option.some(waypoint0), waypoint2)
       );
 
-      expect(transition3.snd.routesRemoved.length).toBe(1);
-      const routeRemoved = transition3.snd.routesRemoved[0];
+      expect(tuple.snd(transition3).routesRemoved.length).toBe(1);
+      const routeRemoved = tuple.snd(transition3).routesRemoved[0];
       expect(routeRemoved.begin).toBe(waypoint0);
       expect(routeRemoved.end).toBe(waypoint1);
-      expect(transition3.snd.routesAdded.length).toBe(2);
-      const added1 = array
-        .findFirst(transition3.snd.routesAdded, (pr) => pr.end === waypoint2)
-        .toNullable();
+      expect(tuple.snd(transition3).routesAdded.length).toBe(2);
+      const added1 = pipe(
+        tuple.snd(transition3).routesAdded,
+        array.findFirst((pr) => pr.end === waypoint2),
+        option.toNullable
+      );
       expect(added1.begin).toBe(waypoint0);
-      const added2 = array
-        .findFirst(transition3.snd.routesAdded, (pr) => pr.begin === waypoint2)
-        .toNullable();
+      const added2 = pipe(
+        tuple.snd(transition3).routesAdded,
+        array.findFirst((pr) => pr.begin === waypoint2),
+        option.toNullable
+      );
       expect(added2.end).toBe(waypoint1);
 
-      expect(transition3.fst.waypoints.length).toBe(3);
-      expect(transition3.fst.waypoints[0]).toBe(waypoint0);
-      expect(transition3.fst.waypoints[1]).toBe(waypoint2);
-      expect(transition3.fst.waypoints[2]).toBe(waypoint1);
+      expect(tuple.fst(transition3).waypoints.length).toBe(3);
+      expect(tuple.fst(transition3).waypoints[0]).toBe(waypoint0);
+      expect(tuple.fst(transition3).waypoints[1]).toBe(waypoint2);
+      expect(tuple.fst(transition3).waypoints[2]).toBe(waypoint1);
     });
   });
 });

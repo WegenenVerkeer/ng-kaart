@@ -1,3 +1,4 @@
+import { either } from "fp-ts";
 import * as ol from "../util/openlayers-compat";
 
 import { jsonAwvV0Style } from "./json-awv-v0-stijl";
@@ -190,7 +191,9 @@ describe("De json AWV V0 interpreter", () => {
         },
       },
     });
-    expect(result.isFailure()).toBe(true);
-    expect(result.value[0]).toContain("geen veld 'radius'");
+    expect(either.isLeft(result)).toBe(true);
+    expect((result as either.Left<[string]>).left[0]).toContain(
+      "geen veld 'radius'"
+    );
   });
 });

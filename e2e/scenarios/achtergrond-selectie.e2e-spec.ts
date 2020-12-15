@@ -1,4 +1,5 @@
 import { array, option } from "fp-ts";
+import { pipe } from 'fp-ts/lib/pipeable';
 import { browser, by, element, WebElement } from "protractor";
 
 import { KaartPage } from "../pages/kaart.po";
@@ -29,7 +30,7 @@ class AchtergrondSelectie {
   }
 
   async zichtbareTileMetTitel(naam: string): Promise<option.Option<AchtergrondTile>> {
-    return array.findFirst(await this.zichtBareTiles(), tile => tile.titel === naam);
+    return pipe(await this.zichtBareTiles(), array.findFirst(tile => tile.titel === naam));
   }
 
   async zichtbaar(): Promise<boolean> {

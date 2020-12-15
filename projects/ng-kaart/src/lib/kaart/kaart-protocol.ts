@@ -1,4 +1,4 @@
-import { validation } from "fp-ts";
+import { either } from "fp-ts";
 
 import { TypedRecord } from "../util/typed-record";
 
@@ -13,7 +13,7 @@ export type Subscriber<Msg extends KaartMsg> = (
   mc: MessageConsumer<Msg>
 ) => void;
 
-export type KaartCmdValidation<T> = validation.Validation<string[], T>;
+export type KaartCmdValidation<T> = either.Either<string[], T>;
 export type Wrapper<T, Msg extends KaartMsg> = (t: T) => Msg;
 export type VoidWrapper<Msg extends KaartMsg> = Wrapper<undefined, Msg>;
 export type LazyWrapper<Msg extends KaartMsg> = () => Msg;

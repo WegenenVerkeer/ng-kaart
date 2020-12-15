@@ -94,7 +94,7 @@
         <div class="zoeker-omschrijving" [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></div>
         <div class="zoeker-extra"
              (click)="expandBeschrijvingIndienNodig($event)"
-             [innerHTML]="resultaat.extraOmschrijving.getOrElse('') | highlight: zoekVeld.value">
+             [innerHTML]="option.getOrElse(constant(''))(resultaat.extraOmschrijving) | highlight: zoekVeld.value">
         </div>
       </span>
     </button>

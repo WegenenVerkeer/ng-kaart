@@ -1,3 +1,4 @@
+import { either } from "fp-ts";
 import * as ol from "../util/openlayers-compat";
 
 import { ok } from "./json-object-interpreting";
@@ -133,8 +134,10 @@ describe("De stijl interpreter", () => {
     describe("wanneer het format niet ondersteund is", () => {
       it("moet een fout mbt tot het niet-ondersteunde formaat geven", () => {
         const result = definitieToStyle("xml", "<style></style>");
-        expect(result.isFailure()).toBe(true);
-        expect(result.value).toEqual(["Encoding 'xml' wordt niet ondersteund"]);
+        expect(either.isLeft(result)).toBe(true);
+        expect((result as either.Left<string[]>).left).toEqual([
+          "Encoding 'xml' wordt niet ondersteund",
+        ]);
       });
     });
 
@@ -147,8 +150,10 @@ describe("De stijl interpreter", () => {
             diefnty: {},
           })
         );
-        expect(result.isFailure()).toBe(true);
-        expect(result.value[0]).toContain("geen veld 'definition'");
+        expect(either.isLeft(result)).toBe(true);
+        expect((result as either.Left<string[]>).left[0]).toContain(
+          "geen veld 'definition'"
+        );
       });
     });
   });

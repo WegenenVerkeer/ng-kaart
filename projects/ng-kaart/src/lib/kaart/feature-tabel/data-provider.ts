@@ -1,11 +1,7 @@
 import { array, eq, option, ord } from "fp-ts";
 import {
-  Curried2,
   Endomorphism,
   flow,
-  Function1,
-  Function2,
-  Function3,
   identity,
   Predicate,
   Refinement,
@@ -74,7 +70,7 @@ export interface PageRequest {
   readonly rowCreator: PartialFunction1<ol.Feature, Row>;
 }
 
-export type PageFetcher = Function1<PageRequest, rx.Observable<DataRequest>>;
+export type PageFetcher = (arg: PageRequest) => rx.Observable<DataRequest>;
 
 export type FeatureCount =
   | FeatureCountPending
@@ -98,10 +94,9 @@ export interface FeatureCountRequest {
   readonly dataExtent: ol.Extent;
 }
 
-export type FeatureCountFetcher = Function1<
-  FeatureCountRequest,
-  rx.Observable<FeatureCount>
->;
+export type FeatureCountFetcher = (
+  arg: FeatureCountRequest
+) => rx.Observable<FeatureCount>;
 
 export namespace SortDirection {
   export const setoidSortDirection: eq.Eq<SortDirection> = eq.eqString;
@@ -113,7 +108,7 @@ export namespace SortDirection {
 export namespace Page {
   export const PageSize = 100;
 
-  export const create: Function2<PageNumber, Row[], Page> = (
+  export const create: (pageNumber: PageNumber, rows: Row[]) => Page = (
     pageNumber,
     rows
   ) => ({
@@ -135,10 +130,9 @@ export namespace Page {
   );
   export const asPageNumber: PartialFunction1<number, PageNumber> =
     prismPageNumber.getOption;
-  export const asPageNumberFromNumberOfFeatures: Function1<
-    number,
-    PageNumber
-  > = flow(
+  export const asPageNumberFromNumberOfFeatures: (
+    arg: number
+  ) => PageNumber = flow(
     countToPages,
     asPageNumber,
     option.getOrElse(() => first)
@@ -148,9 +142,8 @@ export namespace Page {
   );
   export const rowsLens: Lens<Page, Row[]> = Lens.fromProp<Page>()("rows");
   export const ordPageNumber: ord.Ord<PageNumber> = ord.contramap(
-    prismPageNumber.reverseGet,
-    ord.ordNumber
-  );
+    prismPageNumber.reverseGet
+  )(ord.ordNumber);
 
   export const first: PageNumber = isoPageNumber.wrap(0);
   export const previous: Endomorphism<PageNumber> = isoPageNumber.modify((n) =>
@@ -159,23 +152,30 @@ export namespace Page {
   export const next: Endomorphism<PageNumber> = isoPageNumber.modify(
     (n) => n + 1
   );
-  export const set: Function1<number, Endomorphism<PageNumber>> = (value) => (
+  export const set: (arg: number) => Endomorphism<PageNumber> = (value) => (
     pageNumber
-  ) => prismPageNumber.getOption(value).getOrElse(pageNumber);
+  ) =>
+    pipe(
+      prismPageNumber.getOption(value),
+      option.getOrElse(() => pageNumber)
+    );
 
-  export const isInPage: Function1<PageNumber, Predicate<number>> = (
+  export const isInPage: (arg: PageNumber) => Predicate<number> = (
     pageNumber
   ) => (i) => {
     const lowerPageBound = isoPageNumber.unwrap(pageNumber) * PageSize;
     return i >= lowerPageBound && i < lowerPageBound + PageSize;
   };
 
-  export const last: Function1<number, PageNumber> = flow(countToPages, (n) =>
-    prismPageNumber.getOption(n).getOrElse(first)
+  export const last: (arg: number) => PageNumber = flow(countToPages, (n) =>
+    pipe(
+      prismPageNumber.getOption(n),
+      option.getOrElse(() => first)
+    )
   );
   export const isFirst: Predicate<PageNumber> = (pageNumber) =>
     ordPageNumber.equals(pageNumber, first);
-  export const isTop: Function1<PageNumber, Predicate<PageNumber>> = (
+  export const isTop: (arg: PageNumber) => Predicate<PageNumber> = (
     largestPageNumber
   ) => (pageNumber) => ordPageNumber.equals(pageNumber, largestPageNumber);
 }
@@ -188,9 +188,9 @@ export namespace FieldSorting {
     FieldSorting
   >()("fieldKey");
 
-  export const create: Curried2<SortDirection, ke.VeldInfo, FieldSorting> = (
-    direction
-  ) => (veldinfo) => ({
+  export const create: (
+    SortDirection
+  ) => (veldinfo: ke.VeldInfo) => FieldSorting = (direction) => (veldinfo) => ({
     fieldKey: veldinfo.naam,
     direction,
     veldinfo,
@@ -227,36 +227,32 @@ export namespace DataRequest {
 
   export const match: <A>(
     _: matchers.FullKindMatcher<DataRequest, A>
-  ) => Function1<DataRequest, A> = matchers.matchKind;
+  ) => (arg: DataRequest) => A = matchers.matchKind;
 }
 
 export namespace PageFetcher {
-  const selectedFeaturesInExtent: Function2<
-    ol.Extent,
-    ol.Feature[],
-    ol.Feature[]
-  > = (extent, selected) =>
+  const selectedFeaturesInExtent: (
+    extent: ol.Extent,
+    selected: ol.Feature[]
+  ) => ol.Feature[] = (extent, selected) =>
     array.filter(Feature.overlapsExtent(extent))(selected);
-  const takePage: Function1<PageNumber, Endomorphism<ol.Feature[]>> = (
+  const takePage: (arg: PageNumber) => Endomorphism<ol.Feature[]> = (
     pageNumber
   ) => array.filterWithIndex(Page.isInPage(pageNumber));
-  const toRows: Curried2<
-    PartialFunction1<ol.Feature, Row>,
-    ol.Feature[],
-    Row[]
-  > = array.filterMap;
-  const featureToFieldValue: Curried2<
-    FieldSorting,
-    ol.Feature,
-    option.Option<ValueType>
-  > = (sorting) => (feature) =>
-    Row.extractFieldValue(Feature.properties(feature), sorting.veldinfo);
+  const toRows: (
+    arg1: PartialFunction1<ol.Feature, Row>
+  ) => (arg2: ol.Feature[]) => Row[] = array.filterMap;
+  const featureToFieldValue: (
+    arg1: FieldSorting
+  ) => (arg2: ol.Feature) => option.Option<ValueType> = (sorting) => (
+    feature
+  ) => Row.extractFieldValue(Feature.properties(feature), sorting.veldinfo);
 
   const directionOrd: <A>(
     direction: SortDirection
   ) => Endomorphism<ord.Ord<A>> = (direction) =>
     direction === "ASCENDING" ? identity : ord.getDualOrd;
-  const ordFor: Function1<FieldSorting, ord.Ord<ValueType>> = (sorting) =>
+  const ordFor: (arg: FieldSorting) => ord.Ord<ValueType> = (sorting) =>
     ke.VeldInfo.matchWithFallback<ord.Ord<ValueType>>({
       string: () => ord.ordString,
       integer: () => ord.ordNumber,
@@ -265,29 +261,20 @@ export namespace PageFetcher {
       // TODO + date -> parse + ordNumber
       fallback: () => ord.ordString,
     })(sorting.veldinfo);
-  const sortingToOrd: Function1<FieldSorting, ord.Ord<ol.Feature>> = (
-    sorting
-  ) =>
+  const sortingToOrd: (arg: FieldSorting) => ord.Ord<ol.Feature> = (sorting) =>
     pipe(
-      ord.contramap(
-        featureToFieldValue(sorting),
+      ord.contramap(featureToFieldValue(sorting))(
         option.getOrd(ordFor(sorting))
       ),
       directionOrd(sorting.direction)
     );
-  const sortingsToOrds: Function1<
-    FieldSorting[],
-    ord.Ord<ol.Feature>[]
-  > = array.map(sortingToOrd);
+  const sortingsToOrds: (
+    arg: FieldSorting[]
+  ) => ord.Ord<ol.Feature>[] = array.map(sortingToOrd);
 
-  const unlessNoSortableFields: Function1<
-    option.Option<Endomorphism<ol.Feature[]>>,
-    Endomorphism<ol.Feature[]>
-  > = (o) => o.getOrElse(identity);
-  const sortFeatures: Function1<
-    FieldSorting[],
-    Endomorphism<ol.Feature[]>
-  > = flow(sortingsToOrds, array.sortBy, unlessNoSortableFields);
+  const sortFeatures: (
+    arg: FieldSorting[]
+  ) => Endomorphism<ol.Feature[]> = flow(sortingsToOrds, array.sortBy);
 
   const featuresToPage = (
     features: ol.Feature[],
@@ -308,27 +295,25 @@ export namespace PageFetcher {
     );
   };
 
-  export const pageFromAllFeatures: Curried2<
-    ol.Feature[],
-    PageRequest,
-    Page
-  > = (features) => (pageRequest) => featuresToPage(features, pageRequest);
+  export const pageFromAllFeatures: (
+    arg1: ol.Feature[]
+  ) => (arg2: PageRequest) => Page = (features) => (pageRequest) =>
+    featuresToPage(features, pageRequest);
 
-  export const pageFromSelected: Curried2<ol.Feature[], PageRequest, Page> = (
-    selected
-  ) => (pageRequest) =>
+  export const pageFromSelected: (
+    selected: ol.Feature[]
+  ) => (pageRequest: PageRequest) => Page = (selected) => (pageRequest) =>
     featuresToPage(
       selectedFeaturesInExtent(pageRequest.dataExtent, selected),
       pageRequest
     );
 
   // we gebruiken geen streaming API. Net zoals het oude Geoloket dat ook niet doet. Het gaat ook maar om 100 features maximaal.
-  export const pageFromServer: Function3<
-    string,
-    NosqlFsSource,
-    PageRequest,
-    rx.Observable<DataRequest>
-  > = (titel, source, request) =>
+  export const pageFromServer: (
+    titel: string,
+    source: NosqlFsSource,
+    request: PageRequest
+  ) => rx.Observable<DataRequest> = (titel, source, request) =>
     source
       .fetchFeatureCollection$({
         count: Page.PageSize,
@@ -391,7 +376,7 @@ export namespace FeatureCount {
   export const pending: FeatureCountPending = { kind: "FeatureCountPending" };
   export const failed: FeatureCountFailed = { kind: "FeatureCountFailed" };
 
-  export const createFetched: Function1<number, FeatureCountFetched> = (
+  export const createFetched: (arg: number) => FeatureCountFetched = (
     count
   ) => ({
     kind: "FeatureCountFetched",
@@ -399,7 +384,8 @@ export namespace FeatureCount {
   });
 
   export const fetchedCount: PartialFunction1<FeatureCount, number> = flow(
-    option.fromRefinement(isFetched),
+    option.some,
+    option.filter(isFetched),
     option.map((p) => p.count)
   );
 }

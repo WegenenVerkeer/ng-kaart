@@ -1,5 +1,4 @@
 import { InjectionToken } from "@angular/core";
-import { Function1 } from "fp-ts/lib/function";
 
 import * as ol from "../util/openlayers-compat";
 
@@ -47,5 +46,5 @@ export interface KaartConfig {
 export const mobile =
   window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
 
-export const envParams: Function1<KaartConfig, EnvParams> = (config) =>
+export const envParams: (config: KaartConfig) => EnvParams = (config) =>
   config.envParams[mobile ? "mobile" : "desktop"];

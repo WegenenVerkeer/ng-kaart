@@ -1,5 +1,5 @@
 import { eq, option } from "fp-ts";
-import { constant, Function1, Lazy } from "fp-ts/lib/function";
+import { constant, Lazy } from "fp-ts/lib/function";
 
 export type Progress<A> = Requested | TimedOut | Received<A>;
 
@@ -14,7 +14,7 @@ export type ProgressStatus = "Requested" | "TimedOut" | "Received";
 export const withProgress = <A, B>(
   ifRequested: Lazy<B>,
   ifTimedOut: Lazy<B>,
-  ifReceived: Function1<A, B>
+  ifReceived: (a: A) => B
 ) => (progress: Progress<A>) => {
   if (progress === "Requested") {
     return ifRequested();
@@ -29,7 +29,7 @@ export const Requested: Requested = "Requested";
 export const TimedOut: TimedOut = "TimedOut";
 export const Received: <A>(_: A) => Received<A> = (a) => ({ value: a });
 
-export function map<A, B>(pr: Progress<A>, f: Function1<A, B>): Progress<B> {
+export function map<A, B>(pr: Progress<A>, f: (a: A) => B): Progress<B> {
   return withProgress<A, Progress<B>>(
     constant(Requested),
     constant(TimedOut),

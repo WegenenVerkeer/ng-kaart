@@ -7,7 +7,7 @@ import {
   SimpleChanges,
 } from "@angular/core";
 import { Lazy } from "fp-ts/es6/function";
-import { Function1, identity, Refinement } from "fp-ts/lib/function";
+import { identity, Refinement } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { filter, map, mapTo, switchMap, takeUntil } from "rxjs/operators";
 
@@ -148,7 +148,7 @@ export function forChangedValue<A, B>(
   changes: SimpleChanges,
   prop: string,
   action: (cur: B, prev: B) => void,
-  conv: Function1<A, B> = identity as Function1<A, B>,
+  conv: (a: A) => B = identity as (a: A) => B,
   pred: (cur: B, prev: B) => boolean = () => true
 ): void {
   if (

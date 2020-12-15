@@ -39,7 +39,7 @@
             <td
               *ngFor="let header of headers.headers; let first = first"
               [ngClass]="{
-                'empty-field': row.velden[header.name].maybeValue.isNone(),
+                'empty-field': option.isNone(row.velden[header.name].maybeValue),
                 'align-right': data.alignments[header.name] === 'right'
               }"
             >
@@ -55,14 +55,14 @@
                 *ngIf="first"
                 (click)="onAction('zoomToRow', row)"
                 matTooltip="Zoom naar locatie"
-                >{{ row.velden[header.name].maybeValue.getOrElse("") }}</span
+                >{{ option.getOrElse(constant(""))(row.velden[header.name].maybeValue) }}</span
               >
-              <span *ngIf="!first && row.velden[header.name].maybeLink.isNone()">
-                  {{ row.velden[header.name].maybeValue.getOrElse("") }}
+              <span *ngIf="!first && option.isNone(row.velden[header.name].maybeLink)">
+                  {{ option.getOrElse(constant(""))(row.velden[header.name].maybeValue) }}
               </span>
-              <span *ngIf="!first && row.velden[header.name].maybeLink.isSome()">
+              <span *ngIf="!first && option.isSome(row.velden[header.name].maybeLink)">
                   <a href="{{ row.velden[header.name].maybeLink.toNullable() }}" target="_blank">
-                    {{ row.velden[header.name].maybeValue.getOrElse("") }}
+                    {{ option.getOrElse(constant(""))(row.velden[header.name].maybeValue) }}
                   </a>
                 </span>
             </td>
@@ -145,12 +145,12 @@
             let fieldNameSelection of data.fieldNameSelections;
             let first = first
           "
-          [disabled]="first || fieldNameSelection.sortDirection.isSome()"
+          [disabled]="first || option.isSome(fieldNameSelection.sortDirection)"
           (click)="onAction('toggleField', fieldNameSelection)"
         >
           <mat-checkbox
             [checked]="fieldNameSelection.selected"
-            [disabled]="first || fieldNameSelection.sortDirection.isSome()"
+            [disabled]="first || option.isSome(fieldNameSelection.sortDirection)"
             ><span>{{ fieldNameSelection.label }}</span></mat-checkbox
           >
         </button>

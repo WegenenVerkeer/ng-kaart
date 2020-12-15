@@ -1,11 +1,8 @@
 import { formatNumber } from "@angular/common";
 import { array, eq, option, ord, record, semigroup, traversable } from "fp-ts";
 import {
-  Curried2,
   Endomorphism,
   flow,
-  Function1,
-  Function2,
   identity,
   not,
   Predicate,
@@ -201,10 +198,9 @@ export namespace LaagModel {
     "selectedFeatures"
   );
 
-  const fieldSelectionForNameTraversal: Function1<
-    string,
-    Traversal<LaagModel, FieldSelection>
-  > = (fieldName) =>
+  const fieldSelectionForNameTraversal: (
+    fieldName: string
+  ) => Traversal<LaagModel, FieldSelection> = (fieldName) =>
     fieldSelectionsLens.composeTraversal(
       selectiveArrayTraversal((fs) => fs.name === fieldName)
     );
@@ -226,10 +222,9 @@ export namespace LaagModel {
   // de velden. De functie maakt 2 transformers in 1 keer omdat de logica zo gelijklopend is. De eerste bepaalt welke
   // velden er getoond worden als kolomen in de tabel en de tweede hoe de waarden van binnenkomende rijen omgevormd
   // worden tot waarden voor de velden van de tabel.
-  const locationTransformer: Function1<
-    ke.VeldInfo[],
-    [Endomorphism<FieldSelection[]>, Endomorphism<Fields>]
-  > = (veldinfos) => {
+  const locationTransformer: (
+    veldinfos: ke.VeldInfo[]
+  ) => [Endomorphism<FieldSelection[]>, Endomorphism<Fields>] = (veldinfos) => {
     // We moeten op label werken, want de gegevens zitten op verschillende plaatsen bij verschillende lagen
     const veldlabels = veldinfos
       .map(ke.VeldInfo.veldlabelLens.get)
@@ -243,9 +238,10 @@ export namespace LaagModel {
     ];
     const puntAfstandLabels = ["Refpunt", "Afstand"];
     const puntLabelsAlternatief = ["Positie"];
-    const maybeWegKey = array
-      .findFirst(veldinfos, (vi) => vi.label === wegLabel)
-      .map(ke.VeldInfo.veldnaamLens.get);
+    const maybeWegKey = pipe(
+      array.findFirst((vi: VeldInfo) => vi.label === wegLabel)(veldinfos),
+      option.map(ke.VeldInfo.veldnaamLens.get)
+    );
 
     const syntheticLocationFieldKey = "syntheticLocation";
     const syntheticFieldSelection = (
@@ -271,107 +267,122 @@ export namespace LaagModel {
       noLocationVeldTransformer,
     ] as [Endomorphism<FieldSelection[]>, Endomorphism<Fields>];
 
-    return maybeWegKey.fold(noLocationTransformers, (wegKey) => {
-      const distance: Function2<number, number, string> = (ref, offset) =>
-        offset >= 0 ? `${ref} +${offset}` : `${ref} ${offset}`;
-      const lijnValueGen = (wegValue: string) => (
-        distances: number[]
-      ): string =>
-        `${wegValue} van ${distance(distances[0], distances[1])} tot ${distance(
-          distances[2],
-          distances[3]
-        )}`;
-      const puntValueGen = (wegValue: string) => (
-        distances: number[]
-      ): string => `${wegValue} ${distance(distances[0], distances[1])}`;
-      const puntAlternatiefValueGen = (wegValue: string) => (
-        positie: number[]
-      ): string => `${wegValue} ${positie}`;
-      const enkelDeWegValueGen = (wegValue: string) => (): string =>
-        `${wegValue}`;
+    return pipe(
+      maybeWegKey,
+      option.fold(
+        () => noLocationTransformers,
+        (wegKey) => {
+          const distance: (ref: number, offset: number) => string = (
+            ref,
+            offset
+          ) => (offset >= 0 ? `${ref} +${offset}` : `${ref} ${offset}`);
+          const lijnValueGen = (wegValue: string) => (
+            distances: number[]
+          ): string =>
+            `${wegValue} van ${distance(
+              distances[0],
+              distances[1]
+            )} tot ${distance(distances[2], distances[3])}`;
+          const puntValueGen = (wegValue: string) => (
+            distances: number[]
+          ): string => `${wegValue} ${distance(distances[0], distances[1])}`;
+          const puntAlternatiefValueGen = (wegValue: string) => (
+            positie: number[]
+          ): string => `${wegValue} ${positie}`;
+          const enkelDeWegValueGen = (wegValue: string) => (): string =>
+            `${wegValue}`;
 
-      const allLijnLabelsPresent = arrays.containsAll(ord.ordString)(
-        veldlabels,
-        lijnAfstandLabels
-      );
-      const allPuntAfstandLabelsPresent = arrays.containsAll(ord.ordString)(
-        veldlabels,
-        puntAfstandLabels
-      );
-      const allPuntLabelsPresent = arrays.containsAll(ord.ordString)(
-        veldlabels,
-        puntLabelsAlternatief
-      );
+          const allLijnLabelsPresent = arrays.containsAll(ord.ordString)(
+            veldlabels,
+            lijnAfstandLabels
+          );
+          const allPuntAfstandLabelsPresent = arrays.containsAll(ord.ordString)(
+            veldlabels,
+            puntAfstandLabels
+          );
+          const allPuntLabelsPresent = arrays.containsAll(ord.ordString)(
+            veldlabels,
+            puntLabelsAlternatief
+          );
 
-      const [locationLabels, locationValueGen]: [
-        string[],
-        Curried2<string, number[], string>
-      ] = allLijnLabelsPresent
-        ? [lijnAfstandLabels, lijnValueGen]
-        : allPuntAfstandLabelsPresent
-        ? [puntAfstandLabels, puntValueGen]
-        : allPuntLabelsPresent
-        ? [puntLabelsAlternatief, puntAlternatiefValueGen]
-        : maybeWegKey.isSome()
-        ? [[], enkelDeWegValueGen]
-        : [[], () => () => ""];
+          const [locationLabels, locationValueGen]: [
+            string[],
+            (q: string) => (ns: number[]) => string
+          ] = allLijnLabelsPresent
+            ? [lijnAfstandLabels, lijnValueGen]
+            : allPuntAfstandLabelsPresent
+            ? [puntAfstandLabels, puntValueGen]
+            : allPuntLabelsPresent
+            ? [puntLabelsAlternatief, puntAlternatiefValueGen]
+            : pipe(maybeWegKey, option.isSome)
+            ? [[], enkelDeWegValueGen]
+            : [[], () => () => ""];
 
-      const locationKeys = array.array.filterMap(locationLabels, (label) =>
-        array
-          .findFirst(veldinfos, (vi) => vi.label === label)
-          .map(ke.VeldInfo.veldnaamLens.get)
-      );
-
-      const allLocationLabels = array.cons(wegLabel, locationLabels);
-      const allLocationKeys = array.cons(wegKey, locationKeys);
-      const allLocationVeldinfos = array.filterMap((key) =>
-        array.findFirst<ke.VeldInfo>((vi) => vi.naam === key)(veldinfos)
-      )(allLocationKeys);
-
-      const locationFieldSelection: FieldSelection = syntheticFieldSelection(
-        allLocationVeldinfos
-      );
-      const fieldsSelectionTrf: Endomorphism<FieldSelection[]> = (
-        fieldSelections
-      ) =>
-        array
-          .cons(locationFieldSelection, fieldSelections) // Het synthetische veld toevoegen
-          .filter(
-            (fieldSelection) =>
-              !allLocationLabels.includes(fieldSelection.label)
-          ); // en de bijdragende velden verwijderen
-
-      const veldTrf: Endomorphism<Fields> = (row) => {
-        const maybeWegValue = row[wegKey];
-        const maybeDistances: option.Option<number[]> = traversable
-          .sequence(
-            option.option,
-            array.array
-          )(locationKeys.map((key) => row[key].maybeValue.filter(isNumber)))
-          .filter((ns) => ns.length === locationLabels.length);
-        const locatieField: Field = {
-          maybeValue: maybeWegValue.maybeValue
-            .map((wegValue) =>
-              maybeDistances.fold(
-                `${wegValue}`,
-                locationValueGen(wegValue.toString())
-              )
+          const locationKeys = array.array.filterMap(locationLabels, (label) =>
+            pipe(
+              veldinfos,
+              array.findFirst((vi) => vi.label === label),
+              option.map(ke.VeldInfo.veldnaamLens.get)
             )
-            .orElse(() => geenWegLocatieValue),
-          maybeLink: option.none,
-        };
-        return Row.addField(syntheticLocationFieldKey, locatieField)(row);
-      };
-      return [fieldsSelectionTrf, veldTrf] as [
-        Endomorphism<FieldSelection[]>,
-        Endomorphism<Fields>
-      ];
-    });
+          );
+
+          const allLocationLabels = array.cons(wegLabel, locationLabels);
+          const allLocationKeys = array.cons(wegKey, locationKeys);
+          const allLocationVeldinfos = array.filterMap((key) =>
+            array.findFirst<ke.VeldInfo>((vi) => vi.naam === key)(veldinfos)
+          )(allLocationKeys);
+
+          const locationFieldSelection: FieldSelection = syntheticFieldSelection(
+            allLocationVeldinfos
+          );
+          const fieldsSelectionTrf: Endomorphism<FieldSelection[]> = (
+            fieldSelections
+          ) =>
+            array
+              .cons(locationFieldSelection, fieldSelections) // Het synthetische veld toevoegen
+              .filter(
+                (fieldSelection) =>
+                  !allLocationLabels.includes(fieldSelection.label)
+              ); // en de bijdragende velden verwijderen
+
+          const veldTrf: Endomorphism<Fields> = (row) => {
+            const maybeWegValue = row[wegKey];
+            const maybeDistances: option.Option<number[]> = pipe(
+              array.sequence(option.option)(
+                locationKeys.map((key) =>
+                  pipe(row[key].maybeValue, option.filter(isNumber))
+                )
+              ),
+              option.filter((ns) => ns.length === locationLabels.length)
+            );
+            const locatieField: Field = {
+              maybeValue: pipe(
+                maybeWegValue.maybeValue,
+                option.map((wegValue) =>
+                  option.fold(
+                    () => `${wegValue}`,
+                    locationValueGen(wegValue.toString())
+                  )(maybeDistances)
+                ),
+                option.alt(() => geenWegLocatieValue)
+              ),
+              maybeLink: option.none,
+            };
+            return Row.addField(syntheticLocationFieldKey, locatieField)(row);
+          };
+          return [fieldsSelectionTrf, veldTrf] as [
+            Endomorphism<FieldSelection[]>,
+            Endomorphism<Fields>
+          ];
+        }
+      )
+    );
   };
 
   const safeDoubleFormat = (maybeFormat: option.Option<string>): string =>
-    maybeFormat
-      .map((format) => {
+    pipe(
+      maybeFormat,
+      option.map((format) => {
         // We validateren het formaat door het op een nummer te proberen. Dit wordt naar 1 maal uitgevoerd wanner het
         // laagmodel geïnitialiseerd wordt, niet elke keer dat een nummer getoond moet worden.
         try {
@@ -380,8 +391,9 @@ export namespace LaagModel {
         } catch {
           return "1.2-2";
         }
-      })
-      .getOrElse("1.2-2");
+      }),
+      option.getOrElse(() => "1.2-2")
+    );
   const formatNumberSafe = (format: string) => (value: ValueType): string => {
     try {
       return formatNumber(value as number, "nl-BE", format);
@@ -400,7 +412,10 @@ export namespace LaagModel {
   const formatAsUrl = (veldInfo: VeldInfo) => (value: ValueType): string => {
     try {
       return isUrl(value as string)
-        ? option.fromNullable(veldInfo.label).getOrElse("Link")
+        ? pipe(
+            option.fromNullable(veldInfo.label),
+            option.getOrElse(() => "Link")
+          )
         : (value as string);
     } catch {
       kaartLogger.warn(
@@ -429,10 +444,9 @@ export namespace LaagModel {
   );
   const formatDate = (format: option.Option<string>): Endomorphism<Field> =>
     Field.modify(formateerDate(format));
-  const rowFormat: Function1<
-    ke.VeldInfo,
-    option.Option<Endomorphism<Field>>
-  > = (vi) =>
+  const rowFormat: (arg: ke.VeldInfo) => option.Option<Endomorphism<Field>> = (
+    vi
+  ) =>
     ke.VeldInfo.matchWithFallback({
       boolean: () => option.some(formatBoolean),
       integer: () =>
@@ -445,7 +459,7 @@ export namespace LaagModel {
       url: () => option.some(maybeFormatAsUrl(vi)),
       fallback: () => option.none,
     })(vi);
-  const rowFormatsFromVeldinfos: Function1<ke.VeldInfo[], FieldsFormatSpec> = (
+  const rowFormatsFromVeldinfos: (arg: ke.VeldInfo[]) => FieldsFormatSpec = (
     veldinfos
   ) =>
     pipe(
@@ -461,21 +475,21 @@ export namespace LaagModel {
     formats: FieldsFormatSpec
   ) => (fieldName: string, field: Field): Field =>
     array.elem(eq.eqString)(fieldName, selectedFieldNames)
-      ? record
-          .lookup(fieldName, formats)
-          .map((f) => f(field))
-          .getOrElse(field)
+      ? pipe(
+          record.lookup(fieldName, formats),
+          option.map((f) => f(field)),
+          option.getOrElse(() => field)
+        )
       : field;
 
   // Deze formatteert de waarden in de rij (enkel voor de geselecteerde kolommen). Dit is nu een transformatie van Row.
   // Misschien is het nuttig om nog een ander concept in te voeren (FormattedRow?). In elk geval is dit een verzameling
   // van functies die berekend worden op het moment dat de FieldSelections bekend zijn, zodat bij het transformeren van
   // een rij enkel de transformaties zelf uitgevoerd moeten worden, en niet de berekening van welke er nodig zijn.
-  const rowFormatterForFields: Function2<
-    FieldSelection[],
-    FieldsFormatSpec,
-    Endomorphism<Fields>
-  > = (fieldSelections, rowFormats) =>
+  const rowFormatterForFields: (
+    fieldSelections: FieldSelection[],
+    rowFormats: FieldsFormatSpec
+  ) => Endomorphism<Fields> = (fieldSelections, rowFormats) =>
     pipe(
       fieldSelections,
       array.filter(FieldSelection.selectedLens.get),
@@ -499,9 +513,12 @@ export namespace LaagModel {
       arrayTraversal<FieldSelection>().modify((fs) =>
         flow(
           FieldSelection.selectedLens.modify((currentlySelected) =>
-            maybeSelectedFieldNames.fold(
-              currentlySelected,
-              (selectedFieldNames) => selectedFieldNames.has(fs.name)
+            pipe(
+              maybeSelectedFieldNames,
+              option.fold(
+                () => currentlySelected,
+                (selectedFieldNames) => selectedFieldNames.has(fs.name)
+              )
             )
           ),
           FieldSelection.maybeSortDirectionLens.set(
@@ -519,7 +536,7 @@ export namespace LaagModel {
       (fieldSelections) =>
         pipe(
           fieldSelections,
-          array.findFirst((fs) => fs.sortDirection.isSome()),
+          array.findFirst((fs) => option.isSome(fs.sortDirection)),
           option.isSome,
           (hasSortField) =>
             hasSortField ? fieldSelections : sortOnFirstField(fieldSelections)
@@ -531,9 +548,9 @@ export namespace LaagModel {
     Viewinstellingen,
     LaagModel
   > = (laag, viewinstellingen) =>
-    ke.ToegevoegdeVectorLaag.noSqlFsSourceFold
-      .headOption(laag)
-      .map((source) => {
+    pipe(
+      ke.ToegevoegdeVectorLaag.noSqlFsSourceFold.headOption(laag),
+      option.map((source) => {
         // We mogen niet zomaar alle velden gebruiken. Om te beginnen enkel de basisvelden en de locatievelden moeten
         // afzonderlijk behandeld worden.
         const veldinfos = ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag);
@@ -541,11 +558,13 @@ export namespace LaagModel {
           veldinfos
         );
 
-        const selectedFieldNamesFromInstellingen = laag.tabelLaagInstellingen.map(
-          (ins) => ins.zichtbareVelden
+        const selectedFieldNamesFromInstellingen = pipe(
+          laag.tabelLaagInstellingen,
+          option.map((ins) => ins.zichtbareVelden)
         );
-        const sortFieldFromInstellingen = laag.tabelLaagInstellingen.chain(
-          (ins) => array.head(ins.veldsorteringen)
+        const sortFieldFromInstellingen = pipe(
+          laag.tabelLaagInstellingen,
+          option.chain((ins) => array.head(ins.veldsorteringen))
         );
 
         const fieldSelections = pipe(
@@ -559,7 +578,7 @@ export namespace LaagModel {
           )
         );
 
-        const firstField = array.take(1, fieldSelections);
+        const firstField = array.takeLeft(1)(fieldSelections);
         const contributingVeldinfos = array.chain(
           FieldSelection.contributingVeldinfosGetter.get
         )(firstField);
@@ -599,9 +618,10 @@ export namespace LaagModel {
           selectedFeatures: [],
           lastPageNumber: option.none,
         };
-      });
+      })
+    );
 
-  const isExpectedPageSequence: Function1<number, Predicate<LaagModel>> = (
+  const isExpectedPageSequence: (arg: number) => Predicate<LaagModel> = (
     sequenceNumber
   ) => (laag) => laag.nextPageSequence === sequenceNumber;
 
@@ -613,33 +633,43 @@ export namespace LaagModel {
   const incrementNextPageSequence = nextPageSequenceLens.modify((n) => n + 1);
 
   export const isOnFirstPage: Predicate<LaagModel> = (laag) =>
-    laag.page.map(Page.pageNumberLens.get).exists(Page.isFirst);
+    pipe(
+      laag.page,
+      option.map(Page.pageNumberLens.get),
+      option.exists(Page.isFirst)
+    );
   export const isOnLastPage: Predicate<LaagModel> = (laag) =>
-    FeatureCount.fetchedCount(laag.featureCount).fold(
-      true, //
-      (featureCount) =>
-        laag.page
-          .map(Page.pageNumberLens.get)
-          .exists(Page.isTop(Page.last(featureCount)))
+    pipe(
+      FeatureCount.fetchedCount(laag.featureCount),
+      option.fold(
+        () => true, //
+        (featureCount) =>
+          pipe(
+            laag.page,
+            option.map(Page.pageNumberLens.get),
+            option.exists(Page.isTop(Page.last(featureCount)))
+          )
+      )
     );
   export const hasMultiplePages: Predicate<LaagModel> = (laag) =>
-    FeatureCount.fetchedCount(laag.featureCount).fold(
-      false,
-      (featureCount) => !Page.isFirst(Page.last(featureCount))
+    pipe(
+      FeatureCount.fetchedCount(laag.featureCount),
+      option.fold(
+        () => false,
+        (featureCount) => !Page.isFirst(Page.last(featureCount))
+      )
     );
 
   const ifOrElse = (pred: Predicate<LaagModel>) => <A>(
-    ifTrue: Function1<LaagModel, A>,
-    ifFalse: Function1<LaagModel, A>
+    ifTrue: (LaagModel) => A,
+    ifFalse: (LaagModel) => A
   ) => (laag: LaagModel): A => (pred(laag) ? ifTrue : ifFalse)(laag);
-  const applyIfOrElse: Function1<
-    Predicate<LaagModel>,
-    Function2<
-      Endomorphism<LaagModel>,
-      Endomorphism<LaagModel>,
-      Endomorphism<LaagModel>
-    >
-  > = ifOrElse;
+  const applyIfOrElse: (
+    pred: Predicate<LaagModel>
+  ) => (
+    t: Endomorphism<LaagModel>,
+    f: Endomorphism<LaagModel>
+  ) => Endomorphism<LaagModel> = ifOrElse;
   const applyIf = (pred: Predicate<LaagModel>) => (
     ifTrue: Endomorphism<LaagModel>
   ): Endomorphism<LaagModel> => applyIfOrElse(pred)(ifTrue, identity);
@@ -675,10 +705,9 @@ export namespace LaagModel {
   );
 
   // Vervangt de huidige sortingFields door een sorting op 1 enkel logisch veld
-  export const toggleSortingField: Function1<
-    string,
-    Endomorphism<LaagModel>
-  > = (fieldName) => (laag) =>
+  export const toggleSortingField: (arg: string) => Endomorphism<LaagModel> = (
+    fieldName
+  ) => (laag) =>
     pipe(
       fieldSelectionsLens.get(laag),
       array.findFirst((fs) => fs.name === fieldName), // Het veld moet bestaan (anders zouden we zonder sortering kunnen eindigen)
@@ -699,7 +728,7 @@ export namespace LaagModel {
       )
     )(laag);
 
-  const laagPageRequest: Function1<LaagModel, PageRequest> = (laag) => ({
+  const laagPageRequest: (arg: LaagModel) => PageRequest = (laag) => ({
     dataExtent: laag.viewinstellingen.extent,
     fieldSortings: laag.fieldSortings,
     pageNumber: laag.expectedPageNumber,
@@ -707,7 +736,7 @@ export namespace LaagModel {
     requestSequence: laag.nextPageSequence,
   });
 
-  const maakRow: Curried2<LaagModel, ol.Feature, option.Option<Row>> = (
+  const maakRow: (LaagModel) => (feature: ol.Feature) => option.Option<Row> = (
     laag
   ) => (feature) =>
     pipe(
@@ -716,14 +745,14 @@ export namespace LaagModel {
         const origVelden = Row.featureToFields(laag.veldinfos)(
           featureWithIdAndLaagnaam
         );
-        const velden = pipe(
+        const velden: Fields = pipe(
           origVelden,
           laag.veldenTransformer,
           laag.veldenFormatter
         );
         return {
           feature: featureWithIdAndLaagnaam,
-          velden,
+          velden: velden,
         };
       })
     );
@@ -733,7 +762,7 @@ export namespace LaagModel {
     dataExtent: [18000.0, 152999.75, 280144.0, 415143.75],
   });
 
-  const updateLaagPage: Function1<Page, Endomorphism<LaagModel>> = (page) =>
+  const updateLaagPage: (arg: Page) => Endomorphism<LaagModel> = (page) =>
     flow(
       (laag) =>
         pageLens.set(
@@ -756,10 +785,9 @@ export namespace LaagModel {
   const setFeatureCountToFullFeatureCount: LaagModelSyncUpdate = (laag) =>
     pipe(laag, fullFeatureCountLens.get, featureCountLens.set)(laag);
 
-  const setLastPageNumberFromFeatures: Function1<
-    Getter<LaagModel, ol.Feature[]>,
-    LaagModelSyncUpdate
-  > = (featureGetter) => (laag) =>
+  const setLastPageNumberFromFeatures: (
+    featureGetter: Getter<LaagModel, ol.Feature[]>
+  ) => LaagModelSyncUpdate = (featureGetter) => (laag) =>
     pipe(
       laag,
       featureGetter.get,
@@ -901,17 +929,15 @@ export namespace LaagModel {
   // Deze functie zal in het model voor de laag met de gegeven titel eerst de functie f uitvoeren (initiële
   // transformaties) en daarna zorgen dat de Page aangepast wordt. Op zich is dit niet meer dan 2 Updates na elkaar
   // uitvoeren, maar we willen de boilerplate voor de lifting en de concattenatie concenteren op 1 plaats.
-  const andThenUpdatePageData: Function1<
-    Endomorphism<LaagModel>,
-    LaagModelUpdate
-  > = (f) => Update.combineAll(Update.createSync(f), updateLaagPageData);
+  const andThenUpdatePageData: (
+    arg: Endomorphism<LaagModel>
+  ) => LaagModelUpdate = (f) =>
+    Update.combineAll(Update.createSync(f), updateLaagPageData);
 
   // Maakt een (Sync)Update van het endomorfisme en ververst daarna conditioneel de page
-  const andThenUpdatePageDataIf: Curried2<
-    Predicate<LaagModel>,
-    Endomorphism<LaagModel>,
-    LaagModelUpdate
-  > = (pred) => (f) =>
+  const andThenUpdatePageDataIf: (
+    pred: Predicate<LaagModel>
+  ) => (f: Endomorphism<LaagModel>) => LaagModelUpdate = (pred) => (f) =>
     Update.combineAll(
       Update.createSync(f),
       Update.filter(pred)(updateLaagPageData)
@@ -925,10 +951,9 @@ export namespace LaagModel {
   // TODO: Aangeroepen wanneer viewInstelling veranderen. Dit gebeurt heel kort voor of na het zetten van visibleFeatures. De
   // page update zal dus ook 2x kort na elkaar uitgevoerd worden. We kunnen dit oplossen door een combineLatest +
   // debounceTime waar de updates aangemaakt worden.
-  export const setViewInstellingen: Function1<
-    Viewinstellingen,
-    LaagModelUpdate
-  > = (vi) =>
+  export const setViewInstellingen: (
+    arg: Viewinstellingen
+  ) => LaagModelUpdate = (vi) =>
     pipe(
       flow(
         viewinstellingenLens.set(vi),
@@ -976,10 +1001,9 @@ export namespace LaagModel {
       fullFeatureCountLens.set
     )(laag);
 
-  const totaalUpdate: Function1<
-    FilterTotaal,
-    Endomorphism<LaagModel>
-  > = FilterTotaalMatch({
+  const totaalUpdate: (
+    arg: FilterTotaal
+  ) => Endomorphism<LaagModel> = FilterTotaalMatch({
     // We zouden hier op een featureCountPending flag kunnen updaten en adhdv een spinner tonen in de UI.
     TotaalOpTeHalen: () =>
       flow(
@@ -1007,10 +1031,9 @@ export namespace LaagModel {
     LaagModel
   >((laag) => laag.source.fetchTotal$().pipe(map(totaalUpdate)));
 
-  export const updateFilter: Function1<
-    ke.Laagfilterinstellingen,
-    LaagModelUpdate
-  > = (instellingen) =>
+  export const updateFilter: (
+    arg: ke.Laagfilterinstellingen
+  ) => LaagModelUpdate = (instellingen) =>
     pipe(
       flow(
         LaagModel.filterIsActiveLens.set(instellingen.actief),
@@ -1035,14 +1058,18 @@ export namespace LaagModel {
     expectedPageNumberLens.modify(
       ord.clamp(Page.ordPageNumber)(
         Page.first,
-        Page.last(FeatureCount.fetchedCount(laag.featureCount).getOrElse(0))
+        Page.last(
+          pipe(
+            FeatureCount.fetchedCount(laag.featureCount),
+            option.getOrElse(() => 0)
+          )
+        )
       )
     )(laag);
 
-  const modifyPageNumberUpdate: Function1<
-    Endomorphism<PageNumber>,
-    LaagModelUpdate
-  > = (pageNumberUpdate) =>
+  const modifyPageNumberUpdate: (
+    arg: Endomorphism<PageNumber>
+  ) => LaagModelUpdate = (pageNumberUpdate) =>
     updatePageDataAfter(
       flow(
         expectedPageNumberLens.modify(pageNumberUpdate),
@@ -1060,7 +1087,7 @@ export namespace LaagModel {
     Page.next
   );
 
-  export const setPageNumberUpdate: Function1<number, LaagModelUpdate> = (
+  export const setPageNumberUpdate: (arg: number) => LaagModelUpdate = (
     pageNr
   ) => modifyPageNumberUpdate(Page.set(pageNr));
 
@@ -1076,23 +1103,22 @@ export namespace LaagModel {
     fieldSelectionsLens.modify(FieldSelection.selectOnlyFirstAndSortedField)
   );
 
-  export const setFieldSelectedUpdate: Function2<
-    string,
-    boolean,
-    LaagModelUpdate
-  > = (fieldName, value) =>
+  export const setFieldSelectedUpdate: (string, boolean) => LaagModelUpdate = (
+    fieldName,
+    value
+  ) =>
     updatePageDataAfter(
       fieldSelectionForNameTraversal(fieldName)
         .composeLens(FieldSelection.selectedLens)
         .set(value)
     );
 
-  export const sortFieldToggleUpdate: Function1<string, LaagModelUpdate> = flow(
+  export const sortFieldToggleUpdate: (arg: string) => LaagModelUpdate = flow(
     toggleSortingField,
     andThenUpdatePageData
   );
 
-  export const setMapAsFilterUpdate: Function1<boolean, LaagModelUpdate> = (
+  export const setMapAsFilterUpdate: (arg: boolean) => LaagModelUpdate = (
     setting
   ) =>
     Update.combineAll(
@@ -1109,10 +1135,9 @@ export namespace LaagModel {
       updateFullFeatureCountIfNotYetSet
     );
 
-  export const setShowSelectedOnlyUpdate: Function1<
-    boolean,
-    LaagModelUpdate
-  > = flow(
+  export const setShowSelectedOnlyUpdate: (
+    arg: boolean
+  ) => LaagModelUpdate = flow(
     (setting) => (setting ? "SelectedOnly" : "SourceFeatures"),
     (viewSelectionMode) =>
       pipe(
@@ -1125,20 +1150,18 @@ export namespace LaagModel {
       )
   );
 
-  export const updateVisibleFeatures: Function1<
-    ol.Feature[],
-    LaagModelUpdate
-  > = (features) =>
+  export const updateVisibleFeatures: (arg: ol.Feature[]) => LaagModelUpdate = (
+    features
+  ) =>
     pipe(
       features,
       visibleFeaturesLens.set,
       andThenUpdatePageDataIf(ifInMapAsFilter)
     );
 
-  export const updateSelectedFeatures: Function1<
-    ol.Feature[],
-    LaagModelUpdate
-  > = (featuresOpLaag) =>
+  export const updateSelectedFeatures: (
+    arg: ol.Feature[]
+  ) => LaagModelUpdate = (featuresOpLaag) =>
     Update.combineAll(
       pipe(
         selectedFeaturesLens.set(featuresOpLaag),

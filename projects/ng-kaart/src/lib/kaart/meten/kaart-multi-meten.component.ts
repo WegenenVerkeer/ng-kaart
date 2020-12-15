@@ -1,6 +1,7 @@
 import { Component, NgZone } from "@angular/core";
 import { option } from "fp-ts";
 import { Predicate } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import {
   debounceTime,
@@ -64,9 +65,11 @@ interface Measure {
 const InfoBoodschapId = "multi-meten-resultaat";
 
 const hasAtleastTwoPoints: Predicate<ol.geom.Geometry> = (geom) =>
-  toLineString(geom)
-    .map((line) => line.getCoordinates())
-    .exists(arrays.hasAtLeastLength(2));
+  pipe(
+    toLineString(geom),
+    option.map((line) => line.getCoordinates()),
+    option.exists(arrays.hasAtLeastLength(2))
+  );
 
 @Component({
   selector: "awv-kaart-multi-meten",
@@ -105,32 +108,37 @@ export class KaartMultiMetenComponent extends KaartModusDirective {
         rx.combineLatest(this.modelChanges.getekendeGeometry$, scale$).pipe(
           map(([geom, scale]) => {
             const length = option.some(geometryLength(geom));
-            const area = matchGeometryType(geom, {
-              geometryCollection: (collection) => {
-                if (collection.getGeometries().length >= 2) {
-                  return toLineString(collection)
-                    .map((line) => {
-                      const begin = line.getFirstCoordinate();
-                      const end = line.getLastCoordinate();
-                      // Wanneer de punten dicht genoeg bij elkaar liggen, sluiten we de geometrie en berekenen we een oppervlakte.
-                      // Dicht genoeg hangt af van de schaal van de kaart.
-                      if (
-                        distance(begin, end) < scale &&
-                        arrays.isNonEmpty(line.getCoordinates())
-                      ) {
-                        return ol.Sphere.getArea(
-                          new ol.geom.Polygon([line.getCoordinates()])
-                        );
-                      } else {
-                        return 0;
-                      }
-                    })
-                    .getOrElse(0);
-                } else {
-                  return 0;
-                }
-              },
-            }).chain(option.fromPredicate<number>((area) => area > 0)); // flatten had ook gekund, maar dit is analoog aan lengte
+            const area = pipe(
+              matchGeometryType(geom, {
+                geometryCollection: (collection) => {
+                  if (collection.getGeometries().length >= 2) {
+                    return pipe(
+                      toLineString(collection),
+                      option.map((line) => {
+                        const begin = line.getFirstCoordinate();
+                        const end = line.getLastCoordinate();
+                        // Wanneer de punten dicht genoeg bij elkaar liggen, sluiten we de geometrie en berekenen we een oppervlakte.
+                        // Dicht genoeg hangt af van de schaal van de kaart.
+                        if (
+                          distance(begin, end) < scale &&
+                          arrays.isNonEmpty(line.getCoordinates())
+                        ) {
+                          return ol.Sphere.getArea(
+                            new ol.geom.Polygon([line.getCoordinates()])
+                          );
+                        } else {
+                          return 0;
+                        }
+                      }),
+                      option.getOrElse(() => 0)
+                    );
+                  } else {
+                    return 0;
+                  }
+                },
+              }),
+              option.chain(option.fromPredicate<number>((area) => area > 0))
+            ); // flatten had ook gekund, maar dit is analoog aan lengte
             const coordinates = option.some(geometryCoordinates(geom));
             return { length: length, area: area, coordinates: coordinates };
           })
@@ -144,7 +152,10 @@ export class KaartMultiMetenComponent extends KaartModusDirective {
     );
 
     const legeBoodschap$ = boodschap$.pipe(
-      filter((measure) => measure.area.isNone() && measure.length.isNone()),
+      filter(
+        (measure) =>
+          option.isNone(measure.area) && option.isNone(measure.length)
+      ),
       distinctUntilChanged()
     );
 

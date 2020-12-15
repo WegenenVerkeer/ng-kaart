@@ -1,4 +1,4 @@
-import { Function1, Refinement } from "fp-ts/lib/function";
+import { Refinement } from "fp-ts/lib/function";
 
 import * as ke from "../kaart/kaart-elementen";
 
@@ -15,10 +15,9 @@ export interface GeenTransparantieaanpassingBezig {
   readonly type: "GeenTransparantieaanpassingBezig";
 }
 
-export const Transparantieaanpassend: Function1<
-  ke.ToegevoegdeLaag,
-  TransparantieaanpassingBezig
-> = (laag) => ({
+export const Transparantieaanpassend: (
+  arg: ke.ToegevoegdeLaag
+) => TransparantieaanpassingBezig = (laag) => ({
   type: "TransparantieaanpassingBezig",
   laag,
 });

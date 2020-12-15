@@ -4,14 +4,7 @@ import { DomSanitizer } from "@angular/platform-browser";
 import { default as booleanIntersects } from "@turf/boolean-intersects";
 import * as turf from "@turf/turf";
 import { array, option } from "fp-ts";
-import {
-  Endomorphism,
-  flow,
-  Function1,
-  Function2,
-  identity,
-} from "fp-ts/lib/function";
-import { none } from "fp-ts/lib/Option";
+import { Endomorphism, flow, identity } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import { LineString, Point, Polygon } from "ol/geom";
 import * as rx from "rxjs";
@@ -73,11 +66,10 @@ export interface SelecteerFeaturesViaPolygonOpties {
   readonly polygonStyleFunction: ol.style.StyleFunction;
 }
 
-const defaultPolygonStyleFunction: Function2<
-  ol.Feature,
-  number,
-  ol.style.Style[]
-> = () => [
+const defaultPolygonStyleFunction: (
+  f: ol.Feature,
+  n: number
+) => ol.style.Style[] = () => [
   new ol.style.Style({
     stroke: new ol.style.Stroke({
       color: clr.kleurcodeValue(clr.zwart),
@@ -98,10 +90,9 @@ const defaultOptions: SelecteerFeaturesViaPolygonOpties = {
 export const SelecteerFeaturesViaPolygonModusSelector =
   "SelecteerFeaturesViaPolygon";
 
-const geometryToTurfPolygon: Function1<
-  ol.geom.Geometry,
-  option.Option<turf.Feature<turf.Polygon, turf.Properties>>
-> = flow(
+const geometryToTurfPolygon: (
+  g: ol.geom.Geometry
+) => option.Option<turf.Feature<turf.Polygon, turf.Properties>> = flow(
   toLineString,
   option.map((line) => line.getCoordinates()),
   option.filter(arrays.hasAtLeastLength(3)),
@@ -259,7 +250,7 @@ export class FeatureTabelSelectieViaPolygonComponent
             StartDrawing(
               this.opties.markColour,
               this.opties.useRouting,
-              none,
+              option.none,
               option.some(this.opties.polygonStyleFunction)
             )
           ),

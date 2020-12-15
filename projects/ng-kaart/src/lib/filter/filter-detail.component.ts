@@ -1,6 +1,6 @@
 import { Component, Input, NgZone } from "@angular/core";
 import { array, option } from "fp-ts";
-import { Function1, Function2 } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import { filter, map, share, shareReplay, switchMap } from "rxjs/operators";
 
@@ -72,14 +72,15 @@ export class FilterDetailComponent extends KaartChildDirective {
       share()
     );
 
-    const findLaagOpTitel: Function2<
-      string,
-      ke.ToegevoegdeLaag[],
-      option.Option<ke.ToegevoegdeVectorLaag>
-    > = (titel, lgn) =>
-      array
-        .findFirst(lgn, (lg) => lg.titel === titel)
-        .filter(ke.isToegevoegdeVectorLaag);
+    const findLaagOpTitel: (
+      titel: string,
+      lgn: ke.ToegevoegdeLaag[]
+    ) => option.Option<ke.ToegevoegdeVectorLaag> = (titel, lgn) =>
+      pipe(
+        lgn,
+        array.findFirst((lg) => lg.titel === titel),
+        option.filter(ke.isToegevoegdeVectorLaag)
+      );
 
     const laagUpdates$ = laag$.pipe(
       switchMap((laag) =>
@@ -119,7 +120,7 @@ export class FilterDetailComponent extends KaartChildDirective {
 
     const actionOnLaag$: <A>(
       action: string,
-      f: Function1<ke.ToegevoegdeVectorLaag, A>
+      f: (arg: ke.ToegevoegdeVectorLaag) => A
     ) => rx.Observable<A> = (action, f) =>
       rx
         .combineLatest(laag$, this.actionFor$(action))

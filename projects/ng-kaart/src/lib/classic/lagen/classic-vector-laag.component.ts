@@ -1,5 +1,6 @@
 import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as ss from "../../kaart/stijl-selector";
@@ -36,12 +37,14 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeDirective {
       clusterDistance: this._clusterDistance,
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
-      selectieStyleSelector: option
-        .fromNullable(this.selectieStyle)
-        .chain(ss.asStyleSelector),
-      hoverStyleSelector: option
-        .fromNullable(this.hoverStyle)
-        .chain(ss.asStyleSelector),
+      selectieStyleSelector: pipe(
+        option.fromNullable(this.selectieStyle),
+        option.chain(ss.asStyleSelector)
+      ),
+      hoverStyleSelector: pipe(
+        option.fromNullable(this.hoverStyle),
+        option.chain(ss.asStyleSelector)
+      ),
       selecteerbaar: this._selecteerbaar,
       hover: this._hover,
       minZoom: this._minZoom,

@@ -1,5 +1,5 @@
 import { option } from "fp-ts";
-import { Function1, Function4, identity, pipe } from "fp-ts/lib/function";
+import { flow, identity, pipe } from "fp-ts/lib/function";
 import { Iso } from "monocle-ts";
 
 import { offsetStyleFunction } from "../stijl/offset-stijl-function";
@@ -32,9 +32,9 @@ export interface AwvV0DynamicStyleSpec {
 }
 
 export function matchStyleSpec<A>(
-  f: Function1<AwvV0StaticStyleSpec, A>,
-  g: Function1<AwvV0DynamicStyleSpec, A>
-): Function1<AwvV0StyleSpec, A> {
+  f: (arg: AwvV0StaticStyleSpec) => A,
+  g: (arg: AwvV0DynamicStyleSpec) => A
+): (arg: AwvV0StyleSpec) => A {
   return (spec) => {
     switch (spec.type) {
       case "StaticStyle":
@@ -70,10 +70,10 @@ export interface Styles {
 }
 
 export function matchStyleSelector<A>(
-  f: Function1<StaticStyle, A>,
-  g: Function1<DynamicStyle, A>,
-  h: Function1<Styles, A>
-): Function1<StyleSelector, A> {
+  f: (arg: StaticStyle) => A,
+  g: (arg: DynamicStyle) => A,
+  h: (arg: Styles) => A
+): (arg: StyleSelector) => A {
   return (styleSelector) => {
     switch (styleSelector.type) {
       case "StaticStyle":
@@ -212,17 +212,16 @@ export function getHoverStyleSelector(
   return hoverStijlSelectorOpNaam(map)[laagnaam] || option.none;
 }
 
-export const offsetStyleSelector: Function4<
-  string,
-  string,
-  number,
-  boolean,
-  Function1<StyleSelector, StyleSelector>
-> = (
+export const offsetStyleSelector: (
   ident8veld: string,
   offsetveld: string,
   stijlPositie: number,
   rijrichtingIsDigitalisatieZin: boolean
+) => (ss: StyleSelector) => StyleSelector = (
+  ident8veld,
+  offsetveld,
+  stijlPositie,
+  rijrichtingIsDigitalisatieZin
 ) =>
   matchStyleSelector<StyleSelector>(
     identity,
@@ -273,12 +272,11 @@ export const AwvV0DynamicStyleSpecIso: Iso<
   })
 );
 
-const getDefintion = (x: AwvV0StyleSpec) => x.definition;
+const getDefinition = (x: AwvV0StyleSpec) => x.definition;
 
-export const serialiseAwvV0StyleSpec: Function1<
-  AwvV0StyleSpec,
-  string
-> = matchStyleSpec(
-  pipe(getDefintion, serialiseAwvV0StaticStyle),
-  pipe(getDefintion, serialiseAwvV0DynamicStyle)
+export const serialiseAwvV0StyleSpec: (
+  arg: AwvV0StyleSpec
+) => string = matchStyleSpec(
+  flow(getDefinition, serialiseAwvV0StaticStyle),
+  flow(getDefinition, serialiseAwvV0DynamicStyle)
 );

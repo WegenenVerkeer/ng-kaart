@@ -1,4 +1,4 @@
-import { Endomorphism, Function1, pipe, Predicate } from "fp-ts/lib/function";
+import { Endomorphism, flow, pipe, Predicate } from "fp-ts/lib/function";
 import { Iso, Prism } from "monocle-ts";
 import { iso, Newtype, prism } from "newtype-ts";
 
@@ -33,18 +33,17 @@ const clampToUnit: Endomorphism<number> = (value) =>
 export namespace Transparantie {
   export const opaak: Transparantie = isoTransparantie.wrap(0);
 
-  export const toOpaciteit: Function1<Transparantie, Opaciteit> = (
+  export const toOpaciteit: (arg: Transparantie) => Opaciteit = (
     transparantie
   ) => isoOpaciteit.wrap(1 - toNumber(transparantie));
 
   export const fromNumber: PartialFunction1<number, Transparantie> =
     prismTransparantie.getOption;
-  export const fromNumberClamped: Function1<number, Transparantie> = pipe(
+  export const fromNumberClamped: (arg: number) => Transparantie = flow(
     clampToUnit,
     isoTransparantie.wrap
   );
-  export const toNumber: Function1<Transparantie, number> =
-    isoTransparantie.unwrap;
+  export const toNumber: (t: Transparantie) => number = isoTransparantie.unwrap;
 
   export const isOpaak: Predicate<Transparantie> = (transparantie) =>
     transparantie === opaak;
@@ -55,15 +54,15 @@ export namespace Transparantie {
 export namespace Opaciteit {
   export const opaak: Opaciteit = isoOpaciteit.wrap(1);
 
-  export const toTransparantie: Function1<Opaciteit, Transparantie> = (
+  export const toTransparantie: (arg: Opaciteit) => Transparantie = (
     opaciteit
   ) => isoTransparantie.wrap(1 - toNumber(opaciteit));
-  export const fromNumberClamped: Function1<number, Opaciteit> = pipe(
+  export const fromNumberClamped: (arg: number) => Opaciteit = flow(
     clampToUnit,
     isoOpaciteit.wrap
   );
 
   export const fromNumber: PartialFunction1<number, Opaciteit> =
     prismOpaciteit.getOption;
-  export const toNumber: Function1<Opaciteit, number> = isoOpaciteit.unwrap;
+  export const toNumber: (arg: Opaciteit) => number = isoOpaciteit.unwrap;
 }

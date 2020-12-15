@@ -1,4 +1,4 @@
-import { Function1, Lazy } from "fp-ts/lib/function";
+import { Lazy } from "fp-ts/lib/function";
 import { by, element, promise } from "protractor";
 
 // JS Promises zijn zoals Scala Futures: eens ze aangemaakt zijn beginnen ze uit te voeren. Wij willen wachten tot we
@@ -6,7 +6,7 @@ import { by, element, promise } from "protractor";
 export type LazyPromise<A> = Lazy<Promise<A>>;
 
 // Map een functie over een lazy promise
-export function map<A, B>(lp: LazyPromise<A>, f: Function1<A, B>): LazyPromise<B> {
+export function map<A, B>(lp: LazyPromise<A>, f: (A) => B): LazyPromise<B> {
   return () => lp().then(f);
 }
 

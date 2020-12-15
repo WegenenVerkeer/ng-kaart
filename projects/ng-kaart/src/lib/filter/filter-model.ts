@@ -1,9 +1,6 @@
 import { eq, option } from "fp-ts";
 import {
   constant,
-  Function1,
-  Function2,
-  Function4,
   identity,
   Lazy,
   not,
@@ -57,16 +54,15 @@ export namespace Filter {
     readonly right: Expression;
   }
 
-  export const Conjunction: Function2<
-    ConjunctionExpression,
-    Comparison,
-    Conjunction
-  > = (left, right) => ({ kind: "And", left, right });
+  export const Conjunction: (
+    arg1: ConjunctionExpression,
+    arg2: Comparison
+  ) => Conjunction = (left, right) => ({ kind: "And", left, right });
 
-  export const Disjunction: Function2<Expression, Expression, Disjunction> = (
-    left,
-    right
-  ) => ({ kind: "Or", left, right });
+  export const Disjunction: (
+    arg1: Expression,
+    arg2: Expression
+  ) => Disjunction = (left, right) => ({ kind: "Or", left, right });
 
   export type LogicalConnective = Conjunction | Disjunction;
 
@@ -195,10 +191,11 @@ export namespace Filter {
       fallback: () => option.none,
     });
 
-    export const withinValueToDuration: Function1<
-      RelativeDateRange,
-      option.Option<DateTime>
-    > = durationFallBackMatcher((q: Range) => q.unit);
+    export const withinValueToDuration: (
+      arg: RelativeDateRange
+    ) => option.Option<DateTime> = durationFallBackMatcher(
+      (q: Range) => q.unit
+    );
   }
 
   // Dit zijn alle types die we ondersteunen in het geheugen, maar denk eraan dat alles als string of number
@@ -223,13 +220,12 @@ export namespace Filter {
     readonly sqlFormat: option.Option<string>;
   }
 
-  export const BinaryComparison: Function4<
-    BinaryComparisonOperator,
-    Property,
-    Literal,
-    boolean,
-    BinaryComparison
-  > = (operator, property, value, caseSensitive) => ({
+  export const BinaryComparison: (
+    operator: BinaryComparisonOperator,
+    property: Property,
+    value: Literal,
+    caseSensitive: boolean
+  ) => BinaryComparison = (operator, property, value, caseSensitive) => ({
     kind: "BinaryComparison",
     operator,
     property,
@@ -237,11 +233,10 @@ export namespace Filter {
     caseSensitive,
   });
 
-  export const UnaryComparison: Function2<
-    UnaryComparisonOperator,
-    Property,
-    UnaryComparison
-  > = (operator, property) => ({
+  export const UnaryComparison: (
+    arg1: UnaryComparisonOperator,
+    arg2: Property
+  ) => UnaryComparison = (operator, property) => ({
     kind: "UnaryComparison",
     operator,
     property,
@@ -279,23 +274,21 @@ export namespace Filter {
   export const EmptyFilter: EmptyFilter = { kind: "EmptyFilter" };
   export const empty: Lazy<Filter> = constant(EmptyFilter);
 
-  export const ExpressionFilter: Function2<
-    option.Option<string>,
-    Expression,
-    ExpressionFilter
-  > = (name, expression) => ({
+  export const ExpressionFilter: (
+    arg1: option.Option<string>,
+    arg2: Expression
+  ) => ExpressionFilter = (name, expression) => ({
     kind: "ExpressionFilter",
     name: name,
     expression: expression,
   });
 
-  export const Property: Function4<
-    TypeType,
-    string,
-    string,
-    string,
-    Property
-  > = (typetype, name, label, sqlFormat) => ({
+  export const Property: (
+    typetype: TypeType,
+    name: string,
+    label: string,
+    sqlFormat: string
+  ) => Property = (typetype, name, label, sqlFormat) => ({
     kind: "Property",
     type: typetype,
     ref: name,
@@ -303,7 +296,7 @@ export namespace Filter {
     label,
   });
 
-  export const Literal: Function2<TypeType, ValueType, Literal> = (
+  export const Literal: (arg1: TypeType, arg2: ValueType) => Literal = (
     typetype,
     value
   ) => ({
@@ -330,34 +323,33 @@ export namespace Filter {
   > = option.fromPredicate(DateTime.isDateTime);
   export interface FilterMatcher<A> {
     readonly EmptyFilter: Lazy<A>;
-    readonly ExpressionFilter: Function1<ExpressionFilter, A>;
+    readonly ExpressionFilter: (arg: ExpressionFilter) => A;
   }
 
-  export const matchFilter: <A>(_: FilterMatcher<A>) => Function1<Filter, A> =
+  export const matchFilter: <A>(fm: FilterMatcher<A>) => (f: Filter) => A =
     matchers.matchKind;
 
-  export const asExpressionFilter: Function1<
-    Filter,
-    option.Option<ExpressionFilter>
-  > = matchFilter({
+  export const asExpressionFilter: (
+    arg: Filter
+  ) => option.Option<ExpressionFilter> = matchFilter({
     EmptyFilter: constant(option.none),
     ExpressionFilter: option.some,
   });
 
   export interface ExpressionMatcher<A> {
-    readonly And: Function1<Conjunction, A>;
-    readonly Or: Function1<Disjunction, A>;
-    readonly BinaryComparison: Function1<BinaryComparison, A>;
-    readonly UnaryComparison: Function1<UnaryComparison, A>;
+    readonly And: (arg: Conjunction) => A;
+    readonly Or: (arg: Disjunction) => A;
+    readonly BinaryComparison: (arg: BinaryComparison) => A;
+    readonly UnaryComparison: (arg: UnaryComparison) => A;
   }
 
   export const matchExpression: <A>(
     _: ExpressionMatcher<A>
-  ) => Function1<Expression, A> = matchers.matchKind;
+  ) => (arg: Expression) => A = matchers.matchKind;
 
   export const matchLiteral: <A>(
     _: matchers.FullMatcher<Literal, A, TypeType>
-  ) => Function1<Literal, A> = (matcher) =>
+  ) => (arg: Literal) => A = (matcher) =>
     matchers.match(matcher)((l) => l.type);
 
   export const matchTypeTypeWithFallback: <A>(
@@ -366,13 +358,13 @@ export namespace Filter {
     matchers.matchWithFallback(switcher)(identity);
 
   export interface ComparisonMatcher<A> {
-    readonly BinaryComparison: Function1<BinaryComparison, A>;
-    readonly UnaryComparison: Function1<UnaryComparison, A>;
+    readonly BinaryComparison: (arg: BinaryComparison) => A;
+    readonly UnaryComparison: (arg: UnaryComparison) => A;
   }
 
   export const matchComparison: <A>(
     _: ComparisonMatcher<A>
-  ) => Function1<Comparison, A> = matchers.matchKind;
+  ) => (arg: Comparison) => A = matchers.matchKind;
 
   export const matchBinaryComparisonOperatorWithFallback: <A>(
     _: matchers.FallbackMatcher<
@@ -380,17 +372,17 @@ export namespace Filter {
       A,
       BinaryComparisonOperator
     >
-  ) => Function1<BinaryComparisonOperator, A> = (matcher) =>
+  ) => (arg: BinaryComparisonOperator) => A = (matcher) =>
     matchers.matchWithFallback(matcher)(identity);
 
   export const matchUnaryComparisonOperator: <A>(
     _: matchers.FullMatcher<UnaryComparisonOperator, A, UnaryComparisonOperator>
-  ) => Function1<UnaryComparisonOperator, A> = (matcher) =>
+  ) => (arg: UnaryComparisonOperator) => A = (matcher) =>
     matchers.match(matcher)(identity);
 
   export const matchConjunctionExpression: <A>(
     _: matchers.FullKindMatcher<ConjunctionExpression, A>
-  ) => Function1<ConjunctionExpression, A> = (matcher) =>
+  ) => (arg: ConjunctionExpression) => A = (matcher) =>
     matchers.matchKind(matcher);
 
   export const isEmpty: Predicate<Filter> = matchFilter({

@@ -1,5 +1,3 @@
-import { Function1, Function2 } from "fp-ts/lib/function";
-
 import * as oi from "../stijl/json-object-interpreting";
 import { properlyJsonDeclaredText, textToJson } from "../stijl/text-json";
 import { validationChain as chain, validationChain2 } from "../util/validation";
@@ -8,11 +6,10 @@ import { FilterAwv0Json } from "./filter-awv0-export";
 import { AwvV0FilterInterpreters } from "./filter-awv0-interpreter";
 import { Filter as fltr } from "./filter-model";
 
-export const definitieToFilter: Function2<
-  string,
-  string,
-  oi.Validation<fltr.Filter>
-> = (encoding, definitieText) =>
+export const definitieToFilter: (
+  encoding: string,
+  definitieText: string
+) => oi.Validation<fltr.Filter> = (encoding, definitieText) =>
   validationChain2(
     properlyJsonDeclaredText(encoding, definitieText),
     textToJson,
@@ -37,7 +34,7 @@ export interface EncodedFilter {
   readonly encoding: string;
 }
 
-export const filterToDefinitie: Function1<fltr.Filter, EncodedFilter> = (
+export const filterToDefinitie: (filter: fltr.Filter) => EncodedFilter = (
   filter
 ) => ({
   filterDefinitie: FilterAwv0Json.encode(filter),

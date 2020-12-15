@@ -1,5 +1,5 @@
-import { Function1 } from "fp-ts/lib/function";
-
+import { either } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "../util/openlayers-compat";
 import {
   validationChain as chain,
@@ -25,8 +25,9 @@ export function definitieToStyle(
   encoding: string,
   definitieText: string
 ): Validation<ol.style.Style> {
-  return validateAsStaticStyle(encoding, definitieText).map(
-    StaticStyleEncoders.awvV0Style.encode
+  return pipe(
+    validateAsStaticStyle(encoding, definitieText),
+    either.map(StaticStyleEncoders.awvV0Style.encode)
   );
 }
 
@@ -62,6 +63,6 @@ export const validateAwvV0StaticStyle: Validator<
   ol.style.Style
 > = jsonAwvV0Style;
 
-export const serialiseAwvV0StaticStyle: Function1<AwvV0StaticStyle, string> = (
+export const serialiseAwvV0StaticStyle: (arg: AwvV0StaticStyle) => string = (
   style
 ) => JSON.stringify({ version: Version, definition: style });

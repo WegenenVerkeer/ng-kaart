@@ -1,4 +1,5 @@
 import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import * as ol from "../util/openlayers-compat";
 
@@ -50,9 +51,12 @@ export class TileLoader {
 
   public abort(): void {
     this.inTeLadenImages.map((htmlImage) => {
-      option.fromNullable(htmlImage).map((img) => {
-        img.src = "";
-      });
+      pipe(
+        option.fromNullable(htmlImage),
+        option.map((img) => {
+          img.src = "";
+        })
+      );
     });
     this.inTeLadenImages = [];
   }

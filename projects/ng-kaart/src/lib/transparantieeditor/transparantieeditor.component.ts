@@ -5,7 +5,7 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { array, option } from "fp-ts";
-import { Function2, identity } from "fp-ts/lib/function";
+import { identity } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import {
   distinctUntilChanged,
@@ -60,11 +60,11 @@ export class TransparantieeditorComponent extends KaartChildDirective {
       map(isAanpassingBezig)
     );
 
-    const findLaagOpTitel: Function2<
-      string,
-      ke.ToegevoegdeLaag[],
-      option.Option<ke.ToegevoegdeLaag>
-    > = (titel, lgn) => array.findFirst(lgn, (lg) => lg.titel === titel);
+    const findLaagOpTitel: (
+      titel: string,
+      lgn: ke.ToegevoegdeLaag[]
+    ) => option.Option<ke.ToegevoegdeLaag> = (titel, lgn) =>
+      array.findFirst<ke.ToegevoegdeLaag>((lg) => lg.titel === titel)(lgn);
     const laag$: rx.Observable<ke.ToegevoegdeLaag> = forEvery(aanpassing$)(
       (aanpassing) =>
         kaart.modelChanges.lagenOpGroep[aanpassing.laag.laaggroep].pipe(

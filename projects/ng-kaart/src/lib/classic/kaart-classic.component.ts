@@ -12,7 +12,8 @@ import {
   ViewChild,
 } from "@angular/core";
 import { apply, option } from "fp-ts";
-import { Function1, pipe } from "fp-ts/lib/function";
+import { flow } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import { debounceTime, map, share, switchMap, tap } from "rxjs/operators";
 
@@ -83,20 +84,20 @@ export interface ClassicKlikInfoEnStatus {
   readonly combinedLaagLocatieStatus: progress.ProgressStatus;
 }
 
-const flattenKaartLocaties: Function1<
-  KaartLocaties,
-  ClassicKlikInfoEnStatus
-> = (locaties) => ({
+const flattenKaartLocaties: (
+  locaties: KaartLocaties
+) => ClassicKlikInfoEnStatus = (locaties) => ({
   timestamp: locaties.timestamp,
   coordinaat: locaties.coordinaat,
-  adres: progress
-    .toOption(locaties.maybeAdres)
-    .chain(option.fromEither)
-    .toUndefined(),
+  adres: pipe(
+    progress.toOption(locaties.maybeAdres),
+    option.chain(option.fromEither),
+    option.toUndefined
+  ),
   adresStatus: progress.toProgressStatus(locaties.maybeAdres),
   adresFailure: progressFailure(locaties.maybeAdres),
   wegLocaties: arrays.fromOption(
-    progress.toOption(locaties.wegLocaties).map(arrays.fromEither)
+    pipe(progress.toOption(locaties.wegLocaties), option.map(arrays.fromEither))
   ),
   wegLocatiesStatus: progress.toProgressStatus(locaties.wegLocaties),
   wegLocatiesFailure: progressFailure(locaties.wegLocaties),
@@ -308,38 +309,38 @@ export class KaartClassicComponent
         this.kaartClassicSubMsg$.lift(
           classicMsgSubscriptionCmdOperator(
             this.dispatcher,
-            prt.KaartClickSubscription(pipe(KaartClickMsg, KaartClassicMsg)),
+            prt.KaartClickSubscription(flow(KaartClickMsg, KaartClassicMsg)),
             prt.GeselecteerdeFeaturesSubscription(
-              pipe(FeatureSelectieAangepastMsg, KaartClassicMsg)
+              flow(FeatureSelectieAangepastMsg, KaartClassicMsg)
             ),
             prt.HoverFeaturesSubscription(
-              pipe(FeatureHoverAangepastMsg, KaartClassicMsg)
+              flow(FeatureHoverAangepastMsg, KaartClassicMsg)
             ),
             prt.ZichtbareFeaturesSubscription(
-              pipe(ZichtbareFeaturesAangepastMsg, KaartClassicMsg)
+              flow(ZichtbareFeaturesAangepastMsg, KaartClassicMsg)
             ),
-            prt.ZoomSubscription(pipe(ZoomAangepastMsg, KaartClassicMsg)),
+            prt.ZoomSubscription(flow(ZoomAangepastMsg, KaartClassicMsg)),
             prt.MiddelpuntSubscription(
-              pipe(MiddelpuntAangepastMsg, KaartClassicMsg)
+              flow(MiddelpuntAangepastMsg, KaartClassicMsg)
             ),
-            prt.ExtentSubscription(pipe(ExtentAangepastMsg, KaartClassicMsg)),
+            prt.ExtentSubscription(flow(ExtentAangepastMsg, KaartClassicMsg)),
             prt.LagenInGroepSubscription(
               "Achtergrond",
-              pipe(AchtergrondLagenInGroepAangepastMsg, KaartClassicMsg)
+              flow(AchtergrondLagenInGroepAangepastMsg, KaartClassicMsg)
             ),
             prt.LagenInGroepSubscription(
               "Voorgrond.Hoog",
-              pipe(VoorgrondHoogLagenInGroepAangepastMsg, KaartClassicMsg)
+              flow(VoorgrondHoogLagenInGroepAangepastMsg, KaartClassicMsg)
             ),
             prt.LagenInGroepSubscription(
               "Voorgrond.Laag",
-              pipe(VoorgrondLaagLagenInGroepAangepastMsg, KaartClassicMsg)
+              flow(VoorgrondLaagLagenInGroepAangepastMsg, KaartClassicMsg)
             ),
             prt.PublishedKaartLocatiesSubscription(
-              pipe(PublishedKaartLocatiesMsg, KaartClassicMsg)
+              flow(PublishedKaartLocatiesMsg, KaartClassicMsg)
             ),
-            prt.InErrorSubscription(pipe(InErrorMsg, KaartClassicMsg)),
-            prt.BusySubscription(pipe(BusyMsg, KaartClassicMsg))
+            prt.InErrorSubscription(flow(InErrorMsg, KaartClassicMsg)),
+            prt.BusySubscription(flow(BusyMsg, KaartClassicMsg))
           )
         )
       ).subscribe((err) => classicLogger.error(err));
@@ -402,20 +403,27 @@ export class KaartClassicComponent
   ngOnInit() {
     super.ngOnInit();
     // De volgorde van de dispatching hier is van belang voor wat de overhand heeft
-    this._zoom.foldL(nop, (zoom) =>
-      this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper))
+    pipe(
+      this._zoom,
+      option.fold(nop, (zoom) =>
+        this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper))
+      )
     );
-    this._extent.foldL(nop, (extent) =>
-      this.dispatch(prt.VeranderExtentCmd(extent))
+    pipe(
+      this._extent,
+      option.fold(nop, (extent) => this.dispatch(prt.VeranderExtentCmd(extent)))
     );
-    this._middelpunt.foldL(nop, (middelpunt) =>
-      this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, option.none))
+    pipe(
+      this._middelpunt,
+      option.fold(nop, (middelpunt) =>
+        this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, option.none))
+      )
     );
-    if (this._breedte.isSome() || this._hoogte.isSome()) {
+    if (option.isSome(this._breedte) || option.isSome(this._hoogte)) {
       this.dispatch(
         prt.VeranderViewportCmd([
-          this._breedte.toUndefined(),
-          this._hoogte.toUndefined(),
+          option.toUndefined(this._breedte),
+          option.toUndefined(this._hoogte),
         ])
       );
     }
@@ -451,7 +459,7 @@ export class KaartClassicComponent
     forChangedValue(
       changes,
       "extent",
-      (extentOpt) => forEach(extentOpt, pipe(prt.VeranderExtentCmd, dispatch)),
+      (extentOpt) => forEach(extentOpt, flow(prt.VeranderExtentCmd, dispatch)),
       val.optExtent
     );
     forChangedValue(
@@ -460,14 +468,14 @@ export class KaartClassicComponent
       (zoomOpt) =>
         forEach(
           zoomOpt,
-          pipe(option.fromNullable, prt.ZetMijnLocatieZoomCmd, dispatch)
+          flow(option.fromNullable, prt.ZetMijnLocatieZoomCmd, dispatch)
         ),
       val.optNum
     );
     forChangedValue(
       changes,
       "geselecteerdeFeatures",
-      pipe(prt.SelecteerFeaturesCmd, dispatch)
+      flow(prt.SelecteerFeaturesCmd, dispatch)
     );
     forChangedValue(changes, "breedte", () => this.zetKaartGrootte());
     forChangedValue(changes, "hoogte", () => this.zetKaartGrootte());
@@ -487,7 +495,7 @@ export class KaartClassicComponent
     forChangedValue(
       changes,
       "selectieModus",
-      pipe(prt.ActiveerSelectieModusCmd, dispatch),
+      flow(prt.ActiveerSelectieModusCmd, dispatch),
       (param: string) =>
         val.enu(
           param,
@@ -503,7 +511,7 @@ export class KaartClassicComponent
     forChangedValue(
       changes,
       "hovermodus",
-      pipe(prt.ActiveerHoverModusCmd, dispatch),
+      flow(prt.ActiveerHoverModusCmd, dispatch),
       (param: string) => val.enu(param, this._hoverModus, "on", "off"),
       (value) => value !== undefined && value != null
     );
@@ -521,9 +529,10 @@ export class KaartClassicComponent
 
   /** @ignore */
   private zetKaartGrootte() {
-    const maybeNativeMapElement = option
-      .fromNullable(this.mapElement)
-      .chain((elt) => option.fromNullable(elt.nativeElement));
+    const maybeNativeMapElement = pipe(
+      option.fromNullable(this.mapElement),
+      option.chain((elt) => option.fromNullable(elt.nativeElement))
+    );
 
     forEach(
       apply.sequenceT(option.option)(maybeNativeMapElement, this._breedte),
@@ -560,12 +569,18 @@ export class KaartClassicComponent
 
   /** @ignore */
   toonIdentifyInformatie(feature: ol.Feature): void {
-    const featureId = Feature.propertyId(feature).getOrElse("");
+    const featureId = pipe(
+      Feature.propertyId(feature),
+      option.getOrElse(() => "")
+    );
     this.dispatch(
       prt.ToonInfoBoodschapCmd({
         type: "InfoBoodschapIdentify",
         id: featureId,
-        titel: Feature.getLaagnaam(feature).getOrElse("Onbekende laag"),
+        titel: pipe(
+          Feature.getLaagnaam(feature),
+          option.getOrElse(() => "Onbekende laag")
+        ),
         feature: feature,
         bron: option.none,
         sluit: "DOOR_APPLICATIE",

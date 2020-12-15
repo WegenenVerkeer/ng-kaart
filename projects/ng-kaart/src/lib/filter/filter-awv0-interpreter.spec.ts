@@ -1,5 +1,6 @@
-import { eq, option } from "fp-ts";
-import { Function1, Lazy } from "fp-ts/lib/function";
+import { either, eq, option } from "fp-ts";
+import { Lazy } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import { DateTime } from "luxon";
 
 import { Consumer1, Consumer2 } from "../util/function";
@@ -32,7 +33,7 @@ const ensureOption = (obj: unknown): unknown =>
 // We willen zo weinig mogelijk duplicatie in onze testen. Wat we parsen bevat enkel basis datatypes, geen Options. De
 // output echter, bevat wel Options. Voor de rest is echter alles gelijk. Daarom "fixen" we de velden waarvan we weten
 // dat het Optionals moeten zijn obv de ruwe waarde (als die er is).
-const fixOptionals: Function1<any, fltr.Filter> = (rawFilter) =>
+const fixOptionals: (rawFilter: any) => fltr.Filter = (rawFilter) =>
   (modifyKinded(rawFilter, {
     ExpressionFilter: (ef) => (ef.name = ensureOption(ef.name)),
     Property: (prop) => (prop.sqlFormat = ensureOption(prop.sqlFormat)),
@@ -51,7 +52,7 @@ describe("De filterinterpreter", () => {
       typeof obj === "object" &&
       obj["_tag"] === "Some" &&
       typeof obj["value"] === "string";
-    const isNone = (obj): obj is option.None<string> =>
+    const isNone = (obj): obj is option.None =>
       typeof obj === "object" && obj["_tag"] === "None";
     jasmine.addCustomEqualityTester((opt1, opt2) => {
       if (isStringSome(opt1) && isStringSome(opt2)) {
@@ -72,8 +73,13 @@ describe("De filterinterpreter", () => {
     it("moet een 'empty' filter kunnen verwerken", () => {
       const empty: fltr.Filter = fltr.empty();
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(empty);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(empty);
+      expect(either.isRight(result)).toBe(true);
+      expect(
+        pipe(
+          result,
+          either.getOrElse(() => undefined)
+        )
+      ).toEqual(empty);
     });
     it("moet een filter met 1 'gelijk aan' kunnen verwerken", () => {
       const eq = {
@@ -88,8 +94,13 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(eq));
+      expect(either.isRight(result)).toBe(true);
+      expect(
+        pipe(
+          result,
+          either.getOrElse(() => undefined)
+        )
+      ).toEqual(fixOptionals(eq));
     });
     it("moet een filter met 1 case sensitive 'gelijk aan' kunnen verwerken", () => {
       const eq = {
@@ -104,8 +115,13 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(eq));
+      expect(either.isRight(result)).toBe(true);
+      expect(
+        pipe(
+          result,
+          either.getOrElse(() => undefined)
+        )
+      ).toEqual(fixOptionals(eq));
     });
     it("moet een filter met 1 niet case sensitive 'gelijk aan' kunnen verwerken", () => {
       const eq = {
@@ -120,8 +136,13 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(eq));
+      expect(either.isRight(result)).toBe(true);
+      expect(
+        pipe(
+          result,
+          either.getOrElse(() => undefined)
+        )
+      ).toEqual(fixOptionals(eq));
     });
     it("moet een filter met 1 'niet gelijk aan' kunnen verwerken", () => {
       const neq = {
@@ -136,8 +157,13 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(neq);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(neq));
+      expect(either.isRight(result)).toBe(true);
+      expect(
+        pipe(
+          result,
+          either.getOrElse(() => undefined)
+        )
+      ).toEqual(fixOptionals(neq));
     });
     it("moet een filter met 1 'begint met' kunnen verwerken", () => {
       const neq = {
@@ -152,8 +178,13 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(neq);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(neq));
+      expect(either.isRight(result)).toBe(true);
+      expect(
+        pipe(
+          result,
+          either.getOrElse(() => undefined)
+        )
+      ).toEqual(fixOptionals(neq));
     });
     it("moet een filter met 1 'geen waarde' kunnen verwerken", () => {
       const ndef = {
@@ -166,8 +197,13 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(ndef);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(ndef));
+      expect(either.isRight(result)).toBe(true);
+      expect(
+        pipe(
+          result,
+          either.getOrElse(() => undefined)
+        )
+      ).toEqual(fixOptionals(ndef));
     });
     it("moet een filter met 1 'heeft een waarde' kunnen verwerken", () => {
       const def = {
@@ -180,8 +216,13 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(def);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(def));
+      expect(either.isRight(result)).toBe(true);
+      expect(
+        pipe(
+          result,
+          either.getOrElse(() => undefined)
+        )
+      ).toEqual(fixOptionals(def));
     });
     it("moet een filter met 1 'within' kunnen verwerken", () => {
       const def = {
@@ -200,8 +241,13 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(def);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(def));
+      expect(either.isRight(result)).toBe(true);
+      expect(
+        pipe(
+          result,
+          either.getOrElse(() => undefined)
+        )
+      ).toEqual(fixOptionals(def));
     });
     it("moet een filter met 1 '<=' date kunnen verwerken", () => {
       const def = {
@@ -216,8 +262,11 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(def);
-      expect(result.isSuccess()).toBe(true);
-      const exprValue = result.getOrElse(undefined);
+      expect(either.isRight(result)).toBe(true);
+      const exprValue = pipe(
+        result,
+        either.getOrElse(() => undefined)
+      );
       expect(exprValue.kind).toEqual("ExpressionFilter");
       const expr = exprValue as fltr.ExpressionFilter;
       expect(expr.expression.kind).toEqual("BinaryComparison");
@@ -252,8 +301,13 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(and);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(and));
+      expect(either.isRight(result)).toBe(true);
+      expect(
+        pipe(
+          result,
+          either.getOrElse(() => undefined)
+        )
+      ).toEqual(fixOptionals(and));
     });
     it("moet een filter met 2x 'and' kunnen verwerken", () => {
       const and = {
@@ -288,8 +342,13 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(and);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(and));
+      expect(either.isRight(result)).toBe(true);
+      expect(
+        pipe(
+          result,
+          either.getOrElse(() => undefined)
+        )
+      ).toEqual(fixOptionals(and));
     });
     it("moet een filter met 1 'or' kunnen verwerken", () => {
       const or = {
@@ -314,8 +373,13 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(or);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(or));
+      expect(either.isRight(result)).toBe(true);
+      expect(
+        pipe(
+          result,
+          either.getOrElse(() => undefined)
+        )
+      ).toEqual(fixOptionals(or));
     });
     it("moet een filter met 2x 'or' kunnen verwerken", () => {
       const or = {
@@ -350,8 +414,13 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(or);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(or));
+      expect(either.isRight(result)).toBe(true);
+      expect(
+        pipe(
+          result,
+          either.getOrElse(() => undefined)
+        )
+      ).toEqual(fixOptionals(or));
     });
     it("moet een filter met 'or' en 'and' kunnen verwerken", () => {
       const orAnd = {
@@ -386,8 +455,13 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(orAnd);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(orAnd));
+      expect(either.isRight(result)).toBe(true);
+      expect(
+        pipe(
+          result,
+          either.getOrElse(() => undefined)
+        )
+      ).toEqual(fixOptionals(orAnd));
     });
   });
   describe("Bij het interpreteren van ongeldige structuren", () => {
@@ -403,11 +477,15 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
-      expect(result.isFailure()).toBe(true);
+      expect(either.isLeft(result)).toBe(true);
       expect(
-        result.fold(
-          (msgs) => msgs.find((m) => m.endsWith("heeft geen veld 'property'")),
-          undefined
+        pipe(
+          result,
+          either.fold(
+            (msgs) =>
+              msgs.find((m) => m.endsWith("heeft geen veld 'property'")),
+            () => undefined
+          )
         )
       ).toBeTruthy();
     });
@@ -424,14 +502,17 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(def);
-      expect(result.isFailure()).toBe(true);
+      expect(either.isLeft(result)).toBe(true);
       expect(
-        result.fold(
-          (msgs) =>
-            msgs.includes(
-              "De operator, property en de waarde komen niet overeen"
-            ),
-          undefined
+        pipe(
+          result,
+          either.fold(
+            (msgs) =>
+              msgs.includes(
+                "De operator, property en de waarde komen niet overeen"
+              ),
+            () => undefined
+          )
         )
       ).toBe(true);
     });
@@ -448,14 +529,17 @@ describe("De filterinterpreter", () => {
         },
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
-      expect(result.isFailure()).toBe(true);
+      expect(either.isLeft(result)).toBe(true);
       expect(
-        result.fold(
-          (msgs) =>
-            msgs.includes(
-              "Het type van de property komt niet overeen met dat van de waarde"
-            ),
-          undefined
+        pipe(
+          result,
+          either.fold(
+            (msgs) =>
+              msgs.includes(
+                "Het type van de property komt niet overeen met dat van de waarde"
+              ),
+            () => undefined
+          )
         )
       ).toBe(true);
     });
