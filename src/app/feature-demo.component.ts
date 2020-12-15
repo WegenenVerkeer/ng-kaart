@@ -1880,11 +1880,11 @@ export class FeatureDemoComponent {
     this.mogelijkeOpties[optie].value = !this.mogelijkeOpties[optie].value;
   }
 
-  getMijnLocatieZoom(): string {
+  getMijnLocatieZoom(): number | null {
     if (this.mogelijkeOpties["mijnlocatie"].value) {
-      return "10";
+      return 10;
     } else {
-      return "";
+      return null;
     }
   }
 
