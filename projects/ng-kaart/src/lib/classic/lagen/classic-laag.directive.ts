@@ -9,6 +9,7 @@ import {
 } from "@angular/core";
 import { option } from "fp-ts";
 import { pipe } from "fp-ts/lib/pipeable";
+import { ReplaySubject } from "rxjs";
 
 import { Laag, Laaggroep } from "../../kaart/kaart-elementen";
 import { Legende } from "../../kaart/kaart-legende";
@@ -17,6 +18,7 @@ import {
   Opaciteit,
   Transparantie,
 } from "../../transparantieeditor/transparantie";
+import { TypedRecord } from "../../util/typed-record";
 import { ClassicBaseDirective } from "../classic-base.directive";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 import { ClassicLegendeItemDirective } from "../legende/classic-legende-item.directive";
@@ -38,6 +40,8 @@ export abstract class ClassicLaagDirective
   _groep: option.Option<Laaggroep> = option.none;
   _minZoom = 2;
   _maxZoom = 16;
+
+  private _delayedDispatch = new ReplaySubject<prt.Command<TypedRecord>>();
 
   @Input()
   set titel(param: string) {
@@ -124,6 +128,10 @@ export abstract class ClassicLaagDirective
     this.voegLegendeToe();
   }
 
+  protected delayedDispatch(cmd: prt.Command<TypedRecord>) {
+    this._delayedDispatch.next(cmd);
+  }
+
   protected voegLaagToe() {
     const lg = this.createLayer();
     this.laag = option.some(lg);
@@ -140,6 +148,9 @@ export abstract class ClassicLaagDirective
       laagtabelinstellingen: option.none,
       wrapper: logOnlyWrapper,
     });
+    this.bindToLifeCycle(this._delayedDispatch).subscribe((cmd) =>
+      this.kaart.dispatch(cmd)
+    );
   }
 
   protected voegLegendeToe() {
@@ -147,14 +158,14 @@ export abstract class ClassicLaagDirective
       const legende = Legende(
         this.legendeItems.map((item) => item.maakLegendeItem())
       );
-      this.dispatch(
+      this.delayedDispatch(
         prt.ZetLaagLegendeCmd(this._titel, legende, logOnlyWrapper)
       );
     }
   }
 
   protected verwijderLaag() {
-    this.dispatch(prt.VerwijderLaagCmd(this._titel, logOnlyWrapper));
+    this.delayedDispatch(prt.VerwijderLaagCmd(this._titel, logOnlyWrapper));
   }
 
   protected gekozenLaagGroep(): Laaggroep {

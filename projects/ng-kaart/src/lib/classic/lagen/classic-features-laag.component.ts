@@ -125,7 +125,7 @@ export class ClassicFeaturesLaagComponent
   }
 
   private dispatchVervangFeatures(features: ol.Feature[]) {
-    this.dispatch(
+    this.delayedDispatch(
       prt.VervangFeaturesCmd(
         this._titel,
         arrays.fromNullable(features),

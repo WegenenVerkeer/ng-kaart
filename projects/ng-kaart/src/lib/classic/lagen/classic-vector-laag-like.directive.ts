@@ -192,7 +192,7 @@ export abstract class ClassicVectorLaagLikeDirective
   /** @ignore */
   ngOnChanges(changes: SimpleChanges) {
     const dispatch: Consumer1<prt.Command<TypedRecord>> = (cmd) =>
-      this.kaart.dispatch(cmd);
+      this.delayedDispatch(cmd);
     forChangedValue<boolean, boolean>(
       changes,
       "zichtbaar",

@@ -244,7 +244,7 @@ export class ClassicWmtsLaagComponent
     };
     const lg = this.createLayerFromConfig(config);
     this.laag = option.some(lg);
-    this.dispatch({
+    this.delayedDispatch({
       type: "VervangLaagCmd",
       laag: lg,
       wrapper: logOnlyWrapper,

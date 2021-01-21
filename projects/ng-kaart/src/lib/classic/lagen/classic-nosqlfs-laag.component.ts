@@ -107,7 +107,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeDirective 
   @Input()
   set precache(input: PrecacheFeatures) {
     if (input) {
-      this.dispatch(
+      this.delayedDispatch(
         prt.VulCacheVoorNosqlLaag(
           this._titel,
           input.wkt,
@@ -120,7 +120,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeDirective 
 
   @Input()
   set offline(offline: boolean) {
-    this.dispatch(prt.ZetOffline(this._titel, offline, logOnlyWrapper));
+    this.delayedDispatch(prt.ZetOffline(this._titel, offline, logOnlyWrapper));
   }
 
   @Input()
@@ -130,7 +130,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeDirective 
       // Dit moet op de volgende execution gescheduled worden omdat de laag niet geregistreerd is op het moment dat de
       // eerste @Input gezet wordt.
       asap(() =>
-        this.dispatch(
+        this.delayedDispatch(
           prt.VraagCachedFeaturesLookupCmd(
             this._titel,
             cachedFeaturesLookupReadyMsg

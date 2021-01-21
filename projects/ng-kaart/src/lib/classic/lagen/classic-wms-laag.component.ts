@@ -147,7 +147,7 @@ export class ClassicWmsLaagComponent
   @Input()
   set precache(input: PrecacheWMS | undefined) {
     if (input) {
-      this.dispatch(
+      this.delayedDispatch(
         prt.VulCacheVoorWMSLaag(
           this._titel,
           input.startZoom,
@@ -355,7 +355,9 @@ export class ClassicWmsLaagComponent
     super.ngAfterViewInit();
 
     if (this._cacheActief) {
-      this.dispatch(prt.ActiveerCacheVoorLaag(this._titel, logOnlyWrapper));
+      this.delayedDispatch(
+        prt.ActiveerCacheVoorLaag(this._titel, logOnlyWrapper)
+      );
 
       this.bindToLifeCycle(
         merge(
