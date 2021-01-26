@@ -116,7 +116,12 @@ export class ZoekerHelpComponent extends KaartChildDirective {
       map(([root, selectiePad]) =>
         selecteerUitBoom(this.domSanitizer, root, selectiePad.slice(1))
       ),
-      map((optionalSelectie) => optionalSelectie.getOrElse(undefined))
+      map((optionalSelectie) =>
+        pipe(
+          optionalSelectie,
+          option.getOrElse(() => undefined)
+        )
+      )
     );
   }
 
