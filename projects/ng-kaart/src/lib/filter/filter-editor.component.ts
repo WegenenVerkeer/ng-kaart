@@ -9,7 +9,7 @@ import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import { MatAutocompleteTrigger } from "@angular/material/autocomplete";
 import { apply, array, option, ord } from "fp-ts";
 import { Endomorphism, Refinement } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { DateTime } from "luxon";
 import * as momentImported from "moment";
 import * as rx from "rxjs";

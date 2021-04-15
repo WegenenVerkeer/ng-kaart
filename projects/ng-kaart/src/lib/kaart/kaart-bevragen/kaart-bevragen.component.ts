@@ -13,7 +13,7 @@ import {
   switchMap,
   timeoutWith,
 } from "rxjs/operators";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import { ZoekerPerceelService } from "../../zoeker/perceel/zoeker-perceel.service";
 import * as arrays from "../../util/arrays";

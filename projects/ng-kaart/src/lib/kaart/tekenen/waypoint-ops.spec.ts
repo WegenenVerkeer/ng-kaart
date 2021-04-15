@@ -1,5 +1,5 @@
 import { array, option, tuple } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import { addWaypoint, emptyRouteState, removeWaypoint } from "./waypoint-ops";
 import { AddWaypoint, RemoveWaypoint, Waypoint } from "./waypoint.msg";

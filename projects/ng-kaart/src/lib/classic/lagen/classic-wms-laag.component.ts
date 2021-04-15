@@ -11,7 +11,7 @@ import {
 } from "@angular/core";
 import { flow } from "fp-ts/lib/function";
 import { array, eq, map as fpMap, option } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { merge } from "rxjs";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, tap } from "rxjs/operators";

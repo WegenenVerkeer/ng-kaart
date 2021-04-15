@@ -3,7 +3,7 @@ import { constant, Lazy, Refinement } from "fp-ts/lib/function";
 
 import * as clr from "../../stijl/colour";
 import * as ol from "../../util/openlayers-compat";
-import { RoutingService } from "./routing-service";
+import { RoutingService, WegEdge } from "./routing-service";
 
 import { Waypoint } from "./waypoint.msg";
 
@@ -35,7 +35,7 @@ export interface StartDrawing {
   // readonly startGeometrie: Option<ol.geom.Geometry>;
   readonly featureColour: clr.Kleur;
   readonly useRouting: boolean;
-  readonly customRoutingService: option.Option<RoutingService>;
+  readonly customRoutingService: option.Option<RoutingService<unknown>>;
   readonly polygonStyleFunction: option.Option<ol.style.StyleFunction>;
 }
 
@@ -81,7 +81,7 @@ export interface SnapWaypoint {
 export const StartDrawing: (
   featureColour: clr.Kleur,
   useRouting: boolean,
-  customRoutingService: option.Option<RoutingService>,
+  customRoutingService: option.Option<RoutingService<unknown>>,
   polygonStyleFunction: option.Option<ol.style.StyleFunction>
 ) => StartDrawing = (
   featureColour,

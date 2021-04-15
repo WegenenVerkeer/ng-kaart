@@ -1,6 +1,6 @@
 import { array, eq, option } from "fp-ts";
 import { flow, not, Predicate } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { Optional } from "monocle-ts";
 
 import * as clr from "../../stijl/colour";

@@ -1,5 +1,5 @@
 import { set } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 export const isOfSize: (_: number) => <A>(_: Set<A>) => boolean = (size) => (
   set

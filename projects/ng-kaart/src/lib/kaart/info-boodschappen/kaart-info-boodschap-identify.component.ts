@@ -1,6 +1,6 @@
 import { Component, Input, NgZone } from "@angular/core";
 import { option } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import { matchGeometryType } from "../../util";
 import { isObject } from "../../util/object";

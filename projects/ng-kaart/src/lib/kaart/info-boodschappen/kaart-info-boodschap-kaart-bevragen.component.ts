@@ -5,7 +5,7 @@ import {
   NgZone,
 } from "@angular/core";
 import { array, either, option, ord } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import { Adres, WegLocatie } from "..";
 import {

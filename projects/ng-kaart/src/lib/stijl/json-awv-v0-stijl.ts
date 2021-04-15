@@ -1,7 +1,7 @@
 import { identity } from "fp-ts/lib/function";
 
 import { either } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import * as ol from "../util/openlayers-compat";
 
 import { Interpreter } from "./json-object-interpreting";

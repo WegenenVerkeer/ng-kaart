@@ -1,6 +1,6 @@
 import { option } from "fp-ts";
 import { Endomorphism, identity, Predicate } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 export const isOfSize: (_: number) => <K, V>(_: Map<K, V>) => boolean = (
   size

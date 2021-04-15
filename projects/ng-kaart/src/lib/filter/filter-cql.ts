@@ -1,6 +1,6 @@
 import { option } from "fp-ts";
 import { constant, Endomorphism, flow } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import { Filter as fltr } from "../filter/filter-model";
 import { formateerDateAsDefaultDate } from "../util/date-time";

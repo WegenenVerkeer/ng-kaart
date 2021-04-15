@@ -1,6 +1,6 @@
 import { array, eq, option, traversable } from "fp-ts";
 import { FunctionN, Refinement } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import { kaartLogger } from "../kaart/log";
 

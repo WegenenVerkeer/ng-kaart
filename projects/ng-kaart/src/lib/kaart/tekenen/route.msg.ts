@@ -1,5 +1,5 @@
 import { option, record } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import * as ol from "../../util/openlayers-compat";
 
@@ -15,20 +15,20 @@ export interface ProtoRoute {
 }
 
 // Het type dat de berekende geometrie tussen 2 punten beschrijft
-export interface GeometryRoute {
+export interface GeometryRoute<Edge> {
   readonly id: string;
   readonly version: number;
   readonly begin: Waypoint;
   readonly end: Waypoint;
   readonly geometry: ol.geom.Geometry;
-  readonly edges?: any;
+  readonly edges: Edge[];
 }
 
-export type RouteEvent = RouteAdded | RouteRemoved;
+export type RouteEvent<Edge> = RouteAdded<Edge> | RouteRemoved;
 
 export type RouteEventId = string;
 
-export interface RouteAdded {
+export interface RouteAdded<Edge> {
   readonly type: "RouteAdded";
   readonly id: RouteEventId;
   readonly version: number;
@@ -36,7 +36,7 @@ export interface RouteAdded {
   readonly geometry: ol.geom.Geometry;
   readonly beginSnap: option.Option<Waypoint>;
   readonly endSnap: option.Option<Waypoint>;
-  readonly edges: any;
+  readonly edges: Edge[];
 }
 
 export interface RouteRemoved {
@@ -66,11 +66,11 @@ export function createRoute(
   };
 }
 
-export function routeAdded(
-  geometryRoute: GeometryRoute,
+export function routeAdded<Edge>(
+  geometryRoute: GeometryRoute<Edge>,
   beginSnap: option.Option<Waypoint>,
   endSnap: option.Option<Waypoint>
-): RouteAdded {
+): RouteAdded<Edge> {
   return {
     type: "RouteAdded",
     id: geometryRoute.id,

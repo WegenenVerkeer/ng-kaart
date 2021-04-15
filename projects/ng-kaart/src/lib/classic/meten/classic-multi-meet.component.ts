@@ -6,7 +6,7 @@ import {
   Output,
 } from "@angular/core";
 
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { option } from "fp-ts";
 import * as clr from "../../stijl/colour";
 

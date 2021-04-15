@@ -1,5 +1,5 @@
 import { option } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 const sendMessage = (message: any) => {
   pipe(

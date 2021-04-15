@@ -1,6 +1,6 @@
 import { array, eq, option } from "fp-ts";
 import { not, Refinement } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import {
   bufferCount,

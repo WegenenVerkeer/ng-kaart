@@ -1,6 +1,6 @@
 import { either, eq, option } from "fp-ts";
 import { Lazy } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { DateTime } from "luxon";
 
 import { Consumer1, Consumer2 } from "../util/function";

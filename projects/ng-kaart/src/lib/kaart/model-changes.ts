@@ -1,7 +1,7 @@
 import { NgZone } from "@angular/core";
 import { array, either, eq, option } from "fp-ts";
 import { flow } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import {
   debounceTime,

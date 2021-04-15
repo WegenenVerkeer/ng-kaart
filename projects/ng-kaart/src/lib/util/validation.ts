@@ -1,7 +1,7 @@
 import { applicative, array, either, monad, option, semigroup } from "fp-ts";
 import { getSemigroup } from "fp-ts/lib/NonEmptyArray";
 import { Predicate, Refinement } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 export type ErrValidation<A> = either.Either<string[], A>;
 export type Validator<A, B> = (a: A) => ErrValidation<B>;

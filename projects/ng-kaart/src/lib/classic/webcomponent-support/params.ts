@@ -1,6 +1,6 @@
 import { option, either } from "fp-ts";
 import { identity } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import * as ke from "../../kaart/kaart-elementen";
 import { kaartLogger } from "../../kaart/log";

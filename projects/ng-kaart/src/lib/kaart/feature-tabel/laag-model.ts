@@ -7,7 +7,7 @@ import {
   not,
   Predicate,
 } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { Fold, Getter, Lens, Optional, Traversal } from "monocle-ts";
 import { indexArray } from "monocle-ts/lib/Index/Array";
 import { map } from "rxjs/operators";

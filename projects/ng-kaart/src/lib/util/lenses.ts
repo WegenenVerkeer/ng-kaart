@@ -1,6 +1,6 @@
 import { array, option } from "fp-ts";
 import { Predicate } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { fromTraversable, Lens, Optional, Prism, Traversal } from "monocle-ts";
 
 /**

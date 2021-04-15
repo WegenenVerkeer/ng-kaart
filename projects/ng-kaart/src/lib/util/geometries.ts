@@ -1,6 +1,6 @@
 import { array, eq, field, foldable, option } from "fp-ts";
 import { constant, identity } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import * as ol from "./openlayers-compat";
 

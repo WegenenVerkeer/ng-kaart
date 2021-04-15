@@ -1,6 +1,6 @@
 import { array, option } from "fp-ts";
 import { Endomorphism, flow, Predicate } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { fromTraversable, Getter, Lens, Traversal } from "monocle-ts";
 import * as rx from "rxjs";
 import { map } from "rxjs/operators";

@@ -5,7 +5,7 @@ import { default as booleanIntersects } from "@turf/boolean-intersects";
 import * as turf from "@turf/turf";
 import { array, option } from "fp-ts";
 import { Endomorphism, flow, identity } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { LineString, Point, Polygon } from "ol/geom";
 import * as rx from "rxjs";
 import { filter, map, sample, switchMap, switchMapTo } from "rxjs/operators";

@@ -1,6 +1,6 @@
 import { Component, Injector, Input } from "@angular/core";
 import { option } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import {
   defaultMarkerStyle as defaultClickMarkerStyle,

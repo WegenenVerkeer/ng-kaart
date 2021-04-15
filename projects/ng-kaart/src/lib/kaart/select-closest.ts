@@ -1,5 +1,5 @@
 import { array, option, ord, tuple } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import * as arrays from "../util/arrays";
 import { PartialFunction2 } from "../util/function";

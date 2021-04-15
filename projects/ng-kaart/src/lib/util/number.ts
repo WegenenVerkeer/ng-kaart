@@ -1,6 +1,6 @@
 import { option } from "fp-ts";
 import { Refinement } from "fp-ts/es6/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import { PartialFunction1 } from "./function";
 

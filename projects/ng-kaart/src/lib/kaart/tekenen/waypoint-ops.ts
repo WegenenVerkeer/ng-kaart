@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { array, option, record } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { map, mergeMap } from "rxjs/operators";
 
@@ -22,6 +22,7 @@ import {
   RoutingService,
   SimpleRoutingService,
   VerfijndeRoutingService,
+  WegEdge,
 } from "./routing-service";
 import {
   AddWaypoint,
@@ -197,13 +198,16 @@ function nextRouteStateChanges(
   }
 }
 
-export function directeRoutes(): Pipeable<WaypointOperation, RouteEvent> {
+export function directeRoutes<Edge>(): Pipeable<
+  WaypointOperation,
+  RouteEvent<Edge>
+> {
   return waypointOpsToRouteOperation(new SimpleRoutingService());
 }
 
-export function routesViaRoutering(
+export function routesViaRoutering<Edge>(
   http: HttpClient
-): Pipeable<WaypointOperation, RouteEvent> {
+): Pipeable<WaypointOperation, RouteEvent<Edge>> {
   return waypointOpsToRouteOperation(
     new CompositeRoutingService([
       new SimpleRoutingService(),
@@ -212,9 +216,9 @@ export function routesViaRoutering(
   );
 }
 
-export function customRoutes(
-  customRoutingService: RoutingService
-): Pipeable<WaypointOperation, RouteEvent> {
+export function customRoutes<Edge>(
+  customRoutingService: RoutingService<Edge>
+): Pipeable<WaypointOperation, RouteEvent<Edge>> {
   return waypointOpsToRouteOperation(
     new CompositeRoutingService([
       new SimpleRoutingService(),
@@ -231,9 +235,9 @@ const ifDifferentLocation: (
     ? option.none
     : option.some(Waypoint(w.id, l));
 
-const waypointOpsToRouteOperation: (
-  arg: RoutingService
-) => Pipeable<WaypointOperation, RouteEvent> = (routingService) => (
+const waypointOpsToRouteOperation: <Edge>(
+  routingService: RoutingService<Edge>
+) => Pipeable<WaypointOperation, RouteEvent<Edge>> = (routingService) => (
   waypointOpss
 ) => {
   const routeChangesObs: rx.Observable<RouteChanges> = scanState(
@@ -270,10 +274,10 @@ const waypointOpsToRouteOperation: (
   );
 };
 
-function filterRouteEvent(
+function filterRouteEvent<Edge>(
   versions: Versions,
-  routeEvent: RouteEvent
-): [Versions, option.Option<RouteEvent>] {
+  routeEvent: RouteEvent<Edge>
+): [Versions, option.Option<RouteEvent<Edge>>] {
   return pipe(
     record.lookup(routeEvent.id, versions),
     option.fold(

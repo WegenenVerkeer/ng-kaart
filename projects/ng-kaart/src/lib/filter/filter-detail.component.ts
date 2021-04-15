@@ -1,6 +1,6 @@
 import { Component, Input, NgZone } from "@angular/core";
 import { array, option } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { filter, map, share, shareReplay, switchMap } from "rxjs/operators";
 

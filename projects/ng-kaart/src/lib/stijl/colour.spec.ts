@@ -1,5 +1,5 @@
 import { eq, option } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import {
   kleurcode,

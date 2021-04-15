@@ -1,5 +1,5 @@
 import { array, option } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import { supportedProjection } from "../coordinaten/coordinaten.service";
 import * as ol from "../util/openlayers-compat";

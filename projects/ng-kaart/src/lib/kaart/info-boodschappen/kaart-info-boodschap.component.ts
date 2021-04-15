@@ -13,7 +13,7 @@ import {
   OnInit,
 } from "@angular/core";
 import { option } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import scrollIntoView from "scroll-into-view-if-needed";
 
 import { forEach } from "../../util";

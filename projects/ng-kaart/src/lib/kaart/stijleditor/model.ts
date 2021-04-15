@@ -1,6 +1,6 @@
 import { array, eq, option } from "fp-ts";
 import { Endomorphism, Predicate, Refinement } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { Lens, Optional } from "monocle-ts";
 
 import * as clr from "../../stijl/colour";

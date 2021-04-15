@@ -1,7 +1,7 @@
 import { array, either, option, traversable } from "fp-ts";
 import { identity, Refinement } from "fp-ts/lib/function";
 import { NonEmptyArray } from "fp-ts/lib/NonEmptyArray";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import { kaartLogger } from "../kaart/log";
 import {

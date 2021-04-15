@@ -6,7 +6,7 @@ import {
   Predicate,
   Refinement,
 } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { Getter, Iso, Lens, Prism } from "monocle-ts";
 import { iso, Newtype } from "newtype-ts";
 import {

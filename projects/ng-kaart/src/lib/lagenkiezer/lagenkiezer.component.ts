@@ -12,7 +12,7 @@ import { MatTabChangeEvent } from "@angular/material/tabs";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { array, option } from "fp-ts";
 import { not, Predicate } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import {
   debounceTime,

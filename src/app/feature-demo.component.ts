@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { either } from "fp-ts";
 import { animate, style, transition, trigger } from "@angular/animations";
 import scrollIntoView from "scroll-into-view-if-needed";

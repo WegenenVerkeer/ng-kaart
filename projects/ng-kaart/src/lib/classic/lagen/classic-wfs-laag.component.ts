@@ -1,6 +1,6 @@
 import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as ss from "../../kaart/stijl-selector";

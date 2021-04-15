@@ -1,5 +1,5 @@
 import { either } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { Filter as fltr } from "./filter-model";
 import { definitieToFilter, filterToDefinitie } from "./filter-persistence";
 

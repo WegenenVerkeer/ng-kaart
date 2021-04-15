@@ -1,6 +1,6 @@
 import { ElementRef, Injectable, Injector } from "@angular/core";
 import { option } from "fp-ts";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 
 import { classicLogger } from "./log";
 

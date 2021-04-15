@@ -14,7 +14,7 @@ import {
   Predicate,
   Refinement,
 } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { Lens, Optional } from "monocle-ts";
 import * as rx from "rxjs";
 import {
@@ -76,7 +76,7 @@ import { KaartComponent } from "../kaart.component";
 import * as ss from "../stijl-selector";
 
 import { RouteEvent, RouteEventId } from "./route.msg";
-import { RoutingService } from "./routing-service";
+import { RoutingService, WegEdge } from "./routing-service";
 import {
   GetekendeRoute,
   getekendeRoute,
@@ -726,10 +726,10 @@ const removeFeature: (
     featuresByRouteIdLens.modify(removeFromStringMap(routeId)),
   ]);
 
-const routeSegmentReducer: (
+const routeSegmentReducer: <Edge>(
   arg1: clr.Kleur,
   arg2: Consumer1<DrawOps>
-) => ReduceFunction<RouteSegmentState, RouteEvent> = (
+) => ReduceFunction<RouteSegmentState, RouteEvent<Edge>> = (
   lineColour,
   dispatchDrawOps
 ) => (state, ops) => {
@@ -864,10 +864,13 @@ export class KaartMultiTekenLaagComponent
       })
     );
     // Kies de correcte routering
-    const routeSegmentOps$: (
-      arg1: boolean,
-      arg2: option.Option<RoutingService>
-    ) => rx.Observable<RouteEvent> = (useRouting, customRoutingService) => {
+    const routeSegmentOps$: <Edge>(
+      useRouting: boolean,
+      customRoutingService: option.Option<RoutingService<Edge>>
+    ) => rx.Observable<RouteEvent<unknown>> = (
+      useRouting,
+      customRoutingService
+    ) => {
       const routingService = pipe(
         customRoutingService,
         option.fold(
@@ -886,7 +889,7 @@ export class KaartMultiTekenLaagComponent
     interface DrawOptions {
       readonly useRouting: boolean;
       readonly featureColour: clr.Kleur;
-      readonly customRoutingService: option.Option<RoutingService>;
+      readonly customRoutingService: option.Option<RoutingService<unknown>>;
       readonly polygonStyleFunction: option.Option<ol.style.StyleFunction>;
     }
 

@@ -19,7 +19,7 @@ import {
 } from "rxjs/operators";
 
 import { v4 as uuidV4 } from "uuid";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import {
   FilterAanpassend,
   GeenFilterAanpassingBezig,

@@ -7,7 +7,7 @@ import {
   Predicate,
   Refinement,
 } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { DateTime, Duration } from "luxon";
 import { Getter, Lens } from "monocle-ts";
 

@@ -1,6 +1,6 @@
 import { array, option } from "fp-ts";
 import { Endomorphism, FunctionN, not } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { DateTime } from "luxon";
 import { Lens } from "monocle-ts";
 
